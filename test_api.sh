@@ -21,7 +21,7 @@ make_api_call() {
     local url=$2
     local data=$3
     local description=$4
-    
+
     echo "Testing: $description"
     echo "Request: $method $url"
     if [ -n "$data" ]; then
@@ -33,7 +33,7 @@ make_api_call() {
     else
         response=$(curl -s -X $method "http://localhost:8081$url" || echo "ERROR")
     fi
-    
+
     echo "Response: $response"
     echo "---"
 }
@@ -80,4 +80,5 @@ echo "Stopping application..."
 kill $APP_PID
 wait $APP_PID 2>/dev/null
 
+# shellcheck disable=SC1073
 echo "Test completed!"
