@@ -1,0 +1,34 @@
+# Java / Maven / Spring Boot
+# Build output
+/target/
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings/
+
+# VSCode
+.vscode/
+
+# OS
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Env files
+.env
+.env.*
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+.mvn/wrapper/maven-wrapper.properties
+.mvn/
+
+# Misc
+node_modules/
