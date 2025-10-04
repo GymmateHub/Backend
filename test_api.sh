@@ -81,4 +81,5 @@ kill $APP_PID
 wait $APP_PID 2>/dev/null
 
 # shellcheck disable=SC1073
-echo "Test completed!"
+echo "Test script completed..."
+exit 0
