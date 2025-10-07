@@ -22,11 +22,12 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-public class UserController {
-    
+public class
+UserController {
+
     private final UserRegistrationService userRegistrationService;
     private final UserService userService;
-    
+
     /**
      * Register a new user.
      */
@@ -40,12 +41,12 @@ public class UserController {
                 request.getPhoneNumber(),
                 request.getRole()
         );
-        
+
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "User registered successfully"));
     }
-    
+
     /**
      * Register a new gym member (convenience endpoint).
      */
@@ -58,12 +59,12 @@ public class UserController {
                 request.getPassword(),
                 request.getPhoneNumber()
         );
-        
+
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Member registered successfully"));
     }
-    
+
     /**
      * Register a new gym owner (convenience endpoint).
      */
@@ -76,12 +77,12 @@ public class UserController {
                 request.getPassword(),
                 request.getPhoneNumber()
         );
-        
+
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Gym owner registered successfully"));
     }
-    
+
     /**
      * Get user by ID.
      */
@@ -91,7 +92,7 @@ public class UserController {
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-    
+
     /**
      * Update user profile.
      */
@@ -99,14 +100,14 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
             @PathVariable Long id,
             @Valid @RequestBody UserProfileUpdateRequest request) {
-        
-        User user = userService.updateProfile(id, request.getFirstName(), 
+
+        User user = userService.updateProfile(id, request.getFirstName(),
                 request.getLastName(), request.getPhoneNumber());
-        
+
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
     }
-    
+
     /**
      * Get all users by role.
      */
@@ -118,7 +119,7 @@ public class UserController {
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
-    
+
     /**
      * Get all gym owners.
      */
@@ -130,7 +131,7 @@ public class UserController {
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
-    
+
     /**
      * Deactivate user account.
      */
@@ -140,7 +141,7 @@ public class UserController {
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "User deactivated successfully"));
     }
-    
+
     /**
      * Activate user account.
      */
