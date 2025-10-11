@@ -25,6 +25,8 @@
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <lombok.version>1.18.36</lombok.version>
     <springdoc.version>2.8.13</springdoc.version>
+
+    <jwt.version>0.12.3</jwt.version>
   </properties>
 
   <dependencies>
@@ -52,8 +54,25 @@
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
 
-    <!-- Spring-boot swagger documentation -->
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>${jwt.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>${jwt.version}</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>${jwt.version}</version>
+      <scope>runtime</scope>
+    </dependency>
 
+    <!-- Spring-boot swagger documentation -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -126,6 +145,10 @@
               <version>${mapstruct.version}</version>
             </path>
           </annotationProcessorPaths>
+          <fork>true</fork>
+          <compilerArgs>
+            <arg>--release=${java.version}</arg>
+          </compilerArgs>
         </configuration>
       </plugin>
     </plugins>

@@ -11,6 +11,11 @@ server:
     allowed-headers: "*"
     allow-credentials: true
 
+jwt:
+  secret: ${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}
+  expiration: 86400000  # 24 hours in milliseconds
+  refresh-expiration: 604800000  # 7 days in milliseconds
+
 spring:
   application:
     name: gymmate-backend
@@ -81,5 +86,3 @@ cors:
   exposed-headers: "Authorization,Content-Type,Content-Disposition,X-Requested-With,Accept"
   allow-credentials: true
   max-age: 3600
-
-

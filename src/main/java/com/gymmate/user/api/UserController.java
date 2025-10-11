@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * REST controller for user management operations.
@@ -22,8 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
-public class
-UserController {
+public class UserController {
 
     private final UserRegistrationService userRegistrationService;
     private final UserService userService;
@@ -87,7 +87,7 @@ UserController {
      * Get user by ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID id) {
         User user = userService.findById(id);
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response));
@@ -98,7 +98,7 @@ UserController {
      */
     @PutMapping("/{id}/profile")
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody UserProfileUpdateRequest request) {
 
         User user = userService.updateProfile(id, request.getFirstName(),
@@ -136,7 +136,7 @@ UserController {
      * Deactivate user account.
      */
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(@PathVariable UUID id) {
         User user = userService.deactivateUser(id);
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "User deactivated successfully"));
@@ -146,7 +146,7 @@ UserController {
      * Activate user account.
      */
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<ApiResponse<UserResponse>> activateUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> activateUser(@PathVariable UUID id) {
         User user = userService.activateUser(id);
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "User activated successfully"));

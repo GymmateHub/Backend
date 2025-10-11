@@ -1,0 +1,10 @@
+-- Create index for better query performance on gyms
+CREATE INDEX IF NOT EXISTS idx_gyms_owner_id ON gyms(owner_id);
+CREATE INDEX IF NOT EXISTS idx_gyms_status ON gyms(status);
+CREATE INDEX IF NOT EXISTS idx_gyms_city ON gyms(city);
+
+-- Add audit timestamps to both tables if not exists
+ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE gyms ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+ALTER TABLE gyms ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
