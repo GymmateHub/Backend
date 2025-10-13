@@ -1,5 +1,5 @@
 server:
-  port: ${APP_PORT:8080}
+  port: ${APP_PORT}
   servlet:
     context-path: /
     # Enable HTTP/2
@@ -13,15 +13,17 @@ server:
 
 jwt:
   secret: ${JWT_SECRET}
-  expiration: 86400000  # 24 hours in milliseconds
-  refresh-expiration: 604800000  # 7 days in milliseconds
+  expiration: ${JWT_EXPIRATION}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
 spring:
   application:
     name: gymmate-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
     url: ${PG_URI}
-    driver-class-name: org.postgresql.Driver
+    driver-class-name: ${DB_DRIVER}
     username: ${PG_USER}
     password: ${PG_PASSWORD}
     hikari:
@@ -29,15 +31,19 @@ spring:
       maximum-pool-size: 5
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: ${JPA_DDL_AUTO}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-        show_sql: true
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
+        dialect: ${DB_DIALECT}
+        format_sql: ${SHOW_SQL}
+        show_sql: ${SHOW_SQL}
+    database-platform: ${DB_DIALECT}
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
   flyway:
-    enabled: false
+    enabled: ${FLYWAY_ENABLED}
 
 # Actuator Configuration
 management:
@@ -70,22 +76,22 @@ springdoc:
 # Logging Configuration
 logging:
   level:
-    root: INFO
+    root: ${LOG_LEVEL_ROOT}
     org.springframework: INFO
     org.hibernate: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
     org.springframework.web: DEBUG
     org.springframework.security: DEBUG
-    com.gymmate: DEBUG
+    com.gymmate: ${LOG_LEVEL_GYMMATE}
   pattern:
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"
 
 # CORS Configuration (additional to programmatic config)
 cors:
-  allowed-origins: "*"
+  allowed-origins: ${CORS_ALLOWED_ORIGINS}
   allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
   allowed-headers: "*"
   exposed-headers: "Authorization,Content-Type,Content-Disposition,X-Requested-With,Accept"
-  allow-credentials: true
+  allow-credentials: ${CORS_ALLOW_CREDENTIALS}
   max-age: 3600
