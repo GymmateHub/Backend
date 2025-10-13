@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${APP_PORT:8080}
   servlet:
     context-path: /
     # Enable HTTP/2
@@ -12,29 +12,32 @@ server:
     allow-credentials: true
 
 jwt:
-  secret: ${JWT_SECRET:5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437}
+  secret: ${JWT_SECRET}
   expiration: 86400000  # 24 hours in milliseconds
   refresh-expiration: 604800000  # 7 days in milliseconds
 
 spring:
   application:
     name: gymmate-backend
-
   datasource:
-    url: jdbc:h2:mem:gymmate;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
-    driver-class-name: org.h2.Driver
-    username: sa
-    password: ""
+    url: ${PG_URI}
+    driver-class-name: org.postgresql.Driver
+    username: ${PG_USER}
+    password: ${PG_PASSWORD}
+    hikari:
+      connection-timeout: 20000
+      maximum-pool-size: 5
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: create
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-        show_sql: false
+        show_sql: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
   flyway:
-    enabled: true
-    locations: classpath:db/migration
+    enabled: false
 
 # Actuator Configuration
 management:
