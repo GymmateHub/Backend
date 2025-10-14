@@ -27,9 +27,6 @@ logs/
 .env.dev
 
 # Maven
-.mvn/wrapper/maven-wrapper.jar
-.mvn/wrapper/maven-wrapper.properties
-.mvn/
 
 # Misc
 node_modules/
