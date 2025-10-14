@@ -1,13 +1,14 @@
-package com.gymmate.membership.api.dto;
+package com.gymmate.Gym.api.dto;
 
-import com.gymmate.membership.domain.Gym;
-import com.gymmate.membership.domain.GymStatus;
+import com.gymmate.Gym.domain.Gym;
+import com.gymmate.Gym.domain.GymStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * DTO for gym responses.
@@ -17,21 +18,27 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class GymResponse {
-    
-    private Long id;
+
+    private UUID id;
+    private UUID gymId;
     private String name;
     private String description;
     private AddressResponse address;
     private String contactEmail;
     private String contactPhone;
-    private Long ownerId;
+    private UUID ownerId;
     private GymStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
+    private boolean active;
+
+    /**
+     * Create a response DTO from a domain entity.
+     */
     public static GymResponse fromEntity(Gym gym) {
         return GymResponse.builder()
                 .id(gym.getId())
+                .gymId(gym.getGymId())
                 .name(gym.getName())
                 .description(gym.getDescription())
                 .address(AddressResponse.fromValueObject(gym.getAddress()))
@@ -41,9 +48,10 @@ public class GymResponse {
                 .status(gym.getStatus())
                 .createdAt(gym.getCreatedAt())
                 .updatedAt(gym.getUpdatedAt())
+                .active(gym.isActive())
                 .build();
     }
-    
+
     @Data
     @Builder
     @NoArgsConstructor
@@ -54,16 +62,17 @@ public class GymResponse {
         private String state;
         private String postalCode;
         private String country;
-        private String fullAddress;
-        
-        public static AddressResponse fromValueObject(com.gymmate.membership.domain.Address address) {
+
+        public static AddressResponse fromValueObject(com.gymmate.Gym.domain.Address address) {
+            if (address == null) {
+                return null;
+            }
             return AddressResponse.builder()
                     .street(address.getStreet())
                     .city(address.getCity())
                     .state(address.getState())
                     .postalCode(address.getPostalCode())
                     .country(address.getCountry())
-                    .fullAddress(address.getFullAddress())
                     .build();
         }
     }

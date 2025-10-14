@@ -1,5 +1,6 @@
-package com.gymmate.membership.domain;
+package com.gymmate.Gym.domain;
 
+import com.gymmate.shared.domain.BaseEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -7,8 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
-import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Gym domain entity representing a gym facility.
@@ -17,11 +17,7 @@ import java.util.Objects;
 @Table(name = "gyms")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Gym {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+public class Gym extends BaseEntity {
 
     @Column(nullable = false)
     private String name;
@@ -38,22 +34,16 @@ public class Gym {
     @Column(nullable = false)
     private String contactPhone;
 
-    @Column(nullable = false)
-    private Long ownerId; // References User.id
+    @Column(name = "owner_id", nullable = false)
+    private UUID ownerId; // References User.id
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private GymStatus status;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
-
-    public Gym(String name, String description, Address address, String contactEmail, String contactPhone, Long ownerId) {
+    public Gym(String name, String description, Address address, String contactEmail, String contactPhone, UUID ownerId) {
         validateInputs(name, address, contactEmail, contactPhone, ownerId);
-        
+
         this.name = name.trim();
         this.description = description != null ? description.trim() : null;
         this.address = address;
@@ -61,19 +51,19 @@ public class Gym {
         this.contactPhone = contactPhone.trim();
         this.ownerId = ownerId;
         this.status = GymStatus.ACTIVE;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+
+        // A gym is its own tenant, so set gymId to its own ID
+        setGymId(getId());
     }
 
     public void updateDetails(String name, String description, Address address, String contactEmail, String contactPhone) {
         validateUpdateInputs(name, address, contactEmail, contactPhone);
-        
+
         this.name = name.trim();
         this.description = description != null ? description.trim() : null;
         this.address = address;
         this.contactEmail = contactEmail.toLowerCase().trim();
         this.contactPhone = contactPhone.trim();
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void activate() {
@@ -81,7 +71,7 @@ public class Gym {
             throw new DomainException("GYM_ALREADY_ACTIVE", "Gym is already active");
         }
         this.status = GymStatus.ACTIVE;
-        this.updatedAt = LocalDateTime.now();
+        setActive(true);
     }
 
     public void deactivate() {
@@ -89,19 +79,19 @@ public class Gym {
             throw new DomainException("GYM_ALREADY_INACTIVE", "Gym is already inactive");
         }
         this.status = GymStatus.INACTIVE;
-        this.updatedAt = LocalDateTime.now();
+        setActive(false);
     }
 
     public void suspend() {
         this.status = GymStatus.SUSPENDED;
-        this.updatedAt = LocalDateTime.now();
+        setActive(false);
     }
 
     public boolean isActive() {
         return status == GymStatus.ACTIVE;
     }
 
-    private void validateInputs(String name, Address address, String contactEmail, String contactPhone, Long ownerId) {
+    private void validateInputs(String name, Address address, String contactEmail, String contactPhone, UUID ownerId) {
         if (!StringUtils.hasText(name)) {
             throw new DomainException("INVALID_GYM_NAME", "Gym name cannot be empty");
         }
@@ -134,16 +124,23 @@ public class Gym {
         }
     }
 
+    @PrePersist
+    @Override
+    protected void prePersist() {
+        super.prePersist();
+        // Ensure a gym is its own tenant
+        setGymId(getId());
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Gym gym = (Gym) o;
-        return Objects.equals(id, gym.id);
+        if (!(o instanceof Gym)) return false;
+        return getId() != null && getId().equals(((Gym) o).getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id);
+        return getClass().hashCode();
     }
 }
