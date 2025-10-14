@@ -23,7 +23,8 @@ logs/
 
 # Env files
 .env
-.env.*
+.env.prod
+.env.dev
 
 # Maven
 .mvn/wrapper/maven-wrapper.jar

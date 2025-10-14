@@ -1,5 +1,6 @@
 package com.gymmate.user.domain;
 
+import com.gymmate.shared.domain.BaseEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -8,7 +9,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 /**
  * User domain entity representing a user in the system.
@@ -17,13 +17,9 @@ import java.util.Objects;
 @Table(name = "users")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User {
+public class User extends BaseEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(unique = true, nullable = false)
+    @Column(nullable = false)
     private String email;
 
     @Column(nullable = false)
@@ -46,17 +42,19 @@ public class User {
     @Column(nullable = false)
     private UserStatus status;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @Column(name= "is_email_verified", nullable = false)
+    private boolean isEmailVerified;
 
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
+  {
+    isEmailVerified = false;
+  }
 
-    private LocalDateTime lastLoginAt;
+  @Column(name = "last_login")
+    private LocalDateTime lastLogin;
 
-    public User(String email, String firstName, String lastName, String passwordHash, String phoneNumber, UserRole role) {
-        validateInputs(email, firstName, lastName, passwordHash, phoneNumber, role);
-        
+    public User(String email, String firstName, String lastName, String passwordHash,
+                String phoneNumber, UserRole role) {
+        validateInputs(email, firstName, lastName, passwordHash, phoneNumber);
         this.email = email.toLowerCase().trim();
         this.firstName = firstName.trim();
         this.lastName = lastName.trim();
@@ -64,22 +62,19 @@ public class User {
         this.phoneNumber = phoneNumber.trim();
         this.role = role;
         this.status = UserStatus.ACTIVE;
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        setActive(true);
+        validateUserTenancy();
     }
 
     public void updateProfile(String firstName, String lastName, String phoneNumber) {
-        validateProfileInputs(firstName, lastName, phoneNumber);
-        
+        validateProfileUpdate(firstName, lastName, phoneNumber);
         this.firstName = firstName.trim();
         this.lastName = lastName.trim();
         this.phoneNumber = phoneNumber.trim();
-        this.updatedAt = LocalDateTime.now();
     }
 
     public void updateLastLogin() {
-        this.lastLoginAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.lastLogin = LocalDateTime.now();
     }
 
     public void deactivate() {
@@ -87,7 +82,7 @@ public class User {
             throw new DomainException("USER_ALREADY_INACTIVE", "User is already inactive");
         }
         this.status = UserStatus.INACTIVE;
-        this.updatedAt = LocalDateTime.now();
+        setActive(false);
     }
 
     public void activate() {
@@ -95,39 +90,25 @@ public class User {
             throw new DomainException("USER_ALREADY_ACTIVE", "User is already active");
         }
         this.status = UserStatus.ACTIVE;
-        this.updatedAt = LocalDateTime.now();
+        setActive(true);
     }
 
     public String getFullName() {
         return firstName + " " + lastName;
     }
 
-    public boolean isActive() {
-        return status == UserStatus.ACTIVE;
-    }
-
-    private void validateInputs(String email, String firstName, String lastName, String passwordHash, String phoneNumber, UserRole role) {
+    private void validateInputs(String email, String firstName, String lastName,
+                              String passwordHash, String phoneNumber) {
         if (!StringUtils.hasText(email)) {
             throw new DomainException("INVALID_EMAIL", "Email cannot be empty");
         }
-        if (!StringUtils.hasText(firstName)) {
-            throw new DomainException("INVALID_FIRST_NAME", "First name cannot be empty");
-        }
-        if (!StringUtils.hasText(lastName)) {
-            throw new DomainException("INVALID_LAST_NAME", "Last name cannot be empty");
-        }
+        validateProfileUpdate(firstName, lastName, phoneNumber);
         if (!StringUtils.hasText(passwordHash)) {
             throw new DomainException("INVALID_PASSWORD", "Password hash cannot be empty");
         }
-        if (!StringUtils.hasText(phoneNumber)) {
-            throw new DomainException("INVALID_PHONE", "Phone number cannot be empty");
-        }
-        if (role == null) {
-            throw new DomainException("INVALID_ROLE", "User role cannot be null");
-        }
     }
 
-    private void validateProfileInputs(String firstName, String lastName, String phoneNumber) {
+    private void validateProfileUpdate(String firstName, String lastName, String phoneNumber) {
         if (!StringUtils.hasText(firstName)) {
             throw new DomainException("INVALID_FIRST_NAME", "First name cannot be empty");
         }
@@ -136,19 +117,37 @@ public class User {
         }
         if (!StringUtils.hasText(phoneNumber)) {
             throw new DomainException("INVALID_PHONE", "Phone number cannot be empty");
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        validateUserTenancy();
+    }
+
+    private void validateUserTenancy() {
+        // Ensure gym owners don't have a gymId
+        if (role == UserRole.GYM_OWNER && getGymId() != null) {
+            throw new DomainException("INVALID_GYM_OWNER",
+                "Gym owners cannot be associated with a specific gym");
+        }
+
+        // Ensure members and staff have a gymId
+        if ((role == UserRole.MEMBER || role == UserRole.STAFF) && getGymId() == null) {
+            throw new DomainException("INVALID_USER",
+                "Members and staff must be associated with a gym");
         }
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id) && Objects.equals(email, user.email);
+        if (!(o instanceof User)) return false;
+        return getId() != null && getId().equals(((User) o).getId());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, email);
+        return getClass().hashCode();
     }
 }
