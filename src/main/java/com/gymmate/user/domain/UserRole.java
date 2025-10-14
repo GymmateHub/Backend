@@ -4,23 +4,33 @@ package com.gymmate.user.domain;
  * Enumeration of user roles in the system.
  */
 public enum UserRole {
-    /**
-     * Regular gym member who can book classes, view schedules, etc.
-     */
-    MEMBER,
-    
-    /**
-     * Gym trainer/instructor who can conduct classes
-     */
-    TRAINER,
-    
-    /**
-     * Gym owner/manager who can manage the gym operations
-     */
-    GYM_OWNER,
-    
-    /**
-     * System administrator with full access
-     */
-    ADMIN
+  /**
+   * Super admin with full platform access
+   * */
+  SUPER_ADMIN,  // Platform admin
+
+  /**
+   * Gym owner/manager with gym-level access
+   * */
+  GYM_OWNER,    // Gym owner/manager
+
+  /**
+   * Gym administrator with administrative privileges
+   * */
+  GYM_ADMIN,    // Gym administrator
+
+  /**
+   * Fitness trainer with access to training-related features
+   * */
+  TRAINER,      // Fitness trainer
+
+  /**
+   * Front desk staff with limited access
+   * */
+  STAFF,        // Front desk staff
+
+  /**
+   * Regular gym member with access to member features
+   * */
+  MEMBER        // Gym member
 }

@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * REST controller for user management operations.
@@ -23,10 +24,10 @@ import java.util.List;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-    
+
     private final UserRegistrationService userRegistrationService;
     private final UserService userService;
-    
+
     /**
      * Register a new user.
      */
@@ -40,12 +41,12 @@ public class UserController {
                 request.getPhoneNumber(),
                 request.getRole()
         );
-        
+
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "User registered successfully"));
     }
-    
+
     /**
      * Register a new gym member (convenience endpoint).
      */
@@ -58,12 +59,12 @@ public class UserController {
                 request.getPassword(),
                 request.getPhoneNumber()
         );
-        
+
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Member registered successfully"));
     }
-    
+
     /**
      * Register a new gym owner (convenience endpoint).
      */
@@ -76,37 +77,37 @@ public class UserController {
                 request.getPassword(),
                 request.getPhoneNumber()
         );
-        
+
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Gym owner registered successfully"));
     }
-    
+
     /**
      * Get user by ID.
      */
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID id) {
         User user = userService.findById(id);
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
-    
+
     /**
      * Update user profile.
      */
     @PutMapping("/{id}/profile")
     public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @Valid @RequestBody UserProfileUpdateRequest request) {
-        
-        User user = userService.updateProfile(id, request.getFirstName(), 
+
+        User user = userService.updateProfile(id, request.getFirstName(),
                 request.getLastName(), request.getPhoneNumber());
-        
+
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
     }
-    
+
     /**
      * Get all users by role.
      */
@@ -118,7 +119,7 @@ public class UserController {
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
-    
+
     /**
      * Get all gym owners.
      */
@@ -130,22 +131,22 @@ public class UserController {
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
-    
+
     /**
      * Deactivate user account.
      */
     @PatchMapping("/{id}/deactivate")
-    public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(@PathVariable UUID id) {
         User user = userService.deactivateUser(id);
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "User deactivated successfully"));
     }
-    
+
     /**
      * Activate user account.
      */
     @PatchMapping("/{id}/activate")
-    public ResponseEntity<ApiResponse<UserResponse>> activateUser(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<UserResponse>> activateUser(@PathVariable UUID id) {
         User user = userService.activateUser(id);
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "User activated successfully"));

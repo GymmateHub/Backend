@@ -1,4 +1,4 @@
-package com.gymmate.membership.domain;
+package com.gymmate.Gym.domain;
 
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.Column;
@@ -35,7 +35,7 @@ public class Address {
 
     public Address(String street, String city, String state, String postalCode, String country) {
         validateInputs(street, city, state, postalCode, country);
-        
+
         this.street = street.trim();
         this.city = city.trim();
         this.state = state.trim();
