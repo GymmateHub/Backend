@@ -1,0 +1,79 @@
+name: GymMate-hub CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Use Java 21 (Temurin) + Maven cache
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+          cache: 'maven'
+
+      # Prefer the Maven Wrapper if present for reproducible builds
+      - name: Build with Maven
+        run: ./mvnw -B clean package -DskipTests=false
+
+      - name: Run tests (explicit)
+        run: ./mvnw -B test
+
+      - name: Archive JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gymmate-backend-jar
+          path: target/*.jar
+
+      # (Optional) publish surefire test reports as artifacts
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: |
+            **/target/surefire-reports/*.xml
+            **/target/surefire-reports/*.txt
+            **/target/failsafe-reports/*.xml
+            **/target/failsafe-reports/*.txt
+
+  # Optional: Build & Push Docker (runs only on main)
+  docker:
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # Tag with git sha and latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:${{ github.sha }}
+          # Optional: Speed up rebuilds
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache,mode=max
