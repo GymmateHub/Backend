@@ -23,8 +23,14 @@ jobs:
           cache: 'maven'
 
       # Prefer the Maven Wrapper if present for reproducible builds
+      - name: Make mvnw executable
+        run: chmod +x mvnw
+
       - name: Build with Maven
-        run: ./mvnw -B clean package -DskipTests=false
+        run: ./mvnw clean install
+
+      # - name: Build with Maven
+      # run: ./mvnw -B clean package -DskipTests=false
 
       - name: Run tests (explicit)
         run: ./mvnw -B test
