@@ -2,9 +2,9 @@ name: GymMate-hub CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
 
 jobs:
   build:
@@ -38,7 +38,7 @@ jobs:
       - name: Archive JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gymmate-backend-jar
+          name: gymmate-backend-jar-${{ github.ref_name }}
           path: target/*.jar
 
       # (Optional) publish surefire test reports as artifacts
@@ -46,18 +46,18 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-reports
+          name: surefire-reports-${{ github.ref_name }}
           path: |
             **/target/surefire-reports/*.xml
             **/target/surefire-reports/*.txt
             **/target/failsafe-reports/*.xml
             **/target/failsafe-reports/*.txt
 
-  # Optional: Build & Push Docker (runs only on main)
+  # Build & Push Docker (runs for main and dev branches)
   docker:
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -71,15 +71,20 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Extract branch name
+        shell: bash
+        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          # Tag with git sha and latest
+          # Tag with branch name, git sha, and latest (only for main)
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:latest
-            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:${{ env.BRANCH_NAME }}
+            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:${{ env.BRANCH_NAME }}-${{ github.sha }}
+            ${{ github.ref == 'refs/heads/main' && format('{0}/gymmate-backend:latest', secrets.DOCKER_USERNAME) || '' }}
           # Optional: Speed up rebuilds
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache,mode=max
+          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache-${{ env.BRANCH_NAME }}
+          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache-${{ env.BRANCH_NAME }},mode=max
