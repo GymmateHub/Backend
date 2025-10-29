@@ -30,7 +30,7 @@ public class UserRegistrationService {
                            String plainPassword, String phoneNumber, UserRole role) {
         // Check if user already exists in current gym context
         UUID currentGymId = TenantContext.getCurrentTenantId();
-        if (currentGymId != null && userRepository.findByEmailAndGymId(email, currentGymId.toString()).isPresent()) {
+        if (currentGymId != null && userRepository.findByEmailAndGymId(email, currentGymId).isPresent()) {
             throw new DomainException("USER_ALREADY_EXISTS",
                 "A user with email '" + email + "' already exists in this gym");
         }
@@ -47,8 +47,16 @@ public class UserRegistrationService {
         // Encode password
         String passwordHash = passwordService.encode(plainPassword);
 
-        // Create new user
-        User user = new User(email, firstName, lastName, passwordHash, phoneNumber, role);
+        // Create new user using builder
+        User user = User.builder()
+                .email(email)
+                .firstName(firstName)
+                .lastName(lastName)
+                .passwordHash(passwordHash)
+                .phoneNumber(phoneNumber)
+                .role(role)
+                .status(com.gymmate.user.domain.UserStatus.ACTIVE)
+                .build();
 
         // Save and return
         return userRepository.save(user);

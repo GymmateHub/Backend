@@ -93,7 +93,19 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    /**
+  /**
+   * Get all users.
+   */
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
+        List<User> users = userService.findAll();
+        List<UserResponse> responses = users.stream()
+                .map(UserResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
+  /**
      * Update user profile.
      */
     @PutMapping("/{id}/profile")

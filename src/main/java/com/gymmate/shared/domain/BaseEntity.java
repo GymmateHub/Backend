@@ -40,8 +40,24 @@ public abstract class BaseEntity {
 
   @PrePersist
   protected void prePersist() {
-    if (gymId == null) {
-      gymId = TenantContext.getCurrentTenantId();
+    if (gymId == null && requiresTenant()) {
+      // Require a tenant for tenant-scoped entities
+      gymId = TenantContext.requireCurrentTenantId();
     }
+    if (createdAt == null) {
+      createdAt = LocalDateTime.now();
+    }
+    if (updatedAt == null) {
+      updatedAt = LocalDateTime.now();
+    }
+  }
+
+  @PreUpdate
+  protected void preUpdate() {
+    updatedAt = LocalDateTime.now();
+  }
+
+  protected boolean requiresTenant() {
+    return true; // Override in entities that don't require tenant (like SUPER_ADMIN)
   }
 }
