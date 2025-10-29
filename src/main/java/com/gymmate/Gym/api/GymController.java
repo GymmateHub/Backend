@@ -1,7 +1,9 @@
 package com.gymmate.Gym.api;
 
+import com.gymmate.Gym.api.dto.AddressUpdateRequest;
 import com.gymmate.Gym.api.dto.GymRegistrationRequest;
 import com.gymmate.Gym.api.dto.GymResponse;
+import com.gymmate.Gym.api.dto.GymUpdateRequest;
 import com.gymmate.Gym.application.GymService;
 import com.gymmate.Gym.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;
@@ -33,18 +35,73 @@ public class GymController {
                 request.getOwnerId(),
                 request.getName(),
                 request.getDescription(),
-                request.getStreet(),
-                request.getCity(),
-                request.getState(),
-                request.getPostalCode(),
-                request.getCountry(),
                 request.getContactEmail(),
                 request.getContactPhone()
         );
 
+        // If address details are provided, update the address
+        if (request.getStreet() != null && request.getCity() != null &&
+                request.getState() != null && request.getPostalCode() != null &&
+                request.getCountry() != null) {
+
+            gym = gymService.updateGymAddress(
+                    gym.getId(),
+                    request.getStreet(),
+                    request.getCity(),
+                    request.getState(),
+                    request.getPostalCode(),
+                    request.getCountry()
+            );
+        }
+
         GymResponse response = GymResponse.fromEntity(gym);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Gym registered successfully"));
+    }
+
+    /**
+     * Update gym address.
+     */
+    @PutMapping("/{id}/address")
+    public ResponseEntity<ApiResponse<GymResponse>> updateGymAddress(
+            @PathVariable UUID id,
+            @Valid @RequestBody AddressUpdateRequest request) {
+
+        Gym gym = gymService.updateGymAddress(
+                id,
+                request.getStreet(),
+                request.getCity(),
+                request.getState(),
+                request.getPostalCode(),
+                request.getCountry()
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(
+                GymResponse.fromEntity(gym),
+                "Gym address updated successfully"
+        ));
+    }
+
+    /**
+     * Update gym details without address.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<GymResponse>> updateGym(
+            @PathVariable UUID id,
+            @Valid @RequestBody GymUpdateRequest request) {
+
+        Gym gym = gymService.updateGymDetails(
+                id,
+                request.getName(),
+                request.getDescription(),
+                request.getContactEmail(),
+                request.getContactPhone()
+        );
+
+        return ResponseEntity.ok(ApiResponse.success(
+                GymResponse.fromEntity(gym),
+                "Gym details updated successfully"
+        ));
     }
 
     /**
@@ -54,31 +111,6 @@ public class GymController {
     public ResponseEntity<ApiResponse<GymResponse>> getGym(@PathVariable UUID id) {
         Gym gym = gymService.getGymById(id);
         return ResponseEntity.ok(ApiResponse.success(GymResponse.fromEntity(gym)));
-    }
-
-    /**
-     * Update gym details.
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<GymResponse>> updateGym(
-            @PathVariable UUID id,
-            @Valid @RequestBody GymRegistrationRequest request) {
-
-        Gym gym = gymService.updateGymDetails(
-                id,
-                request.getName(),
-                request.getDescription(),
-                request.getStreet(),
-                request.getCity(),
-                request.getState(),
-                request.getPostalCode(),
-                request.getCountry(),
-                request.getContactEmail(),
-                request.getContactPhone()
-        );
-
-        GymResponse response = GymResponse.fromEntity(gym);
-        return ResponseEntity.ok(ApiResponse.success(response, "Gym updated successfully"));
     }
 
     /**

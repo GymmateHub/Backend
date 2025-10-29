@@ -80,7 +80,6 @@
       <version>${springdoc.version}</version>
     </dependency>
 
-
     <!-- Database drivers -->
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -133,6 +132,19 @@
       <artifactId>java-dotenv</artifactId>
       <version>5.2.2</version>
     </dependency>
+
+    <!-- Spring Boot Mail Starter -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
+    </dependency>
+
+    <!-- Thymeleaf for email templates -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+
   </dependencies>
 
   <build>
