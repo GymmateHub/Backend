@@ -1,80 +1,92 @@
 package com.gymmate.shared.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.user.domain.User;
+import com.gymmate.user.infrastructure.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.lang.NonNull;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-  private final JwtService jwtService;
-  private final TenantAwareUserDetailsService userDetailsService;
+    private final JwtTokenProvider tokenProvider;
+    private final UserRepository userRepository;
+    private final ObjectMapper objectMapper;
 
-  @Override
-  protected void doFilterInternal(@NonNull HttpServletRequest request,
-                                  @NonNull HttpServletResponse response,
-                                  @NonNull FilterChain filterChain)
-    throws ServletException, IOException {
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                  HttpServletResponse response,
+                                  FilterChain filterChain) throws ServletException, IOException {
+        try {
+            String jwt = getJwtFromRequest(request);
 
-    final String authHeader = request.getHeader("Authorization");
+            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
+                UUID userId = tokenProvider.getUserIdFromToken(jwt);
+                User user = userRepository.findById(userId)
+                        .orElseThrow(() -> new IllegalStateException("User not found: " + userId));
 
-    if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-      filterChain.doFilter(request, response);
-      return;
-    }
+                if (!user.isActive()) {
+                    handleAuthenticationError(response, "User account is not active");
+                    return;
+                }
 
-    try {
-      final String jwt = authHeader.substring(7);
-      final String userEmail = jwtService.extractUsername(jwt);
+                TenantAwareUserDetails userDetails = new TenantAwareUserDetails(user);
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-      if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-        // Load user details with tenant context from token
-        TenantAwareUserDetails userDetails = userDetailsService.loadUserByUsernameAndGymId(
-          userEmail,
-          jwtService.extractGymId(jwt)
-        );
+                SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        if (jwtService.validateToken(jwt, userDetails)) {
-          UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-            userDetails,
-            null,
-            userDetails.getAuthorities()
-          );
-
-          authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-          SecurityContextHolder.getContext().setAuthentication(authToken);
-
-          log.debug("User authenticated: {} for gym: {}", userEmail, userDetails.getGymId());
+                // Set tenant context for SUPER_ADMIN or if user has a gym association
+                if (user.getGymId() != null) {
+                    TenantContext.setCurrentTenantId(user.getGymId());
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Could not set user authentication in security context", ex);
+            handleAuthenticationError(response, "Authentication failed");
+            return;
         }
-      }
-    } catch (Exception e) {
-      log.error("JWT authentication failed: {}", e.getMessage());
+
+        filterChain.doFilter(request, response);
     }
 
-    filterChain.doFilter(request, response);
-  }
+    private String getJwtFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
 
-  @Override
-  protected boolean shouldNotFilter(HttpServletRequest request) {
-    String path = request.getRequestURI();
-    return path.startsWith("/api/v1/auth/login") ||
-      path.startsWith("/api/v1/auth/register") ||
-      path.startsWith("/api/v1/gyms/register") ||
-      path.startsWith("/actuator/") ||
-      path.startsWith("/swagger-ui") ||
-      path.startsWith("/v3/api-docs");
-  }
+    private void handleAuthenticationError(HttpServletResponse response, String message) throws IOException {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        objectMapper.writeValue(response.getWriter(), ApiResponse.error(message));
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/api/auth/") ||
+               path.startsWith("/v3/api-docs") ||
+               path.startsWith("/swagger-ui") ||
+               path.startsWith("/actuator");
+    }
 }

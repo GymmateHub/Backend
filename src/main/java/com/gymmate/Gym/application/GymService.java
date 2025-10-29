@@ -32,8 +32,7 @@ public class GymService {
      */
     @Transactional
     public Gym registerGym(UUID ownerId, String name, String description,
-                           String street, String city, String state, String postalCode, String country,
-                           String contactEmail, String contactPhone) {
+                          String contactEmail, String contactPhone) {
 
         // Validate that the owner exists and has the correct role
         User owner = userRepository.findById(ownerId)
@@ -49,11 +48,8 @@ public class GymService {
                 "Owner account must be active to register a gym");
         }
 
-        // Create address
-        Address address = new Address(street, city, state, postalCode, country);
-
-        // Create gym
-        Gym gym = new Gym(name, description, address, contactEmail, contactPhone, ownerId);
+        // Create gym with required fields
+        Gym gym = new Gym(name, description, contactEmail, contactPhone, ownerId);
 
         // Save and return
         return gymRepository.save(gym);
@@ -68,17 +64,25 @@ public class GymService {
     }
 
     /**
-     * Update gym details.
+     * Update gym address.
+     */
+    @Transactional
+    public Gym updateGymAddress(UUID id, String street, String city, String state,
+                              String postalCode, String country) {
+        Gym gym = getGymById(id);
+        Address address = new Address(street, city, state, postalCode, country);
+        gym.updateAddress(address);
+        return gymRepository.save(gym);
+    }
+
+    /**
+     * Update gym details without address.
      */
     @Transactional
     public Gym updateGymDetails(UUID id, String name, String description,
-                               String street, String city, String state, String postalCode, String country,
-                               String contactEmail, String contactPhone) {
-
+                              String contactEmail, String contactPhone) {
         Gym gym = getGymById(id);
-        Address address = new Address(street, city, state, postalCode, country);
-
-        gym.updateDetails(name, description, address, contactEmail, contactPhone);
+        gym.updateDetails(name, description, contactEmail, contactPhone);
         return gymRepository.save(gym);
     }
 

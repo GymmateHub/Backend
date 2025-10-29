@@ -1,43 +1,48 @@
 package com.gymmate.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 public class CorsConfig {
-  @Bean
-  public CorsConfigurationSource corsConfigurationSource() {
-    CorsConfiguration configuration = new CorsConfiguration();
 
-    // Allow all origins, methods, and headers in development
-    configuration.setAllowedOrigins(List.of("*"));
-    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
-    configuration.setAllowedHeaders(List.of("*"));
+    @Value("${cors.allowed-origins}")
+    private String[] allowedOrigins;
 
-    // Expose specific headers to the client
-    configuration.setExposedHeaders(Arrays.asList(
-      "Authorization",
-      "Content-Type",
-      "Content-Disposition",
-      "X-Requested-With",
-      "Accept"
-    ));
+    @Value("${cors.allowed-methods}")
+    private String[] allowedMethods;
 
-    // Allow credentials (cookies, HTTP authentication)
-    configuration.setAllowCredentials(true);
+    @Value("${cors.allowed-headers}")
+    private String[] allowedHeaders;
 
-    // Set max age of the CORS preflight request
-    configuration.setMaxAge(3600L);
+    @Value("${cors.exposed-headers}")
+    private String[] exposedHeaders;
 
-    // Configure CORS for all endpoints
-    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-    source.registerCorsConfiguration("/**", configuration);
+    @Value("${cors.allow-credentials}")
+    private boolean allowCredentials;
 
-    return source;
-  }
+    @Value("${cors.max-age:3600}")
+    private long maxAge;
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
+        configuration.setAllowedMethods(Arrays.asList(allowedMethods));
+        configuration.setAllowedHeaders(Arrays.asList(allowedHeaders));
+        configuration.setExposedHeaders(Arrays.asList(exposedHeaders));
+        configuration.setAllowCredentials(allowCredentials);
+        configuration.setMaxAge(maxAge);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }

@@ -1,0 +1,25 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    url: ${PG_URI:jdbc:postgresql://localhost:5432/gymmate}
+    driver-class-name: ${DB_DRIVER}
+    username: ${PG_USER:gymmate}
+    password: ${PG_PASSWORD:gymmate_password}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        show_sql: true
+
+# Development-specific admin configuration
+app:
+  admin:
+    email: ${DEV_EMAIL}:dev.admin@gymmatehub.com
+    password: ${DEV_PASSWORD}:DevAdmin#@1357
+    first-name: ${DEV_FIRST_NAME}:Development
+    last-name: ${DEV_LAST_NAME}:Administrator
