@@ -1,5 +1,5 @@
 # Multi-stage build for Spring Boot application
-FROM openjdk:21-jdk-slim as builder
+FROM openjdk:21-slim as builder
 
 # Set working directory
 WORKDIR /app
@@ -22,7 +22,7 @@ COPY src/ src/
 RUN ./mvnw clean package -DskipTests
 
 # Runtime stage
-FROM openjdk:21-jre-slim
+FROM openjdk:21-slim
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash gymmate

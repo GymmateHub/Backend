@@ -20,7 +20,6 @@ import java.util.UUID;
 public class GymResponse {
 
     private UUID id;
-    private UUID gymId;
     private String name;
     private String description;
     private AddressResponse address;
@@ -38,7 +37,6 @@ public class GymResponse {
     public static GymResponse fromEntity(Gym gym) {
         return GymResponse.builder()
                 .id(gym.getId())
-                .gymId(gym.getGymId())
                 .name(gym.getName())
                 .description(gym.getDescription())
                 .address(AddressResponse.fromValueObject(gym.getAddress()))

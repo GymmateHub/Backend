@@ -4,7 +4,8 @@ import com.gymmate.shared.domain.BaseEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
-import lombok.Getter;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.util.StringUtils;
 
@@ -16,7 +17,8 @@ import java.util.UUID;
 /**
  * Gym domain entity representing a gym facility.
  */
-@Getter
+@Data
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "gyms")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -29,7 +31,7 @@ public class Gym extends BaseEntity {
   private String description;
 
   @Embedded
-  private Address address; // Now optional
+  private Address address;
 
   @Column(nullable = false)
   private String contactEmail;
@@ -38,13 +40,13 @@ public class Gym extends BaseEntity {
   private String contactPhone;
 
   @Column(name = "owner_id", nullable = false)
-  private UUID ownerId; // References User.id
+  private UUID ownerId;
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
   private GymStatus status;
 
-  @Column(nullable = true, columnDefinition = "jsonb")
+  @Column(columnDefinition = "jsonb")
   private String settings;
 
   @Column(unique = true)
@@ -173,18 +175,6 @@ public class Gym extends BaseEntity {
     if (!StringUtils.hasText(contactPhone)) {
       throw new DomainException("INVALID_CONTACT_PHONE", "Contact phone cannot be empty");
     }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof Gym)) return false;
-    return getId() != null && getId().equals(((Gym) o).getId());
-  }
-
-  @Override
-  public int hashCode() {
-    return getClass().hashCode();
   }
 
   public void updateSubscription(String plan, LocalDateTime startDate, LocalDateTime endDate) {

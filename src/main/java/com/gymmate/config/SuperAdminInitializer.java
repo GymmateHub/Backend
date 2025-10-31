@@ -37,7 +37,6 @@ public class SuperAdminInitializer {
 
             if (userRepository.findByEmail(adminEmail).isEmpty()) {
                 log.info("Initializing default super admin user with email: {}", adminEmail);
-                LocalDateTime now = LocalDateTime.now();
 
                 User superAdmin = User.builder()
                         .email(adminEmail)
@@ -50,11 +49,8 @@ public class SuperAdminInitializer {
                         .emailVerified(true)
                         .build();
 
-                // Set base entity fields
+                // Set tenant ID for super admin
                 superAdmin.setGymId(DEFAULT_TENANT_ID);
-                superAdmin.setCreatedAt(now);
-                superAdmin.setUpdatedAt(now);
-                superAdmin.setActive(true);
 
                 userRepository.save(superAdmin);
                 log.info("Successfully created super admin user");
