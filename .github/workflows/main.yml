@@ -75,16 +75,34 @@ jobs:
         shell: bash
         run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
 
+      # add before the "Build and push Docker image" step
+      - name: Prepare image name and tag
+        id: image
+        shell: bash
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          # derive branch name and sanitize
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          BRANCH_TAG=$(echo "$BRANCH" \
+            | tr '[:upper:]' '[:lower:]' \         # lowercase
+            | sed 's#[/[:space:]]#-#g' \           # replace / and whitespace with -
+            | sed 's#[^a-z0-9._-]#-#g' )           # replace other invalid chars with -
+
+          # build image repo (keep username as provided by secret)
+          IMAGE="${DOCKER_USERNAME}/gymmate-backend"
+
+          echo "image=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "tag=${BRANCH_TAG}" >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          # Tag with branch name, git sha, and latest (only for main)
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:${{ env.BRANCH_NAME }}
-            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:${{ env.BRANCH_NAME }}-${{ github.sha }}
-            ${{ github.ref == 'refs/heads/main' && format('{0}/gymmate-backend:latest', secrets.DOCKER_USERNAME) || '' }}
-          # Optional: Speed up rebuilds
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache-${{ env.BRANCH_NAME }}
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache-${{ env.BRANCH_NAME }},mode=max
+            ${{ steps.image.outputs.image }}:${{ steps.image.outputs.tag }}
+            ${{ steps.image.outputs.image }}:${{ steps.image.outputs.tag }}-${{ github.sha }}
+            ${{ github.ref == 'refs/heads/main' && format('{0}:latest', steps.image.outputs.image) || '' }}
+          cache-from: type=registry,ref=${{ steps.image.outputs.image }}:buildcache-${{ steps.image.outputs.tag }}
+          cache-to: type=registry,ref=${{ steps.image.outputs.image }}:buildcache-${{ steps.image.outputs.tag }},mode=max
