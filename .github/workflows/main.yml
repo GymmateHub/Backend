@@ -120,8 +120,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Deploy to Railway
-        uses: railwayapp/railway-action@v2
+      - name: Set up Node.js (for Railway CLI)
+        uses: actions/setup-node@v4
         with:
-          railwayToken: ${{ secrets.RAILWAY_TOKEN }}
-          command: up
+          node-version: '18'
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Validate Railway Service ID
+        run: |
+          if [ -z "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
+            echo "Error: RAILWAY_SERVICE_ID is not set or is empty."
+            exit 1
+          fi
+
+      - name: Login to Railway
+        run: railway login --token ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE_ID: ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: |
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          if [ "$BRANCH" = "main" ]; then
+            ENVIRONMENT="production"
+          else
+            ENVIRONMENT="development"
+          fi
+
+          echo "Deploying branch '$BRANCH' to Railway service '$RAILWAY_SERVICE_ID' in environment '$ENVIRONMENT'"
+          # deploy; adjust flags if you use linking/project id instead of service id
+          railway up --service "$RAILWAY_SERVICE_ID" --detach --environment "$ENVIRONMENT"
