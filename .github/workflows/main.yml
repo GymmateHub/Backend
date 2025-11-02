@@ -143,14 +143,5 @@ jobs:
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         run: |
-          BRANCH="${GITHUB_REF#refs/heads/}"
-          if [ "$BRANCH" = "main" ]; then
-            ENVIRONMENT="production"
-          else
-            ENVIRONMENT="development"
-          fi
-
-          echo "Deploying branch '$BRANCH' to Railway service '${{ secrets.RAILWAY_SERVICE_ID }}' in environment '$ENVIRONMENT'"
-
           # Deploy using Railway CLI with service ID and environment
-          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach --environment $ENVIRONMENT
+          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach --environment production
