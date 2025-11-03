@@ -1,4 +1,4 @@
-package com.gymmate.config;
+package com.gymmate.shared.config;
 
 import com.gymmate.shared.multitenancy.TenantFilter;
 import com.gymmate.shared.security.JwtAuthenticationFilter;
@@ -40,8 +40,12 @@ public class SecurityConfig {
 
             // Configure authorization
             .authorizeHttpRequests(auth -> auth
+                // Explicitly deny suspicious paths
+                .requestMatchers("/.git/**", "/.env", "/config/**").denyAll()
                 // Public endpoints
                 .requestMatchers(
+                    "/",
+                    "/error",
                     "/api/auth/**",
                     "/api/gyms/register",
                     "/api/users/register/gym-owner",

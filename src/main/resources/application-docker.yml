@@ -19,15 +19,15 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
-  # Actuator endpoints for health checks
-  management:
-    endpoints:
-      web:
-        exposure:
-          include: health,info,metrics
-    endpoint:
-      health:
-        show-details: when-authorized
+# Actuator endpoints for health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
 
 server:
   port: 8080

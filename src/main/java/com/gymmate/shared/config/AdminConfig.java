@@ -1,4 +1,4 @@
-package com.gymmate.config;
+package com.gymmate.shared.config;
 
 import lombok.Getter;
 import lombok.Setter;
