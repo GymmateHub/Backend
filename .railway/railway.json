@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "deployments": {
+    "gymmate-backend": {
+      "service": "backend",
+      "source": "./",
+      "build": {
+        "builder": "dockerfile",
+        "dockerfile": "./Dockerfile",
+        "context": "."
+      },
+      "deploy": {
+        "restartPolicy": "on-failure",
+        "startCommand": "java -jar app.jar"
+      }
+    }
+  }
+}

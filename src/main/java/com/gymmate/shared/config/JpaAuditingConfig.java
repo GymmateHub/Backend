@@ -1,4 +1,4 @@
-package com.gymmate.config;
+package com.gymmate.shared.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
