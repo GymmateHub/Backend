@@ -1,7 +1,5 @@
 package com.gymmate.shared.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.UserRepository;
@@ -11,7 +9,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -28,7 +25,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider tokenProvider;
     private final UserRepository userRepository;
-    private final ObjectMapper objectMapper;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -37,31 +33,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             String jwt = getJwtFromRequest(request);
 
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-                UUID userId = tokenProvider.getUserIdFromToken(jwt);
-                User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new IllegalStateException("User not found: " + userId));
+            if (StringUtils.hasText(jwt)) {
+                // Only validate and process if JWT is present
+                if (tokenProvider.validateToken(jwt)) {
+                    UUID userId = tokenProvider.getUserIdFromToken(jwt);
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new IllegalStateException("User not found: " + userId));
 
-                if (!user.isActive()) {
-                    handleAuthenticationError(response, "User account is not active");
-                    return;
-                }
+                    if (!user.isActive()) {
+                        log.warn("Inactive user attempted to authenticate: {}", userId);
+                        SecurityContextHolder.clearContext();
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
 
-                TenantAwareUserDetails userDetails = new TenantAwareUserDetails(user);
-                UsernamePasswordAuthenticationToken authentication =
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                    TenantAwareUserDetails userDetails = new TenantAwareUserDetails(user);
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                // Set tenant context for SUPER_ADMIN or if user has a gym association
-                if (user.getGymId() != null) {
-                    TenantContext.setCurrentTenantId(user.getGymId());
+                    // Set tenant context for SUPER_ADMIN or if user has a gym association
+                    if (user.getGymId() != null) {
+                        TenantContext.setCurrentTenantId(user.getGymId());
+                    }
+                } else {
+                    // Invalid token - clear security context and let Spring Security handle it
+                    log.warn("Invalid JWT token for request: {} {}", request.getMethod(), request.getRequestURI());
+                    SecurityContextHolder.clearContext();
                 }
             }
+            // If no JWT token, just continue - anonymous access will be checked by SecurityFilterChain
         } catch (Exception ex) {
-            log.error("Could not set user authentication in security context", ex);
-            handleAuthenticationError(response, "Authentication failed");
-            return;
+            log.error("Error processing JWT authentication: {}", ex.getMessage());
+            SecurityContextHolder.clearContext();
         }
 
         filterChain.doFilter(request, response);
@@ -75,18 +80,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    private void handleAuthenticationError(HttpServletResponse response, String message) throws IOException {
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        objectMapper.writeValue(response.getWriter(), ApiResponse.error(message));
-    }
-
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.startsWith("/api/auth/") ||
+        // Allow these paths to skip JWT processing entirely
+        return path.equals("/") ||
+               path.equals("/error") ||
+               path.startsWith("/api/auth/") ||
+               path.equals("/api/gyms/register") ||
+               path.equals("/api/users/register/gym-owner") ||
                path.startsWith("/v3/api-docs") ||
                path.startsWith("/swagger-ui") ||
-               path.startsWith("/actuator");
+               path.startsWith("/webjars/") ||
+               path.startsWith("/actuator/health") ||
+               path.startsWith("/actuator/info");
     }
 }
