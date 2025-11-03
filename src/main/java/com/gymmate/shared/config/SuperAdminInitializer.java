@@ -1,4 +1,4 @@
-package com.gymmate.config;
+package com.gymmate.shared.config;
 
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.user.domain.User;
@@ -14,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Slf4j

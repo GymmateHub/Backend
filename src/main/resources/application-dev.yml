@@ -16,6 +16,12 @@ spring:
         format_sql: true
         show_sql: true
 
+  flyway:
+    enabled: false
+    baseline-on-migrate: true
+    baseline-version: 0
+    validate-on-migrate: false
+
 # Development-specific admin configuration
 app:
   admin:
