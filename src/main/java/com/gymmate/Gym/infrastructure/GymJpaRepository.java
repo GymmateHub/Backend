@@ -18,5 +18,5 @@ public interface GymJpaRepository extends JpaRepository<Gym, UUID> {
 
     List<Gym> findByStatus(GymStatus status);
 
-    List<Gym> findByAddress_City(String city);
+    List<Gym> findByCity(String city);
 }

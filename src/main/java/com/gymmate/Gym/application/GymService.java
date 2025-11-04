@@ -1,6 +1,5 @@
 package com.gymmate.Gym.application;
 
-import com.gymmate.Gym.domain.Address;
 import com.gymmate.Gym.domain.Gym;
 import com.gymmate.Gym.domain.GymRepository;
 import com.gymmate.Gym.domain.GymStatus;
@@ -13,8 +12,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+
 
 /**
  * Application service for gym registration and management use cases.
@@ -38,9 +39,9 @@ public class GymService {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
 
-        if (owner.getRole() != UserRole.GYM_OWNER && owner.getRole() != UserRole.GYM_ADMIN) {
+        if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN) {
             throw new DomainException("INVALID_GYM_OWNER",
-                "Only users with GYM_OWNER or ADMIN role can register gyms");
+                "Only users with ADMIN or SUPER_ADMIN role can register gyms");
         }
 
         if (!owner.isActive()) {
@@ -70,8 +71,7 @@ public class GymService {
     public Gym updateGymAddress(UUID id, String street, String city, String state,
                               String postalCode, String country) {
         Gym gym = getGymById(id);
-        Address address = new Address(street, city, state, postalCode, country);
-        gym.updateAddress(address);
+        gym.updateAddress(street, city, state, country, postalCode);
         return gymRepository.save(gym);
     }
 
@@ -82,7 +82,7 @@ public class GymService {
     public Gym updateGymDetails(UUID id, String name, String description,
                               String contactEmail, String contactPhone) {
         Gym gym = getGymById(id);
-        gym.updateDetails(name, description, contactEmail, contactPhone);
+        gym.updateDetails(name, description, contactEmail, contactPhone, null);
         return gymRepository.save(gym);
     }
 
@@ -153,5 +153,91 @@ public class GymService {
      */
     public List<Gym> findAll() {
         return gymRepository.findAll();
+    }
+
+    /**
+     * Update gym subscription plan and expiry.
+     */
+    @Transactional
+    public Gym updateSubscription(UUID id, String plan, LocalDateTime expiresAt) {
+        Gym gym = getGymById(id);
+        gym.updateSubscription(plan, expiresAt);
+        return gymRepository.save(gym);
+    }
+
+    /**
+     * Complete gym onboarding process.
+     */
+    @Transactional
+    public Gym completeOnboarding(UUID id) {
+        Gym gym = getGymById(id);
+        gym.completeOnboarding();
+        return gymRepository.save(gym);
+    }
+
+    /**
+     * Check if gym subscription is expired.
+     */
+    public boolean isSubscriptionExpired(UUID id) {
+        Gym gym = getGymById(id);
+        return gym.isSubscriptionExpired();
+    }
+
+    /**
+     * Update gym business settings.
+     */
+    @Transactional
+    public Gym updateBusinessSettings(UUID id, String timezone, String currency, String businessHours) {
+        Gym gym = getGymById(id);
+        if (timezone != null) {
+            gym.setTimezone(timezone);
+        }
+        if (currency != null) {
+            gym.setCurrency(currency);
+        }
+        if (businessHours != null) {
+            gym.setBusinessHours(businessHours);
+        }
+        return gymRepository.save(gym);
+    }
+
+    /**
+     * Update gym features.
+     */
+    @Transactional
+    public Gym updateFeatures(UUID id, String featuresEnabled) {
+        Gym gym = getGymById(id);
+        gym.setFeaturesEnabled(featuresEnabled);
+        return gymRepository.save(gym);
+    }
+
+    /**
+     * Update gym max members limit.
+     */
+    @Transactional
+    public Gym updateMaxMembers(UUID id, Integer maxMembers) {
+        Gym gym = getGymById(id);
+        gym.setMaxMembers(maxMembers);
+        return gymRepository.save(gym);
+    }
+
+    /**
+     * Update gym logo.
+     */
+    @Transactional
+    public Gym updateLogo(UUID id, String logoUrl) {
+        Gym gym = getGymById(id);
+        gym.setLogoUrl(logoUrl);
+        return gymRepository.save(gym);
+    }
+
+    /**
+     * Update gym website.
+     */
+    @Transactional
+    public Gym updateWebsite(UUID id, String website) {
+        Gym gym = getGymById(id);
+        gym.setWebsite(website);
+        return gymRepository.save(gym);
     }
 }

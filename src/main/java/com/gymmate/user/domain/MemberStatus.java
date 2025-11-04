@@ -1,8 +1,9 @@
 package com.gymmate.user.domain;
 
-public enum UserStatus {
+public enum MemberStatus {
     ACTIVE,
     INACTIVE,
     SUSPENDED,
-    BANNED
+    CANCELLED
 }
+
