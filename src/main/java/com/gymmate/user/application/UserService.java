@@ -42,9 +42,9 @@ public class UserService {
      * Update user profile.
      */
     @Transactional
-    public User updateProfile(UUID userId, String firstName, String lastName, String phoneNumber) {
+    public User updateProfile(UUID userId, String firstName, String lastName, String phone) {
         User user = findById(userId);
-        user.updateProfile(firstName, lastName, phoneNumber);
+        user.updateProfile(firstName, lastName, phone);
         return userRepository.save(user);
     }
 
@@ -93,10 +93,10 @@ public class UserService {
     }
 
     /**
-     * Find all active gym owners.
+     * Find all active gym admins.
      */
-    public List<User> findActiveGymOwners() {
-        return userRepository.findByRole(UserRole.GYM_OWNER)
+    public List<User> findActiveGymAdmins() {
+        return userRepository.findByRole(UserRole.ADMIN)
                 .stream()
                 .filter(User::isActive)
                 .toList();

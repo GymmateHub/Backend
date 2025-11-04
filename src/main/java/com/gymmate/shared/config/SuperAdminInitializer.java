@@ -14,14 +14,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import java.util.UUID;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SuperAdminInitializer {
     private static final String DEFAULT_PHONE_NUMBER = "00000000000";
-    private static final UUID DEFAULT_TENANT_ID = UUID.fromString("00000000-0000-0000-0000-000000000000");
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AdminConfig adminConfig;
@@ -30,7 +27,9 @@ public class SuperAdminInitializer {
     @Transactional
     public void initializeSuperAdmin() {
         try {
-            TenantContext.setCurrentTenantId(DEFAULT_TENANT_ID);
+            // Clear tenant context for super admin creation
+            TenantContext.clear();
+
             validateAdminConfig();
             String adminEmail = adminConfig.getEmail();
 
@@ -42,14 +41,14 @@ public class SuperAdminInitializer {
                         .passwordHash(passwordEncoder.encode(adminConfig.getPassword()))
                         .firstName(adminConfig.getFirstName())
                         .lastName(adminConfig.getLastName())
-                        .phoneNumber(DEFAULT_PHONE_NUMBER)
+                        .phone(DEFAULT_PHONE_NUMBER)
                         .role(UserRole.SUPER_ADMIN)
                         .status(UserStatus.ACTIVE)
                         .emailVerified(true)
                         .build();
 
-                // Set tenant ID for super admin
-                superAdmin.setGymId(DEFAULT_TENANT_ID);
+                // Super admin is not associated with any gym
+                superAdmin.setGymId(null);
 
                 userRepository.save(superAdmin);
                 log.info("Successfully created super admin user");
