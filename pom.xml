@@ -10,7 +10,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.gymmate</groupId>
+  <groupId>com.gymmatehub</groupId>
   <artifactId>gymmate-backend</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>GymMate Backend</name>
@@ -102,6 +102,14 @@
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-database-postgresql</artifactId>
       <version>${flyway.version}</version>
+    </dependency>
+
+    <!-- Optional but recommended for JSONB/array mapping -->
+    <!-- https://mvnrepository.com/artifact/io.openliberty.features/jsonb-3.0 -->
+    <dependency>
+      <groupId>io.openliberty.features</groupId>
+      <artifactId>jsonb-3.0</artifactId>
+      <version>25.0.0.11</version>
     </dependency>
 
     <!-- Lombok (optional) -->
