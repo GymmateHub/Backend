@@ -36,5 +36,5 @@ app:
   admin:
     email: dev.admin@gymmatehub.com
     password: DevAdmin#@1357
-    first-name: Development
-    last-name: Administrator
+    firstName: Development
+    lastName: Administrator

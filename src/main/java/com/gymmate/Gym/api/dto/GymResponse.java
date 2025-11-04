@@ -35,11 +35,22 @@ public class GymResponse {
      * Create a response DTO from a domain entity.
      */
     public static GymResponse fromEntity(Gym gym) {
+        AddressResponse addressResponse = null;
+        if (gym.getAddress() != null || gym.getCity() != null) {
+            addressResponse = AddressResponse.builder()
+                    .street(gym.getAddress())
+                    .city(gym.getCity())
+                    .state(gym.getState())
+                    .postalCode(gym.getPostalCode())
+                    .country(gym.getCountry())
+                    .build();
+        }
+
         return GymResponse.builder()
                 .id(gym.getId())
                 .name(gym.getName())
                 .description(gym.getDescription())
-                .address(AddressResponse.fromValueObject(gym.getAddress()))
+                .address(addressResponse)
                 .contactEmail(gym.getContactEmail())
                 .contactPhone(gym.getContactPhone())
                 .ownerId(gym.getOwnerId())
@@ -60,18 +71,5 @@ public class GymResponse {
         private String state;
         private String postalCode;
         private String country;
-
-        public static AddressResponse fromValueObject(com.gymmate.Gym.domain.Address address) {
-            if (address == null) {
-                return null;
-            }
-            return AddressResponse.builder()
-                    .street(address.getStreet())
-                    .city(address.getCity())
-                    .state(address.getState())
-                    .postalCode(address.getPostalCode())
-                    .country(address.getCountry())
-                    .build();
-        }
     }
 }

@@ -1,17 +1,17 @@
 package com.gymmate.Gym.domain;
 
-import com.gymmate.shared.domain.BaseEntity;
+import com.gymmate.shared.domain.BaseAuditEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -22,107 +22,133 @@ import java.util.UUID;
 @Entity
 @Table(name = "gyms")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Gym extends BaseEntity {
+public class Gym extends BaseAuditEntity {
 
   @Column(nullable = false)
   private String name;
 
+  @Column(unique = true, nullable = false, length = 100)
+  private String slug;
+
   @Column(columnDefinition = "TEXT")
   private String description;
 
-  @Embedded
-  private Address address;
+  // Address fields (flattened from Address value object)
+  @Column(columnDefinition = "TEXT")
+  private String address;
 
-  @Column(nullable = false)
+  @Column(length = 100)
+  private String city;
+
+  @Column(length = 50)
+  private String state;
+
+  @Column(length = 50)
+  private String country;
+
+  @Column(name = "postal_code", length = 20)
+  private String postalCode;
+
+  // Contact information
+  @Column(length = 20)
+  private String phone;
+
+  @Column
+  private String email;
+
+  @Column(name = "contact_email")
   private String contactEmail;
 
-  @Column(nullable = false)
+  @Column(name = "contact_phone", length = 20)
   private String contactPhone;
 
-  @Column(name = "owner_id", nullable = false)
+  @Column
+  private String website;
+
+  @Column(name = "logo_url", length = 500)
+  private String logoUrl;
+
+  // Owner reference (should be nullable as per schema - not all gyms may have owner assigned initially)
+  @Column(name = "owner_id")
   private UUID ownerId;
 
-  @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  private GymStatus status;
+  // Business settings
+  @Column(length = 50)
+  private String timezone = "UTC";
 
-  @Column(columnDefinition = "jsonb")
-  private String settings;
+  @Column(length = 3)
+  private String currency = "USD";
 
-  @Column(unique = true)
-  private String subdomain;
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "business_hours", columnDefinition = "jsonb")
+  private String businessHours;
 
-  @Column(name = "business_info", columnDefinition = "jsonb")
-  private String businessInfo;
-
+  // SaaS subscription
   @Column(name = "subscription_plan", length = 50)
   private String subscriptionPlan = "starter";
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "subscription_status", length = 20)
-  private String subscriptionStatus = "trial";
+  private GymStatus status = GymStatus.ACTIVE;
 
-  @Column(name = "subscription_start_date")
-  private LocalDateTime subscriptionStartDate;
+  @Column(name = "subscription_expires_at")
+  private LocalDateTime subscriptionExpiresAt;
 
-  @Column(name = "subscription_end_date")
-  private LocalDateTime subscriptionEndDate;
+  @Column(name = "max_members")
+  private Integer maxMembers = 200;
 
-  @Column(name = "trial_ends_at")
-  private LocalDateTime trialEndsAt;
+  // Features enabled
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "features_enabled", columnDefinition = "jsonb")
+  private String featuresEnabled = "[]";
 
-  @Column(name = "features_enabled")
-  @ElementCollection
-  @CollectionTable(name = "gym_features", joinColumns = @JoinColumn(name = "gym_id"))
-  private Set<String> featuresEnabled = new HashSet<>();
+  // Status
+  @Column(name = "onboarding_completed")
+  private boolean onboardingCompleted = false;
 
-  @Column(name = "limits", columnDefinition = "jsonb")
-  private String limits;
-
-  @Column(name = "billing_info", columnDefinition = "jsonb")
-  private String billingInfo;
-
-  public Gym(String name, String description, String contactEmail,
-             String contactPhone, UUID ownerId) {
-    validateInputs(name, contactEmail, contactPhone, ownerId);
+  public Gym(String name, String description, String contactEmail, String contactPhone, UUID ownerId) {
+    validateInputs(name, contactEmail, contactPhone);
 
     this.name = name.trim();
-    this.description = description != null ? description.trim() : null;
+    this.slug = generateSlug(name);
+    this.description = description;
     this.contactEmail = contactEmail.toLowerCase().trim();
+    this.email = contactEmail.toLowerCase().trim(); // Set both email fields
     this.contactPhone = contactPhone.trim();
+    this.phone = contactPhone.trim(); // Set both phone fields
     this.ownerId = ownerId;
     this.status = GymStatus.ACTIVE;
     this.subscriptionPlan = "starter";
-    this.subscriptionStatus = "trial";
-    this.featuresEnabled = new HashSet<>(Set.of(
-        "basic_membership",
-        "class_booking",
-        "payment_processing",
-        "email_notifications"
-    ));
-    this.settings = "{}";
-    this.businessInfo = "{}";
-    this.limits = "{}";
-    this.billingInfo = "{}";
+    this.featuresEnabled = "[]";
   }
 
-  public void setSubdomain(String subdomain) {
-    if (!StringUtils.hasText(subdomain)) {
-      throw new DomainException("INVALID_SUBDOMAIN", "Subdomain cannot be empty");
-    }
-    this.subdomain = subdomain.toLowerCase().trim();
+  private String generateSlug(String name) {
+    return name.toLowerCase()
+            .replaceAll("[^a-z0-9\\s-]", "")
+            .replaceAll("\\s+", "-")
+            .replaceAll("-+", "-")
+            .trim();
   }
 
-  public void updateDetails(String name, String description, String contactEmail, String contactPhone) {
+  public void updateDetails(String name, String description, String contactEmail, String contactPhone, String website) {
     validateUpdateInputs(name, contactEmail, contactPhone);
-
     this.name = name.trim();
-    this.description = description != null ? description.trim() : null;
+    this.description = description;
     this.contactEmail = contactEmail.toLowerCase().trim();
+    this.email = contactEmail.toLowerCase().trim();
     this.contactPhone = contactPhone.trim();
+    this.phone = contactPhone.trim();
+    if (website != null) {
+      this.website = website.trim();
+    }
   }
 
-  public void updateAddress(Address address) {
+  public void updateAddress(String address, String city, String state, String country, String postalCode) {
     this.address = address;
+    this.city = city;
+    this.state = state;
+    this.country = country;
+    this.postalCode = postalCode;
   }
 
   public void activate() {
@@ -134,10 +160,7 @@ public class Gym extends BaseEntity {
   }
 
   public void deactivate() {
-    if (this.status == GymStatus.INACTIVE) {
-      throw new DomainException("GYM_ALREADY_INACTIVE", "Gym is already inactive");
-    }
-    this.status = GymStatus.INACTIVE;
+    this.status = GymStatus.SUSPENDED;
     setActive(false);
   }
 
@@ -146,84 +169,50 @@ public class Gym extends BaseEntity {
     setActive(false);
   }
 
+  public void cancel() {
+    this.status = GymStatus.CANCELLED;
+    setActive(false);
+  }
+
   public boolean isActive() {
     return status == GymStatus.ACTIVE;
   }
 
-  private void validateInputs(String name, String contactEmail, String contactPhone, UUID ownerId) {
+  private void validateInputs(String name, String email, String phone) {
     if (!StringUtils.hasText(name)) {
       throw new DomainException("INVALID_GYM_NAME", "Gym name cannot be empty");
     }
-    if (!StringUtils.hasText(contactEmail)) {
-      throw new DomainException("INVALID_CONTACT_EMAIL", "Contact email cannot be empty");
+    if (!StringUtils.hasText(email)) {
+      throw new DomainException("INVALID_EMAIL", "Email cannot be empty");
     }
-    if (!StringUtils.hasText(contactPhone)) {
-      throw new DomainException("INVALID_CONTACT_PHONE", "Contact phone cannot be empty");
-    }
-    if (ownerId == null) {
-      throw new DomainException("INVALID_OWNER", "Owner ID cannot be null");
+    if (!StringUtils.hasText(phone)) {
+      throw new DomainException("INVALID_PHONE", "Phone cannot be empty");
     }
   }
 
-  private void validateUpdateInputs(String name, String contactEmail, String contactPhone) {
+  private void validateUpdateInputs(String name, String email, String phone) {
     if (!StringUtils.hasText(name)) {
       throw new DomainException("INVALID_GYM_NAME", "Gym name cannot be empty");
     }
-    if (!StringUtils.hasText(contactEmail)) {
-      throw new DomainException("INVALID_CONTACT_EMAIL", "Contact email cannot be empty");
+    if (!StringUtils.hasText(email)) {
+      throw new DomainException("INVALID_EMAIL", "Email cannot be empty");
     }
-    if (!StringUtils.hasText(contactPhone)) {
-      throw new DomainException("INVALID_CONTACT_PHONE", "Contact phone cannot be empty");
+    if (!StringUtils.hasText(phone)) {
+      throw new DomainException("INVALID_PHONE", "Phone cannot be empty");
     }
   }
 
-  public void updateSubscription(String plan, LocalDateTime startDate, LocalDateTime endDate) {
+  public void updateSubscription(String plan, LocalDateTime expiresAt) {
     this.subscriptionPlan = plan;
-    this.subscriptionStartDate = startDate;
-    this.subscriptionEndDate = endDate;
-    this.subscriptionStatus = "active";
+    this.subscriptionExpiresAt = expiresAt;
+    this.status = GymStatus.ACTIVE;
   }
 
-  public void setTrialPeriod(LocalDateTime trialEndDate) {
-    this.trialEndsAt = trialEndDate;
-    this.subscriptionStatus = "trial";
-  }
-
-  public void updateFeatures(Set<String> features) {
-    if (features != null) {
-      this.featuresEnabled = new HashSet<>(features);
-    }
-  }
-
-  public void updateBusinessInfo(String businessInfo) {
-    if (StringUtils.hasText(businessInfo)) {
-      this.businessInfo = businessInfo;
-    }
-  }
-
-  public void updateSettings(String settings) {
-    if (StringUtils.hasText(settings)) {
-      this.settings = settings;
-    }
-  }
-
-  public void updateLimits(String limits) {
-    if (StringUtils.hasText(limits)) {
-      this.limits = limits;
-    }
-  }
-
-  public void updateBillingInfo(String billingInfo) {
-    if (StringUtils.hasText(billingInfo)) {
-      this.billingInfo = billingInfo;
-    }
-  }
-
-  public boolean isTrialExpired() {
-    return trialEndsAt != null && LocalDateTime.now().isAfter(trialEndsAt);
+  public void completeOnboarding() {
+    this.onboardingCompleted = true;
   }
 
   public boolean isSubscriptionExpired() {
-    return subscriptionEndDate != null && LocalDateTime.now().isAfter(subscriptionEndDate);
+    return subscriptionExpiresAt != null && LocalDateTime.now().isAfter(subscriptionExpiresAt);
   }
 }
