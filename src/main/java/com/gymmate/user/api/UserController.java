@@ -38,7 +38,7 @@ public class UserController {
                 request.getFirstName(),
                 request.getLastName(),
                 request.getPassword(),
-                request.getPhoneNumber(),
+                request.getPhone(),
                 request.getRole()
         );
 
@@ -57,7 +57,7 @@ public class UserController {
                 request.getFirstName(),
                 request.getLastName(),
                 request.getPassword(),
-                request.getPhoneNumber()
+                request.getPhone()
         );
 
         UserResponse response = UserResponse.fromEntity(user);
@@ -66,21 +66,21 @@ public class UserController {
     }
 
     /**
-     * Register a new gym owner (convenience endpoint).
+     * Register a new gym admin/owner (convenience endpoint).
      */
-    @PostMapping("/register/gym-owner")
-    public ResponseEntity<ApiResponse<UserResponse>> registerGymOwner(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = userRegistrationService.registerGymOwner(
+    @PostMapping("/register/gym-admin")
+    public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(@Valid @RequestBody UserRegistrationRequest request) {
+        User user = userRegistrationService.registerGymAdmin(
                 request.getEmail(),
                 request.getFirstName(),
                 request.getLastName(),
                 request.getPassword(),
-                request.getPhoneNumber()
+                request.getPhone()
         );
 
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Gym owner registered successfully"));
+                .body(ApiResponse.success(response, "Gym admin registered successfully"));
     }
 
     /**
@@ -114,7 +114,7 @@ public class UserController {
             @Valid @RequestBody UserProfileUpdateRequest request) {
 
         User user = userService.updateProfile(id, request.getFirstName(),
-                request.getLastName(), request.getPhoneNumber());
+                request.getLastName(), request.getPhone());
 
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
@@ -133,12 +133,12 @@ public class UserController {
     }
 
     /**
-     * Get all gym owners.
+     * Get all gym admins.
      */
-    @GetMapping("/gym-owners")
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getGymOwners() {
-        List<User> gymOwners = userService.findActiveGymOwners();
-        List<UserResponse> responses = gymOwners.stream()
+    @GetMapping("/gym-admins")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getGymAdmins() {
+        List<User> gymAdmins = userService.findActiveGymAdmins();
+        List<UserResponse> responses = gymAdmins.stream()
                 .map(UserResponse::fromEntity)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));

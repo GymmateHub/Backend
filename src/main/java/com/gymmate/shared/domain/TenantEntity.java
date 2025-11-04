@@ -7,11 +7,16 @@ import lombok.EqualsAndHashCode;
 
 import java.util.UUID;
 
+/**
+ * Base entity for multi-tenant entities.
+ * Extends BaseAuditEntity and adds gymId for tenant isolation.
+ */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class TenantEntity extends BaseEntity {
-  @Column(name = "gym_id", nullable = false)
+public abstract class TenantEntity extends BaseAuditEntity {
+
+  @Column(name = "gym_id", nullable = true)
   private UUID gymId;
 
   @Override
@@ -19,7 +24,10 @@ public abstract class TenantEntity extends BaseEntity {
     super.prePersist();
 
     if (gymId == null) {
-      gymId = TenantContext.requireCurrentTenantId();
+      UUID currentTenantId = TenantContext.getCurrentTenantId();
+      if (currentTenantId != null) {
+        gymId = currentTenantId;
+      }
     }
   }
 }

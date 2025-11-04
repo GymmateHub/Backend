@@ -6,6 +6,7 @@ import com.gymmate.shared.service.PasswordService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.UserRepository;
 import com.gymmate.user.domain.UserRole;
+import com.gymmate.user.domain.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +28,7 @@ public class UserRegistrationService {
      * Register a new user in the system.
      */
     public User registerUser(String email, String firstName, String lastName,
-                           String plainPassword, String phoneNumber, UserRole role) {
+                           String plainPassword, String phone, UserRole role) {
         // Check if user already exists in current gym context
         UUID currentGymId = TenantContext.getCurrentTenantId();
         if (currentGymId != null && userRepository.findByEmailAndGymId(email, currentGymId).isPresent()) {
@@ -35,8 +36,8 @@ public class UserRegistrationService {
                 "A user with email '" + email + "' already exists in this gym");
         }
 
-        // For system-wide unique email check (mainly for gym owners)
-        if (role == UserRole.GYM_OWNER && userRepository.existsByEmail(email)) {
+        // For ADMIN role (gym owners/admins), check system-wide unique email
+        if (role == UserRole.ADMIN && userRepository.existsByEmail(email)) {
             throw new DomainException("USER_ALREADY_EXISTS",
                 "A user with email '" + email + "' already exists");
         }
@@ -53,9 +54,9 @@ public class UserRegistrationService {
                 .firstName(firstName)
                 .lastName(lastName)
                 .passwordHash(passwordHash)
-                .phoneNumber(phoneNumber)
+                .phone(phone)
                 .role(role)
-                .status(com.gymmate.user.domain.UserStatus.ACTIVE)
+                .status(UserStatus.ACTIVE)
                 .build();
 
         // Save and return
@@ -66,36 +67,72 @@ public class UserRegistrationService {
      * Register a new gym member.
      */
     public User registerMember(String email, String firstName, String lastName,
-                             String plainPassword, String phoneNumber) {
+                             String plainPassword, String phone) {
         if (TenantContext.getCurrentTenantId() == null) {
             throw new DomainException("INVALID_REGISTRATION",
                 "Members can only be registered within a gym context");
         }
-        return registerUser(email, firstName, lastName, plainPassword, phoneNumber, UserRole.MEMBER);
+        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.MEMBER);
     }
 
     /**
-     * Register a new gym owner.
+     * Register a new gym admin/owner.
      */
-    public User registerGymOwner(String email, String firstName, String lastName,
-                               String plainPassword, String phoneNumber) {
-        if (TenantContext.getCurrentTenantId() != null) {
-            throw new DomainException("INVALID_REGISTRATION",
-                "Gym owners cannot be registered within a gym context");
+    public User registerGymAdmin(String email, String firstName, String lastName,
+                               String plainPassword, String phone) {
+        // Check if user already exists (system-wide)
+        if (userRepository.existsByEmail(email)) {
+            throw new DomainException("USER_ALREADY_EXISTS",
+                "A user with email '" + email + "' already exists");
         }
-        return registerUser(email, firstName, lastName, plainPassword, phoneNumber, UserRole.GYM_OWNER);
+
+        // Validate password requirements
+        validatePassword(plainPassword);
+
+        // Encode password
+        String passwordHash = passwordService.encode(plainPassword);
+
+        // Create new gym admin
+        User user = User.builder()
+                .email(email)
+                .firstName(firstName)
+                .lastName(lastName)
+                .passwordHash(passwordHash)
+                .phone(phone)
+                .role(UserRole.ADMIN)
+                .status(UserStatus.ACTIVE)
+                .build();
+
+        // Gym admins can be created with or without gym context
+        // If within gym context, they'll be assigned to that gym
+        // If not, gymId will be set when they create/join a gym
+
+        // Save and return
+        return userRepository.save(user);
     }
 
     /**
-     * Register a new gym staff.
+     * Register a new trainer.
      */
-    public User registerGymStaff(String email, String firstName, String lastName,
-                               String plainPassword, String phoneNumber) {
+    public User registerTrainer(String email, String firstName, String lastName,
+                               String plainPassword, String phone) {
+        if (TenantContext.getCurrentTenantId() == null) {
+            throw new DomainException("INVALID_REGISTRATION",
+                "Trainers can only be registered within a gym context");
+        }
+        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.TRAINER);
+    }
+
+    /**
+     * Register a new staff member.
+     */
+    public User registerStaff(String email, String firstName, String lastName,
+                               String plainPassword, String phone) {
         if (TenantContext.getCurrentTenantId() == null) {
             throw new DomainException("INVALID_REGISTRATION",
                 "Staff can only be registered within a gym context");
         }
-        return registerUser(email, firstName, lastName, plainPassword, phoneNumber, UserRole.STAFF);
+        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.STAFF);
     }
 
     private void validatePassword(String password) {
