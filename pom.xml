@@ -28,6 +28,9 @@
     <springdoc.version>2.8.13</springdoc.version>
 
     <jwt.version>0.12.3</jwt.version>
+
+    <openliberty.repo.id>openliberty-releases</openliberty.repo.id>
+    <openliberty.repo.url>https://repo.openliberty.io/releases/</openliberty.repo.url>
   </properties>
 
   <dependencies>
@@ -105,12 +108,12 @@
     </dependency>
 
     <!-- Optional but recommended for JSONB/array mapping -->
-    <!-- https://mvnrepository.com/artifact/io.openliberty.features/jsonb-3.0 -->
     <dependency>
       <groupId>io.openliberty.features</groupId>
       <artifactId>jsonb-3.0</artifactId>
       <version>25.0.0.11</version>
     </dependency>
+    <!-- https://mvnrepository.com/artifact/io.openliberty.features/jsonb-3.0 -->
 
     <!-- Lombok (optional) -->
     <dependency>
