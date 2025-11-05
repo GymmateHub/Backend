@@ -1,5 +1,5 @@
 # Multi-stage build for Spring Boot application
-FROM openjdk:21-slim as builder
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
 # Set working directory
 WORKDIR /app
@@ -22,7 +22,10 @@ COPY src/ src/
 RUN ./mvnw clean package -DskipTests
 
 # Runtime stage
-FROM openjdk:21-slim
+FROM eclipse-temurin:21-jre-jammy
+
+# Install curl for health check
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user for security
 RUN useradd --create-home --shell /bin/bash gymmate
