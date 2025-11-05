@@ -39,10 +39,22 @@ jobs:
       - name: Run tests (explicit)
         run: ./mvnw -B test
 
+      - name: Sanitize branch name for artifact
+        id: sanitize
+        shell: bash
+        run: |
+          # Sanitize branch name by replacing invalid characters
+          BRANCH_NAME="${{ github.ref_name }}"
+          SANITIZED_NAME=$(echo "$BRANCH_NAME" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's#[/\\:*?"<>|]#-#g' \
+            | sed 's#[\r\n]##g')
+          echo "branch=${SANITIZED_NAME}" >> $GITHUB_OUTPUT
+
       - name: Archive JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gymmate-backend-jar-${{ github.ref_name }}
+          name: gymmate-backend-jar-${{ steps.sanitize.outputs.branch }}
           path: target/*.jar
 
       # (Optional) publish surefire test reports as artifacts
@@ -50,7 +62,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-reports-${{ github.ref_name }}
+          name: surefire-reports-${{ steps.sanitize.outputs.branch }}
           path: |
             **/target/surefire-reports/*.xml
             **/target/surefire-reports/*.txt
