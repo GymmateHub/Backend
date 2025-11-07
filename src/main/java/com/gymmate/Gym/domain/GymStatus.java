@@ -1,21 +1,21 @@
 package com.gymmate.Gym.domain;
 
 /**
- * Enumeration of gym statuses in the system.
+ * Enumeration of gym subscription statuses in the system.
  */
 public enum GymStatus {
     /**
-     * Gym is active and accepting members
+     * Gym subscription is active
      */
     ACTIVE,
 
     /**
-     * Gym is temporarily inactive
+     * Gym subscription is suspended
      */
-    INACTIVE,
+    SUSPENDED,
 
     /**
-     * Gym is suspended due to policy violations or other issues
+     * Gym subscription is cancelled
      */
-    SUSPENDED
+    CANCELLED
 }

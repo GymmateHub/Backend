@@ -1,5 +1,6 @@
-package com.gymmate.shared.security;
+package com.gymmate.shared.service;
 
+import com.gymmate.shared.security.TenantAwareUserDetails;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class TenantAwareUserDetailsService implements UserDetailsService {
     throws UsernameNotFoundException {
     log.debug("Loading user by email: {} for gym: {}", email, gymId);
 
-    User user = userRepository.findByEmailAndGymId(email, gymId.toString())
+    User user = userRepository.findByEmailAndGymId(email, gymId)
       .orElseThrow(() -> new UsernameNotFoundException(
         "User not found with email: " + email + " for gym: " + gymId
       ));

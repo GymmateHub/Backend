@@ -1,153 +1,150 @@
 package com.gymmate.user.domain;
 
-import com.gymmate.shared.domain.BaseEntity;
-import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.domain.TenantEntity;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import org.springframework.util.StringUtils;
+import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * User domain entity representing a user in the system.
- */
-@Entity
-@Table(name = "users")
-@Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class User extends BaseEntity {
+@AllArgsConstructor
+@Data
+@Entity
+@EqualsAndHashCode(callSuper = true)
+@Builder
+@Table(name = "users")
+public class User extends TenantEntity {
 
-    @Column(nullable = false)
-    private String email;
+  @Column(nullable = false)
+  private String email;
 
-    @Column(nullable = false)
-    private String firstName;
+  @Column(name = "password_hash")
+  private String passwordHash;
 
-    @Column(nullable = false)
-    private String lastName;
+  @Column(name = "email_verified")
+  @Builder.Default
+  private boolean emailVerified = false;
 
-    @Column(nullable = false)
-    private String passwordHash;
+  @Column(name = "email_verification_token")
+  private String emailVerificationToken;
 
-    @Column(nullable = false)
-    private String phoneNumber;
+  @Column(name = "password_reset_token")
+  private String passwordResetToken;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserRole role;
+  @Column(name = "password_reset_expires")
+  private LocalDateTime passwordResetExpires;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private UserStatus status;
+  // Profile
+  @Column(name = "first_name", length = 100)
+  private String firstName;
 
-    @Column(name= "is_email_verified", nullable = false)
-    private boolean isEmailVerified;
+  @Column(name = "last_name", length = 100)
+  private String lastName;
 
-  {
-    isEmailVerified = false;
+  @Column(length = 20)
+  private String phone;
+
+  @Column(name = "date_of_birth")
+  private LocalDate dateOfBirth;
+
+  @Column(length = 10)
+  private String gender; // male, female, other, prefer_not_to_say
+
+  @Column(name = "profile_photo_url", length = 500)
+  private String profilePhotoUrl;
+
+  // Role & Status
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 50)
+  @Builder.Default
+  private UserRole role = UserRole.MEMBER;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  @Builder.Default
+  private UserStatus status = UserStatus.ACTIVE;
+
+  // Preferences
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(columnDefinition = "jsonb")
+  @Builder.Default
+  private String preferences = "{}";
+
+  // Security
+  @Column(name = "two_factor_enabled")
+  @Builder.Default
+  private boolean twoFactorEnabled = false;
+
+  @Column(name = "two_factor_secret")
+  private String twoFactorSecret;
+
+  @Column(name = "last_login_at")
+  private LocalDateTime lastLoginAt;
+
+  @Column(name = "login_attempts")
+  @Builder.Default
+  private Integer loginAttempts = 0;
+
+  @Column(name = "locked_until")
+  private LocalDateTime lockedUntil;
+
+  public void updateLastLogin() {
+    this.lastLoginAt = LocalDateTime.now();
+    this.loginAttempts = 0;
   }
 
-  @Column(name = "last_login")
-    private LocalDateTime lastLogin;
+  public boolean isActive() {
+    return status == UserStatus.ACTIVE && (lockedUntil == null || lockedUntil.isBefore(LocalDateTime.now()));
+  }
 
-    public User(String email, String firstName, String lastName, String passwordHash,
-                String phoneNumber, UserRole role) {
-        validateInputs(email, firstName, lastName, passwordHash, phoneNumber);
-        this.email = email.toLowerCase().trim();
-        this.firstName = firstName.trim();
-        this.lastName = lastName.trim();
-        this.passwordHash = passwordHash;
-        this.phoneNumber = phoneNumber.trim();
-        this.role = role;
-        this.status = UserStatus.ACTIVE;
-        setActive(true);
-        validateUserTenancy();
+  public String getFullName() {
+    if (firstName != null && lastName != null) {
+      return firstName + " " + lastName;
     }
+    return email;
+  }
 
-    public void updateProfile(String firstName, String lastName, String phoneNumber) {
-        validateProfileUpdate(firstName, lastName, phoneNumber);
-        this.firstName = firstName.trim();
-        this.lastName = lastName.trim();
-        this.phoneNumber = phoneNumber.trim();
+  public void updateProfile(String firstName, String lastName, String phone) {
+    if (firstName != null) this.firstName = firstName;
+    if (lastName != null) this.lastName = lastName;
+    if (phone != null) this.phone = phone;
+  }
+
+  public void deactivate() {
+    this.status = UserStatus.INACTIVE;
+  }
+
+  public void activate() {
+    this.status = UserStatus.ACTIVE;
+  }
+
+  public void suspend() {
+    this.status = UserStatus.SUSPENDED;
+  }
+
+  public void ban() {
+    this.status = UserStatus.BANNED;
+  }
+
+  public void incrementLoginAttempts() {
+    this.loginAttempts++;
+    if (this.loginAttempts >= 5) {
+      this.lockedUntil = LocalDateTime.now().plusHours(1);
     }
+  }
 
-    public void updateLastLogin() {
-        this.lastLogin = LocalDateTime.now();
-    }
+  public void resetLoginAttempts() {
+    this.loginAttempts = 0;
+    this.lockedUntil = null;
+  }
 
-    public void deactivate() {
-        if (this.status == UserStatus.INACTIVE) {
-            throw new DomainException("USER_ALREADY_INACTIVE", "User is already inactive");
-        }
-        this.status = UserStatus.INACTIVE;
-        setActive(false);
-    }
-
-    public void activate() {
-        if (this.status == UserStatus.ACTIVE) {
-            throw new DomainException("USER_ALREADY_ACTIVE", "User is already active");
-        }
-        this.status = UserStatus.ACTIVE;
-        setActive(true);
-    }
-
-    public String getFullName() {
-        return firstName + " " + lastName;
-    }
-
-    private void validateInputs(String email, String firstName, String lastName,
-                              String passwordHash, String phoneNumber) {
-        if (!StringUtils.hasText(email)) {
-            throw new DomainException("INVALID_EMAIL", "Email cannot be empty");
-        }
-        validateProfileUpdate(firstName, lastName, phoneNumber);
-        if (!StringUtils.hasText(passwordHash)) {
-            throw new DomainException("INVALID_PASSWORD", "Password hash cannot be empty");
-        }
-    }
-
-    private void validateProfileUpdate(String firstName, String lastName, String phoneNumber) {
-        if (!StringUtils.hasText(firstName)) {
-            throw new DomainException("INVALID_FIRST_NAME", "First name cannot be empty");
-        }
-        if (!StringUtils.hasText(lastName)) {
-            throw new DomainException("INVALID_LAST_NAME", "Last name cannot be empty");
-        }
-        if (!StringUtils.hasText(phoneNumber)) {
-            throw new DomainException("INVALID_PHONE", "Phone number cannot be empty");
-        }
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        validateUserTenancy();
-    }
-
-    private void validateUserTenancy() {
-        // Ensure gym owners don't have a gymId
-        if (role == UserRole.GYM_OWNER && getGymId() != null) {
-            throw new DomainException("INVALID_GYM_OWNER",
-                "Gym owners cannot be associated with a specific gym");
-        }
-
-        // Ensure members and staff have a gymId
-        if ((role == UserRole.MEMBER || role == UserRole.STAFF) && getGymId() == null) {
-            throw new DomainException("INVALID_USER",
-                "Members and staff must be associated with a gym");
-        }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof User)) return false;
-        return getId() != null && getId().equals(((User) o).getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
+  public void verifyEmail() {
+    this.emailVerified = true;
+    this.emailVerificationToken = null;
+  }
 }
+
+
