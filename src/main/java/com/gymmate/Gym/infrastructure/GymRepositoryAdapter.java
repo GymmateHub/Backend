@@ -42,7 +42,7 @@ public class GymRepositoryAdapter implements GymRepository {
 
     @Override
     public List<Gym> findByAddressCity(String city) {
-        return jpaRepository.findByAddress_City(city);
+        return jpaRepository.findByCity(city);
     }
 
     @Override

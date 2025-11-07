@@ -10,7 +10,7 @@
     <relativePath/>
   </parent>
 
-  <groupId>com.gymmate</groupId>
+  <groupId>com.gymmatehub</groupId>
   <artifactId>gymmate-backend</artifactId>
   <version>0.0.1-SNAPSHOT</version>
   <name>GymMate Backend</name>
@@ -80,7 +80,6 @@
       <version>${springdoc.version}</version>
     </dependency>
 
-
     <!-- Database drivers -->
     <dependency>
       <groupId>org.postgresql</groupId>
@@ -104,6 +103,7 @@
       <artifactId>flyway-database-postgresql</artifactId>
       <version>${flyway.version}</version>
     </dependency>
+
 
     <!-- Lombok (optional) -->
     <dependency>
@@ -133,6 +133,19 @@
       <artifactId>java-dotenv</artifactId>
       <version>5.2.2</version>
     </dependency>
+
+    <!-- Spring Boot Mail Starter -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
+    </dependency>
+
+    <!-- Thymeleaf for email templates -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-thymeleaf</artifactId>
+    </dependency>
+
   </dependencies>
 
   <build>
