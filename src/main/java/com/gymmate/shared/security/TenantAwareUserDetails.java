@@ -1,77 +1,83 @@
 package com.gymmate.shared.security;
 
+import com.gymmate.user.domain.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 import java.util.UUID;
 
 @Getter
 public class TenantAwareUserDetails implements UserDetails {
+    private final UUID userId;
+    private final String email;
+    private final String password;
+    private final UUID gymId;
+    private final String role;
+    private final boolean emailVerified;
+    private final Collection<? extends GrantedAuthority> authorities;
+    private final boolean active;
 
-  private final UUID userId;
-  private final UUID gymId;  // This is the tenant ID
-  private final String email;
-  private final String password;
-  private final String role;
-  private final boolean active;
-  private final boolean emailVerified;
+    public TenantAwareUserDetails(User user) {
+        this.userId = user.getId();
+        this.email = user.getEmail();
+        this.password = user.getPasswordHash();
+        this.gymId = user.getGymId();
+        this.role = user.getRole().name();
+        this.emailVerified = user.isEmailVerified();
+        this.authorities = Collections.singletonList(
+            new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
+        );
+        this.active = user.isActive();
+    }
 
-  public TenantAwareUserDetails(UUID userId,
-                                UUID gymId,
-                                String email,
-                                String password,
-                                String role,
-                                boolean active,
-                                boolean emailVerified) {
-    this.userId = userId;
-    this.gymId = gymId;
-    this.email = email;
-    this.password = password;
-    this.role = role;
-    this.active = active;
-    this.emailVerified = emailVerified;
-  }
+    // Alternate constructor used by TenantAwareUserDetailsService
+    public TenantAwareUserDetails(UUID userId, UUID gymId, String email, String password, String role, boolean active, boolean emailVerified) {
+        this.userId = userId;
+        this.email = email;
+        this.password = password;
+        this.gymId = gymId;
+        this.role = role;
+        this.emailVerified = emailVerified;
+        this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+        this.active = active;
+    }
 
-  public UUID getTenantId() {
-    return gymId;
-  }
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return authorities;
+    }
 
-  @Override
-  public Collection<? extends GrantedAuthority> getAuthorities() {
-    return List.of(new SimpleGrantedAuthority("ROLE_" + role));
-  }
+    @Override
+    public String getPassword() {
+        return password;
+    }
 
-  @Override
-  public String getPassword() {
-    return password;
-  }
+    @Override
+    public String getUsername() {
+        return email;
+    }
 
-  @Override
-  public String getUsername() {
-    return email;
-  }
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
 
-  @Override
-  public boolean isAccountNonExpired() {
-    return true;
-  }
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
 
-  @Override
-  public boolean isAccountNonLocked() {
-    return active;
-  }
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
 
-  @Override
-  public boolean isCredentialsNonExpired() {
-    return true;
-  }
-
-  @Override
-  public boolean isEnabled() {
-    return active;
-  }
+    @Override
+    public boolean isEnabled() {
+        return active;
+    }
 }

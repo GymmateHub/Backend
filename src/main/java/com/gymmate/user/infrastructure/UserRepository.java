@@ -3,57 +3,33 @@ package com.gymmate.user.infrastructure;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.domain.UserStatus;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository interface for User aggregate.
+ * Spring Data JPA repository for User entity.
+ * Provides tenant-aware and system-wide query methods.
  */
-public interface UserRepository {
+@Repository
+public interface UserRepository extends JpaRepository<User, UUID> {
 
-    /**
-     * Save a user to the repository.
-     */
-    User save(User user);
-
-    /**
-     * Find a user by their unique identifier.
-     */
-    Optional<User> findById(UUID id);
-
-    /**
-     * Find a user by their email address.
-     */
+    // Email lookup methods
     Optional<User> findByEmail(String email);
-
-    Optional<User> findByEmailAndGymId(String email, String gymId);
-
-    /**
-     * Check if a user exists with the given email.
-     */
+    Optional<User> findByEmailAndGymId(String email, UUID gymId);
     boolean existsByEmail(String email);
 
-    /**
-     * Find all users with a specific role.
-     */
+    // Role-based queries
     List<User> findByRole(UserRole role);
+    List<User> findByRoleAndGymId(UserRole role, UUID gymId);
 
-    /**
-     * Find all users with a specific status.
-     */
+    // Status-based queries
     List<User> findByStatus(UserStatus status);
+    List<User> findByStatusAndGymId(UserStatus status, UUID gymId);
 
-    /**
-     * Find all users.
-     */
-    List<User> findAll();
-
-    /**
-     * Delete a user by their identifier.
-     */
-    void deleteById(UUID id);
-
-    boolean existsById(UUID id);
+    // Gym-based queries
+    List<User> findByGymId(UUID gymId);
 }

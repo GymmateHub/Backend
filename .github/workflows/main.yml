@@ -2,9 +2,13 @@ name: GymMate-hub CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "dev" ]
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/gymmate-backend
 
 jobs:
   build:
@@ -35,10 +39,22 @@ jobs:
       - name: Run tests (explicit)
         run: ./mvnw -B test
 
+      - name: Sanitize branch name for artifact
+        id: sanitize
+        shell: bash
+        run: |
+          # Sanitize branch name by replacing invalid characters
+          BRANCH_NAME="${{ github.ref_name }}"
+          SANITIZED_NAME=$(echo "$BRANCH_NAME" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's#[/\\:*?"<>|]#-#g' \
+            | sed 's#[\r\n]##g')
+          echo "branch=${SANITIZED_NAME}" >> $GITHUB_OUTPUT
+
       - name: Archive JAR artifact
         uses: actions/upload-artifact@v4
         with:
-          name: gymmate-backend-jar
+          name: gymmate-backend-jar-${{ steps.sanitize.outputs.branch }}
           path: target/*.jar
 
       # (Optional) publish surefire test reports as artifacts
@@ -46,18 +62,18 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-reports
+          name: surefire-reports-${{ steps.sanitize.outputs.branch }}
           path: |
             **/target/surefire-reports/*.xml
             **/target/surefire-reports/*.txt
             **/target/failsafe-reports/*.xml
             **/target/failsafe-reports/*.txt
 
-  # Optional: Build & Push Docker (runs only on main)
+  # Build & Push Docker (runs for main and dev branches)
   docker:
     runs-on: ubuntu-latest
     needs: build
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -71,15 +87,73 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
+      - name: Extract branch name
+        shell: bash
+        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
+
+      # add before the "Build and push Docker image" step
+      - name: Prepare image name and tag
+        id: image
+        shell: bash
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: |
+          # derive branch name and sanitize
+          BRANCH="${GITHUB_REF#refs/heads/}"
+          BRANCH_TAG=$(echo "$BRANCH" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's#[/[:space:]]#-#g' \
+            | sed 's#[^a-z0-9._-]#-#g' )
+
+          # build image repo (keep username as provided by secret)
+          IMAGE="${DOCKER_USERNAME}/gymmate-backend"
+
+          echo "image=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "tag=${BRANCH_TAG}" >> $GITHUB_OUTPUT
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          # Tag with git sha and latest
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:latest
-            ${{ secrets.DOCKER_USERNAME }}/gymmate-backend:${{ github.sha }}
-          # Optional: Speed up rebuilds
-          cache-from: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_USERNAME }}/gymmate-backend:buildcache,mode=max
+            ${{ steps.image.outputs.image }}:${{ steps.image.outputs.tag }}
+            ${{ steps.image.outputs.image }}:${{ steps.image.outputs.tag }}-${{ github.sha }}
+            ${{ github.ref == 'refs/heads/main' && format('{0}:latest', steps.image.outputs.image) || '' }}
+          cache-from: type=registry,ref=${{ steps.image.outputs.image }}:buildcache-${{ steps.image.outputs.tag }}
+          cache-to: type=registry,ref=${{ steps.image.outputs.image }}:buildcache-${{ steps.image.outputs.tag }},mode=max
+
+  deploy-to-railway:
+    runs-on: ubuntu-latest
+    needs: docker
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js (for Railway CLI)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Validate Railway Secrets
+        run: |
+          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
+            echo "Error: RAILWAY_TOKEN is not set or is empty."
+            exit 1
+          fi
+          if [ -z "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
+            echo "Error: RAILWAY_SERVICE_ID is not set or is empty."
+            exit 1
+          fi
+
+      - name: Deploy to Railway
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          # Deploy using Railway CLI with service ID and environment
+          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach --environment production

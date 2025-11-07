@@ -25,7 +25,7 @@ public class UserResponse {
     private String email;
     private String firstName;
     private String lastName;
-    private String phoneNumber;
+    private String phone;
     private UserRole role;
     private UserStatus status;
     private boolean active;
@@ -40,13 +40,13 @@ public class UserResponse {
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())
-                .phoneNumber(user.getPhoneNumber())
+                .phone(user.getPhone())
                 .role(user.getRole())
                 .status(user.getStatus())
                 .active(user.isActive())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
-                .lastLoginAt(user.getLastLogin())
+                .lastLoginAt(user.getLastLoginAt())
                 .build();
     }
 
