@@ -23,7 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtTokenProvider tokenProvider;
+    private final JwtService jwtService;
     private final UserRepository userRepository;
 
     @Override
@@ -35,8 +35,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt)) {
                 // Only validate and process if JWT is present
-                if (tokenProvider.validateToken(jwt)) {
-                    UUID userId = tokenProvider.getUserIdFromToken(jwt);
+                if (jwtService.validateToken(jwt)) {
+                    UUID userId = jwtService.extractUserId(jwt);
                     User user = userRepository.findById(userId)
                             .orElseThrow(() -> new IllegalStateException("User not found: " + userId));
 
