@@ -11,15 +11,13 @@ import java.util.UUID;
 /**
  * DTO for creating a new member.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class MemberCreateRequest {
 
-    @NotNull(message = "User ID is required")
-    private UUID userId;
-
-    private String membershipNumber;
+public record MemberCreateRequest(UUID userId, String membershipNumber) {
+  public MemberCreateRequest{
+    if (membershipNumber.isBlank())
+      throw new IllegalArgumentException("Membership number is required");
+    if (userId == null)
+      throw new IllegalArgumentException("User ID is required");
+  }
 }
 
