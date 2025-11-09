@@ -8,24 +8,17 @@ import lombok.NoArgsConstructor;
 /**
  * DTO for updating member information.
  */
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class MemberUpdateRequest {
-
+public record MemberUpdateRequest(
     // Emergency contact
-    private String emergencyContactName;
-    private String emergencyContactPhone;
-    private String emergencyContactRelationship;
-
+  String emergencyContactName,
+  String emergencyContactPhone,
+  String emergencyContactRelationship,
     // Health information
-    private String[] medicalConditions;
-    private String[] allergies;
-    private String[] medications;
-
+  String[] medicalConditions,
+  String[] allergies,
+  String[] medications,
     // Fitness
-    private String[] fitnessGoals;
-    private String experienceLevel;
-}
+  String[] fitnessGoals,
+  String experienceLevel) { }
 
