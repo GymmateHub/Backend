@@ -1,10 +1,10 @@
 package com.gymmate.user.api;
 
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.security.AuthenticationService;
 import com.gymmate.user.api.dto.UserProfileUpdateRequest;
 import com.gymmate.user.api.dto.UserRegistrationRequest;
 import com.gymmate.user.api.dto.UserResponse;
-import com.gymmate.user.application.UserRegistrationService;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserController {
 
-    private final UserRegistrationService userRegistrationService;
+    private final AuthenticationService authenticationService;
     private final UserService userService;
 
     /**
@@ -33,7 +33,7 @@ public class UserController {
      */
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<UserResponse>> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = userRegistrationService.registerUser(
+        User user = authenticationService.registerUser(
                 request.getEmail(),
                 request.getFirstName(),
                 request.getLastName(),
@@ -52,7 +52,7 @@ public class UserController {
      */
     @PostMapping("/register/member")
     public ResponseEntity<ApiResponse<UserResponse>> registerMember(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = userRegistrationService.registerMember(
+        User user = authenticationService.registerMember(
                 request.getEmail(),
                 request.getFirstName(),
                 request.getLastName(),
@@ -70,7 +70,7 @@ public class UserController {
      */
     @PostMapping("/register/gym-admin")
     public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = userRegistrationService.registerGymAdmin(
+        User user = authenticationService.registerGymAdmin(
                 request.getEmail(),
                 request.getFirstName(),
                 request.getLastName(),
@@ -113,8 +113,8 @@ public class UserController {
             @PathVariable UUID id,
             @Valid @RequestBody UserProfileUpdateRequest request) {
 
-        User user = userService.updateProfile(id, request.getFirstName(),
-                request.getLastName(), request.getPhone());
+        User user = userService.updateProfile(id, request.firstName(),
+                request.lastName(), request.phone());
 
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
