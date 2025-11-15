@@ -1,10 +1,10 @@
 package com.gymmate.user.api;
 
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.security.AuthenticationService;
 import com.gymmate.user.api.dto.UserProfileUpdateRequest;
 import com.gymmate.user.api.dto.UserRegistrationRequest;
 import com.gymmate.user.api.dto.UserResponse;
-import com.gymmate.user.application.UserRegistrationService;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
@@ -24,64 +24,7 @@ import java.util.UUID;
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
 public class UserController {
-
-    private final UserRegistrationService userRegistrationService;
     private final UserService userService;
-
-    /**
-     * Register a new user.
-     */
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse>> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = userRegistrationService.registerUser(
-                request.getEmail(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getPassword(),
-                request.getPhone(),
-                request.getRole()
-        );
-
-        UserResponse response = UserResponse.fromEntity(user);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "User registered successfully"));
-    }
-
-    /**
-     * Register a new gym member (convenience endpoint).
-     */
-    @PostMapping("/register/member")
-    public ResponseEntity<ApiResponse<UserResponse>> registerMember(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = userRegistrationService.registerMember(
-                request.getEmail(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getPassword(),
-                request.getPhone()
-        );
-
-        UserResponse response = UserResponse.fromEntity(user);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Member registered successfully"));
-    }
-
-    /**
-     * Register a new gym admin/owner (convenience endpoint).
-     */
-    @PostMapping("/register/gym-admin")
-    public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(@Valid @RequestBody UserRegistrationRequest request) {
-        User user = userRegistrationService.registerGymAdmin(
-                request.getEmail(),
-                request.getFirstName(),
-                request.getLastName(),
-                request.getPassword(),
-                request.getPhone()
-        );
-
-        UserResponse response = UserResponse.fromEntity(user);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Gym admin registered successfully"));
-    }
 
     /**
      * Get user by ID.
@@ -93,8 +36,8 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-  /**
-   * Get all users.
+    /**
+    * Get all users.
    */
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
@@ -113,8 +56,8 @@ public class UserController {
             @PathVariable UUID id,
             @Valid @RequestBody UserProfileUpdateRequest request) {
 
-        User user = userService.updateProfile(id, request.getFirstName(),
-                request.getLastName(), request.getPhone());
+        User user = userService.updateProfile(id, request.firstName(),
+                request.lastName(), request.phone());
 
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
