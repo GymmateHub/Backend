@@ -1,14 +1,16 @@
 package com.gymmate.shared.security;
 
- import com.gymmate.user.domain.User;
+import com.gymmate.user.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
+import java.security.Key;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +19,10 @@ import java.util.function.Function;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class JwtService {
+
+  private final TokenBlacklistRepository tokenBlacklistRepository;
 
   @Value("${jwt.secret}")
   private String jwtSecret;
@@ -34,6 +39,8 @@ public class JwtService {
   public String generateToken(TenantAwareUserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("userId", userDetails.getUserId().toString());
+    claims.put("email", userDetails.getUsername());
+    claims.put("tenantId", userDetails.getGymId().toString());
     claims.put("gymId", userDetails.getGymId().toString());
     claims.put("role", userDetails.getRole());
     claims.put("emailVerified", userDetails.isEmailVerified());
@@ -102,7 +109,7 @@ public class JwtService {
   /**
    * Extract username (email) from token
    */
-  public String extractUsername(String token) {
+  public String extractUserName(String token) {
     return extractClaim(token, Claims::getSubject);
   }
 
@@ -157,10 +164,15 @@ public class JwtService {
    */
   private Claims extractAllClaims(String token) {
     return Jwts.parser()
-      .verifyWith(getSigningKey())
+      .setSigningKey(getSigningKey())
       .build()
-      .parseSignedClaims(token)
-      .getPayload();
+      .parseClaimsJws(token)
+      .getBody();
+  }
+
+  public Boolean isTokenValid(String token, TenantAwareUserDetails userDetails) {
+    final String username = extractUserName(token);
+    return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
   }
 
   /**
@@ -174,7 +186,13 @@ public class JwtService {
    * Validate token against user details
    */
   public Boolean validateToken(String token, TenantAwareUserDetails userDetails) {
-    final String username = extractUsername(token);
+    // Check if token is blacklisted first
+    if (isTokenBlacklisted(token)) {
+      log.warn("Token is blacklisted");
+      return false;
+    }
+
+    final String username = extractUserName(token);
     final UUID gymId = extractGymId(token);
 
     return (username.equals(userDetails.getUsername()) &&
@@ -187,6 +205,12 @@ public class JwtService {
    */
   public Boolean validateToken(String token) {
     try {
+      // Check if token is blacklisted first
+      if (isTokenBlacklisted(token)) {
+        log.warn("Token is blacklisted");
+        return false;
+      }
+
       extractAllClaims(token);
       return !isTokenExpired(token);
     } catch (Exception e) {
@@ -196,9 +220,43 @@ public class JwtService {
   }
 
   /**
-   * Get signing key from secret
+   * Check if a token is blacklisted
    */
-  private SecretKey getSigningKey() {
-    return Keys.hmacShaKeyFor(jwtSecret.getBytes());
+  public boolean isTokenBlacklisted(String token) {
+    return tokenBlacklistRepository.existsByToken(token);
+  }
+
+  /**
+   * Get signing key from secret
+   * Properly decodes Base64 encoded secret for secure key generation
+   */
+  private Key getSigningKey() {
+    try {
+      // Try to decode as Base64 first (recommended approach)
+      byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+
+      // Validate key length (should be at least 256 bits / 32 bytes for HS256)
+      if (keyBytes.length < 32) {
+        log.warn("JWT secret is too short. Minimum 256 bits (32 bytes) required. Current: {} bytes", keyBytes.length);
+      }
+
+      return Keys.hmacShaKeyFor(keyBytes);
+    } catch (Exception e) {
+      // Fallback to UTF-8 encoding if Base64 decoding fails
+      log.warn("JWT secret is not Base64 encoded. Using UTF-8 bytes as fallback. " +
+               "For better security, use a Base64-encoded secret generated with: openssl rand -base64 64");
+
+      byte[] keyBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+
+      // Ensure minimum key length
+      if (keyBytes.length < 32) {
+        throw new IllegalArgumentException(
+          "JWT secret is too short. Must be at least 256 bits (32 bytes). Current: " + keyBytes.length + " bytes. " +
+          "Please update JWT_SECRET in your .env file with a proper Base64-encoded secret."
+        );
+      }
+
+      return Keys.hmacShaKeyFor(keyBytes);
+    }
   }
 }
