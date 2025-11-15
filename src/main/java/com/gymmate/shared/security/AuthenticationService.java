@@ -1,6 +1,5 @@
 package com.gymmate.shared.security;
 
-import com.gymmate.shared.exception.AuthException;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.InvalidTokenException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
@@ -13,13 +12,21 @@ import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.domain.UserStatus;
 import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -29,46 +36,65 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final PasswordResetTokenRepository resetTokenRepository;
     private final EmailService emailService;
+    private final AuthenticationManager authenticationManager;
+    private final TokenBlacklistRepository tokenBlacklistRepository;
 
     @Value("${app.password-reset.expiration-minutes:30}")
     private int passwordResetExpirationMinutes;
 
+    /**
+     * Authenticate user and generate JWT tokens.
+     * Uses Spring Security's AuthenticationManager for proper authentication.
+     */
     @Transactional
     public LoginResponse authenticate(LoginRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new AuthException("Invalid email or password"));
-
-        // Guard against null/blank stored password hashes to avoid 500 errors
-        String storedHash = user.getPasswordHash();
         try {
-            if (storedHash == null || storedHash.isBlank() || !passwordEncoder.matches(request.getPassword(), storedHash)) {
-                throw new AuthException("Invalid email or password");
+            // Use AuthenticationManager to authenticate the user
+            Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                    request.getEmail(),
+                    request.getPassword()
+                )
+            );
+
+            // Get the authenticated user details
+            TenantAwareUserDetails userDetails = (TenantAwareUserDetails) authentication.getPrincipal();
+
+            // Fetch the full user entity
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new BadCredentialsException("User not found"));
+
+            // Check if account is active
+            if (!user.isActive()) {
+                log.warn("Inactive user attempted to login: {}", user.getEmail());
+                throw new BadCredentialsException("Account is not active");
             }
-        } catch (IllegalArgumentException | NullPointerException ex) {
-            // BCrypt may throw if the stored hash is invalid; normalize to 401
-            throw new AuthException("Invalid email or password", ex);
+
+            // Generate JWT tokens
+            String accessToken = jwtService.generateToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
+
+            // Update last login timestamp
+            user.updateLastLogin();
+            userRepository.save(user);
+
+            log.info("User authenticated successfully: {}", user.getEmail());
+
+            return LoginResponse.builder()
+                    .accessToken(accessToken)
+                    .refreshToken(refreshToken)
+                    .userId(user.getId())
+                    .email(user.getEmail())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
+                    .role(user.getRole())
+                    .gymId(user.getGymId())
+                    .build();
+
+        } catch (AuthenticationException ex) {
+            log.error("Authentication failed for user: {}", request.getEmail(), ex);
+            throw new BadCredentialsException("Invalid email or password");
         }
-
-        if (!user.isActive()) {
-            throw new AuthException("Account is not active");
-        }
-
-        String accessToken = jwtService.generateToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
-        user.updateLastLogin();
-        userRepository.save(user);
-
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .userId(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .role(user.getRole())
-                .gymId(user.getGymId())
-                .build();
     }
 
     @Transactional
@@ -130,10 +156,37 @@ public class AuthenticationService {
                 .build();
     }
 
+    /**
+     * Logout user by blacklisting their token
+     */
     @Transactional
-    public void logout(String refreshToken) {
-        // You could implement a token blacklist here if needed
-        // For now, client-side token removal is sufficient as tokens are short-lived
+    public void logout(String token) {
+        if (token == null || token.isEmpty() || token.trim().isBlank()) {
+            log.debug("No token provided for logout");
+            return;
+        }
+
+        try {
+            // Extract user id and expiration from the token
+            // Note: We don't validate the token here because we want to blacklist it regardless
+            UUID userId = jwtService.extractUserId(token);
+            Date expiresAt = jwtService.extractExpiration(token);
+
+            // Check if token is already blacklisted
+            if (jwtService.isTokenBlacklisted(token)) {
+                log.debug("Token is already blacklisted");
+                return;
+            }
+
+            // Create and save blacklist entry
+            TokenBlacklist blacklistedToken = TokenBlacklist.create(token, userId, expiresAt, "User logout");
+            tokenBlacklistRepository.save(blacklistedToken);
+
+            log.info("Token blacklisted successfully for user: {}", userId);
+        } catch (Exception e) {
+            log.error("Failed to blacklist token: {}", e.getMessage(), e);
+            throw new InvalidTokenException("Failed to logout: " + e.getMessage());
+        }
     }
 
     // ========== Registration Methods ==========
