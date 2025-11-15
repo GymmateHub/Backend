@@ -32,7 +32,7 @@ public class MemberController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<MemberResponse>> createMember(@Valid @RequestBody MemberCreateRequest request) {
-        Member member = memberService.createMember(request.getUserId(), request.getMembershipNumber());
+        Member member = memberService.createMember(request.userId(), request.membershipNumber());
         MemberResponse response = MemberResponse.fromEntity(member);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Member created successfully"));
@@ -125,9 +125,9 @@ public class MemberController {
             @Valid @RequestBody MemberUpdateRequest request) {
         Member member = memberService.updateEmergencyContact(
                 id,
-                request.getEmergencyContactName(),
-                request.getEmergencyContactPhone(),
-                request.getEmergencyContactRelationship()
+                request.emergencyContactName(),
+                request.emergencyContactPhone(),
+                request.emergencyContactRelationship()
         );
         MemberResponse response = MemberResponse.fromEntity(member);
         return ResponseEntity.ok(ApiResponse.success(response, "Emergency contact updated successfully"));
@@ -152,9 +152,9 @@ public class MemberController {
             @Valid @RequestBody MemberUpdateRequest request) {
         Member member = memberService.updateHealthInfo(
                 id,
-                request.getMedicalConditions(),
-                request.getAllergies(),
-                request.getMedications()
+                request.medicalConditions(),
+                request.allergies(),
+                request.medications()
         );
         MemberResponse response = MemberResponse.fromEntity(member);
         return ResponseEntity.ok(ApiResponse.success(response, "Health information updated successfully"));
@@ -169,8 +169,8 @@ public class MemberController {
             @Valid @RequestBody MemberUpdateRequest request) {
         Member member = memberService.updateFitnessGoals(
                 id,
-                request.getFitnessGoals(),
-                request.getExperienceLevel()
+                request.fitnessGoals(),
+                request.experienceLevel()
         );
         MemberResponse response = MemberResponse.fromEntity(member);
         return ResponseEntity.ok(ApiResponse.success(response, "Fitness goals updated successfully"));

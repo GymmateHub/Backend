@@ -30,3 +30,6 @@ logs/
 
 # Misc
 node_modules/
+
+# docs
+/docs/*.md
