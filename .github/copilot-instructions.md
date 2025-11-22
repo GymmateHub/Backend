@@ -11,9 +11,12 @@
 **ALWAYS use Java 21.** The default system Java may be 17, which will cause compilation failures.
 
 ```bash
-# Set Java 21 for all Maven commands
+# Linux/Ubuntu
 export JAVA_HOME=/usr/lib/jvm/temurin-21-jdk-amd64
 export PATH=$JAVA_HOME/bin:$PATH
+
+# macOS (adjust path to your installation)
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 ```
 
 ### Build Commands
@@ -118,7 +121,7 @@ src/main/java/com/gymmate/
 **Note:** `booking`, `payment`, `inventory`, `analytics`, `notification` modules are documented but not yet implemented.
 
 ### Key Files
-- `pom.xml`, `application.yml`, `application-dev.yml`, `db/migration/`, `.editorconfig` (2 spaces, LF)
+- `pom.xml`, `application.yml`, `application-dev.yml`, `src/main/resources/db/migration/`, `.editorconfig` (2 spaces, LF)
 - `GymMateApplication.java` - Loads `.env`, starts app
 - `shared/config/SecurityConfig.java` - Security + JWT config
 - `shared/exception/GlobalExceptionHandler.java` - Exception handling
@@ -171,7 +174,7 @@ No tests exist (`src/test` empty). When adding: place in `src/test/java/`, use `
 1. Set Java 21 env vars → 2. Code in appropriate module → 3. Build: `./mvnw clean package -DskipTests` → 4. Test: `./mvnw spring-boot:run` → 5. Verify: Swagger (`/swagger-ui.html`), health (`/actuator/health`)
 
 ### Database Migrations
-Create `db/migration/V<version>__<description>.sql` (sequential from V1_5). Enable: `FLYWAY_ENABLED=true`, `JPA_DDL_AUTO=validate`
+Create `src/main/resources/db/migration/V1_6__<description>.sql` (next version after existing V1_5). Enable: `FLYWAY_ENABLED=true`, `JPA_DDL_AUTO=validate`
 
 ### Code Style
 2 spaces, LF endings, UTF-8 (`.editorconfig`). No linter configured.
