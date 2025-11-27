@@ -30,6 +30,7 @@ public class TenantFilter extends OncePerRequestFilter {
     // Endpoints that don't require tenant context
     private static final List<String> NON_TENANT_ENDPOINTS = Arrays.asList(
         "/api/auth",
+        "/api/gyms",
         "/api/gyms/register",
         "/api/users/register",
         "/v3/api-docs",
@@ -42,23 +43,33 @@ public class TenantFilter extends OncePerRequestFilter {
                                   HttpServletResponse response,
                                   FilterChain filterChain) throws ServletException, IOException {
         try {
+            // Skip tenant filtering for public/non-tenant endpoints
             if (shouldSkipTenantFilter(request)) {
+                log.debug("Skipping tenant filter for endpoint: {}", request.getRequestURI());
                 filterChain.doFilter(request, response);
                 return;
             }
 
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.getPrincipal() instanceof TenantAwareUserDetails) {
+
+            // If authenticated, try to set tenant context
+            if (authentication != null && authentication.isAuthenticated()
+                    && authentication.getPrincipal() instanceof TenantAwareUserDetails) {
+
                 TenantAwareUserDetails userDetails = (TenantAwareUserDetails) authentication.getPrincipal();
                 UUID tenantId = userDetails.getGymId();
 
                 if (tenantId != null) {
+                    log.debug("Setting tenant context for gym: {}", tenantId);
                     TenantContext.setCurrentTenantId(tenantId);
                     filterChain.doFilter(request, response);
                 } else {
+                    log.warn("Authenticated user {} has no gym/tenant assigned", userDetails.getUsername());
                     handleNoTenantError(response);
                 }
             } else {
+                // For unauthenticated or non-tenant-aware requests, proceed without tenant context
+                log.debug("No tenant-aware authentication found, proceeding without tenant context");
                 filterChain.doFilter(request, response);
             }
         } finally {
