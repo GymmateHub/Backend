@@ -1,11 +1,13 @@
-package com.gymmate.classes.domain;
+package com.gymmate.classes.infrastructure;
+
+import com.gymmate.classes.domain.GymClass;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository interface for GymClass domain entity.
+ * Repository interface for GymClass domain entity (moved to infrastructure).
  */
 public interface GymClassRepository {
 
@@ -27,3 +29,4 @@ public interface GymClassRepository {
 
   boolean existsByGymIdAndName(UUID gymId, String name);
 }
+

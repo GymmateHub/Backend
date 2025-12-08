@@ -1,7 +1,6 @@
 package com.gymmate.classes.infrastructure;
 
 import com.gymmate.classes.domain.ClassBooking;
-import com.gymmate.classes.domain.ClassBookingRepository;
 import com.gymmate.classes.domain.BookingStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
