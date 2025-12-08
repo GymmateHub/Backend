@@ -1,7 +1,6 @@
 package com.gymmate.classes.infrastructure;
 
 import com.gymmate.classes.domain.GymClass;
-import com.gymmate.classes.domain.GymClassRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -59,4 +58,3 @@ public class GymClassRepositoryAdapter implements GymClassRepository {
     return jpaRepository.existsByGymIdAndName(gymId, name);
   }
 }
-

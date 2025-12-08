@@ -1,7 +1,6 @@
 package com.gymmate.classes.infrastructure;
 
 import com.gymmate.classes.domain.ClassSchedule;
-import com.gymmate.classes.domain.ClassScheduleRepository;
 import com.gymmate.classes.domain.ClassScheduleStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
