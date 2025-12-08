@@ -28,13 +28,13 @@ public class TrainerController {
     @PostMapping
     public ResponseEntity<ApiResponse<TrainerResponse>> createTrainer(@Valid @RequestBody TrainerCreateRequest request) {
         Trainer trainer = trainerService.createTrainer(
-                request.getUserId(),
-                request.getSpecializations(),
-                request.getBio(),
-                request.getHourlyRate(),
-                request.getCommissionRate(),
-                request.getHireDate(),
-                request.getEmploymentType()
+                request.userId(),
+                request.specializations(),
+                request.bio(),
+                request.hourlyRate(),
+                request.commissionRate(),
+                request.hireDate(),
+                request.employmentType()
         );
         TrainerResponse response = TrainerResponse.fromEntity(trainer);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -77,7 +77,7 @@ public class TrainerController {
     public ResponseEntity<ApiResponse<TrainerResponse>> updateRate(
             @PathVariable UUID id,
             @Valid @RequestBody TrainerUpdateRequest request) {
-        Trainer trainer = trainerService.updateRate(id, request.getHourlyRate(), request.getCommissionRate());
+        Trainer trainer = trainerService.updateRate(id, request.hourlyRate(), request.commissionRate());
         TrainerResponse response = TrainerResponse.fromEntity(trainer);
         return ResponseEntity.ok(ApiResponse.success(response, "Rate updated successfully"));
     }
@@ -103,4 +103,3 @@ public class TrainerController {
         return ResponseEntity.ok(ApiResponse.success(response, "Trainer deactivated successfully"));
     }
 }
-
