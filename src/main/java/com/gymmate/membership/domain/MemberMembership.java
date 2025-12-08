@@ -1,6 +1,6 @@
 package com.gymmate.membership.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.domain.TenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,13 +15,13 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "member_memberships")
-public class MemberMembership extends BaseAuditEntity {
+public class MemberMembership extends TenantEntity {
 
   @Column(name = "member_id", nullable = false)
   private UUID memberId;
 
-  @Column(name = "membership_plan_id")
-  private UUID membershipPlanId;
+  @Column(name = "plan_id")
+    private UUID membershipPlanId;
 
   // Subscription period
   @Column(name = "start_date", nullable = false)

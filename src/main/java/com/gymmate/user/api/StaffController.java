@@ -28,12 +28,12 @@ public class StaffController {
     @PostMapping
     public ResponseEntity<ApiResponse<StaffResponse>> createStaff(@Valid @RequestBody StaffCreateRequest request) {
         Staff staff = staffService.createStaff(
-                request.getUserId(),
-                request.getPosition(),
-                request.getDepartment(),
-                request.getHourlyWage(),
-                request.getHireDate(),
-                request.getEmploymentType()
+                request.userId(),
+                request.position(),
+                request.department(),
+                request.hourlyWage(),
+                request.hireDate(),
+                request.employmentType()
         );
         StaffResponse response = StaffResponse.fromEntity(staff);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -85,7 +85,7 @@ public class StaffController {
     public ResponseEntity<ApiResponse<StaffResponse>> updatePosition(
             @PathVariable UUID id,
             @Valid @RequestBody StaffUpdateRequest request) {
-        Staff staff = staffService.updatePosition(id, request.getPosition(), request.getDepartment());
+        Staff staff = staffService.updatePosition(id, request.position(), request.department());
         StaffResponse response = StaffResponse.fromEntity(staff);
         return ResponseEntity.ok(ApiResponse.success(response, "Position updated successfully"));
     }
@@ -94,7 +94,7 @@ public class StaffController {
     public ResponseEntity<ApiResponse<StaffResponse>> updateWage(
             @PathVariable UUID id,
             @Valid @RequestBody StaffUpdateRequest request) {
-        Staff staff = staffService.updateWage(id, request.getHourlyWage());
+        Staff staff = staffService.updateWage(id, request.hourlyWage());
         StaffResponse response = StaffResponse.fromEntity(staff);
         return ResponseEntity.ok(ApiResponse.success(response, "Wage updated successfully"));
     }
@@ -113,4 +113,3 @@ public class StaffController {
         return ResponseEntity.ok(ApiResponse.success(response, "Staff deactivated successfully"));
     }
 }
-
