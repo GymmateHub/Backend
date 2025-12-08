@@ -30,10 +30,13 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
   @Query("SELECT mm FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.endDate BETWEEN :startDate AND :endDate")
   List<MemberMembership> findExpiringMemberships(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-  List<MemberMembership> findByPlanId(UUID planId);
+  @Query(value = "SELECT * FROM member_memberships mm WHERE mm.plan_id = :planId", nativeQuery = true)
+  List<MemberMembership> findByPlanId(@Param("planId") UUID planId);
 
   @Query("SELECT COUNT(mm) FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE'")
   long countActiveByGymId(@Param("gymId") UUID gymId);
 
-  long countByPlanId(UUID planId);
+  // Use native query to avoid Spring Data property resolution issues with generated method names
+  @Query(value = "SELECT COUNT(*) FROM member_memberships mm WHERE mm.plan_id = :planId", nativeQuery = true)
+  long countByPlanId(@Param("planId") UUID planId);
 }
