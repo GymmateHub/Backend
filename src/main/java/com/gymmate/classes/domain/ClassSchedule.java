@@ -1,6 +1,6 @@
 package com.gymmate.classes.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.domain.TenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +15,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "class_schedules")
-public class ClassSchedule extends BaseAuditEntity {
+public class ClassSchedule extends TenantEntity {
 
   @Column(name = "class_id", nullable = false)
   private UUID classId;

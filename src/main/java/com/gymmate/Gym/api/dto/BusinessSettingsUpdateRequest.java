@@ -1,28 +1,17 @@
 package com.gymmate.Gym.api.dto;
 
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * DTO for updating gym business settings.
+ * DTO for updating gym business settings as a record.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class BusinessSettingsUpdateRequest {
-
-    private String timezone;
-    private String currency;
-    private String businessHours; // JSON string
+public record BusinessSettingsUpdateRequest(
+    String timezone,
+    String currency,
+    String businessHours,
 
     @Positive(message = "Max members must be positive")
-    private Integer maxMembers;
+    Integer maxMembers,
 
-    private String featuresEnabled; // JSON array string
-}
-
+    String featuresEnabled
+) {}
