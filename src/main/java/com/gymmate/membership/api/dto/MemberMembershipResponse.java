@@ -34,7 +34,7 @@ public record MemberMembershipResponse(
       membership.getId(),
       membership.getGymId(),
       membership.getMemberId(),
-      membership.getPlanId(),
+      membership.getMembershipPlanId(),
       membership.getStartDate(),
       membership.getEndDate(),
       membership.getMonthlyAmount(),
