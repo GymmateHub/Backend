@@ -3,10 +3,6 @@ package com.gymmate.user.api.dto;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.domain.UserStatus;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -14,40 +10,36 @@ import java.util.UUID;
 /**
  * DTO for user responses.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserResponse {
-
-    private UUID id;
-    private UUID gymId;
-    private String email;
-    private String firstName;
-    private String lastName;
-    private String phone;
-    private UserRole role;
-    private UserStatus status;
-    private boolean active;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
-    private LocalDateTime lastLoginAt;
+public record UserResponse(
+    UUID id,
+    UUID gymId,
+    String email,
+    String firstName,
+    String lastName,
+    String phone,
+    UserRole role,
+    UserStatus status,
+    boolean active,
+    LocalDateTime createdAt,
+    LocalDateTime updatedAt,
+    LocalDateTime lastLoginAt
+) {
 
     public static UserResponse fromEntity(User user) {
-        return UserResponse.builder()
-                .id(user.getId())
-                .gymId(user.getGymId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .phone(user.getPhone())
-                .role(user.getRole())
-                .status(user.getStatus())
-                .active(user.isActive())
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .lastLoginAt(user.getLastLoginAt())
-                .build();
+        return new UserResponse(
+                user.getId(),
+                user.getGymId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhone(),
+                user.getRole(),
+                user.getStatus(),
+                user.isActive(),
+                user.getCreatedAt(),
+                user.getUpdatedAt(),
+                user.getLastLoginAt()
+        );
     }
 
     public String getFullName() {

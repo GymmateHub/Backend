@@ -1,29 +1,19 @@
 package com.gymmate.user.api.dto;
 
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class TrainerCreateRequest {
-
+public record TrainerCreateRequest(
     @NotNull(message = "User ID is required")
-    private UUID userId;
+    UUID userId,
 
-    private String[] specializations;
-    private String bio;
-    private BigDecimal hourlyRate;
-    private BigDecimal commissionRate;
-    private LocalDate hireDate;
-    private String employmentType;
-}
-
+    String[] specializations,
+    String bio,
+    BigDecimal hourlyRate,
+    BigDecimal commissionRate,
+    LocalDate hireDate,
+    String employmentType
+) {}
