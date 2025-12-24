@@ -19,16 +19,31 @@
   <properties>
     <!-- Java Version -->
     <java.version>21</java.version>
-    <!-- Spring Boot Version -->
-    <spring-boot.version>3.5.6</spring-boot.version>
-    <flyway.version>10.8.1</flyway.version>
 
+    <!-- Dependency Versions -->
+    <flyway.version>10.8.1</flyway.version>
     <mapstruct.version>1.5.5.Final</mapstruct.version>
     <lombok.version>1.18.36</lombok.version>
     <springdoc.version>2.8.13</springdoc.version>
-
     <jwt.version>0.12.5</jwt.version>
+    <testcontainers.version>1.19.3</testcontainers.version>
+    <rest-assured.version>5.4.0</rest-assured.version>
+    <java-faker.version>1.0.2</java-faker.version>
   </properties>
+
+  <!-- Dependency Management for BOMs -->
+  <dependencyManagement>
+    <dependencies>
+      <!-- Testcontainers BOM -->
+      <dependency>
+        <groupId>org.testcontainers</groupId>
+        <artifactId>testcontainers-bom</artifactId>
+        <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <!-- Spring Boot starters -->
@@ -45,17 +60,13 @@
       <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
-    <!-- Optional security and JPA (likely needed soon) -->
+    <!-- Security -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-security</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.springframework.security</groupId>
-      <artifactId>spring-security-test</artifactId>
-      <scope>test</scope>
-    </dependency>
 
+    <!-- JWT -->
     <dependency>
       <groupId>io.jsonwebtoken</groupId>
       <artifactId>jjwt-api</artifactId>
@@ -74,14 +85,14 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- Spring-boot swagger documentation -->
+    <!-- API Documentation -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
       <version>${springdoc.version}</version>
     </dependency>
 
-    <!-- Database drivers -->
+    <!-- Database -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -109,8 +120,7 @@
       <version>${flyway.version}</version>
     </dependency>
 
-
-    <!-- Lombok (optional) -->
+    <!-- Lombok -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -118,39 +128,75 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- MapStruct (optional) -->
+    <!-- MapStruct -->
     <dependency>
       <groupId>org.mapstruct</groupId>
       <artifactId>mapstruct</artifactId>
       <version>${mapstruct.version}</version>
     </dependency>
 
-    <!-- Test -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-
-    <!-- dot env support -->
+    <!-- Environment Variables -->
     <dependency>
       <groupId>io.github.cdimascio</groupId>
       <artifactId>java-dotenv</artifactId>
       <version>5.2.2</version>
     </dependency>
 
-    <!-- Spring Boot Mail Starter -->
+    <!-- Email Support -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-mail</artifactId>
     </dependency>
-
-    <!-- Thymeleaf for email templates -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-thymeleaf</artifactId>
     </dependency>
 
+    <!-- Test Dependencies -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Testcontainers (versions managed by BOM) -->
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>testcontainers</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.testcontainers</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- REST Assured -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <version>${rest-assured.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Java Faker -->
+    <dependency>
+      <groupId>com.github.javafaker</groupId>
+      <artifactId>javafaker</artifactId>
+      <version>${java-faker.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
