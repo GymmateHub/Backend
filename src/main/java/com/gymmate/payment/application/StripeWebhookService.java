@@ -1,0 +1,414 @@
+package com.gymmate.payment.application;
+
+import com.gymmate.payment.domain.*;
+import com.gymmate.shared.config.StripeConfig;
+import com.gymmate.shared.exception.DomainException;
+import com.gymmate.subscription.domain.GymSubscription;
+import com.gymmate.subscription.domain.GymSubscriptionRepository;
+import com.gymmate.subscription.domain.SubscriptionStatus;
+import com.stripe.exception.SignatureVerificationException;
+import com.stripe.model.*;
+import com.stripe.net.Webhook;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.UUID;
+
+/**
+ * Service for handling Stripe webhook events.
+ * Processes platform events (for gym subscriptions) and Connect events (for member payments).
+ */
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class StripeWebhookService {
+
+    private final StripeConfig stripeConfig;
+    private final StripeWebhookEventRepository webhookEventRepository;
+    private final GymSubscriptionRepository subscriptionRepository;
+    private final GymInvoiceRepository invoiceRepository;
+    private final StripeConnectService connectService;
+
+    /**
+     * Process a platform webhook event (for gym subscriptions to GymMate).
+     */
+    @Transactional
+    public void processPlatformWebhook(String payload, String signature) {
+        Event event = verifyAndParseEvent(payload, signature, stripeConfig.getWebhookSecret());
+
+        // Check for duplicate processing
+        if (webhookEventRepository.existsByStripeEventId(event.getId())) {
+            log.info("Webhook event {} already processed, skipping", event.getId());
+            return;
+        }
+
+        // Save event for tracking
+        StripeWebhookEvent webhookEvent = StripeWebhookEvent.builder()
+                .stripeEventId(event.getId())
+                .eventType(event.getType())
+                .payload(payload)
+                .build();
+        webhookEventRepository.save(webhookEvent);
+
+        try {
+            handlePlatformEvent(event);
+            webhookEvent.markProcessed();
+        } catch (Exception e) {
+            log.error("Failed to process webhook event {}: {}", event.getId(), e.getMessage());
+            webhookEvent.markFailed(e.getMessage());
+        }
+
+        webhookEventRepository.save(webhookEvent);
+    }
+
+    /**
+     * Process a Connect webhook event (for member payments to gyms).
+     */
+    @Transactional
+    public void processConnectWebhook(String payload, String signature) {
+        Event event = verifyAndParseEvent(payload, signature, stripeConfig.getConnectWebhookSecret());
+
+        // Check for duplicate processing
+        if (webhookEventRepository.existsByStripeEventId(event.getId())) {
+            log.info("Connect webhook event {} already processed, skipping", event.getId());
+            return;
+        }
+
+        // Save event for tracking
+        StripeWebhookEvent webhookEvent = StripeWebhookEvent.builder()
+                .stripeEventId(event.getId())
+                .eventType(event.getType())
+                .payload(payload)
+                .build();
+        webhookEventRepository.save(webhookEvent);
+
+        try {
+            handleConnectEvent(event);
+            webhookEvent.markProcessed();
+        } catch (Exception e) {
+            log.error("Failed to process Connect webhook event {}: {}", event.getId(), e.getMessage());
+            webhookEvent.markFailed(e.getMessage());
+        }
+
+        webhookEventRepository.save(webhookEvent);
+    }
+
+    /**
+     * Handle platform events for gym subscriptions.
+     */
+    private void handlePlatformEvent(Event event) {
+        String eventType = event.getType();
+        log.info("Processing platform webhook event: {} ({})", eventType, event.getId());
+
+        switch (eventType) {
+            case "customer.subscription.created":
+            case "customer.subscription.updated":
+                handleSubscriptionUpdated(event);
+                break;
+
+            case "customer.subscription.deleted":
+                handleSubscriptionDeleted(event);
+                break;
+
+            case "customer.subscription.trial_will_end":
+                handleTrialWillEnd(event);
+                break;
+
+            case "invoice.paid":
+                handleInvoicePaid(event);
+                break;
+
+            case "invoice.payment_failed":
+                handleInvoicePaymentFailed(event);
+                break;
+
+            case "invoice.created":
+            case "invoice.updated":
+                handleInvoiceUpdated(event);
+                break;
+
+            default:
+                log.debug("Unhandled platform event type: {}", eventType);
+        }
+    }
+
+    /**
+     * Handle Connect events for gym accounts.
+     */
+    private void handleConnectEvent(Event event) {
+        String eventType = event.getType();
+        log.info("Processing Connect webhook event: {} ({})", eventType, event.getId());
+
+        switch (eventType) {
+            case "account.updated":
+                handleAccountUpdated(event);
+                break;
+
+            case "account.application.deauthorized":
+                handleAccountDeauthorized(event);
+                break;
+
+            case "payment_intent.succeeded":
+                handleConnectPaymentSucceeded(event);
+                break;
+
+            case "payment_intent.payment_failed":
+                handleConnectPaymentFailed(event);
+                break;
+
+            default:
+                log.debug("Unhandled Connect event type: {}", eventType);
+        }
+    }
+
+    // Platform event handlers
+
+    private void handleSubscriptionUpdated(Event event) {
+        Subscription stripeSubscription = extractEventObject(event, Subscription.class);
+        if (stripeSubscription == null) return;
+
+        subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
+                .ifPresent(subscription -> {
+                    // Update status
+                    subscription.setStatus(mapStripeStatus(stripeSubscription.getStatus()));
+
+                    // Update period dates
+                    if (stripeSubscription.getCurrentPeriodStart() != null) {
+                        subscription.setCurrentPeriodStart(
+                                toLocalDateTime(stripeSubscription.getCurrentPeriodStart()));
+                    }
+                    if (stripeSubscription.getCurrentPeriodEnd() != null) {
+                        subscription.setCurrentPeriodEnd(
+                                toLocalDateTime(stripeSubscription.getCurrentPeriodEnd()));
+                    }
+
+                    // Update trial dates
+                    if (stripeSubscription.getTrialStart() != null) {
+                        subscription.setTrialStart(toLocalDateTime(stripeSubscription.getTrialStart()));
+                    }
+                    if (stripeSubscription.getTrialEnd() != null) {
+                        subscription.setTrialEnd(toLocalDateTime(stripeSubscription.getTrialEnd()));
+                    }
+
+                    // Update cancellation
+                    subscription.setCancelAtPeriodEnd(stripeSubscription.getCancelAtPeriodEnd());
+
+                    subscriptionRepository.save(subscription);
+                    log.info("Updated subscription {} status to {}", subscription.getId(), subscription.getStatus());
+                });
+    }
+
+    private void handleSubscriptionDeleted(Event event) {
+        Subscription stripeSubscription = extractEventObject(event, Subscription.class);
+        if (stripeSubscription == null) return;
+
+        subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
+                .ifPresent(subscription -> {
+                    subscription.setStatus(SubscriptionStatus.CANCELLED);
+                    subscription.setCancelledAt(LocalDateTime.now());
+                    subscriptionRepository.save(subscription);
+                    log.info("Subscription {} marked as cancelled", subscription.getId());
+                });
+    }
+
+    private void handleTrialWillEnd(Event event) {
+        Subscription stripeSubscription = extractEventObject(event, Subscription.class);
+        if (stripeSubscription == null) return;
+
+        subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
+                .ifPresent(subscription -> {
+                    // TODO: Send trial ending notification email
+                    log.info("Trial ending soon for subscription {}", subscription.getId());
+                });
+    }
+
+    private void handleInvoicePaid(Event event) {
+        Invoice stripeInvoice = extractEventObject(event, Invoice.class);
+        if (stripeInvoice == null) return;
+
+        // Update or create invoice record
+        GymInvoice invoice = invoiceRepository.findByStripeInvoiceId(stripeInvoice.getId())
+                .orElseGet(() -> createInvoiceFromStripe(stripeInvoice));
+
+        invoice.markPaid(stripeInvoice.getStatusTransitions() != null &&
+                stripeInvoice.getStatusTransitions().getPaidAt() != null ?
+                toLocalDateTime(stripeInvoice.getStatusTransitions().getPaidAt()) : LocalDateTime.now());
+
+        invoiceRepository.save(invoice);
+        log.info("Invoice {} marked as paid", stripeInvoice.getId());
+
+        // Update subscription status if it was past due
+        if (stripeInvoice.getSubscription() != null) {
+            subscriptionRepository.findByStripeSubscriptionId(stripeInvoice.getSubscription())
+                    .ifPresent(subscription -> {
+                        if (subscription.getStatus() == SubscriptionStatus.PAST_DUE) {
+                            subscription.setStatus(SubscriptionStatus.ACTIVE);
+                            subscriptionRepository.save(subscription);
+                            log.info("Subscription {} reactivated after payment", subscription.getId());
+                        }
+                    });
+        }
+    }
+
+    private void handleInvoicePaymentFailed(Event event) {
+        Invoice stripeInvoice = extractEventObject(event, Invoice.class);
+        if (stripeInvoice == null) return;
+
+        // Update invoice status
+        invoiceRepository.findByStripeInvoiceId(stripeInvoice.getId())
+                .ifPresent(invoice -> {
+                    invoice.markFailed();
+                    invoiceRepository.save(invoice);
+                });
+
+        // Update subscription to past_due
+        if (stripeInvoice.getSubscription() != null) {
+            subscriptionRepository.findByStripeSubscriptionId(stripeInvoice.getSubscription())
+                    .ifPresent(subscription -> {
+                        subscription.markPastDue();
+                        subscriptionRepository.save(subscription);
+                        log.warn("Subscription {} marked as past due due to payment failure", subscription.getId());
+                        // TODO: Send payment failed notification email
+                    });
+        }
+    }
+
+    private void handleInvoiceUpdated(Event event) {
+        Invoice stripeInvoice = extractEventObject(event, Invoice.class);
+        if (stripeInvoice == null) return;
+
+        // Only process if we have a customer to link to
+        if (stripeInvoice.getCustomer() == null) return;
+
+        // Find subscription by customer ID and create/update invoice
+        subscriptionRepository.findByStripeCustomerId(stripeInvoice.getCustomer())
+                .ifPresent(subscription -> {
+                    GymInvoice invoice = invoiceRepository.findByStripeInvoiceId(stripeInvoice.getId())
+                            .orElseGet(() -> createInvoiceFromStripe(stripeInvoice, subscription.getGymId()));
+
+                    invoice.setStatus(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()));
+                    invoice.setInvoicePdfUrl(stripeInvoice.getInvoicePdf());
+                    invoice.setHostedInvoiceUrl(stripeInvoice.getHostedInvoiceUrl());
+
+                    invoiceRepository.save(invoice);
+                });
+    }
+
+    // Connect event handlers
+
+    private void handleAccountUpdated(Event event) {
+        Account account = extractEventObject(event, Account.class);
+        if (account == null) return;
+
+        connectService.handleAccountUpdated(account.getId());
+    }
+
+    private void handleAccountDeauthorized(Event event) {
+        Account account = extractEventObject(event, Account.class);
+        if (account == null) return;
+
+        String gymIdStr = account.getMetadata().get("gym_id");
+        if (gymIdStr != null) {
+            log.warn("Gym {} deauthorized their Stripe Connect account", gymIdStr);
+            // TODO: Handle account deauthorization - notify gym owner
+        }
+    }
+
+    private void handleConnectPaymentSucceeded(Event event) {
+        PaymentIntent paymentIntent = extractEventObject(event, PaymentIntent.class);
+        if (paymentIntent == null) return;
+
+        log.info("Connect payment succeeded: {} for amount {}",
+                paymentIntent.getId(), paymentIntent.getAmount());
+        // TODO: Update member membership payment status
+    }
+
+    private void handleConnectPaymentFailed(Event event) {
+        PaymentIntent paymentIntent = extractEventObject(event, PaymentIntent.class);
+        if (paymentIntent == null) return;
+
+        log.warn("Connect payment failed: {} - {}",
+                paymentIntent.getId(), paymentIntent.getLastPaymentError());
+        // TODO: Handle member payment failure - notify gym and member
+    }
+
+    // Helper methods
+
+    private Event verifyAndParseEvent(String payload, String signature, String webhookSecret) {
+        if (webhookSecret == null || webhookSecret.isBlank()) {
+            throw new DomainException("WEBHOOK_NOT_CONFIGURED", "Webhook secret not configured");
+        }
+
+        try {
+            return Webhook.constructEvent(payload, signature, webhookSecret);
+        } catch (SignatureVerificationException e) {
+            log.error("Invalid webhook signature: {}", e.getMessage());
+            throw new DomainException("INVALID_WEBHOOK_SIGNATURE", "Invalid webhook signature");
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T extractEventObject(Event event, Class<T> clazz) {
+        EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
+        if (deserializer.getObject().isPresent()) {
+            return (T) deserializer.getObject().get();
+        }
+        log.warn("Failed to deserialize event object for event {}", event.getId());
+        return null;
+    }
+
+    private GymInvoice createInvoiceFromStripe(Invoice stripeInvoice) {
+        String gymIdStr = stripeInvoice.getMetadata().get("gym_id");
+        UUID gymId = gymIdStr != null ? UUID.fromString(gymIdStr) : null;
+        return createInvoiceFromStripe(stripeInvoice, gymId);
+    }
+
+    private GymInvoice createInvoiceFromStripe(Invoice stripeInvoice, UUID gymId) {
+        if (gymId == null) {
+            // Try to find gym by customer ID
+            subscriptionRepository.findByStripeCustomerId(stripeInvoice.getCustomer())
+                    .ifPresent(sub -> {});
+        }
+
+        return GymInvoice.builder()
+                .gymId(gymId)
+                .stripeInvoiceId(stripeInvoice.getId())
+                .invoiceNumber(stripeInvoice.getNumber())
+                .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue()).divide(BigDecimal.valueOf(100)))
+                .currency(stripeInvoice.getCurrency() != null ? stripeInvoice.getCurrency().toUpperCase() : "USD")
+                .status(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()))
+                .description(stripeInvoice.getDescription())
+                .periodStart(stripeInvoice.getPeriodStart() != null ?
+                        toLocalDateTime(stripeInvoice.getPeriodStart()) : null)
+                .periodEnd(stripeInvoice.getPeriodEnd() != null ?
+                        toLocalDateTime(stripeInvoice.getPeriodEnd()) : null)
+                .dueDate(stripeInvoice.getDueDate() != null ?
+                        toLocalDateTime(stripeInvoice.getDueDate()) : null)
+                .invoicePdfUrl(stripeInvoice.getInvoicePdf())
+                .hostedInvoiceUrl(stripeInvoice.getHostedInvoiceUrl())
+                .build();
+    }
+
+    private SubscriptionStatus mapStripeStatus(String stripeStatus) {
+        return switch (stripeStatus) {
+            case "active" -> SubscriptionStatus.ACTIVE;
+            case "trialing" -> SubscriptionStatus.TRIAL;
+            case "past_due" -> SubscriptionStatus.PAST_DUE;
+            case "canceled", "cancelled" -> SubscriptionStatus.CANCELLED;
+            case "unpaid" -> SubscriptionStatus.SUSPENDED;
+            case "incomplete", "incomplete_expired" -> SubscriptionStatus.EXPIRED;
+            default -> SubscriptionStatus.ACTIVE;
+        };
+    }
+
+    private LocalDateTime toLocalDateTime(Long epochSeconds) {
+        return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSeconds), ZoneId.systemDefault());
+    }
+}
+

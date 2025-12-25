@@ -1,7 +1,6 @@
 package com.gymmate.membership.infrastructure;
 
 import com.gymmate.membership.domain.MembershipPlan;
-import com.gymmate.membership.domain.MembershipPlanRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
