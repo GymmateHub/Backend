@@ -123,10 +123,18 @@ file:
   max-size: ${FILE_MAX_SIZE}
   max-request-size: ${FILE_MAX_REQUEST_SIZE}
 
+# Stripe Configuration
+stripe:
+  api-key: ${STRIPE_API_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  connect-webhook-secret: ${STRIPE_CONNECT_WEBHOOK_SECRET:}
+  application-fee-percent: ${STRIPE_APPLICATION_FEE_PERCENT:1.0}
+
 # External API Keys
 
 # App defaults
 app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
   admin:
     email: ${APP_ADMIN_EMAIL:admin@gymmatehub.com}
     password: ${APP_ADMIN_PASSWORD:Admin#@1357}
