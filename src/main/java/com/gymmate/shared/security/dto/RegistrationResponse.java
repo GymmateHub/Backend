@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class RegistrationResponse {
 
-  private String registrationId;
+  private String userId;
   private String message;
   private int expiresIn; // seconds
   private Long retryAfter; // seconds (for rate limiting)

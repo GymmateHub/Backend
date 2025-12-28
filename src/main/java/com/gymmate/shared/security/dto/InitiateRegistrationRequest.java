@@ -31,5 +31,12 @@ public class InitiateRegistrationRequest {
   @Pattern(regexp = "^[+]?[0-9]{10,20}$", message = "Phone number must be valid")
   @Size(max = 20, message = "Phone number must not exceed 20 characters")
   private String phoneNumber;
+
+  @NotBlank(message = "Password is required")
+  @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
+  private String password;
+
+  @NotBlank(message = "Confirm password is required")
+  private String confirmPassword;
 }
 
