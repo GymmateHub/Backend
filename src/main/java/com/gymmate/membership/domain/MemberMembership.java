@@ -60,6 +60,13 @@ public class MemberMembership extends TenantEntity {
   @Builder.Default
   private boolean autoRenew = true;
 
+  // Stripe integration
+  @Column(name = "stripe_customer_id")
+  private String stripeCustomerId;
+
+  @Column(name = "stripe_subscription_id")
+  private String stripeSubscriptionId;
+
   // Freezing/holding
   @Column(name = "is_frozen")
   @Builder.Default
