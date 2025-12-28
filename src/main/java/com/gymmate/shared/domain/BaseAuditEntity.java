@@ -3,6 +3,7 @@ package com.gymmate.shared.domain;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -19,6 +20,9 @@ import java.time.LocalDateTime;
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseAuditEntity extends BaseEntity {
 
+  @Column(name = "created_by")
+  private String createdBy;
+
   @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
   private LocalDateTime createdAt;
@@ -26,6 +30,9 @@ public abstract class BaseAuditEntity extends BaseEntity {
   @LastModifiedDate
   @Column(name = "updated_at")
   private LocalDateTime updatedAt;
+
+  @Column(name = "updated_by")
+  private String updatedBy;
 
   @Column(name = "is_active")
   private boolean active = true;

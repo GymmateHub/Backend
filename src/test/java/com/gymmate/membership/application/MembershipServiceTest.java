@@ -1,9 +1,9 @@
 package com.gymmate.membership.application;
 
 import com.gymmate.membership.domain.MemberMembership;
-import com.gymmate.membership.domain.MemberMembershipRepository;
+import com.gymmate.membership.infrastructure.MemberMembershipRepository;
 import com.gymmate.membership.domain.MembershipPlan;
-import com.gymmate.membership.domain.MembershipPlanRepository;
+import com.gymmate.membership.infrastructure.MembershipPlanRepository;
 import com.gymmate.membership.domain.MembershipStatus;
 import com.gymmate.shared.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
