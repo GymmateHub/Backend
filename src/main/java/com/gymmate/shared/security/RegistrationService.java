@@ -54,12 +54,14 @@ public class RegistrationService {
         });
 
     // Create pending registration
+    // Note: createdAt is auto-set by @PrePersist, expiresAt is set here (both in UTC)
     PendingRegistration pendingRegistration = PendingRegistration.builder()
         .registrationId(UUID.randomUUID().toString())
         .email(request.getEmail().toLowerCase().trim())
         .firstName(request.getFirstName().trim())
         .lastName(request.getLastName().trim())
         .phoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber().trim() : null)
+        .expiresAt(Instant.now().plusSeconds(86400)) // 24 hours (UTC)
         .build();
 
     pendingRegistrationRepository.save(pendingRegistration);

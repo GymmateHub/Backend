@@ -85,41 +85,41 @@ public class AuthController {
       .body(ApiResponse.success(response, "User registered successfully"));
   }
 
-  /**
-   * Register a new gym member (convenience endpoint).
-   */
-  @PostMapping("/register/member")
-  public ResponseEntity<ApiResponse<UserResponse>> registerMember(@Valid @RequestBody UserRegistrationRequest request) {
-    User user = authenticationService.registerMember(
-      request.email(),
-      request.firstName(),
-      request.lastName(),
-      request.password(),
-      request.phone()
-    );
+//  /**
+//   * Register a new gym member (convenience endpoint).
+//   */
+//  @PostMapping("/register/member")
+//  public ResponseEntity<ApiResponse<UserResponse>> registerMember(@Valid @RequestBody UserRegistrationRequest request) {
+//    User user = authenticationService.registerMember(
+//      request.email(),
+//      request.firstName(),
+//      request.lastName(),
+//      request.password(),
+//      request.phone()
+//    );
+//
+//    UserResponse response = UserResponse.fromEntity(user);
+//    return ResponseEntity.status(HttpStatus.CREATED)
+//      .body(ApiResponse.success(response, "Member registered successfully"));
+//  }
 
-    UserResponse response = UserResponse.fromEntity(user);
-    return ResponseEntity.status(HttpStatus.CREATED)
-      .body(ApiResponse.success(response, "Member registered successfully"));
-  }
-
-  /**
-   * Register a new gym admin/owner (convenience endpoint).
-   */
-  @PostMapping("/register/gym-admin")
-  public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(@Valid @RequestBody UserRegistrationRequest request) {
-    User user = authenticationService.registerGymAdmin(
-      request.email(),
-      request.firstName(),
-      request.lastName(),
-      request.password(),
-      request.phone()
-    );
-
-    UserResponse response = UserResponse.fromEntity(user);
-    return ResponseEntity.status(HttpStatus.CREATED)
-      .body(ApiResponse.success(response, "Gym admin registered successfully"));
-  }
+//  /**
+//   * Register a new gym admin/owner (convenience endpoint).
+//   */
+//  @PostMapping("/register/gym-admin")
+//  public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(@Valid @RequestBody UserRegistrationRequest request) {
+//    User user = authenticationService.registerGymAdmin(
+//      request.email(),
+//      request.firstName(),
+//      request.lastName(),
+//      request.password(),
+//      request.phone()
+//    );
+//
+//    UserResponse response = UserResponse.fromEntity(user);
+//    return ResponseEntity.status(HttpStatus.CREATED)
+//      .body(ApiResponse.success(response, "Gym admin registered successfully"));
+//  }
 
   /// Login and Log-out
   @PostMapping("/login")
