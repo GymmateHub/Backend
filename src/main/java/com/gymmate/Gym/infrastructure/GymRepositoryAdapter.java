@@ -1,7 +1,7 @@
 package com.gymmate.Gym.infrastructure;
 
 import com.gymmate.Gym.domain.Gym;
-import com.gymmate.Gym.domain.GymRepository;
+import com.gymmate.Gym.infrastructure.GymRepository;
 import com.gymmate.Gym.domain.GymStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

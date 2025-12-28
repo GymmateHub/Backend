@@ -1,7 +1,7 @@
 package com.gymmate.Gym.application;
 
 import com.gymmate.Gym.domain.Gym;
-import com.gymmate.Gym.domain.GymRepository;
+import com.gymmate.Gym.infrastructure.GymRepository;
 import com.gymmate.Gym.domain.GymStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;

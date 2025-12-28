@@ -67,6 +67,13 @@ public class MembershipPlan extends TenantEntity {
   @Builder.Default
   private boolean featured = false;
 
+  // Stripe integration
+  @Column(name = "stripe_product_id")
+  private String stripeProductId;
+
+  @Column(name = "stripe_price_id")
+  private String stripePriceId;
+
   public void updatePricing(BigDecimal price, String billingCycle) {
     this.price = price;
     this.billingCycle = billingCycle;
