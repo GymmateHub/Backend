@@ -402,7 +402,7 @@ public class AuthenticationService {
         log.info("Generating OTP for userId: {}", userId);
 
         String otp = totpService.generateOtp(userId);
-        log.info("OTP generated: {}", otp);
+        log.info("OTP generated for userId: {}", userId);
 
         totpService.updateRateLimit(userId);
         log.info("Rate limit updated for userId: {}", userId);
