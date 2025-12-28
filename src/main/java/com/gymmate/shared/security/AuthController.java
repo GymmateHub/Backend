@@ -16,6 +16,55 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
   private final AuthenticationService authenticationService;
+  private final RegistrationService registrationService;
+
+  // ==================== NEW GYM OWNER REGISTRATION FLOW ====================
+
+  /**
+   * Step 1: Initiate registration - Send OTP to email
+   */
+  @PostMapping("/register/initiate")
+  public ResponseEntity<ApiResponse<RegistrationResponse>> initiateRegistration(
+      @Valid @RequestBody InitiateRegistrationRequest request) {
+    RegistrationResponse response = registrationService.initiateRegistration(request);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success(response, response.getMessage()));
+  }
+
+  /**
+   * Step 2: Resend OTP (rate limited to 60 seconds)
+   */
+  @PostMapping("/register/resend-otp")
+  public ResponseEntity<ApiResponse<RegistrationResponse>> resendOtp(
+      @Valid @RequestBody ResendOtpRequest request) {
+    RegistrationResponse response = registrationService.resendOtp(request);
+    return ResponseEntity.ok(ApiResponse.success(response, response.getMessage()));
+  }
+
+  /**
+   * Step 3: Verify OTP - Get verification token
+   */
+  @PostMapping("/register/verify-otp")
+  public ResponseEntity<ApiResponse<VerificationTokenResponse>> verifyOtp(
+      @Valid @RequestBody VerifyOtpRequest request) {
+    VerificationTokenResponse response = registrationService.verifyOtp(request);
+    return ResponseEntity.ok(ApiResponse.success(response, response.getMessage()));
+  }
+
+  /**
+   * Step 4: Complete registration - Set password and create user
+   */
+  @PostMapping("/register/complete")
+  public ResponseEntity<ApiResponse<UserResponse>> completeRegistration(
+      @Valid @RequestBody CompleteRegistrationRequest request) {
+    User user = registrationService.completeRegistration(request);
+    UserResponse response = UserResponse.fromEntity(user);
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(ApiResponse.success(response, "Registration completed successfully. Please login."));
+  }
+
+  // ==================== LEGACY REGISTRATION ENDPOINTS ====================
+
 
   /**
    * Register a new user.
