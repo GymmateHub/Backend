@@ -2,6 +2,8 @@ package com.gymmate.shared.security;
 
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.security.dto.*;
+import com.gymmate.user.api.dto.GymAdminRegistrationRequest;
+import com.gymmate.user.api.dto.MemberRegistrationRequest;
 import com.gymmate.user.api.dto.UserRegistrationRequest;
 import com.gymmate.user.api.dto.UserResponse;
 import com.gymmate.user.domain.User;
@@ -16,20 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
   private final AuthenticationService authenticationService;
-  private final RegistrationService registrationService;
-
-  // ==================== NEW GYM OWNER REGISTRATION FLOW ====================
-
-  /**
-   * Step 1: Initiate registration - Send OTP to email
-   */
-  @PostMapping("/register/initiate")
-  public ResponseEntity<ApiResponse<RegistrationResponse>> initiateRegistration(
-      @Valid @RequestBody InitiateRegistrationRequest request) {
-    RegistrationResponse response = registrationService.initiateRegistration(request);
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success(response, response.getMessage()));
-  }
 
   /**
    * Step 2: Resend OTP (rate limited to 60 seconds)
@@ -37,34 +25,19 @@ public class AuthController {
   @PostMapping("/register/resend-otp")
   public ResponseEntity<ApiResponse<RegistrationResponse>> resendOtp(
       @Valid @RequestBody ResendOtpRequest request) {
-    RegistrationResponse response = registrationService.resendOtp(request);
+    RegistrationResponse response = authenticationService.resendOtp(request);
     return ResponseEntity.ok(ApiResponse.success(response, response.getMessage()));
   }
 
   /**
-   * Step 3: Verify OTP - Get verification token
+   * Step 3: Verify OTP - Activate user account
    */
   @PostMapping("/register/verify-otp")
   public ResponseEntity<ApiResponse<VerificationTokenResponse>> verifyOtp(
       @Valid @RequestBody VerifyOtpRequest request) {
-    VerificationTokenResponse response = registrationService.verifyOtp(request);
+    VerificationTokenResponse response = authenticationService.verifyOtp(request);
     return ResponseEntity.ok(ApiResponse.success(response, response.getMessage()));
   }
-
-  /**
-   * Step 4: Complete registration - Set password and create user
-   */
-  @PostMapping("/register/complete")
-  public ResponseEntity<ApiResponse<UserResponse>> completeRegistration(
-      @Valid @RequestBody CompleteRegistrationRequest request) {
-    User user = registrationService.completeRegistration(request);
-    UserResponse response = UserResponse.fromEntity(user);
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(ApiResponse.success(response, "Registration completed successfully. Please login."));
-  }
-
-  // ==================== LEGACY REGISTRATION ENDPOINTS ====================
-
 
   /**
    * Register a new user.
@@ -85,47 +58,57 @@ public class AuthController {
       .body(ApiResponse.success(response, "User registered successfully"));
   }
 
-//  /**
-//   * Register a new gym member (convenience endpoint).
-//   */
-//  @PostMapping("/register/member")
-//  public ResponseEntity<ApiResponse<UserResponse>> registerMember(@Valid @RequestBody UserRegistrationRequest request) {
-//    User user = authenticationService.registerMember(
-//      request.email(),
-//      request.firstName(),
-//      request.lastName(),
-//      request.password(),
-//      request.phone()
-//    );
-//
-//    UserResponse response = UserResponse.fromEntity(user);
-//    return ResponseEntity.status(HttpStatus.CREATED)
-//      .body(ApiResponse.success(response, "Member registered successfully"));
-//  }
+  /**
+   * Register a new gym member (convenience endpoint).
+   */
+  @PostMapping("/register/member")
+  public ResponseEntity<ApiResponse<UserResponse>> registerMember(@Valid @RequestBody MemberRegistrationRequest request) {
+    User user = authenticationService.registerMember(
+      request.email(),
+      request.firstName(),
+      request.lastName(),
+      request.password(),
+      request.phone()
+    );
 
-//  /**
-//   * Register a new gym admin/owner (convenience endpoint).
-//   */
-//  @PostMapping("/register/gym-admin")
-//  public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(@Valid @RequestBody UserRegistrationRequest request) {
-//    User user = authenticationService.registerGymAdmin(
-//      request.email(),
-//      request.firstName(),
-//      request.lastName(),
-//      request.password(),
-//      request.phone()
-//    );
-//
-//    UserResponse response = UserResponse.fromEntity(user);
-//    return ResponseEntity.status(HttpStatus.CREATED)
-//      .body(ApiResponse.success(response, "Gym admin registered successfully"));
-//  }
+    UserResponse response = UserResponse.fromEntity(user);
+    return ResponseEntity.status(HttpStatus.CREATED)
+      .body(ApiResponse.success(response, "Member registered successfully"));
+  }
+
+  /**
+   * Register a new gym owner (convenience endpoint).
+   * Creates user as INACTIVE with emailVerified=false, then sends OTP.
+   */
+  @PostMapping("/register/gym-admin")
+  public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(@Valid @RequestBody GymAdminRegistrationRequest request) {
+    User user = authenticationService.registerGymAdmin(
+      request.email(),
+      request.firstName(),
+      request.lastName(),
+      request.password(),
+      request.phone()
+    );
+
+    // Send OTP to the newly created gym owner
+    authenticationService.sendOtpForUser(user);
+
+    UserResponse response = UserResponse.fromEntity(user);
+    return ResponseEntity.status(HttpStatus.CREATED)
+      .body(ApiResponse.success(response, "Gym owner registered successfully. An OTP has been sent to your email."));
+  }
 
   /// Login and Log-out
   @PostMapping("/login")
   public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
       LoginResponse response = authenticationService.authenticate(request);
-      return ResponseEntity.ok(ApiResponse.success(response, "Login successful"));
+
+      // Return appropriate message based on email verification status
+      String message = response.isEmailVerified()
+          ? "Login successful"
+          : "Email not verified. An OTP has been sent to your email. Please verify to continue.";
+
+      return ResponseEntity.ok(ApiResponse.success(response, message));
   }
 
   @PostMapping("/logout")

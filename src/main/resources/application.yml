@@ -44,11 +44,13 @@ spring:
     port: ${MAILTRAP_PORT}
     username: ${MAILTRAP_USERNAME}
     password: ${MAILTRAP_PASSWORD}
+    from: no-reply@gymmatehub.com
     properties:
       mail:
         smtp:
           auth: true
-          starttls:enable: true
+          starttls:
+            enable: true
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000

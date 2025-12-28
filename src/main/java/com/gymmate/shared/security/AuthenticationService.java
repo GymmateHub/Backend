@@ -1,7 +1,9 @@
 package com.gymmate.shared.security;
 
+import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.InvalidTokenException;
+import com.gymmate.shared.exception.NotFoundException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.dto.*;
@@ -38,6 +40,9 @@ public class AuthenticationService {
     private final EmailService emailService;
     private final AuthenticationManager authenticationManager;
     private final TokenBlacklistRepository tokenBlacklistRepository;
+    private final TotpService totpService;
+
+    private static final int OTP_VALIDITY_MINUTES = 5;
 
     @Value("${app.password-reset.expiration-minutes:30}")
     private int passwordResetExpirationMinutes;
@@ -64,13 +69,45 @@ public class AuthenticationService {
             User user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new BadCredentialsException("User not found"));
 
-            // Check if account is active
-            if (!user.isActive()) {
-                log.warn("Inactive user attempted to login: {}", user.getEmail());
-                throw new BadCredentialsException("Account is not active");
+            // Check if account is active (but allow INACTIVE users with unverified email to proceed)
+            if (user.getStatus() != UserStatus.ACTIVE && user.getStatus() != UserStatus.INACTIVE) {
+                log.warn("User with invalid status attempted to login: {}", user.getEmail());
+                throw new BadCredentialsException("Account is not accessible");
             }
 
-            // Generate JWT tokens
+            // If email is not verified, send OTP and return partial response
+            if (!user.isEmailVerified()) {
+                log.info("User login with unverified email: {} - Sending OTP", user.getEmail());
+
+                // Generate and send OTP
+                String userId = user.getId().toString();
+                String otp = totpService.generateOtp(userId);
+                totpService.updateRateLimit(userId);
+
+                emailService.sendOtpEmail(
+                    user.getEmail(),
+                    user.getFirstName(),
+                    otp,
+                    5 // OTP validity in minutes
+                );
+
+                log.info("OTP sent to unverified user: {}", user.getEmail());
+
+                // Return response without tokens but with userId for OTP verification
+                return LoginResponse.builder()
+                        .accessToken(null)
+                        .refreshToken(null)
+                        .userId(user.getId())
+                        .email(user.getEmail())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .role(user.getRole())
+                        .gymId(user.getGymId())
+                        .emailVerified(false)
+                        .build();
+            }
+
+            // Generate JWT tokens for verified users
             String accessToken = jwtService.generateToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
 
@@ -89,6 +126,7 @@ public class AuthenticationService {
                     .lastName(user.getLastName())
                     .role(user.getRole())
                     .gymId(user.getGymId())
+                    .emailVerified(true)
                     .build();
 
         } catch (AuthenticationException ex) {
@@ -198,10 +236,10 @@ public class AuthenticationService {
     public User registerUser(String email, String firstName, String lastName,
                            String plainPassword, String phone, UserRole role) {
 
-        // Prevent GYM_OWNER registration through this method
-        if (role == UserRole.GYM_OWNER) {
+        // Prevent OWNER registration through this method
+        if (role == UserRole.OWNER) {
             throw new DomainException("INVALID_REGISTRATION",
-                "GYM_OWNER registration must use the OTP verification flow");
+                "OWNER registration must use the OTP verification flow");
         }
 
         // Check if user already exists in current gym context
@@ -253,10 +291,13 @@ public class AuthenticationService {
 
     /**
      * Register a new gym admin/owner.
+     * Creates user as INACTIVE with emailVerified=false for OTP verification flow.
      */
     @Transactional
     public User registerGymAdmin(String email, String firstName, String lastName,
                                String plainPassword, String phone) {
+        log.info("Registering gym admin with email: {}, phone: {}", email, phone);
+
         // Check if user already exists (system-wide)
         if (userRepository.existsByEmail(email)) {
             throw new DomainException("USER_ALREADY_EXISTS",
@@ -269,23 +310,30 @@ public class AuthenticationService {
         // Encode password
         String passwordHash = passwordService.encode(plainPassword);
 
-        // Create new gym admin
+        // Create new gym owner with INACTIVE status and emailVerified=false
+        // User will be activated after OTP verification
         User user = User.builder()
                 .email(email)
                 .firstName(firstName)
                 .lastName(lastName)
                 .passwordHash(passwordHash)
                 .phone(phone)
-                .role(UserRole.ADMIN)
-                .status(UserStatus.ACTIVE)
+                .role(UserRole.OWNER)
+                .status(UserStatus.INACTIVE)
+                .emailVerified(false)
                 .build();
 
-        // Gym admins can be created with or without gym context
-        // If within gym context, they'll be assigned to that gym
-        // If not, gymId will be set when they create/join a gym
+        log.info("User object created - email: {}, phone: {}, role: {}, status: {}, emailVerified: {}",
+            user.getEmail(), user.getPhone(), user.getRole(), user.getStatus(), user.isEmailVerified());
 
         // Save and return
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+
+        log.info("User saved - ID: {}, email: {}, phone: {}, role: {}, status: {}, emailVerified: {}, isActive: {}",
+            savedUser.getId(), savedUser.getEmail(), savedUser.getPhone(), savedUser.getRole(),
+            savedUser.getStatus(), savedUser.isEmailVerified(), savedUser.isActive());
+
+        return savedUser;
     }
 
     /**
@@ -338,5 +386,123 @@ public class AuthenticationService {
             throw new DomainException("WEAK_PASSWORD",
                 "Password must contain at least one digit");
         }
+    }
+
+    /**
+     * Send OTP to user for email verification
+     */
+    public RegistrationResponse sendOtpForUser(User user) {
+        log.info("sendOtpForUser called for user: {}, emailVerified: {}", user.getEmail(), user.isEmailVerified());
+
+        if (user.isEmailVerified()) {
+            throw new BadRequestException("Email already verified.");
+        }
+
+        String userId = user.getId().toString();
+        log.info("Generating OTP for userId: {}", userId);
+
+        String otp = totpService.generateOtp(userId);
+        log.info("OTP generated: {}", otp);
+
+        totpService.updateRateLimit(userId);
+        log.info("Rate limit updated for userId: {}", userId);
+
+        log.info("Sending OTP email to: {} (firstName: {})", user.getEmail(), user.getFirstName());
+        emailService.sendOtpEmail(
+            user.getEmail(),
+            user.getFirstName(),
+            otp,
+            OTP_VALIDITY_MINUTES
+        );
+
+        log.info("OTP email sent successfully to: {}", user.getEmail());
+
+        return RegistrationResponse.builder()
+            .userId(userId)
+            .message("An OTP has been sent to your email for verification.")
+            .expiresIn(OTP_VALIDITY_MINUTES * 60)
+            .build();
+    }
+
+    /**
+     * Resend OTP to user
+     */
+    @Transactional
+    public RegistrationResponse resendOtp(ResendOtpRequest request) {
+        User user = userRepository.findById(UUID.fromString(request.getUserId()))
+            .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (user.isEmailVerified()) {
+            throw new BadRequestException("Email already verified.");
+        }
+
+        // Check rate limit
+        if (!totpService.canSendOtp(request.getUserId())) {
+            long remainingSeconds = totpService.getRemainingRateLimitSeconds(request.getUserId());
+            throw new BadRequestException(
+                String.format("Please wait %d seconds before requesting another OTP", remainingSeconds)
+            );
+        }
+
+        // Generate and send new OTP
+        String otp = totpService.generateOtp(request.getUserId());
+        totpService.updateRateLimit(request.getUserId());
+
+        emailService.sendOtpEmail(
+            user.getEmail(),
+            user.getFirstName(),
+            otp,
+            OTP_VALIDITY_MINUTES
+        );
+
+        log.info("OTP resent for userId: {}", request.getUserId());
+
+        return RegistrationResponse.builder()
+            .userId(request.getUserId())
+            .message("OTP resent to your email")
+            .expiresIn(OTP_VALIDITY_MINUTES * 60)
+            .retryAfter(60L)
+            .build();
+    }
+
+    /**
+     * Verify OTP and activate user account
+     */
+    @Transactional
+    public VerificationTokenResponse verifyOtp(VerifyOtpRequest request) {
+        User user = userRepository.findById(UUID.fromString(request.getUserId()))
+            .orElseThrow(() -> new NotFoundException("User not found"));
+
+        if (user.isEmailVerified()) {
+            throw new BadRequestException("Email already verified.");
+        }
+
+        // Verify OTP
+        if (!totpService.verifyOtp(request.getUserId(), request.getOtp())) {
+            int remainingAttempts = totpService.getRemainingAttempts(request.getUserId());
+            if (remainingAttempts <= 0) {
+                throw new BadRequestException("Maximum OTP attempts exceeded. Please request a new OTP.");
+            }
+
+            throw new BadRequestException(
+                String.format("Invalid OTP. %d attempts remaining.", remainingAttempts)
+            );
+        }
+
+        // Mark email as verified and activate user
+        user.setEmailVerified(true);
+        user.setStatus(UserStatus.ACTIVE);
+        userRepository.save(user);
+
+        // Send welcome email
+        emailService.sendWelcomeEmail(user.getEmail(), user.getFirstName());
+
+        log.info("Email verified and user activated for userId: {}", user.getId());
+
+        return VerificationTokenResponse.builder()
+            .verificationToken(null)
+            .message("Email verified successfully. Your account is now active.")
+            .expiresIn(0)
+            .build();
     }
 }

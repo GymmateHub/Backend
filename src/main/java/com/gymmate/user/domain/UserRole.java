@@ -3,7 +3,7 @@ package com.gymmate.user.domain;
 public enum UserRole {
   SUPER_ADMIN,
   ADMIN,
-  GYM_OWNER,
+  OWNER,
   TRAINER,
   STAFF,
   MEMBER
