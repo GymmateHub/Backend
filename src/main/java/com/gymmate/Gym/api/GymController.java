@@ -29,25 +29,25 @@ public class GymController {
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<GymResponse>> registerGym(@Valid @RequestBody GymRegistrationRequest request) {
         Gym gym = gymService.registerGym(
-                request.getOwnerId(),
-                request.getName(),
-                request.getDescription(),
-                request.getContactEmail(),
-                request.getContactPhone()
+                request.ownerId(),
+                request.name(),
+                request.description(),
+                request.contactEmail(),
+                request.contactPhone()
         );
 
         // If address details are provided, update the address
-        if (request.getStreet() != null && request.getCity() != null &&
-                request.getState() != null && request.getPostalCode() != null &&
-                request.getCountry() != null) {
+        if (request.street() != null && request.city() != null &&
+                request.state() != null && request.postalCode() != null &&
+                request.country() != null) {
 
             gym = gymService.updateGymAddress(
                     gym.getId(),
-                    request.getStreet(),
-                    request.getCity(),
-                    request.getState(),
-                    request.getPostalCode(),
-                    request.getCountry()
+                    request.street(),
+                    request.city(),
+                    request.state(),
+                    request.postalCode(),
+                    request.country()
             );
         }
 
@@ -66,11 +66,11 @@ public class GymController {
 
         Gym gym = gymService.updateGymAddress(
                 id,
-                request.getStreet(),
-                request.getCity(),
-                request.getState(),
-                request.getPostalCode(),
-                request.getCountry()
+                request.street(),
+                request.city(),
+                request.state(),
+                request.postalCode(),
+                request.country()
         );
 
         return ResponseEntity.ok(ApiResponse.success(
@@ -89,10 +89,10 @@ public class GymController {
 
         Gym gym = gymService.updateGymDetails(
                 id,
-                request.getName(),
-                request.getDescription(),
-                request.getContactEmail(),
-                request.getContactPhone()
+                request.name(),
+                request.description(),
+                request.contactEmail(),
+                request.contactPhone()
         );
 
         return ResponseEntity.ok(ApiResponse.success(
@@ -240,7 +240,7 @@ public class GymController {
     public ResponseEntity<ApiResponse<GymResponse>> updateSubscription(
             @PathVariable UUID id,
             @Valid @RequestBody SubscriptionUpdateRequest request) {
-        Gym gym = gymService.updateSubscription(id, request.getPlan(), request.getExpiresAt());
+        Gym gym = gymService.updateSubscription(id, request.plan(), request.expiresAt());
         return ResponseEntity.ok(ApiResponse.success(GymResponse.fromEntity(gym), "Subscription updated successfully"));
     }
 
@@ -253,17 +253,17 @@ public class GymController {
             @Valid @RequestBody BusinessSettingsUpdateRequest request) {
         Gym gym = gymService.updateBusinessSettings(
                 id,
-                request.getTimezone(),
-                request.getCurrency(),
-                request.getBusinessHours()
+                request.timezone(),
+                request.currency(),
+                request.businessHours()
         );
 
-        if (request.getMaxMembers() != null) {
-            gym = gymService.updateMaxMembers(id, request.getMaxMembers());
+        if (request.maxMembers() != null) {
+            gym = gymService.updateMaxMembers(id, request.maxMembers());
         }
 
-        if (request.getFeaturesEnabled() != null) {
-            gym = gymService.updateFeatures(id, request.getFeaturesEnabled());
+        if (request.featuresEnabled() != null) {
+            gym = gymService.updateFeatures(id, request.featuresEnabled());
         }
 
         return ResponseEntity.ok(ApiResponse.success(GymResponse.fromEntity(gym), "Business settings updated successfully"));

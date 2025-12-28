@@ -49,25 +49,16 @@ public class JwtService {
   }
 
   /**
-   * Generate refresh token
-   */
-  public String generateRefreshToken(TenantAwareUserDetails userDetails) {
-    Map<String, Object> claims = new HashMap<>();
-    claims.put("userId", userDetails.getUserId().toString());
-    claims.put("gymId", userDetails.getGymId().toString());
-
-    return createToken(claims, userDetails.getUsername(), refreshExpiration);
-  }
-
-  /**
    * Generate JWT token directly from User entity with specific tenant/gym context
    */
   public String generateToken(User user, UUID gymId) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("userId", user.getId().toString());
-    claims.put("gymId", gymId != null ? gymId.toString() : null);
     claims.put("email", user.getEmail());
+    claims.put("gymId", gymId != null ? gymId.toString() : null);
     claims.put("role", user.getRole().name());
+    claims.put("emailVerified", user.isEmailVerified());
+    claims.put("tenantId", gymId != null ? gymId.toString() : null);
 
     return createToken(claims, user.getEmail(), jwtExpiration);
   }
@@ -86,8 +77,25 @@ public class JwtService {
     Map<String, Object> claims = new HashMap<>();
     claims.put("userId", user.getId().toString());
     claims.put("gymId", user.getGymId() != null ? user.getGymId().toString() : null);
+    claims.put("email", user.getEmail());
+    claims.put("role", user.getRole().name());
+    claims.put("emailVerified", user.isEmailVerified());
 
     return createToken(claims, user.getEmail(), refreshExpiration);
+  }
+
+  /**
+   * Generate refresh token
+   */
+  public String generateRefreshToken(TenantAwareUserDetails userDetails) {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("userId", userDetails.getUserId().toString());
+    claims.put("gymId", userDetails.getGymId().toString());
+    claims.put("email", userDetails.getEmail());
+    claims.put("role", userDetails.getRole());
+    claims.put("emailVerified", userDetails.isEmailVerified());
+
+    return createToken(claims, userDetails.getUsername(), refreshExpiration);
   }
 
   /**
