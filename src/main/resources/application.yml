@@ -1,6 +1,18 @@
+server:
+  port: ${APP_PORT}
+  servlet:
+    context-path: /
+  compression:
+    enabled: true
+    min-response-size: 1024
+
 spring:
   application:
-    name: gymmate-backend
+    name: gymmatehub-backend
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
   datasource:
     url: ${PG_URI}
@@ -12,6 +24,7 @@ spring:
       minimum-idle: 5
       max-lifetime: 1800000
       connection-timeout: 20000
+
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
@@ -26,11 +39,6 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     locations: classpath:db/migration
-
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
   # Redis Configuration
   data:
     redis:
@@ -54,14 +62,6 @@ spring:
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
-
-server:
-  port: ${APP_PORT}
-  servlet:
-    context-path: /
-  compression:
-    enabled: true
-    min-response-size: 1024
 
 # Actuator Configuration
 management:
@@ -126,13 +126,19 @@ file:
   max-request-size: ${FILE_MAX_REQUEST_SIZE}
 
 # External API Keys
+# Stripe Configuration
+stripe:
+  api-key: ${STRIPE_API_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  connect-webhook-secret: ${STRIPE_CONNECT_WEBHOOK_SECRET:}
+  application-fee-percent: ${STRIPE_APPLICATION_FEE_PERCENT:1.0}
 
 # App defaults
 app:
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
   admin:
     email: ${APP_ADMIN_EMAIL:admin@gymmatehub.com}
     password: ${APP_ADMIN_PASSWORD:Admin#@1357}
     firstName: ${APP_ADMIN_FIRST_NAME:System}
     lastName: ${APP_ADMIN_LAST_NAME:Admin}
-
   max-login-attempts: ${APP_MAX_LOGIN_ATTEMPTS:3}
