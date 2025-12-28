@@ -1,8 +1,8 @@
-package com.gymmate.Gym.application;
+package com.gymmate.gym.application;
 
-import com.gymmate.Gym.domain.Gym;
-import com.gymmate.Gym.infrastructure.GymRepository;
-import com.gymmate.Gym.domain.GymStatus;
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.gym.domain.GymStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.user.domain.User;
@@ -38,9 +38,9 @@ public class GymService {
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
 
-        if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN) {
-            throw new DomainException("INVALID_GYM_OWNER",
-                "Only users with ADMIN or SUPER_ADMIN role can register gyms");
+        if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN && owner.getRole() != UserRole.OWNER) {
+            throw new DomainException("INVALID_OWNER",
+                "Only users with OWNER, ADMIN or SUPER_ADMIN role can register gyms");
         }
 
         if (!owner.isActive()) {

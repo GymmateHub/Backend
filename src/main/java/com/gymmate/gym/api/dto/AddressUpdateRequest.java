@@ -1,4 +1,4 @@
-package com.gymmate.Gym.api.dto;
+package com.gymmate.gym.api.dto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
