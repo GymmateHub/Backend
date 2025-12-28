@@ -74,6 +74,7 @@ public class SecurityConfig {
                     "/api/gyms/active",  // Public listing of active gyms
                     "/api/gyms/city/**",  // Public search by city
                     "/api/users/register/gym-owner",
+                    "/api/webhooks/**",  // Stripe webhooks (signature verified internally)
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",

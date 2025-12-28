@@ -1,4 +1,7 @@
-package com.gymmate.membership.domain;
+package com.gymmate.membership.infrastructure;
+
+import com.gymmate.membership.domain.MemberMembership;
+import com.gymmate.membership.domain.MembershipStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +25,10 @@ public interface MemberMembershipRepository {
   List<MemberMembership> findByGymId(UUID gymId);
 
   List<MemberMembership> findByGymIdAndStatus(UUID gymId, MembershipStatus status);
+
+  List<MemberMembership> findByMemberIdAndGymIdAndStatusIn(UUID memberId, UUID gymId, List<MembershipStatus> statuses);
+
+  Optional<MemberMembership> findByStripeSubscriptionId(String stripeSubscriptionId);
 
   List<MemberMembership> findExpiringMemberships(UUID gymId, LocalDateTime startDate, LocalDateTime endDate);
 
