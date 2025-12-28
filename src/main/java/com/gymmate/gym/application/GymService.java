@@ -1,4 +1,4 @@
-dpackage com.gymmate.gym.application;
+package com.gymmate.gym.application;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
