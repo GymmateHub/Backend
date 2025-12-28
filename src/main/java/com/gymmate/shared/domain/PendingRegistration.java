@@ -48,7 +48,7 @@ public class PendingRegistration {
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
-  @Column(name = "expires_at", nullable = false)
+  @Column(name = "expires_at", nullable = false, updatable = false)
   private Instant expiresAt;
 
   @PrePersist
@@ -56,13 +56,11 @@ public class PendingRegistration {
     if (registrationId == null) {
       registrationId = UUID.randomUUID().toString();
     }
+    // Set createdAt in UTC (Instant.now() is always UTC)
     if (createdAt == null) {
       createdAt = Instant.now();
     }
-    if (expiresAt == null) {
-      // Expires in 24 hours
-      expiresAt = createdAt.plusSeconds(86400);
-    }
+    // Note: expiresAt must be set manually at service level before persisting
   }
 
   public boolean isExpired() {

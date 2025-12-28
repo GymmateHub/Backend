@@ -197,6 +197,13 @@ public class AuthenticationService {
     @Transactional
     public User registerUser(String email, String firstName, String lastName,
                            String plainPassword, String phone, UserRole role) {
+
+        // Prevent GYM_OWNER registration through this method
+        if (role == UserRole.GYM_OWNER) {
+            throw new DomainException("INVALID_REGISTRATION",
+                "GYM_OWNER registration must use the OTP verification flow");
+        }
+
         // Check if user already exists in current gym context
         UUID currentGymId = TenantContext.getCurrentTenantId();
         if (currentGymId != null && userRepository.findByEmailAndGymId(email, currentGymId).isPresent()) {
