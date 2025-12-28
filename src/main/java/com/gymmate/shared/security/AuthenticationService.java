@@ -77,7 +77,7 @@ public class AuthenticationService {
 
             // If email is not verified, send OTP and return partial response
             if (!user.isEmailVerified()) {
-                log.info("User login with unverified email: {} - Sending OTP", user.getEmail());
+                log.debug("User login with unverified email: {} - Sending OTP", user.getEmail());
 
                 // Generate and send OTP
                 String userId = user.getId().toString();
@@ -91,7 +91,7 @@ public class AuthenticationService {
                     5 // OTP validity in minutes
                 );
 
-                log.info("OTP sent to unverified user: {}", user.getEmail());
+                log.info("OTP sent to unverified user during login: {}", user.getEmail());
 
                 // Return response without tokens but with userId for OTP verification
                 return LoginResponse.builder()
@@ -392,22 +392,22 @@ public class AuthenticationService {
      * Send OTP to user for email verification
      */
     public RegistrationResponse sendOtpForUser(User user) {
-        log.info("sendOtpForUser called for user: {}, emailVerified: {}", user.getEmail(), user.isEmailVerified());
+        log.debug("Sending OTP for user: {}, emailVerified: {}", user.getEmail(), user.isEmailVerified());
 
         if (user.isEmailVerified()) {
             throw new BadRequestException("Email already verified.");
         }
 
         String userId = user.getId().toString();
-        log.info("Generating OTP for userId: {}", userId);
+        log.trace("Generating OTP for userId: {}", userId);
 
         String otp = totpService.generateOtp(userId);
-        log.info("OTP generated for userId: {}", userId);
+        log.trace("OTP generated for userId: {}", userId);
 
         totpService.updateRateLimit(userId);
-        log.info("Rate limit updated for userId: {}", userId);
+        log.trace("Rate limit updated for userId: {}", userId);
 
-        log.info("Sending OTP email to: {} (firstName: {})", user.getEmail(), user.getFirstName());
+        log.trace("Sending OTP email to: {} (firstName: {})", user.getEmail(), user.getFirstName());
         emailService.sendOtpEmail(
             user.getEmail(),
             user.getFirstName(),
@@ -415,7 +415,7 @@ public class AuthenticationService {
             OTP_VALIDITY_MINUTES
         );
 
-        log.info("OTP email sent successfully to: {}", user.getEmail());
+        log.info("OTP email sent to user: {}", user.getEmail());
 
         return RegistrationResponse.builder()
             .userId(userId)
@@ -455,7 +455,7 @@ public class AuthenticationService {
             OTP_VALIDITY_MINUTES
         );
 
-        log.info("OTP resent for userId: {}", request.getUserId());
+        log.info("OTP resent to user: {}", user.getEmail());
 
         return RegistrationResponse.builder()
             .userId(request.getUserId())
