@@ -36,7 +36,7 @@ public class SubscriptionController {
 
     @PostMapping
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Create a new subscription", description = "Create a subscription for a gym")
+    @Operation(summary = "Create a new subscription", description = "Create a subscription for a gym with optional Stripe billing")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> createSubscription(
             @Valid @RequestBody CreateSubscriptionRequest request) {
 
@@ -44,11 +44,17 @@ public class SubscriptionController {
         GymSubscription subscription = subscriptionService.createSubscription(
             gymId,
             request.getTierName(),
-            request.getStartTrial()
+            Boolean.TRUE.equals(request.getStartTrial()),
+            request.getPaymentMethodId(),
+            request.getEnableStripeBilling() != null ? request.getEnableStripeBilling() : true
         );
 
+        String message = Boolean.TRUE.equals(request.getStartTrial())
+            ? "Subscription created with trial period"
+            : "Subscription created successfully";
+
         return ResponseEntity.status(HttpStatus.CREATED)
-            .body(ApiResponse.success(mapper.toResponse(subscription), "Subscription created successfully"));
+            .body(ApiResponse.success(mapper.toResponse(subscription), message));
     }
 
     @GetMapping("/current")

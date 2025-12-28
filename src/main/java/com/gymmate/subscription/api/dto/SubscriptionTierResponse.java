@@ -47,5 +47,9 @@ public class SubscriptionTierResponse {
     private BigDecimal overageEmailPrice;
 
     private Integer sortOrder;
+
+    // Trial and Stripe configuration
+    private Integer trialDays;
+    private Boolean hasStripeIntegration;
 }
 
