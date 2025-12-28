@@ -3,11 +3,13 @@ package com.gymmate.shared.security;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,8 +26,33 @@ public class TotpService {
   private static final String RATE_LIMIT_KEY_PREFIX = "otp_rate:";
   private static final String OTP_ATTEMPTS_KEY_PREFIX = "otp_attempts:";
 
+  // Lua script for atomic rate limit check and update
+  private static final String RATE_LIMIT_LUA_SCRIPT = 
+      "local key = KEYS[1] " +
+      "local rate_limit_seconds = tonumber(ARGV[1]) " +
+      "local current_time = tonumber(ARGV[2]) " +
+      "local last_sent = redis.call('GET', key) " +
+      "if last_sent == false then " +
+      "  redis.call('SET', key, current_time, 'EX', rate_limit_seconds) " +
+      "  return 1 " +
+      "end " +
+      "local time_since_last = current_time - tonumber(last_sent) " +
+      "if time_since_last >= (rate_limit_seconds * 1000) then " +
+      "  redis.call('SET', key, current_time, 'EX', rate_limit_seconds) " +
+      "  return 1 " +
+      "end " +
+      "return 0";
+
   private final RedisTemplate<String, Object> redisTemplate;
   private final SecureRandom secureRandom = new SecureRandom();
+  private final DefaultRedisScript<Long> rateLimitScript;
+
+  public TotpService(RedisTemplate<String, Object> redisTemplate) {
+    this.redisTemplate = redisTemplate;
+    this.rateLimitScript = new DefaultRedisScript<>();
+    this.rateLimitScript.setScriptText(RATE_LIMIT_LUA_SCRIPT);
+    this.rateLimitScript.setResultType(Long.class);
+  }
 
   /**
    * Generate a new OTP for the given registration ID
@@ -104,8 +131,33 @@ public class TotpService {
   }
 
   /**
-   * Check if rate limit allows sending OTP
+   * Atomically check if rate limit allows sending OTP and update the timestamp if allowed.
+   * This prevents race conditions by using a Lua script to perform both operations atomically.
+   * 
+   * @param registrationId The registration ID
+   * @return true if OTP can be sent (and rate limit was updated), false otherwise
    */
+  public boolean checkAndUpdateRateLimit(String registrationId) {
+    String rateLimitKey = RATE_LIMIT_KEY_PREFIX + registrationId;
+    long currentTimeMillis = Instant.now().toEpochMilli();
+    
+    Long result = redisTemplate.execute(
+        rateLimitScript,
+        Collections.singletonList(rateLimitKey),
+        RATE_LIMIT_SECONDS,
+        currentTimeMillis
+    );
+    
+    boolean allowed = result != null && result == 1L;
+    log.debug("Rate limit check for registrationId {}: {}", registrationId, allowed ? "allowed" : "blocked");
+    return allowed;
+  }
+
+  /**
+   * Check if rate limit allows sending OTP (non-atomic, for read-only checks)
+   * @deprecated Use checkAndUpdateRateLimit() for atomic check-and-set operations
+   */
+  @Deprecated
   public boolean canSendOtp(String registrationId) {
     String rateLimitKey = RATE_LIMIT_KEY_PREFIX + registrationId;
     Long lastSentAt = (Long) redisTemplate.opsForValue().get(rateLimitKey);

@@ -436,8 +436,8 @@ public class AuthenticationService {
             throw new BadRequestException("Email already verified.");
         }
 
-        // Check rate limit
-        if (!totpService.canSendOtp(request.getUserId())) {
+        // Atomically check and update rate limit to prevent race conditions
+        if (!totpService.checkAndUpdateRateLimit(request.getUserId())) {
             long remainingSeconds = totpService.getRemainingRateLimitSeconds(request.getUserId());
             throw new BadRequestException(
                 String.format("Please wait %d seconds before requesting another OTP", remainingSeconds)
@@ -446,7 +446,6 @@ public class AuthenticationService {
 
         // Generate and send new OTP
         String otp = totpService.generateOtp(request.getUserId());
-        totpService.updateRateLimit(request.getUserId());
 
         emailService.sendOtpEmail(
             user.getEmail(),
