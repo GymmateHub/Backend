@@ -15,7 +15,6 @@ import java.util.Map;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class TotpService {
 
   private static final int OTP_LENGTH = 6;
@@ -29,16 +28,16 @@ public class TotpService {
   // Lua script for atomic rate limit check and update
   private static final String RATE_LIMIT_LUA_SCRIPT = 
       "local key = KEYS[1] " +
-      "local rate_limit_seconds = tonumber(ARGV[1]) " +
+      "local rate_limit_millis = tonumber(ARGV[1]) " +
       "local current_time = tonumber(ARGV[2]) " +
       "local last_sent = redis.call('GET', key) " +
       "if last_sent == false then " +
-      "  redis.call('SET', key, current_time, 'EX', rate_limit_seconds) " +
+      "  redis.call('SET', key, current_time, 'PX', rate_limit_millis) " +
       "  return 1 " +
       "end " +
       "local time_since_last = current_time - tonumber(last_sent) " +
-      "if time_since_last >= (rate_limit_seconds * 1000) then " +
-      "  redis.call('SET', key, current_time, 'EX', rate_limit_seconds) " +
+      "if time_since_last >= rate_limit_millis then " +
+      "  redis.call('SET', key, current_time, 'PX', rate_limit_millis) " +
       "  return 1 " +
       "end " +
       "return 0";
@@ -140,11 +139,12 @@ public class TotpService {
   public boolean checkAndUpdateRateLimit(String registrationId) {
     String rateLimitKey = RATE_LIMIT_KEY_PREFIX + registrationId;
     long currentTimeMillis = Instant.now().toEpochMilli();
+    long rateLimitMillis = RATE_LIMIT_SECONDS * 1000;
     
     Long result = redisTemplate.execute(
         rateLimitScript,
         Collections.singletonList(rateLimitKey),
-        RATE_LIMIT_SECONDS,
+        rateLimitMillis,
         currentTimeMillis
     );
     
