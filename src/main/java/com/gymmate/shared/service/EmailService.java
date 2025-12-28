@@ -48,9 +48,10 @@ public class EmailService {
         }
     }
 
-    @Async
     public void sendOtpEmail(String to, String firstName, String otp, int validityMinutes) {
         try {
+            log.info("Attempting to send OTP email to: {} with OTP: {}", to, otp);
+
             Context context = new Context();
             context.setVariable("firstName", firstName);
             context.setVariable("otp", otp);
@@ -63,13 +64,16 @@ public class EmailService {
 
             helper.setFrom(fromEmail);
             helper.setTo(to);
-            helper.setSubject("Your GymMate Verification Code");
+            helper.setSubject("Your GymMateHub Verification Code");
             helper.setText(emailContent, true);
 
             emailSender.send(message);
-            log.info("OTP email sent to: {}", to);
+            log.info("OTP email sent successfully to: {}", to);
         } catch (MessagingException e) {
             log.error("Failed to send OTP email to: {}", to, e);
+            throw new RuntimeException("Failed to send OTP email", e);
+        } catch (Exception e) {
+            log.error("Unexpected error sending OTP email to: {}", to, e);
             throw new RuntimeException("Failed to send OTP email", e);
         }
     }

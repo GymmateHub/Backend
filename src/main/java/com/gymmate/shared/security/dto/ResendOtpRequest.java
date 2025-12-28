@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class ResendOtpRequest {
 
-  @NotBlank(message = "Registration ID is required")
-  private String registrationId;
+  @NotBlank(message = "User ID is required")
+  private String userId;
 }
 
