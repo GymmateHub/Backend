@@ -1,5 +1,6 @@
 package com.gymmate.subscription.application;
 
+import com.gymmate.payment.application.StripePaymentService;
 import com.gymmate.subscription.domain.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,8 +20,24 @@ public class SubscriptionService {
     private final GymSubscriptionRepository gymSubscriptionRepository;
     private final SubscriptionTierRepository tierRepository;
     private final SubscriptionUsageRepository usageRepository;
+    private final StripePaymentService stripePaymentService;
 
     public GymSubscription createSubscription(UUID gymId, String tierName, boolean startTrial) {
+        return createSubscription(gymId, tierName, startTrial, null, true);
+    }
+
+    /**
+     * Create a subscription with optional Stripe billing integration.
+     *
+     * @param gymId              The gym ID
+     * @param tierName           The subscription tier name
+     * @param startTrial         Whether to start a trial period
+     * @param paymentMethodId    Stripe PaymentMethod ID (pm_xxx) for billing
+     * @param enableStripeBilling Whether to create subscription in Stripe
+     * @return The created subscription
+     */
+    public GymSubscription createSubscription(UUID gymId, String tierName, boolean startTrial,
+                                               String paymentMethodId, boolean enableStripeBilling) {
         // Check if gym already has a subscription
         gymSubscriptionRepository.findByGymId(gymId)
             .ifPresent(existing -> {
@@ -44,8 +61,10 @@ public class SubscriptionService {
             .build();
 
         if (startTrial) {
+            int trialDays = tier.getTrialDays() != null ? tier.getTrialDays() : 14;
             subscription.setTrialStart(now);
-            subscription.setTrialEnd(now.plusDays(14)); // 14-day trial
+            subscription.setTrialEnd(now.plusDays(trialDays));
+            subscription.setCurrentPeriodEnd(now.plusDays(trialDays)); // Trial period end
         }
 
         subscription = gymSubscriptionRepository.save(subscription);
@@ -53,7 +72,25 @@ public class SubscriptionService {
         // Create initial usage record
         createUsageRecord(subscription);
 
-        log.info("Created subscription for gym {} with tier {}", gymId, tierName);
+        // Integrate with Stripe if enabled and tier has Stripe pricing configured
+        if (enableStripeBilling && tier.getStripePriceId() != null && !tier.getStripePriceId().isBlank()) {
+            try {
+                // Attach payment method if provided
+                if (paymentMethodId != null && !paymentMethodId.isBlank()) {
+                    stripePaymentService.attachPaymentMethod(gymId, paymentMethodId, true);
+                }
+
+                // Create Stripe subscription
+                stripePaymentService.createStripeSubscription(gymId, tier, startTrial);
+                log.info("Created Stripe subscription for gym {} with tier {}", gymId, tierName);
+            } catch (Exception e) {
+                log.warn("Failed to create Stripe subscription for gym {}: {}. " +
+                         "Subscription created locally only.", gymId, e.getMessage());
+                // Continue with local subscription - Stripe can be configured later
+            }
+        }
+
+        log.info("Created subscription for gym {} with tier {} (trial: {})", gymId, tierName, startTrial);
         return subscription;
     }
 

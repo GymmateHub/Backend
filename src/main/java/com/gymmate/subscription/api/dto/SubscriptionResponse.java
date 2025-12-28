@@ -43,5 +43,13 @@ public class SubscriptionResponse {
     private Boolean isInTrial;
     private Boolean hasExceededMemberLimit;
     private Integer memberOverage;
+
+    // Stripe integration status
+    private Boolean hasStripeSubscription;
+    private Boolean hasPaymentMethod;
+
+    // Computed helper fields for frontend
+    private Long daysRemainingInTrial;
+    private Long daysUntilRenewal;
 }
 

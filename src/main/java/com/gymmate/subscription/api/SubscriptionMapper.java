@@ -8,6 +8,8 @@ import com.gymmate.subscription.domain.GymSubscription;
 import com.gymmate.subscription.domain.SubscriptionTier;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +19,22 @@ public class SubscriptionMapper {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public SubscriptionResponse toResponse(GymSubscription subscription) {
+        LocalDateTime now = LocalDateTime.now();
+
+        // Calculate days remaining in trial
+        Long daysRemainingInTrial = null;
+        if (subscription.isInTrial() && subscription.getTrialEnd() != null) {
+            daysRemainingInTrial = ChronoUnit.DAYS.between(now, subscription.getTrialEnd());
+            if (daysRemainingInTrial < 0) daysRemainingInTrial = 0L;
+        }
+
+        // Calculate days until renewal
+        Long daysUntilRenewal = null;
+        if (subscription.getCurrentPeriodEnd() != null) {
+            daysUntilRenewal = ChronoUnit.DAYS.between(now, subscription.getCurrentPeriodEnd());
+            if (daysUntilRenewal < 0) daysUntilRenewal = 0L;
+        }
+
         return SubscriptionResponse.builder()
             .id(subscription.getId())
             .gymId(subscription.getGymId())
@@ -41,6 +59,10 @@ public class SubscriptionMapper {
             .isInTrial(subscription.isInTrial())
             .hasExceededMemberLimit(subscription.hasExceededMemberLimit())
             .memberOverage(subscription.getMemberOverage())
+            .hasStripeSubscription(subscription.getStripeSubscriptionId() != null)
+            .hasPaymentMethod(subscription.getStripeCustomerId() != null)
+            .daysRemainingInTrial(daysRemainingInTrial)
+            .daysUntilRenewal(daysUntilRenewal)
             .build();
     }
 
@@ -70,6 +92,8 @@ public class SubscriptionMapper {
             .overageSmsPrice(tier.getOverageSmsPrice())
             .overageEmailPrice(tier.getOverageEmailPrice())
             .sortOrder(tier.getSortOrder())
+            .trialDays(tier.getTrialDays())
+            .hasStripeIntegration(tier.getStripePriceId() != null && !tier.getStripePriceId().isBlank())
             .build();
     }
 

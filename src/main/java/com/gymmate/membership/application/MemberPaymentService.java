@@ -182,17 +182,26 @@ public class MemberPaymentService {
 
             Subscription subscription = Subscription.create(paramsBuilder.build(), connectOptions);
 
-            // Create local membership record
+            // Create local membership record - Stripe SDK v31+ access via raw JSON
+            Long periodEnd = null;
+            try {
+                com.google.gson.JsonObject rawJson = subscription.getRawJsonObject();
+                if (rawJson.has("current_period_end") && !rawJson.get("current_period_end").isJsonNull()) {
+                    periodEnd = rawJson.get("current_period_end").getAsLong();
+                }
+            } catch (Exception e) {
+                log.warn("Failed to get period end from subscription: {}", e.getMessage());
+            }
+
+            final Long finalPeriodEnd = periodEnd;
             MemberMembership membership = MemberMembership.builder()
                     .memberId(memberId)
                     .membershipPlanId(planId)
                     .startDate(LocalDate.now())
-                    .endDate(subscription.getCurrentPeriodEnd() != null ?
-                            toLocalDate(subscription.getCurrentPeriodEnd()) : null)
+                    .endDate(finalPeriodEnd != null ? toLocalDate(finalPeriodEnd) : null)
                     .monthlyAmount(plan.getPrice())
                     .billingCycle(plan.getBillingCycle())
-                    .nextBillingDate(subscription.getCurrentPeriodEnd() != null ?
-                            toLocalDate(subscription.getCurrentPeriodEnd()) : null)
+                    .nextBillingDate(finalPeriodEnd != null ? toLocalDate(finalPeriodEnd) : null)
                     .stripeCustomerId(customerId)
                     .stripeSubscriptionId(subscription.getId())
                     .status(MembershipStatus.ACTIVE)

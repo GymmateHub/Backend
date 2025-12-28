@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -34,6 +35,7 @@ public class StripeWebhookService {
     private final GymSubscriptionRepository subscriptionRepository;
     private final GymInvoiceRepository invoiceRepository;
     private final StripeConnectService connectService;
+    private final PaymentNotificationService notificationService;
 
     /**
      * Process a platform webhook event (for gym subscriptions to GymMate).
@@ -178,26 +180,27 @@ public class StripeWebhookService {
                     // Update status
                     subscription.setStatus(mapStripeStatus(stripeSubscription.getStatus()));
 
-                    // Update period dates
-                    if (stripeSubscription.getCurrentPeriodStart() != null) {
-                        subscription.setCurrentPeriodStart(
-                                toLocalDateTime(stripeSubscription.getCurrentPeriodStart()));
+                    // Update period dates - Stripe SDK v31+ access via raw JSON object
+                    try {
+                        com.google.gson.JsonObject rawJson = stripeSubscription.getRawJsonObject();
+                        if (rawJson.has("current_period_start") && !rawJson.get("current_period_start").isJsonNull()) {
+                            subscription.setCurrentPeriodStart(toLocalDateTime(rawJson.get("current_period_start").getAsLong()));
+                        }
+                        if (rawJson.has("current_period_end") && !rawJson.get("current_period_end").isJsonNull()) {
+                            subscription.setCurrentPeriodEnd(toLocalDateTime(rawJson.get("current_period_end").getAsLong()));
+                        }
+                        if (rawJson.has("trial_start") && !rawJson.get("trial_start").isJsonNull()) {
+                            subscription.setTrialStart(toLocalDateTime(rawJson.get("trial_start").getAsLong()));
+                        }
+                        if (rawJson.has("trial_end") && !rawJson.get("trial_end").isJsonNull()) {
+                            subscription.setTrialEnd(toLocalDateTime(rawJson.get("trial_end").getAsLong()));
+                        }
+                        if (rawJson.has("cancel_at_period_end")) {
+                            subscription.setCancelAtPeriodEnd(rawJson.get("cancel_at_period_end").getAsBoolean());
+                        }
+                    } catch (Exception e) {
+                        log.warn("Failed to parse subscription period dates: {}", e.getMessage());
                     }
-                    if (stripeSubscription.getCurrentPeriodEnd() != null) {
-                        subscription.setCurrentPeriodEnd(
-                                toLocalDateTime(stripeSubscription.getCurrentPeriodEnd()));
-                    }
-
-                    // Update trial dates
-                    if (stripeSubscription.getTrialStart() != null) {
-                        subscription.setTrialStart(toLocalDateTime(stripeSubscription.getTrialStart()));
-                    }
-                    if (stripeSubscription.getTrialEnd() != null) {
-                        subscription.setTrialEnd(toLocalDateTime(stripeSubscription.getTrialEnd()));
-                    }
-
-                    // Update cancellation
-                    subscription.setCancelAtPeriodEnd(stripeSubscription.getCancelAtPeriodEnd());
 
                     subscriptionRepository.save(subscription);
                     log.info("Updated subscription {} status to {}", subscription.getId(), subscription.getStatus());
@@ -214,6 +217,12 @@ public class StripeWebhookService {
                     subscription.setCancelledAt(LocalDateTime.now());
                     subscriptionRepository.save(subscription);
                     log.info("Subscription {} marked as cancelled", subscription.getId());
+
+                    // Send cancellation notification
+                    notificationService.sendSubscriptionCancelledNotification(
+                            subscription.getGymId(),
+                            subscription.getCurrentPeriodEnd()
+                    );
                 });
     }
 
@@ -223,8 +232,9 @@ public class StripeWebhookService {
 
         subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
                 .ifPresent(subscription -> {
-                    // TODO: Send trial ending notification email
                     log.info("Trial ending soon for subscription {}", subscription.getId());
+                    // Send trial ending notification email
+                    notificationService.sendTrialEndingReminder(subscription.getGymId(), subscription);
                 });
     }
 
@@ -243,16 +253,28 @@ public class StripeWebhookService {
         invoiceRepository.save(invoice);
         log.info("Invoice {} marked as paid", stripeInvoice.getId());
 
+        // Send payment success notification
+        if (invoice.getGymId() != null) {
+            notificationService.sendPaymentSuccessNotification(invoice.getGymId(), invoice);
+        }
+
         // Update subscription status if it was past due
-        if (stripeInvoice.getSubscription() != null) {
-            subscriptionRepository.findByStripeSubscriptionId(stripeInvoice.getSubscription())
-                    .ifPresent(subscription -> {
-                        if (subscription.getStatus() == SubscriptionStatus.PAST_DUE) {
-                            subscription.setStatus(SubscriptionStatus.ACTIVE);
-                            subscriptionRepository.save(subscription);
-                            log.info("Subscription {} reactivated after payment", subscription.getId());
-                        }
-                    });
+        // In Stripe SDK v31+, access subscription via raw JSON
+        try {
+            com.google.gson.JsonObject rawJson = stripeInvoice.getRawJsonObject();
+            if (rawJson.has("subscription") && !rawJson.get("subscription").isJsonNull()) {
+                String subscriptionId = rawJson.get("subscription").getAsString();
+                subscriptionRepository.findByStripeSubscriptionId(subscriptionId)
+                        .ifPresent(subscription -> {
+                            if (subscription.getStatus() == SubscriptionStatus.PAST_DUE) {
+                                subscription.setStatus(SubscriptionStatus.ACTIVE);
+                                subscriptionRepository.save(subscription);
+                                log.info("Subscription {} reactivated after payment", subscription.getId());
+                            }
+                        });
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get subscription from invoice: {}", e.getMessage());
         }
     }
 
@@ -267,15 +289,43 @@ public class StripeWebhookService {
                     invoiceRepository.save(invoice);
                 });
 
-        // Update subscription to past_due
-        if (stripeInvoice.getSubscription() != null) {
-            subscriptionRepository.findByStripeSubscriptionId(stripeInvoice.getSubscription())
-                    .ifPresent(subscription -> {
-                        subscription.markPastDue();
-                        subscriptionRepository.save(subscription);
-                        log.warn("Subscription {} marked as past due due to payment failure", subscription.getId());
-                        // TODO: Send payment failed notification email
-                    });
+        // Update subscription to past_due and send notification
+        // In Stripe SDK v31+, access subscription via raw JSON
+        try {
+            com.google.gson.JsonObject rawJson = stripeInvoice.getRawJsonObject();
+            if (rawJson.has("subscription") && !rawJson.get("subscription").isJsonNull()) {
+                String subscriptionId = rawJson.get("subscription").getAsString();
+                subscriptionRepository.findByStripeSubscriptionId(subscriptionId)
+                        .ifPresent(subscription -> {
+                            subscription.markPastDue();
+                            subscriptionRepository.save(subscription);
+                            log.warn("Subscription {} marked as past due due to payment failure", subscription.getId());
+
+                            // Get failure reason and next retry date
+                            String failureReason = "Payment could not be processed";
+                            LocalDateTime nextRetryDate = LocalDateTime.now().plusDays(3);
+
+                            try {
+                                if (rawJson.has("next_payment_attempt") && !rawJson.get("next_payment_attempt").isJsonNull()) {
+                                    nextRetryDate = toLocalDateTime(rawJson.get("next_payment_attempt").getAsLong());
+                                }
+                            } catch (Exception ex) {
+                                log.debug("Could not parse next_payment_attempt: {}", ex.getMessage());
+                            }
+
+                            // Send payment failed notification
+                            BigDecimal amount = BigDecimal.valueOf(stripeInvoice.getAmountDue())
+                                    .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                            notificationService.sendPaymentFailedNotification(
+                                    subscription.getGymId(),
+                                    amount,
+                                    failureReason,
+                                    nextRetryDate
+                            );
+                        });
+            }
+        } catch (Exception e) {
+            log.warn("Failed to get subscription from invoice: {}", e.getMessage());
         }
     }
 
@@ -380,7 +430,7 @@ public class StripeWebhookService {
                 .gymId(gymId)
                 .stripeInvoiceId(stripeInvoice.getId())
                 .invoiceNumber(stripeInvoice.getNumber())
-                .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue()).divide(BigDecimal.valueOf(100)))
+                .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
                 .currency(stripeInvoice.getCurrency() != null ? stripeInvoice.getCurrency().toUpperCase() : "USD")
                 .status(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()))
                 .description(stripeInvoice.getDescription())
