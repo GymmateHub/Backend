@@ -1,8 +1,8 @@
-package com.gymmate.Gym.application;
+package com.gymmate.gym.application;
 
-import com.gymmate.Gym.domain.Gym;
-import com.gymmate.Gym.infrastructure.GymRepository;
-import com.gymmate.Gym.domain.GymStatus;
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.gym.domain.GymStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.user.domain.User;

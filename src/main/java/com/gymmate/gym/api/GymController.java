@@ -1,8 +1,8 @@
-package com.gymmate.Gym.api;
+package com.gymmate.gym.api;
 
-import com.gymmate.Gym.api.dto.*;
-import com.gymmate.Gym.application.GymService;
-import com.gymmate.Gym.domain.Gym;
+import com.gymmate.gym.api.dto.*;
+import com.gymmate.gym.application.GymService;
+import com.gymmate.gym.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
