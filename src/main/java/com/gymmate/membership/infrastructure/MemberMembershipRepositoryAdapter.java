@@ -1,7 +1,6 @@
 package com.gymmate.membership.infrastructure;
 
 import com.gymmate.membership.domain.MemberMembership;
-import com.gymmate.membership.domain.MemberMembershipRepository;
 import com.gymmate.membership.domain.MembershipStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -49,6 +48,16 @@ public class MemberMembershipRepositoryAdapter implements MemberMembershipReposi
   @Override
   public List<MemberMembership> findByGymIdAndStatus(UUID gymId, MembershipStatus status) {
     return jpaRepository.findByGymIdAndStatus(gymId, status);
+  }
+
+  @Override
+  public List<MemberMembership> findByMemberIdAndGymIdAndStatusIn(UUID memberId, UUID gymId, List<MembershipStatus> statuses) {
+    return jpaRepository.findByMemberIdAndGymIdAndStatusIn(memberId, gymId, statuses);
+  }
+
+  @Override
+  public Optional<MemberMembership> findByStripeSubscriptionId(String stripeSubscriptionId) {
+    return jpaRepository.findByStripeSubscriptionId(stripeSubscriptionId);
   }
 
   @Override
