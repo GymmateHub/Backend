@@ -23,12 +23,12 @@ public class AuthController {
   @PostMapping("/register")
   public ResponseEntity<ApiResponse<UserResponse>> registerUser(@Valid @RequestBody UserRegistrationRequest request) {
     User user = authenticationService.registerUser(
-      request.getEmail(),
-      request.getFirstName(),
-      request.getLastName(),
-      request.getPassword(),
-      request.getPhone(),
-      request.getRole()
+      request.email(),
+      request.firstName(),
+      request.lastName(),
+      request.password(),
+      request.phone(),
+      request.role()
     );
 
     UserResponse response = UserResponse.fromEntity(user);
@@ -42,11 +42,11 @@ public class AuthController {
   @PostMapping("/register/member")
   public ResponseEntity<ApiResponse<UserResponse>> registerMember(@Valid @RequestBody UserRegistrationRequest request) {
     User user = authenticationService.registerMember(
-      request.getEmail(),
-      request.getFirstName(),
-      request.getLastName(),
-      request.getPassword(),
-      request.getPhone()
+      request.email(),
+      request.firstName(),
+      request.lastName(),
+      request.password(),
+      request.phone()
     );
 
     UserResponse response = UserResponse.fromEntity(user);
@@ -60,11 +60,11 @@ public class AuthController {
   @PostMapping("/register/gym-admin")
   public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(@Valid @RequestBody UserRegistrationRequest request) {
     User user = authenticationService.registerGymAdmin(
-      request.getEmail(),
-      request.getFirstName(),
-      request.getLastName(),
-      request.getPassword(),
-      request.getPhone()
+      request.email(),
+      request.firstName(),
+      request.lastName(),
+      request.password(),
+      request.phone()
     );
 
     UserResponse response = UserResponse.fromEntity(user);

@@ -70,7 +70,11 @@ public class SecurityConfig {
                     "/error",
                     "/api/auth/**",
                     "/api/gyms/register",
+                    "/api/gyms",  // Public listing of all gyms
+                    "/api/gyms/active",  // Public listing of active gyms
+                    "/api/gyms/city/**",  // Public search by city
                     "/api/users/register/gym-owner",
+                    "/api/webhooks/**",  // Stripe webhooks (signature verified internally)
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html",
@@ -82,8 +86,8 @@ public class SecurityConfig {
                 // Super Admin only endpoints
                 .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
 
-                // Admin and Super Admin endpoints
-                .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN")
+                // Admin and Super Admin endpoints (for gym management)
+                .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "GYM_OWNER")
 
                 // Trainer endpoints
                 .requestMatchers("/api/classes/**").hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN")
