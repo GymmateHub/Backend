@@ -1,4 +1,6 @@
-package com.gymmate.membership.domain;
+package com.gymmate.membership.infrastructure;
+
+import com.gymmate.membership.domain.MembershipPlan;
 
 import java.util.List;
 import java.util.Optional;
