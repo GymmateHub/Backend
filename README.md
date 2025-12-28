@@ -2,6 +2,15 @@
 
 GymMateHub is a modular monolith built with Spring Boot, designed to provide a comprehensive gym management system. It organizes features into cohesive modules while maintaining a single deployable unit for simplicity and speed during MVP development.
 
+## 📢 Recent Updates
+
+### ✅ November 20, 2025 - Tenant Context Fix
+- **Fixed**: GET `/api/gyms` endpoint now works correctly (was returning 403 Forbidden)
+- **Updated**: SecurityConfig to properly handle public gym listing endpoints
+- **Enhanced**: TenantFilter for better public endpoint handling
+
+👉 **For technical details, testing, and implementation gaps**: See `TECHNICAL_NOTES.md`
+
 ## Tech Stack
 
 - **Java**: 21
@@ -76,6 +85,23 @@ The application will start on `http://localhost:8080`
 - `run.sh`: Starts the application
 - `stop.sh`: Stops the running application
 - `test_api.sh`: Runs API tests
+
+## Documentation
+
+### Technical Documentation
+📘 **[TECHNICAL_NOTES.md](docs/TECHNICAL_NOTES.md)** - **Start here for technical details**
+- Recent bug fixes and changes
+- Known issues and solutions
+- Implementation gaps and roadmap
+- Testing guidelines
+- Technical decisions
+- API documentation
+- Development troubleshooting
+
+### Business Documentation
+- 📋 **[BRD](docs/gymmate_brd.md)** - Business Requirements Document
+- 🗂️ **[Schema](docs/gymmate_schema.md)** - Database schema
+- 📖 **[Comprehensive Spec](docs/gymmate_comprehensive_spec.md)** - Detailed specifications
 
 ## Key Features
 

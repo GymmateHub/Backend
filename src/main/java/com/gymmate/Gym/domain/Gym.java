@@ -97,6 +97,22 @@ public class Gym extends BaseAuditEntity {
   @Column(name = "max_members")
   private Integer maxMembers = 200;
 
+  // Stripe Connect fields for receiving member payments
+  @Column(name = "stripe_connect_account_id")
+  private String stripeConnectAccountId;
+
+  @Column(name = "stripe_charges_enabled")
+  private Boolean stripeChargesEnabled = false;
+
+  @Column(name = "stripe_payouts_enabled")
+  private Boolean stripePayoutsEnabled = false;
+
+  @Column(name = "stripe_details_submitted")
+  private Boolean stripeDetailsSubmitted = false;
+
+  @Column(name = "stripe_onboarding_completed_at")
+  private LocalDateTime stripeOnboardingCompletedAt;
+
   // Features enabled
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "features_enabled", columnDefinition = "jsonb")
