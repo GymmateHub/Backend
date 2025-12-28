@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to GymMate</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 600;
+        }
+        .header p {
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333333;
+            font-weight: 600;
+        }
+        .message {
+            font-size: 16px;
+            color: #555555;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+        .features {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 30px 0;
+        }
+        .features h2 {
+            margin-top: 0;
+            color: #667eea;
+            font-size: 20px;
+        }
+        .feature-item {
+            margin: 15px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .feature-item:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #28a745;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #666666;
+            border-top: 1px solid #e9ecef;
+        }
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏋️ Welcome to GymMate!</h1>
+            <p>Your journey to fitness management excellence starts here</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hi <span th:text="${firstName}">User</span>! 🎉</p>
+
+            <p class="message">
+                Congratulations on successfully registering with GymMate! We're thrilled to have you
+                on board as a gym owner. Your account has been created and you're ready to start
+                managing your gym operations with ease.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://localhost:8100/swagger-ui.html" class="cta-button">
+                    Get Started
+                </a>
+            </div>
+
+            <div class="features">
+                <h2>What's Next?</h2>
+                <div class="feature-item">
+                    <strong>Set up your gym:</strong> Add your gym details, operating hours, and facilities
+                </div>
+                <div class="feature-item">
+                    <strong>Create membership plans:</strong> Design flexible plans that suit your members
+                </div>
+                <div class="feature-item">
+                    <strong>Add staff & trainers:</strong> Build your team and assign roles
+                </div>
+                <div class="feature-item">
+                    <strong>Schedule classes:</strong> Set up class schedules and manage bookings
+                </div>
+                <div class="feature-item">
+                    <strong>Track analytics:</strong> Monitor your gym's performance with detailed insights
+                </div>
+            </div>
+
+            <p class="message">
+                If you have any questions or need assistance getting started, our support team is
+                here to help. Don't hesitate to reach out!
+            </p>
+
+            <p class="message" style="margin-top: 30px;">
+                <strong>Best regards,</strong><br>
+                The GymMate Team
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                Need help? Contact us at
+                <a href="mailto:support@gymmatehub.com">support@gymmatehub.com</a>
+            </p>
+            <p style="margin-top: 10px;">
+                Follow us:
+                <a href="#">Twitter</a> |
+                <a href="#">Facebook</a> |
+                <a href="#">LinkedIn</a>
+            </p>
+            <p style="margin-top: 15px; color: #999999;">
+                © 2025 GymMate. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+

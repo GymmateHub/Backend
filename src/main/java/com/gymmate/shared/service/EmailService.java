@@ -47,4 +47,55 @@ public class EmailService {
             throw new RuntimeException("Failed to send password reset email", e);
         }
     }
+
+    @Async
+    public void sendOtpEmail(String to, String firstName, String otp, int validityMinutes) {
+        try {
+            Context context = new Context();
+            context.setVariable("firstName", firstName);
+            context.setVariable("otp", otp);
+            context.setVariable("validityMinutes", validityMinutes);
+
+            String emailContent = templateEngine.process("registration-otp", context);
+
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("Your GymMate Verification Code");
+            helper.setText(emailContent, true);
+
+            emailSender.send(message);
+            log.info("OTP email sent to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send OTP email to: {}", to, e);
+            throw new RuntimeException("Failed to send OTP email", e);
+        }
+    }
+
+    @Async
+    public void sendWelcomeEmail(String to, String firstName) {
+        try {
+            Context context = new Context();
+            context.setVariable("firstName", firstName);
+
+            String emailContent = templateEngine.process("welcome", context);
+
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("Welcome to GymMate!");
+            helper.setText(emailContent, true);
+
+            emailSender.send(message);
+            log.info("Welcome email sent to: {}", to);
+        } catch (MessagingException e) {
+            log.error("Failed to send welcome email to: {}", to, e);
+            // Don't throw exception for welcome email - it's not critical
+            log.warn("Continuing despite welcome email failure");
+        }
+    }
 }

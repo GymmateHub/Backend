@@ -1,4 +1,4 @@
-package com.gymmate.Gym.domain;
+package com.gymmate.gym.domain;
 
 import com.gymmate.shared.domain.BaseAuditEntity;
 import com.gymmate.shared.exception.DomainException;
