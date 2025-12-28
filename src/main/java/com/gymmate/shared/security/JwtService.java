@@ -276,7 +276,7 @@ public class JwtService {
     claims.put("registrationId", registrationId);
     claims.put("type", "verification");
 
-    long expiryMillis = expiryMinutes * 60 * 1000L;
+    long expiryMillis = expiryMinutes * 60_000L;
     return createToken(claims, email, expiryMillis);
   }
 
