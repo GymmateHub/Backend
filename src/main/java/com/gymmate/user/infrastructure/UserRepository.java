@@ -32,4 +32,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     // Gym-based queries
     List<User> findByGymId(UUID gymId);
+
+    // Count queries for analytics
+    long countByGymIdAndRole(UUID gymId, UserRole role);
+    long countByGymIdAndRoleAndStatus(UUID gymId, UserRole role, UserStatus status);
 }
