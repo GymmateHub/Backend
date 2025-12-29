@@ -1,5 +1,7 @@
-package com.gymmate.payment.domain;
+package com.gymmate.payment.infrastructure;
 
+import com.gymmate.payment.domain.GymInvoice;
+import com.gymmate.payment.domain.InvoiceStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

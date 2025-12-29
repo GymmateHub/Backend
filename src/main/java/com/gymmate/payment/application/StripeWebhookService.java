@@ -1,10 +1,11 @@
 package com.gymmate.payment.application;
 
 import com.gymmate.payment.domain.*;
+import com.gymmate.payment.infrastructure.*;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.subscription.domain.GymSubscription;
-import com.gymmate.subscription.domain.GymSubscriptionRepository;
+import com.gymmate.subscription.infrastructure.GymSubscriptionRepository;
 import com.gymmate.subscription.domain.SubscriptionStatus;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.*;
