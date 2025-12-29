@@ -18,6 +18,14 @@ public class ClassResponse {
   private BigDecimal price;
   private Integer creditsRequired;
 
+  // extra fields
+  private String skillLevel;
+  private String ageRestriction;
+  private String[] equipmentNeeded;
+  private String imageUrl;
+  private String videoUrl;
+  private String instructions;
+
   public static ClassResponse from(GymClass gc) {
     ClassResponse r = new ClassResponse();
     r.id = gc.getId();
@@ -29,7 +37,12 @@ public class ClassResponse {
     r.capacity = gc.getCapacity();
     r.price = gc.getPrice();
     r.creditsRequired = gc.getCreditsRequired();
+    r.skillLevel = gc.getSkillLevel();
+    r.ageRestriction = gc.getAgeRestriction();
+    r.equipmentNeeded = gc.getEquipmentNeeded();
+    r.imageUrl = gc.getImageUrl();
+    r.videoUrl = gc.getVideoUrl();
+    r.instructions = gc.getInstructions();
     return r;
   }
 }
-

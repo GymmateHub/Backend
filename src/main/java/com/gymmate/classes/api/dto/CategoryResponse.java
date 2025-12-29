@@ -12,6 +12,7 @@ public class CategoryResponse {
   private String name;
   private String description;
   private String color;
+  private String icon;
 
   public static CategoryResponse from(ClassCategory c) {
     CategoryResponse r = new CategoryResponse();
@@ -20,7 +21,7 @@ public class CategoryResponse {
     r.name = c.getName();
     r.description = c.getDescription();
     r.color = c.getColor();
+    r.icon = c.getIcon();
     return r;
   }
 }
-
