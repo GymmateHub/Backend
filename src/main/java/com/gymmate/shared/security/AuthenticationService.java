@@ -21,7 +21,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +32,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthenticationService {
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final PasswordService passwordService;
     private final JwtService jwtService;
     private final PasswordResetTokenRepository resetTokenRepository;
@@ -47,6 +45,9 @@ public class AuthenticationService {
     @Value("${app.password-reset.expiration-minutes:30}")
     private int passwordResetExpirationMinutes;
 
+    @Value("${FRONTEND_URL:http://localhost:3000}")
+    private String frontendUrl;
+
     /**
      * Authenticate user and generate JWT tokens.
      * Uses Spring Security's AuthenticationManager for proper authentication.
@@ -54,6 +55,17 @@ public class AuthenticationService {
     @Transactional
     public LoginResponse authenticate(LoginRequest request) {
         try {
+            log.debug("Attempting authentication for user: {}", request.getEmail());
+
+            // Fetch user first for debugging
+            User user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new BadCredentialsException("User not found"));
+
+            log.debug("User found - ID: {}, email: {}, passwordHash exists: {}",
+                user.getId(), user.getEmail(), user.getPasswordHash() != null);
+            log.debug("Password verification test: {}",
+                passwordService.matches(request.getPassword(), user.getPasswordHash()));
+
             // Use AuthenticationManager to authenticate the user
             Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -65,9 +77,6 @@ public class AuthenticationService {
             // Get the authenticated user details
             TenantAwareUserDetails userDetails = (TenantAwareUserDetails) authentication.getPrincipal();
 
-            // Fetch the full user entity
-            User user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new BadCredentialsException("User not found"));
 
             // Check if account is active (but allow INACTIVE users with unverified email to proceed)
             if (user.getStatus() != UserStatus.ACTIVE && user.getStatus() != UserStatus.INACTIVE) {
@@ -149,7 +158,7 @@ public class AuthenticationService {
         resetTokenRepository.save(resetToken);
 
         // Send reset email
-        String resetLink = String.format("%s/reset-password?token=%s", "https://your-frontend-url", token);
+        String resetLink = String.format("%s/reset-password?token=%s", frontendUrl, token);
         emailService.sendPasswordResetEmail(user.getEmail(), user.getFirstName(), resetLink);
     }
 
@@ -164,8 +173,11 @@ public class AuthenticationService {
         }
 
         User user = resetToken.getUser();
-        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
-        userRepository.save(user);
+        String oldPasswordHash = user.getPasswordHash();
+        String newPasswordHash = passwordService.encode(request.getNewPassword());
+
+        user.setPasswordHash(newPasswordHash);
+        User savedUser = userRepository.save(user);
 
         resetTokenRepository.delete(resetToken);
     }
