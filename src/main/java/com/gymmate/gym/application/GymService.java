@@ -1,17 +1,20 @@
 package com.gymmate.gym.application;
 
+import com.gymmate.gym.api.dto.GymAnalyticsResponse;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.gym.domain.GymStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.user.domain.User;
+import com.gymmate.user.domain.UserStatus;
 import com.gymmate.user.infrastructure.UserRepository;
 import com.gymmate.user.domain.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -31,12 +34,10 @@ public class GymService {
      * Register a new gym with the system.
      */
     @Transactional
-    public Gym registerGym(UUID ownerId, String name, String description,
-                          String contactEmail, String contactPhone) {
-
+    public Gym registerGym(com.gymmate.gym.api.dto.GymRegistrationRequest request) {
         // Validate that the owner exists and has the correct role
-        User owner = userRepository.findById(ownerId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
+        User owner = userRepository.findById(request.ownerId())
+                .orElseThrow(() -> new ResourceNotFoundException("User", request.ownerId().toString()));
 
         if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN && owner.getRole() != UserRole.OWNER) {
             throw new DomainException("INVALID_OWNER",
@@ -49,7 +50,32 @@ public class GymService {
         }
 
         // Create gym with required fields
-        Gym gym = new Gym(name, description, contactEmail, contactPhone, ownerId);
+        Gym gym = new Gym(request.name(), request.description(), request.contactEmail(),
+                         request.contactPhone(), request.ownerId());
+
+        // Set optional fields
+        if (request.website() != null) {
+            gym.setWebsite(request.website());
+        }
+        if (request.logoUrl() != null) {
+            gym.setLogoUrl(request.logoUrl());
+        }
+        if (request.timezone() != null) {
+            gym.setTimezone(request.timezone());
+        }
+        if (request.currency() != null) {
+            gym.setCurrency(request.currency());
+        }
+        if (request.maxMembers() != null) {
+            gym.setMaxMembers(request.maxMembers());
+        }
+
+        // Set address if provided
+        if (request.street() != null || request.city() != null || request.state() != null ||
+            request.postalCode() != null || request.country() != null) {
+            gym.updateAddress(request.street(), request.city(), request.state(),
+                            request.country(), request.postalCode());
+        }
 
         // Save and return
         return gymRepository.save(gym);
@@ -75,13 +101,37 @@ public class GymService {
     }
 
     /**
-     * Update gym details without address.
+     * Update gym details with all fields including address.
      */
     @Transactional
-    public Gym updateGymDetails(UUID id, String name, String description,
-                              String contactEmail, String contactPhone) {
+    public Gym updateGymDetails(UUID id, com.gymmate.gym.api.dto.GymUpdateRequest request) {
         Gym gym = getGymById(id);
-        gym.updateDetails(name, description, contactEmail, contactPhone, null);
+
+        // Update basic details
+        gym.updateDetails(request.name(), request.description(), request.contactEmail(),
+                         request.contactPhone(), request.website());
+
+        // Update address if provided
+        if (request.street() != null || request.city() != null || request.state() != null ||
+            request.postalCode() != null || request.country() != null) {
+            gym.updateAddress(request.street(), request.city(), request.state(),
+                            request.country(), request.postalCode());
+        }
+
+        // Update other fields
+        if (request.logoUrl() != null) {
+            gym.setLogoUrl(request.logoUrl());
+        }
+        if (request.timezone() != null) {
+            gym.setTimezone(request.timezone());
+        }
+        if (request.currency() != null) {
+            gym.setCurrency(request.currency());
+        }
+        if (request.maxMembers() != null) {
+            gym.setMaxMembers(request.maxMembers());
+        }
+
         return gymRepository.save(gym);
     }
 
@@ -238,5 +288,113 @@ public class GymService {
         Gym gym = getGymById(id);
         gym.setWebsite(website);
         return gymRepository.save(gym);
+    }
+
+    /**
+     * Get analytics for all gyms owned by a specific user.
+     * This is a SaaS multi-tenant method that aggregates data across all gyms owned by the user.
+     */
+    public GymAnalyticsResponse getOwnerAnalytics(UUID ownerId) {
+        // Validate owner exists
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
+
+        // Get all gyms owned by this user
+        List<Gym> ownedGyms = gymRepository.findByOwnerId(ownerId);
+
+        // Calculate total gyms
+        int totalGyms = ownedGyms.size();
+
+        // Calculate active locations (gyms with ACTIVE status)
+        long activeLocations = ownedGyms.stream()
+                .filter(gym -> gym.getStatus() == GymStatus.ACTIVE)
+                .count();
+
+        // Calculate total capacity across all gyms
+        int totalCapacity = ownedGyms.stream()
+                .mapToInt(gym -> gym.getMaxMembers() != null ? gym.getMaxMembers() : 0)
+                .sum();
+
+        // Calculate total members, staff, and trainers across all gyms
+        int totalMembers = 0;
+        int totalActiveMembers = 0;
+        int totalStaff = 0;
+        int totalTrainers = 0;
+
+        for (Gym gym : ownedGyms) {
+            totalMembers += userRepository.countByGymIdAndRole(gym.getId(), UserRole.MEMBER);
+            totalActiveMembers += userRepository.countByGymIdAndRoleAndStatus(
+                gym.getId(), UserRole.MEMBER, UserStatus.ACTIVE);
+            totalStaff += userRepository.countByGymIdAndRole(gym.getId(), UserRole.STAFF);
+            totalTrainers += userRepository.countByGymIdAndRole(gym.getId(), UserRole.TRAINER);
+        }
+
+        // Calculate average utilization across all gyms
+        double avgUtilization = 0.0;
+        if (totalCapacity > 0) {
+            avgUtilization = (totalMembers * 100.0) / totalCapacity;
+        }
+
+        // TODO: Calculate total revenue this month (requires payment/subscription integration)
+        BigDecimal totalRevenue = BigDecimal.ZERO;
+
+        return GymAnalyticsResponse.builder()
+                .totalGyms(totalGyms)
+                .activeLocations((int) activeLocations)
+                .totalCapacity(totalCapacity)
+                .avgUtilization(Math.round(avgUtilization * 100.0) / 100.0) // Round to 2 decimal places
+                .totalRevenue(totalRevenue)
+                .totalMembers(totalMembers)
+                .totalActiveMembers(totalActiveMembers)
+                .totalStaff(totalStaff)
+                .totalTrainers(totalTrainers)
+                .build();
+    }
+
+    /**
+     * Get analytics for a specific gym owned by a user.
+     * Validates that the gym belongs to the owner before returning analytics.
+     */
+    public GymAnalyticsResponse getGymAnalytics(UUID gymId, UUID ownerId) {
+        // Get gym and verify ownership
+        Gym gym = getGymById(gymId);
+
+        if (!gym.getOwnerId().equals(ownerId)) {
+            throw new DomainException("ACCESS_DENIED",
+                "You do not have permission to view analytics for this gym");
+        }
+
+        // Calculate gym-specific metrics
+        long currentMembers = userRepository.countByGymIdAndRole(gymId, UserRole.MEMBER);
+        long activeMembers = userRepository.countByGymIdAndRoleAndStatus(
+            gymId, UserRole.MEMBER, UserStatus.ACTIVE);
+        long staff = userRepository.countByGymIdAndRole(gymId, UserRole.STAFF);
+        long trainers = userRepository.countByGymIdAndRole(gymId, UserRole.TRAINER);
+
+        int maxMembers = gym.getMaxMembers() != null ? gym.getMaxMembers() : 0;
+        double utilization = 0.0;
+        if (maxMembers > 0) {
+            utilization = (currentMembers * 100.0) / maxMembers;
+        }
+
+        // TODO: Calculate revenue for this gym this month
+        BigDecimal gymRevenue = BigDecimal.ZERO;
+
+        return GymAnalyticsResponse.builder()
+                .gymId(gymId)
+                .gymName(gym.getName())
+                .totalGyms(1)
+                .activeLocations(gym.getStatus() == GymStatus.ACTIVE ? 1 : 0)
+                .totalCapacity(maxMembers)
+                .avgUtilization(Math.round(utilization * 100.0) / 100.0)
+                .totalRevenue(gymRevenue)
+                .totalMembers((int) currentMembers)
+                .totalActiveMembers((int) activeMembers)
+                .totalStaff((int) staff)
+                .totalTrainers((int) trainers)
+                .currentMembers((int) currentMembers)
+                .maxMembers(maxMembers)
+                .utilizationPercentage(Math.round(utilization * 100.0) / 100.0)
+                .build();
     }
 }
