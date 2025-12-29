@@ -1,6 +1,7 @@
 package com.gymmate.subscription.application;
 
 import com.gymmate.subscription.domain.*;
+import com.gymmate.subscription.infrastructure.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
