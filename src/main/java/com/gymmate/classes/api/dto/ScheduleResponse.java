@@ -20,6 +20,11 @@ public class ScheduleResponse {
   private BigDecimal priceOverride;
   private String status;
 
+  // extra fields
+  private String cancellationReason;
+  private String instructorNotes;
+  private String adminNotes;
+
   public static ScheduleResponse from(ClassSchedule s) {
     ScheduleResponse r = new ScheduleResponse();
     r.id = s.getId();
@@ -32,7 +37,9 @@ public class ScheduleResponse {
     r.capacityOverride = s.getCapacityOverride();
     r.priceOverride = s.getPriceOverride();
     r.status = s.getStatus() == null ? null : s.getStatus().name();
+    r.cancellationReason = s.getCancellationReason();
+    r.instructorNotes = s.getInstructorNotes();
+    r.adminNotes = s.getAdminNotes();
     return r;
   }
 }
-
