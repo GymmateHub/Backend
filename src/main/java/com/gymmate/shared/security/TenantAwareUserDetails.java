@@ -78,6 +78,7 @@ public class TenantAwareUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return active;
+        // Allow login if active OR if inactive but email not verified (to allow OTP verification)
+        return active || !emailVerified;
     }
 }
