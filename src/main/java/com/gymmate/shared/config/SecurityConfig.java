@@ -87,7 +87,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
 
                 // Admin and Super Admin endpoints (for gym management)
-                .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "GYM_OWNER")
+                .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "OWNER")
 
                 // Trainer endpoints
                 .requestMatchers("/api/classes/**").hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN")

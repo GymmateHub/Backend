@@ -125,7 +125,7 @@ src/main/java/com/gymmate/
 - `GymMateApplication.java` - Loads `.env`, starts app
 - `shared/config/SecurityConfig.java` - Security + JWT config
 - `shared/exception/GlobalExceptionHandler.java` - Exception handling
-- `user/domain/User.java` - User entity (roles: SUPER_ADMIN, GYM_OWNER, STAFF, TRAINER, MEMBER)
+- `user/domain/User.java` - User entity (roles: SUPER_ADMIN, OWNER, STAFF, TRAINER, MEMBER)
 
 ## CI/CD Pipeline
 
