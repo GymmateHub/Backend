@@ -32,7 +32,7 @@ public class MembershipPlanController {
   private final MembershipPlanService membershipPlanService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('GYM_OWNER', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
   @Operation(summary = "Create membership plan", description = "Create a new membership plan for a gym")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> createPlan(
     @RequestParam UUID gymId,
@@ -100,7 +100,7 @@ public class MembershipPlanController {
   }
 
   @PutMapping("/{planId}/pricing")
-  @PreAuthorize("hasAnyRole('GYM_OWNER', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
   @Operation(summary = "Update plan pricing", description = "Update pricing for a membership plan")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> updatePricing(
     @PathVariable UUID planId,
@@ -116,7 +116,7 @@ public class MembershipPlanController {
   }
 
   @PutMapping("/{planId}/features")
-  @PreAuthorize("hasAnyRole('GYM_OWNER', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
   @Operation(summary = "Update plan features", description = "Update features for a membership plan")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> updateFeatures(
     @PathVariable UUID planId,
@@ -133,7 +133,7 @@ public class MembershipPlanController {
   }
 
   @PutMapping("/{planId}/featured")
-  @PreAuthorize("hasAnyRole('GYM_OWNER', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
   @Operation(summary = "Set plan as featured", description = "Mark a plan as featured or not featured")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> setFeatured(
     @PathVariable UUID planId,
@@ -144,7 +144,7 @@ public class MembershipPlanController {
   }
 
   @DeleteMapping("/{planId}")
-  @PreAuthorize("hasAnyRole('GYM_OWNER', 'SUPER_ADMIN')")
+  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
   @Operation(summary = "Deactivate plan", description = "Deactivate a membership plan (soft delete)")
   public ResponseEntity<ApiResponse<Void>> deactivatePlan(@PathVariable UUID planId) {
     membershipPlanService.deactivatePlan(planId);

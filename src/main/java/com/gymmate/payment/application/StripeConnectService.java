@@ -1,7 +1,7 @@
 package com.gymmate.payment.application;
 
-import com.gymmate.Gym.domain.Gym;
-import com.gymmate.Gym.infrastructure.GymRepository;
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.payment.api.dto.ConnectAccountStatusResponse;
 import com.gymmate.payment.api.dto.ConnectOnboardingResponse;
 import com.gymmate.shared.config.StripeConfig;

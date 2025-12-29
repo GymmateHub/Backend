@@ -267,4 +267,36 @@ public class JwtService {
       return Keys.hmacShaKeyFor(keyBytes);
     }
   }
+
+  /**
+   * Generate short-lived verification token for email verification
+   */
+  public String generateVerificationToken(String registrationId, String email, int expiryMinutes) {
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("registrationId", registrationId);
+    claims.put("type", "verification");
+
+    long expiryMillis = expiryMinutes * 60_000L;
+    return createToken(claims, email, expiryMillis);
+  }
+
+  /**
+   * Validate verification token and extract claims
+   */
+  public Claims validateVerificationToken(String token) {
+    Claims claims = extractAllClaims(token);
+
+    // Verify token type
+    String type = claims.get("type", String.class);
+    if (!"verification".equals(type)) {
+      throw new IllegalArgumentException("Invalid token type");
+    }
+
+    // Verify not expired
+    if (isTokenExpired(token)) {
+      throw new IllegalArgumentException("Verification token has expired");
+    }
+
+    return claims;
+  }
 }
