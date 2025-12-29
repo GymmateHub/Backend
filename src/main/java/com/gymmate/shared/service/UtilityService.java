@@ -13,10 +13,7 @@ import java.security.SecureRandom;
 import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -137,6 +134,10 @@ public abstract class UtilityService {
   public static LocalDateTime toLocalDateTime(Date date) {
     if (date == null) return null;
     return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+  }
+
+  public LocalDateTime secondsToLocalDateTime(Long epochSeconds) {
+    return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSeconds), ZoneId.systemDefault());
   }
 
   public static Date toDate(LocalDate localDate) {
@@ -740,5 +741,12 @@ public abstract class UtilityService {
     double met = metValues.getOrDefault(activityType.toLowerCase(), 5.0);
     // Calories = MET × weight (kg) × duration (hours)
     return (int) (met * weightKg * (durationMinutes / 60.0));
+  }
+
+  // ==================== Gym-Specific Utilities ====================
+
+  // =================== OTP Utilities ===================
+  public static String generateOTP() {
+    return String.format("%06d", new Random().nextInt(900000) + 100000);
   }
 }

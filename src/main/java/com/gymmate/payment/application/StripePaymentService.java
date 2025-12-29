@@ -2,13 +2,15 @@ package com.gymmate.payment.application;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.payment.api.dto.InvoiceResponse;
-import com.gymmate.payment.api.dto.PaymentMethodResponse;
+import com.gymmate.payment.api.dto.*;
 import com.gymmate.payment.domain.*;
+import com.gymmate.payment.infrastructure.*;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
+import com.gymmate.gym.application.GymService;
+import com.gymmate.shared.service.UtilityService;
 import com.gymmate.subscription.domain.GymSubscription;
-import com.gymmate.subscription.domain.GymSubscriptionRepository;
+import com.gymmate.subscription.infrastructure.GymSubscriptionRepository;
 import com.gymmate.subscription.domain.SubscriptionTier;
 import com.stripe.exception.StripeException;
 import com.stripe.model.*;
@@ -40,13 +42,16 @@ public class StripePaymentService {
     private final GymSubscriptionRepository subscriptionRepository;
     private final GymPaymentMethodRepository paymentMethodRepository;
     private final GymInvoiceRepository invoiceRepository;
+    private final PaymentRefundRepository refundRepository;
+    private final UtilityService utilityService;
+    private final GymService gymService;
 
     /**
      * Create a Stripe customer for a gym.
      */
     @Transactional
     public String createOrGetStripeCustomer(UUID gymId) {
-        Gym gym = getGym(gymId);
+        Gym gym = gymService.getGymById(gymId);
         GymSubscription subscription = getSubscription(gymId);
 
         // Return existing customer ID if present
@@ -299,13 +304,199 @@ public class StripePaymentService {
         }
     }
 
-    // Helper methods
+  /**
+     * Process a refund for a payment.
+     *
+     * @param gymId The gym ID requesting the refund
+     * @param request The refund request containing payment intent ID, amount, and reason
+     * @return RefundResponse with refund details
+     */
+    @Transactional
+    public RefundResponse processRefund(UUID gymId, RefundRequest request) {
+        validateStripeConfigured();
 
-    private Gym getGym(UUID gymId) {
-        return gymRepository.findById(gymId)
-                .orElseThrow(() -> new DomainException("GYM_NOT_FOUND", "Gym not found"));
+        // Verify the gym exists
+      gymService.getGymById(gymId);
+
+        try {
+            // Retrieve the payment intent to verify it exists and get details
+            PaymentIntent paymentIntent = PaymentIntent.retrieve(request.getPaymentIntentId());
+
+            // Verify the payment intent is in a refundable state
+            if (!"succeeded".equals(paymentIntent.getStatus())) {
+                throw new DomainException("PAYMENT_NOT_REFUNDABLE",
+                    "Payment cannot be refunded. Current status: " + paymentIntent.getStatus());
+            }
+
+            // Build refund parameters
+            RefundCreateParams.Builder refundParamsBuilder = RefundCreateParams.builder()
+                    .setPaymentIntent(request.getPaymentIntentId())
+                    .putMetadata("gym_id", gymId.toString())
+                    .putMetadata("requested_by", "gym_admin");
+
+            // Set amount if partial refund (convert dollars to cents)
+            if (request.getAmount() != null) {
+                long amountInCents = request.getAmount()
+                        .multiply(BigDecimal.valueOf(100))
+                        .longValue();
+
+                // Validate amount doesn't exceed original payment
+                if (amountInCents > paymentIntent.getAmount()) {
+                    throw new DomainException("REFUND_AMOUNT_EXCEEDS_PAYMENT",
+                        "Refund amount cannot exceed the original payment amount");
+                }
+
+                refundParamsBuilder.setAmount(amountInCents);
+            }
+
+            // Set reason if provided
+            if (request.getReason() != null && !request.getReason().isBlank()) {
+                // Map to Stripe's allowed reason values or use metadata
+                RefundCreateParams.Reason stripeReason = mapToStripeReason(request.getReason());
+                if (stripeReason != null) {
+                    refundParamsBuilder.setReason(stripeReason);
+                }
+                refundParamsBuilder.putMetadata("custom_reason", request.getReason());
+            }
+
+            // Create the refund
+            Refund refund = Refund.create(refundParamsBuilder.build());
+
+            log.info("Created refund {} for payment intent {} (gym: {})",
+                refund.getId(), request.getPaymentIntentId(), gymId);
+
+            // Convert amount from cents to dollars
+            BigDecimal refundAmount = BigDecimal.valueOf(refund.getAmount())
+                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+
+            // Save refund record for audit and analytics
+            PaymentRefund paymentRefund = saveRefundRecord(gymId, refund, request);
+
+            return RefundResponse.builder()
+                    .refundId(refund.getId())
+                    .paymentIntentId(request.getPaymentIntentId())
+                    .amount(refundAmount)
+                    .currency(refund.getCurrency().toUpperCase())
+                    .status(refund.getStatus())
+                    .reason(request.getReason())
+                    .createdAt(utilityService.secondsToLocalDateTime(refund.getCreated()))
+                    .build();
+
+        } catch (StripeException e) {
+            log.error("Failed to process refund for payment intent {}: {}",
+                request.getPaymentIntentId(), e.getMessage());
+            throw new DomainException("STRIPE_REFUND_FAILED",
+                "Failed to process refund: " + e.getMessage());
+        }
     }
 
+    /**
+     * Save a refund record to the database for audit and analytics.
+     */
+    private PaymentRefund saveRefundRecord(UUID gymId, Refund stripeRefund, RefundRequest request) {
+        // Check if refund already exists (idempotency)
+        return refundRepository.findByStripeRefundId(stripeRefund.getId())
+                .orElseGet(() -> {
+                    BigDecimal amount = BigDecimal.valueOf(stripeRefund.getAmount())
+                            .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP);
+
+                    // Try to find subscription for this gym
+                    UUID subscriptionId = subscriptionRepository.findByGymId(gymId)
+                            .map(GymSubscription::getId)
+                            .orElse(null);
+
+                    PaymentRefund refundRecord = PaymentRefund.builder()
+                            .gymId(gymId)
+                            .stripeRefundId(stripeRefund.getId())
+                            .stripePaymentIntentId(request.getPaymentIntentId())
+                            .stripeChargeId(stripeRefund.getCharge())
+                            .amount(amount)
+                            .currency(stripeRefund.getCurrency() != null ? stripeRefund.getCurrency().toUpperCase() : "USD")
+                            .status(RefundStatus.fromStripeStatus(stripeRefund.getStatus()))
+                            .reason(stripeRefund.getReason())
+                            .customReason(request.getReason())
+                            .subscriptionId(subscriptionId)
+                            .requestedByType("user")
+                            .receiptNumber(stripeRefund.getReceiptNumber())
+                            .stripeCreatedAt(utilityService.secondsToLocalDateTime(stripeRefund.getCreated()))
+                            .build();
+
+                    PaymentRefund saved = refundRepository.save(refundRecord);
+                    log.info("Saved refund record {} for Stripe refund {}", saved.getId(), stripeRefund.getId());
+                    return saved;
+                });
+    }
+
+    /**
+     * Get refund history for a gym.
+     *
+     * @param gymId The gym ID
+     * @return List of refund responses
+     */
+    @Transactional(readOnly = true)
+    public List<RefundResponse> getRefundHistory(UUID gymId) {
+        List<PaymentRefund> refunds = refundRepository.findByGymIdOrderByCreatedAtDesc(gymId);
+        return refunds.stream()
+                .map(this::toRefundResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get a specific refund by ID.
+     *
+     * @param gymId The gym ID (for authorization)
+     * @param refundId The refund ID
+     * @return RefundResponse
+     */
+    @Transactional(readOnly = true)
+    public RefundResponse getRefund(UUID gymId, UUID refundId) {
+        PaymentRefund refund = refundRepository.findById(refundId)
+                .orElseThrow(() -> new DomainException("REFUND_NOT_FOUND", "Refund not found"));
+
+        // Verify the refund belongs to this gym
+        if (!refund.getGymId().equals(gymId)) {
+            throw new DomainException("REFUND_ACCESS_DENIED", "This refund does not belong to your gym");
+        }
+
+        return toRefundResponse(refund);
+    }
+
+    /**
+     * Convert PaymentRefund entity to RefundResponse DTO.
+     */
+    private RefundResponse toRefundResponse(PaymentRefund refund) {
+        return RefundResponse.builder()
+                .refundId(refund.getStripeRefundId())
+                .paymentIntentId(refund.getStripePaymentIntentId())
+                .amount(refund.getAmount())
+                .currency(refund.getCurrency())
+                .status(refund.getStatus().name().toLowerCase())
+                .reason(refund.getCustomReason() != null ? refund.getCustomReason() : refund.getReason())
+                .createdAt(refund.getStripeCreatedAt())
+                .build();
+    }
+
+    /**
+     * Map custom reason string to Stripe's allowed reason values.
+     */
+    private RefundCreateParams.Reason mapToStripeReason(String reason) {
+        if (reason == null) {
+            return null;
+        }
+
+        String lowerReason = reason.toLowerCase();
+        if (lowerReason.contains("duplicate")) {
+            return RefundCreateParams.Reason.DUPLICATE;
+        } else if (lowerReason.contains("fraud")) {
+            return RefundCreateParams.Reason.FRAUDULENT;
+        } else if (lowerReason.contains("request") || lowerReason.contains("customer")) {
+            return RefundCreateParams.Reason.REQUESTED_BY_CUSTOMER;
+        }
+
+        return null; // Will not set a Stripe reason, but custom_reason metadata is preserved
+    }
+
+    // Helper methods
     private GymSubscription getSubscription(UUID gymId) {
         return subscriptionRepository.findByGymId(gymId)
                 .orElseThrow(() -> new DomainException("SUBSCRIPTION_NOT_FOUND",
@@ -344,29 +535,25 @@ public class StripePaymentService {
                             .gymId(gymId)
                             .stripeInvoiceId(stripeInvoice.getId())
                             .invoiceNumber(stripeInvoice.getNumber())
-                            .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue()).divide(BigDecimal.valueOf(100)))
+                            .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue()).divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP))
                             .currency(stripeInvoice.getCurrency().toUpperCase())
                             .status(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()))
                             .description(stripeInvoice.getDescription())
                             .periodStart(stripeInvoice.getPeriodStart() != null ?
-                                toLocalDateTime(stripeInvoice.getPeriodStart()) : null)
+                              utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodStart()) : null)
                             .periodEnd(stripeInvoice.getPeriodEnd() != null ?
-                                toLocalDateTime(stripeInvoice.getPeriodEnd()) : null)
+                              utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodEnd()) : null)
                             .dueDate(stripeInvoice.getDueDate() != null ?
-                                toLocalDateTime(stripeInvoice.getDueDate()) : null)
+                              utilityService.secondsToLocalDateTime(stripeInvoice.getDueDate()) : null)
                             .paidAt(stripeInvoice.getStatusTransitions() != null &&
                                     stripeInvoice.getStatusTransitions().getPaidAt() != null ?
-                                toLocalDateTime(stripeInvoice.getStatusTransitions().getPaidAt()) : null)
+                              utilityService.secondsToLocalDateTime(stripeInvoice.getStatusTransitions().getPaidAt()) : null)
                             .invoicePdfUrl(stripeInvoice.getInvoicePdf())
                             .hostedInvoiceUrl(stripeInvoice.getHostedInvoiceUrl())
                             .build();
 
                     return invoiceRepository.save(invoice);
                 });
-    }
-
-    private LocalDateTime toLocalDateTime(Long epochSeconds) {
-        return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSeconds), ZoneId.systemDefault());
     }
 
     private PaymentMethodResponse toPaymentMethodResponse(GymPaymentMethod method) {

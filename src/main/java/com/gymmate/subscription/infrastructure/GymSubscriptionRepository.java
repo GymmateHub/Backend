@@ -1,5 +1,7 @@
-package com.gymmate.subscription.domain;
+package com.gymmate.subscription.infrastructure;
 
+import com.gymmate.subscription.domain.GymSubscription;
+import com.gymmate.subscription.domain.SubscriptionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
