@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
-public abstract class UtilityService {
+public class UtilityService {
   public static final String DATE_FORMAT = "yyyy-MM-dd";
   public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
   public static final String TIME_FORMAT = "HH:mm:ss";
