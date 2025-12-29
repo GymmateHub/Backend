@@ -43,5 +43,19 @@ public record GymRegistrationRequest(
 
     @NotBlank(message = "Contact phone is required")
     @Size(max = 20, message = "Phone number must not exceed 20 characters")
-    String contactPhone
+    String contactPhone,
+
+    @Size(max = 500, message = "Website URL must not exceed 500 characters")
+    String website,
+
+    @Size(max = 500, message = "Logo URL must not exceed 500 characters")
+    String logoUrl,
+
+    @Size(max = 50, message = "Timezone must not exceed 50 characters")
+    String timezone,
+
+    @Size(min = 3, max = 3, message = "Currency must be a 3-letter code (e.g., USD, EUR)")
+    String currency,
+
+    Integer maxMembers
 ) {}
