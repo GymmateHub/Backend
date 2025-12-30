@@ -208,9 +208,9 @@ public class MemberPaymentService {
                     .classCreditsRemaining(plan.getClassCredits())
                     .guestPassesRemaining(plan.getGuestPasses())
                     .trainerSessionsRemaining(plan.getTrainerSessions())
+                    .gymId(gymId)
                     .build();
 
-            membership.setGymId(gymId);
             membershipRepository.save(membership);
 
             log.info("Created membership {} with Stripe subscription {} for member {} at gym {}",
@@ -317,9 +317,9 @@ public class MemberPaymentService {
                 .classCreditsRemaining(plan.getClassCredits())
                 .guestPassesRemaining(plan.getGuestPasses())
                 .trainerSessionsRemaining(plan.getTrainerSessions())
+                .gymId(gymId)
                 .build();
 
-        membership.setGymId(gymId);
         return membershipRepository.save(membership);
     }
 
@@ -336,9 +336,9 @@ public class MemberPaymentService {
                 .expiryMonth(card != null ? card.getExpMonth().intValue() : null)
                 .expiryYear(card != null ? card.getExpYear().intValue() : null)
                 .isDefault(isDefault)
+                .gymId(gymId)
                 .build();
 
-        method.setGymId(gymId);
         return paymentMethodRepository.save(method);
     }
 

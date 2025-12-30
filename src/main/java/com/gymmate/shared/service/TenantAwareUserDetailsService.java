@@ -31,25 +31,25 @@ public class TenantAwareUserDetailsService implements UserDetailsService {
     // The actual tenant filtering happens during JWT token generation
 
     throw new UnsupportedOperationException(
-      "Use loadUserByUsernameAndGymId for tenant-aware authentication"
+      "Use loadUserByUsernameAndOrganisationId for tenant-aware authentication"
     );
   }
 
   /**
-   * Load user with explicit gym context (tenant-aware)
+   * Load user with explicit organisation context (tenant-aware)
    */
-  public TenantAwareUserDetails loadUserByUsernameAndGymId(String email, UUID gymId)
+  public TenantAwareUserDetails loadUserByUsernameAndOrganisationId(String email, UUID organisationId)
     throws UsernameNotFoundException {
-    log.debug("Loading user by email: {} for gym: {}", email, gymId);
+    log.debug("Loading user by email: {} for organisation: {}", email, organisationId);
 
-    User user = userRepository.findByEmailAndGymId(email, gymId)
+    User user = userRepository.findByEmailAndOrganisationId(email, organisationId)
       .orElseThrow(() -> new UsernameNotFoundException(
-        "User not found with email: " + email + " for gym: " + gymId
+        "User not found with email: " + email + " for organisation: " + organisationId
       ));
 
     return new TenantAwareUserDetails(
       user.getId(),
-      user.getGymId(),
+      user.getOrganisationId(),
       user.getEmail(),
       user.getPasswordHash(),
       user.getRole().name(),
