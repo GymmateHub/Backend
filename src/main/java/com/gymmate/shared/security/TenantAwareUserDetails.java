@@ -15,7 +15,7 @@ public class TenantAwareUserDetails implements UserDetails {
     private final UUID userId;
     private final String email;
     private final String password;
-    private final UUID gymId;
+    private final UUID organisationId;
     private final String role;
     private final boolean emailVerified;
     private final Collection<? extends GrantedAuthority> authorities;
@@ -25,7 +25,7 @@ public class TenantAwareUserDetails implements UserDetails {
         this.userId = user.getId();
         this.email = user.getEmail();
         this.password = user.getPasswordHash();
-        this.gymId = user.getGymId();
+        this.organisationId = user.getOrganisationId();
         this.role = user.getRole().name();
         this.emailVerified = user.isEmailVerified();
         this.authorities = Collections.singletonList(
@@ -35,11 +35,11 @@ public class TenantAwareUserDetails implements UserDetails {
     }
 
     // Alternate constructor used by TenantAwareUserDetailsService
-    public TenantAwareUserDetails(UUID userId, UUID gymId, String email, String password, String role, boolean active, boolean emailVerified) {
+    public TenantAwareUserDetails(UUID userId, UUID organisationId, String email, String password, String role, boolean active, boolean emailVerified) {
         this.userId = userId;
         this.email = email;
         this.password = password;
-        this.gymId = gymId;
+        this.organisationId = organisationId;
         this.role = role;
         this.emailVerified = emailVerified;
         this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));

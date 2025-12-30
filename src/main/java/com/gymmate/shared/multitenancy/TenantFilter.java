@@ -2,6 +2,7 @@ package com.gymmate.shared.multitenancy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.security.JwtService;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -26,13 +27,16 @@ import java.util.UUID;
 public class TenantFilter extends OncePerRequestFilter {
 
     private final ObjectMapper objectMapper;
+    private final JwtService jwtService;
 
     // Endpoints that don't require tenant context
     private static final List<String> NON_TENANT_ENDPOINTS = Arrays.asList(
         "/api/auth",
-        "/api/gyms",
         "/api/gyms/register",
+        "/api/gyms/my-gyms",
         "/api/users/register",
+        "/api/users/verify-otp",
+        "/api/users/resend-otp",
         "/v3/api-docs",
         "/swagger-ui",
         "/actuator"
@@ -57,15 +61,27 @@ public class TenantFilter extends OncePerRequestFilter {
                     && authentication.getPrincipal() instanceof TenantAwareUserDetails) {
 
                 TenantAwareUserDetails userDetails = (TenantAwareUserDetails) authentication.getPrincipal();
-                UUID tenantId = userDetails.getGymId();
+                UUID organisationId = userDetails.getOrganisationId();
 
-                if (tenantId != null) {
-                    log.debug("Setting tenant context for gym: {}", tenantId);
-                    TenantContext.setCurrentTenantId(tenantId);
+                if (organisationId != null) {
+                    log.debug("Setting tenant context for organisation: {}", organisationId);
+                    TenantContext.setCurrentTenantId(organisationId);
+
+                    // Try to extract gym context from JWT if present
+                    String authHeader = request.getHeader("Authorization");
+                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                        String token = authHeader.substring(7);
+                        UUID gymId = jwtService.extractGymId(token);
+                        if (gymId != null) {
+                            TenantContext.setCurrentGymId(gymId);
+                            log.debug("Setting gym context: {}", gymId);
+                        }
+                    }
+
                     filterChain.doFilter(request, response);
                 } else {
-                    log.warn("Authenticated user {} has no gym/tenant assigned", userDetails.getUsername());
-                    handleNoTenantError(response);
+                    log.warn("Authenticated user {} has no organisation/tenant assigned", userDetails.getUsername());
+                    handleNoTenantError(response, userDetails.getUsername());
                 }
             } else {
                 // For unauthenticated or non-tenant-aware requests, proceed without tenant context
@@ -82,11 +98,17 @@ public class TenantFilter extends OncePerRequestFilter {
         return NON_TENANT_ENDPOINTS.stream().anyMatch(requestPath::startsWith);
     }
 
-    private void handleNoTenantError(HttpServletResponse response) throws IOException {
+    private void handleNoTenantError(HttpServletResponse response, String username) throws IOException {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
-        ApiResponse<?> apiResponse = ApiResponse.error("No tenant context available");
+        String message = String.format(
+            "Organisation context required. User '%s' is not associated with any organisation. " +
+            "Please contact support or complete organisation setup.",
+            username
+        );
+
+        ApiResponse<?> apiResponse = ApiResponse.error(message);
         objectMapper.writeValue(response.getWriter(), apiResponse);
     }
 }

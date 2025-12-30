@@ -21,6 +21,9 @@ public class Member extends BaseAuditEntity {
   @Column(name = "user_id", nullable = false)
   private UUID userId;
 
+  @Column(name = "gym_id", nullable = false)
+  private UUID gymId;
+
   @Column(name = "membership_number", unique = true, length = 50)
   private String membershipNumber;
 
