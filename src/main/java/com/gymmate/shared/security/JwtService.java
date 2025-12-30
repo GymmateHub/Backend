@@ -223,10 +223,10 @@ public class JwtService {
     }
 
     final String username = extractUserName(token);
-    final UUID gymId = extractGymId(token);
+    final UUID organisationId = extractOrganisationId(token);
 
     return (username.equals(userDetails.getUsername()) &&
-      gymId.equals(userDetails.getGymId()) &&
+      organisationId != null && organisationId.equals(userDetails.getOrganisationId()) &&
       !isTokenExpired(token));
   }
 
