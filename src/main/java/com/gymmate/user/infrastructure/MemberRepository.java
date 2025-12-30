@@ -20,6 +20,11 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
     Optional<Member> findByUserId(UUID userId);
     boolean existsByUserId(UUID userId);
 
+    // Gym queries
+    List<Member> findByGymId(UUID gymId);
+    long countByGymId(UUID gymId);
+    long countByGymIdAndStatus(UUID gymId, MemberStatus status);
+
     // Membership number lookup
     Optional<Member> findByMembershipNumber(String membershipNumber);
     boolean existsByMembershipNumber(String membershipNumber);

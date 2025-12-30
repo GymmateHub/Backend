@@ -34,14 +34,14 @@ public class JwtService {
   private long refreshExpiration;
 
   /**
-   * Generate JWT token with user details and gym context
+   * Generate JWT token with user details and organisation context
    */
   public String generateToken(TenantAwareUserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("userId", userDetails.getUserId().toString());
     claims.put("email", userDetails.getUsername());
-    claims.put("tenantId", userDetails.getGymId().toString());
-    claims.put("gymId", userDetails.getGymId().toString());
+    claims.put("organisationId", userDetails.getOrganisationId() != null ? userDetails.getOrganisationId().toString() : null);
+    claims.put("tenantId", userDetails.getOrganisationId() != null ? userDetails.getOrganisationId().toString() : null);
     claims.put("role", userDetails.getRole());
     claims.put("emailVerified", userDetails.isEmailVerified());
 
@@ -49,25 +49,26 @@ public class JwtService {
   }
 
   /**
-   * Generate JWT token directly from User entity with specific tenant/gym context
+   * Generate JWT token directly from User entity with specific gym context
    */
-  public String generateToken(User user, UUID gymId) {
+  public String generateToken(User user, UUID currentGymId) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("userId", user.getId().toString());
     claims.put("email", user.getEmail());
-    claims.put("gymId", gymId != null ? gymId.toString() : null);
+    claims.put("organisationId", user.getOrganisationId() != null ? user.getOrganisationId().toString() : null);
+    claims.put("tenantId", user.getOrganisationId() != null ? user.getOrganisationId().toString() : null);
+    claims.put("gymId", currentGymId != null ? currentGymId.toString() : null);
     claims.put("role", user.getRole().name());
     claims.put("emailVerified", user.isEmailVerified());
-    claims.put("tenantId", gymId != null ? gymId.toString() : null);
 
     return createToken(claims, user.getEmail(), jwtExpiration);
   }
 
   /**
-   * Generate JWT token directly from User entity (uses user's associated gymId)
+   * Generate JWT token directly from User entity (no gym context)
    */
   public String generateToken(User user) {
-    return generateToken(user, user.getGymId());
+    return generateToken(user, null);
   }
 
   /**
@@ -76,7 +77,8 @@ public class JwtService {
   public String generateRefreshToken(User user) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("userId", user.getId().toString());
-    claims.put("gymId", user.getGymId() != null ? user.getGymId().toString() : null);
+    claims.put("organisationId", user.getOrganisationId() != null ? user.getOrganisationId().toString() : null);
+    claims.put("tenantId", user.getOrganisationId() != null ? user.getOrganisationId().toString() : null);
     claims.put("email", user.getEmail());
     claims.put("role", user.getRole().name());
     claims.put("emailVerified", user.isEmailVerified());
@@ -90,7 +92,8 @@ public class JwtService {
   public String generateRefreshToken(TenantAwareUserDetails userDetails) {
     Map<String, Object> claims = new HashMap<>();
     claims.put("userId", userDetails.getUserId().toString());
-    claims.put("gymId", userDetails.getGymId().toString());
+    claims.put("organisationId", userDetails.getOrganisationId() != null ? userDetails.getOrganisationId().toString() : null);
+    claims.put("tenantId", userDetails.getOrganisationId() != null ? userDetails.getOrganisationId().toString() : null);
     claims.put("email", userDetails.getEmail());
     claims.put("role", userDetails.getRole());
     claims.put("emailVerified", userDetails.isEmailVerified());
@@ -142,7 +145,26 @@ public class JwtService {
       // Fallback to tenantId if gymId claim doesn't exist (for backward compatibility)
       gymId = extractClaim(token, claims -> claims.get("tenantId", String.class));
     }
-    return gymId != null ? UUID.fromString(gymId) : null;
+    return gymId != null && !"null".equals(gymId) ? UUID.fromString(gymId) : null;
+  }
+
+  /**
+   * Extract organisation ID (tenant ID) from token
+   */
+  public UUID extractOrganisationId(String token) {
+    String orgId = extractClaim(token, claims -> claims.get("organisationId", String.class));
+    if (orgId == null) {
+      // Fallback to tenantId if organisationId claim doesn't exist
+      orgId = extractClaim(token, claims -> claims.get("tenantId", String.class));
+    }
+    return orgId != null && !"null".equals(orgId) ? UUID.fromString(orgId) : null;
+  }
+
+  /**
+   * Extract tenant ID from token (alias for extractOrganisationId)
+   */
+  public UUID extractTenantId(String token) {
+    return extractOrganisationId(token);
   }
 
   /**
