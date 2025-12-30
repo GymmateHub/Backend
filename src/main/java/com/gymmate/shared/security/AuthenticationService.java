@@ -257,11 +257,11 @@ public class AuthenticationService {
                 "OWNER registration must use the OTP verification flow");
         }
 
-        // Check if user already exists in current gym context
-        UUID currentGymId = TenantContext.getCurrentTenantId();
-        if (currentGymId != null && userRepository.findByEmailAndGymId(email, currentGymId).isPresent()) {
+        // Check if user already exists in current organisation context
+        UUID currentOrganisationId = TenantContext.getCurrentTenantId();
+        if (currentOrganisationId != null && userRepository.findByEmailAndOrganisationId(email, currentOrganisationId).isPresent()) {
             throw new DomainException("USER_ALREADY_EXISTS",
-                "A user with email '" + email + "' already exists in this gym");
+                "A user with email '" + email + "' already exists in this organisation");
         }
 
         // For ADMIN role (gym owners/admins), check system-wide unique email

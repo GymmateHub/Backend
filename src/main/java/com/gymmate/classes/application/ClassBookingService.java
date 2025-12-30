@@ -66,10 +66,9 @@ public class ClassBookingService {
       .memberId(memberId)
       .classScheduleId(scheduleId)
       .memberNotes(memberNotes)
+      .gymId(gymId)
       .build();
 
-    // Set the gymId to ensure proper tenant isolation
-    booking.setGymId(gymId);
 
     if (hasSpace) {
       booking.setStatus(BookingStatus.CONFIRMED);

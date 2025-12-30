@@ -70,9 +70,9 @@ public class MembershipService {
       .status(MembershipStatus.ACTIVE)
       .autoRenew(true)
       .frozen(false)
+      .gymId(gymId)
       .build();
 
-    membership.setGymId(gymId);
     return membershipRepository.save(membership);
   }
 
