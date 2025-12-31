@@ -17,31 +17,31 @@ import java.util.UUID;
 @Transactional
 public class SubscriptionService {
 
-    private final GymSubscriptionRepository gymSubscriptionRepository;
+    private final SubscriptionRepository SubscriptionRepository;
     private final SubscriptionTierRepository tierRepository;
     private final SubscriptionUsageRepository usageRepository;
     private final StripePaymentService stripePaymentService;
 
-    public GymSubscription createSubscription(UUID gymId, String tierName, boolean startTrial) {
-        return createSubscription(gymId, tierName, startTrial, null, true);
+    public Subscription createSubscription(UUID organisationId, String tierName, boolean startTrial) {
+        return createSubscription(organisationId, tierName, startTrial, null, true);
     }
 
     /**
      * Create a subscription with optional Stripe billing integration.
      *
-     * @param gymId              The gym ID
+     * @param organisationId     The organisation ID
      * @param tierName           The subscription tier name
      * @param startTrial         Whether to start a trial period
      * @param paymentMethodId    Stripe PaymentMethod ID (pm_xxx) for billing
      * @param enableStripeBilling Whether to create subscription in Stripe
      * @return The created subscription
      */
-    public GymSubscription createSubscription(UUID gymId, String tierName, boolean startTrial,
+    public Subscription createSubscription(UUID organisationId, String tierName, boolean startTrial,
                                                String paymentMethodId, boolean enableStripeBilling) {
-        // Check if gym already has a subscription
-        gymSubscriptionRepository.findByGymId(gymId)
+        // Check if organisation already has a subscription
+        SubscriptionRepository.findByOrganisationId(organisationId)
             .ifPresent(existing -> {
-                throw new IllegalStateException("Gym already has an active subscription");
+                throw new IllegalStateException("Organisation already has an active subscription");
             });
 
         SubscriptionTier tier = tierRepository.findByName(tierName)
@@ -50,8 +50,8 @@ public class SubscriptionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime periodEnd = now.plusMonths(1);
 
-        GymSubscription subscription = GymSubscription.builder()
-            .gymId(gymId)
+        Subscription subscription = Subscription.builder()
+            .organisationId(organisationId)
             .tier(tier)
             .status(startTrial ? SubscriptionStatus.TRIAL : SubscriptionStatus.ACTIVE)
             .currentPeriodStart(now)
@@ -67,7 +67,7 @@ public class SubscriptionService {
             subscription.setCurrentPeriodEnd(now.plusDays(trialDays)); // Trial period end
         }
 
-        subscription = gymSubscriptionRepository.save(subscription);
+        subscription = SubscriptionRepository.save(subscription);
 
         // Create initial usage record
         createUsageRecord(subscription);
@@ -77,30 +77,30 @@ public class SubscriptionService {
             try {
                 // Attach payment method if provided
                 if (paymentMethodId != null && !paymentMethodId.isBlank()) {
-                    stripePaymentService.attachPaymentMethod(gymId, paymentMethodId, true);
+                    stripePaymentService.attachPaymentMethod(organisationId, paymentMethodId, true);
                 }
 
                 // Create Stripe subscription
-                stripePaymentService.createStripeSubscription(gymId, tier, startTrial);
-                log.info("Created Stripe subscription for gym {} with tier {}", gymId, tierName);
+                stripePaymentService.createStripeSubscription(organisationId, tier, startTrial);
+                log.info("Created Stripe subscription for organisation {} with tier {}", organisationId, tierName);
             } catch (Exception e) {
-                log.warn("Failed to create Stripe subscription for gym {}: {}. " +
-                         "Subscription created locally only.", gymId, e.getMessage());
+                log.warn("Failed to create Stripe subscription for organisation {}: {}. " +
+                         "Subscription created locally only.", organisationId, e.getMessage());
                 // Continue with local subscription - Stripe can be configured later
             }
         }
 
-        log.info("Created subscription for gym {} with tier {} (trial: {})", gymId, tierName, startTrial);
+        log.info("Created subscription for organisation {} with tier {} (trial: {})", organisationId, tierName, startTrial);
         return subscription;
     }
 
-    public GymSubscription getGymSubscription(UUID gymId) {
-        return gymSubscriptionRepository.findByGymId(gymId)
-            .orElseThrow(() -> new IllegalArgumentException("No subscription found for gym: " + gymId));
+    public Subscription getSubscription(UUID organisationId) {
+        return SubscriptionRepository.findByOrganisationId(organisationId)
+            .orElseThrow(() -> new IllegalArgumentException("No subscription found for organisation: " + organisationId));
     }
 
-    public GymSubscription upgradeSubscription(UUID gymId, String newTierName) {
-        GymSubscription subscription = getGymSubscription(gymId);
+    public Subscription upgradeSubscription(UUID organisationId, String newTierName) {
+        Subscription subscription = getSubscription(organisationId);
         SubscriptionTier newTier = tierRepository.findByName(newTierName)
             .orElseThrow(() -> new IllegalArgumentException("Subscription tier not found: " + newTierName));
 
@@ -109,14 +109,14 @@ public class SubscriptionService {
         }
 
         subscription.upgradeTier(newTier);
-        gymSubscriptionRepository.save(subscription);
+        SubscriptionRepository.save(subscription);
 
-        log.info("Upgraded subscription for gym {} to tier {}", gymId, newTierName);
+        log.info("Upgraded subscription for organisation {} to tier {}", organisationId, newTierName);
         return subscription;
     }
 
-    public GymSubscription downgradeSubscription(UUID gymId, String newTierName) {
-        GymSubscription subscription = getGymSubscription(gymId);
+    public Subscription downgradeSubscription(UUID organisationId, String newTierName) {
+        Subscription subscription = getSubscription(organisationId);
         SubscriptionTier newTier = tierRepository.findByName(newTierName)
             .orElseThrow(() -> new IllegalArgumentException("Subscription tier not found: " + newTierName));
 
@@ -133,14 +133,14 @@ public class SubscriptionService {
         }
 
         subscription.upgradeTier(newTier);
-        gymSubscriptionRepository.save(subscription);
+        SubscriptionRepository.save(subscription);
 
-        log.info("Downgraded subscription for gym {} to tier {}", gymId, newTierName);
+        log.info("Downgraded subscription for organisation {} to tier {}", organisationId, newTierName);
         return subscription;
     }
 
-    public GymSubscription cancelSubscription(UUID gymId, boolean immediate) {
-        GymSubscription subscription = getGymSubscription(gymId);
+    public Subscription cancelSubscription(UUID organisationId, boolean immediate) {
+        Subscription subscription = getSubscription(organisationId);
 
         if (immediate) {
             subscription.setStatus(SubscriptionStatus.CANCELLED);
@@ -149,14 +149,14 @@ public class SubscriptionService {
             subscription.cancelAtPeriodEnd();
         }
 
-        gymSubscriptionRepository.save(subscription);
+        SubscriptionRepository.save(subscription);
 
-        log.info("Cancelled subscription for gym {} (immediate: {})", gymId, immediate);
+        log.info("Cancelled subscription for organisation {} (immediate: {})", organisationId, immediate);
         return subscription;
     }
 
-    public GymSubscription reactivateSubscription(UUID gymId) {
-        GymSubscription subscription = getGymSubscription(gymId);
+    public Subscription reactivateSubscription(UUID organisationId) {
+        Subscription subscription = getSubscription(organisationId);
 
         if (subscription.getStatus() == SubscriptionStatus.CANCELLED) {
             throw new IllegalStateException("Cannot reactivate a cancelled subscription. Please create a new subscription.");
@@ -164,16 +164,16 @@ public class SubscriptionService {
 
         subscription.reactivate();
         subscription.activate();
-        gymSubscriptionRepository.save(subscription);
+        SubscriptionRepository.save(subscription);
 
-        log.info("Reactivated subscription for gym {}", gymId);
+        log.info("Reactivated subscription for organisation {}", organisationId);
         return subscription;
     }
 
-    public void updateMemberCount(UUID gymId, Integer memberCount) {
-        GymSubscription subscription = getGymSubscription(gymId);
+    public void updateMemberCount(UUID organisationId, Integer memberCount) {
+        Subscription subscription = getSubscription(organisationId);
         subscription.updateMemberCount(memberCount);
-        gymSubscriptionRepository.save(subscription);
+        SubscriptionRepository.save(subscription);
 
         // Update current usage record
         SubscriptionUsage usage = getCurrentUsage(subscription.getId());
@@ -182,13 +182,13 @@ public class SubscriptionService {
 
         // Check if upgrade notification is needed
         if (usage.needsUpgradeNotification()) {
-            log.warn("Gym {} should consider upgrading - overage cost exceeds 50% of base cost", gymId);
+            log.warn("Organisation {} should consider upgrading - overage cost exceeds 50% of base cost", organisationId);
             // TODO: Send notification
         }
     }
 
-    public void renewSubscription(UUID gymId) {
-        GymSubscription subscription = getGymSubscription(gymId);
+    public void renewSubscription(UUID organisationId) {
+        Subscription subscription = getSubscription(organisationId);
 
         LocalDateTime newStart = subscription.getCurrentPeriodEnd();
         LocalDateTime newEnd = newStart.plusMonths(1);
@@ -199,12 +199,12 @@ public class SubscriptionService {
             subscription.setStatus(SubscriptionStatus.CANCELLED);
         }
 
-        gymSubscriptionRepository.save(subscription);
+        SubscriptionRepository.save(subscription);
 
         // Create new usage record for new period
         createUsageRecord(subscription);
 
-        log.info("Renewed subscription for gym {}", gymId);
+        log.info("Renewed subscription for organisation {}", organisationId);
     }
 
     public List<SubscriptionTier> getAllActiveTiers() {
@@ -225,7 +225,7 @@ public class SubscriptionService {
         return usageRepository.findByGymId(gymId);
     }
 
-    private void createUsageRecord(GymSubscription subscription) {
+    private void createUsageRecord(Subscription subscription) {
         SubscriptionUsage usage = SubscriptionUsage.builder()
             .subscription(subscription)
             .billingPeriodStart(subscription.getCurrentPeriodStart())
@@ -240,13 +240,13 @@ public class SubscriptionService {
 
     // Background job methods
     public void processExpiredSubscriptions() {
-        List<GymSubscription> expiredSubscriptions = gymSubscriptionRepository
+        List<Subscription> expiredSubscriptions = SubscriptionRepository
             .findExpiredSubscriptions(LocalDateTime.now(), SubscriptionStatus.ACTIVE);
 
-        for (GymSubscription subscription : expiredSubscriptions) {
+        for (Subscription subscription : expiredSubscriptions) {
             subscription.markExpired();
-            gymSubscriptionRepository.save(subscription);
-            log.info("Marked subscription as expired for gym {}", subscription.getGymId());
+            SubscriptionRepository.save(subscription);
+            log.info("Marked subscription as expired for organisation {}", subscription.getOrganisationId());
         }
     }
 
@@ -254,11 +254,11 @@ public class SubscriptionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime threeDaysFromNow = now.plusDays(3);
 
-        List<GymSubscription> upcomingRenewals = gymSubscriptionRepository
+        List<Subscription> upcomingRenewals = SubscriptionRepository
             .findSubscriptionsExpiringBetween(now, threeDaysFromNow);
 
-        for (GymSubscription subscription : upcomingRenewals) {
-            log.info("Subscription renewal upcoming for gym {} in 3 days", subscription.getGymId());
+        for (Subscription subscription : upcomingRenewals) {
+            log.info("Subscription renewal upcoming for organisation {} in 3 days", subscription.getOrganisationId());
             // TODO: Send notification
         }
     }
@@ -267,11 +267,11 @@ public class SubscriptionService {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime twoDaysFromNow = now.plusDays(2);
 
-        List<GymSubscription> endingTrials = gymSubscriptionRepository
+        List<Subscription> endingTrials = SubscriptionRepository
             .findTrialsEndingBetween(now, twoDaysFromNow);
 
-        for (GymSubscription subscription : endingTrials) {
-            log.info("Trial ending soon for gym {} in 2 days", subscription.getGymId());
+        for (Subscription subscription : endingTrials) {
+            log.info("Trial ending soon for organisation {} in 2 days", subscription.getOrganisationId());
             // TODO: Send notification
         }
     }
