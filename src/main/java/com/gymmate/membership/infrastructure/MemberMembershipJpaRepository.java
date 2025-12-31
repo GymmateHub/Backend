@@ -23,21 +23,24 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
   @Query("SELECT mm FROM MemberMembership mm WHERE mm.memberId = :memberId AND mm.status = 'ACTIVE' AND mm.endDate > :now")
   Optional<MemberMembership> findActiveMembershipByMemberId(@Param("memberId") UUID memberId, @Param("now") LocalDateTime now);
 
-  List<MemberMembership> findByGymId(UUID gymId);
+  @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId")
+  List<MemberMembership> findByGymId(@Param("gymId") UUID gymId);
 
-  List<MemberMembership> findByGymIdAndStatus(UUID gymId, MembershipStatus status);
+  @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = :status")
+  List<MemberMembership> findByGymIdAndStatus(@Param("gymId") UUID gymId, @Param("status") MembershipStatus status);
 
-  List<MemberMembership> findByMemberIdAndGymIdAndStatusIn(UUID memberId, UUID gymId, List<MembershipStatus> statuses);
+  @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE mm.memberId = :memberId AND m.gymId = :gymId AND mm.status IN :statuses")
+  List<MemberMembership> findByMemberIdAndGymIdAndStatusIn(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId, @Param("statuses") List<MembershipStatus> statuses);
 
   Optional<MemberMembership> findByStripeSubscriptionId(String stripeSubscriptionId);
 
-  @Query("SELECT mm FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.endDate BETWEEN :startDate AND :endDate")
+  @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.endDate BETWEEN :startDate AND :endDate")
   List<MemberMembership> findExpiringMemberships(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
   @Query(value = "SELECT * FROM member_memberships mm WHERE mm.plan_id = :planId", nativeQuery = true)
   List<MemberMembership> findByPlanId(@Param("planId") UUID planId);
 
-  @Query("SELECT COUNT(mm) FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE'")
+  @Query("SELECT COUNT(mm) FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE'")
   long countActiveByGymId(@Param("gymId") UUID gymId);
 
   // Use native query to avoid Spring Data property resolution issues with generated method names

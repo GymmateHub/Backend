@@ -6,8 +6,11 @@ import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.gym.domain.GymStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
+import com.gymmate.user.domain.Member;
+import com.gymmate.user.domain.MemberStatus;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserStatus;
+import com.gymmate.user.infrastructure.MemberRepository;
 import com.gymmate.user.infrastructure.UserRepository;
 import com.gymmate.user.domain.UserRole;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ public class GymService {
 
     private final GymRepository gymRepository;
     private final UserRepository userRepository;
+    private final MemberRepository memberRepository;
 
     /**
      * Register a new gym with the system.
@@ -49,9 +53,17 @@ public class GymService {
                 "Owner account must be active to register a gym");
         }
 
+        if (owner.getOrganisationId() == null) {
+            throw new DomainException("NO_ORGANISATION",
+                "Owner must be associated with an organisation to register a gym");
+        }
+
         // Create gym with required fields
         Gym gym = new Gym(request.name(), request.description(), request.contactEmail(),
                          request.contactPhone(), request.ownerId());
+
+        // Set organisation ID from owner
+        gym.setOrganisationId(owner.getOrganisationId());
 
         // Set optional fields
         if (request.website() != null) {
@@ -322,11 +334,20 @@ public class GymService {
         int totalTrainers = 0;
 
         for (Gym gym : ownedGyms) {
-            totalMembers += userRepository.countByGymIdAndRole(gym.getId(), UserRole.MEMBER);
-            totalActiveMembers += userRepository.countByGymIdAndRoleAndStatus(
-                gym.getId(), UserRole.MEMBER, UserStatus.ACTIVE);
-            totalStaff += userRepository.countByGymIdAndRole(gym.getId(), UserRole.STAFF);
-            totalTrainers += userRepository.countByGymIdAndRole(gym.getId(), UserRole.TRAINER);
+            // Count members from members table (not users table)
+            totalMembers += memberRepository.countByGymId(gym.getId());
+            totalActiveMembers += memberRepository.countByGymIdAndStatus(gym.getId(), MemberStatus.ACTIVE);
+
+            // Staff and trainers are in the organisation, not specific to a gym
+            // For now, count them from the organisation
+        }
+
+        // Count staff and trainers at organisation level
+        if (owner.getOrganisationId() != null) {
+            totalStaff = (int) userRepository.countByOrganisationIdAndRole(
+                owner.getOrganisationId(), UserRole.STAFF);
+            totalTrainers = (int) userRepository.countByOrganisationIdAndRole(
+                owner.getOrganisationId(), UserRole.TRAINER);
         }
 
         // Calculate average utilization across all gyms
@@ -365,11 +386,16 @@ public class GymService {
         }
 
         // Calculate gym-specific metrics
-        long currentMembers = userRepository.countByGymIdAndRole(gymId, UserRole.MEMBER);
-        long activeMembers = userRepository.countByGymIdAndRoleAndStatus(
-            gymId, UserRole.MEMBER, UserStatus.ACTIVE);
-        long staff = userRepository.countByGymIdAndRole(gymId, UserRole.STAFF);
-        long trainers = userRepository.countByGymIdAndRole(gymId, UserRole.TRAINER);
+        long currentMembers = memberRepository.countByGymId(gymId);
+        long activeMembers = memberRepository.countByGymIdAndStatus(gymId, MemberStatus.ACTIVE);
+
+        // Staff and trainers are organisation-level, not gym-specific
+        long staff = 0;
+        long trainers = 0;
+        if (gym.getOrganisationId() != null) {
+            staff = userRepository.countByOrganisationIdAndRole(gym.getOrganisationId(), UserRole.STAFF);
+            trainers = userRepository.countByOrganisationIdAndRole(gym.getOrganisationId(), UserRole.TRAINER);
+        }
 
         int maxMembers = gym.getMaxMembers() != null ? gym.getMaxMembers() : 0;
         double utilization = 0.0;

@@ -51,9 +51,9 @@ public class MembershipPlanService {
       .peakHoursAccess(true)
       .offPeakOnly(false)
       .featured(false)
+      .gymId(gymId)
       .build();
 
-    plan.setGymId(gymId);
     return membershipPlanRepository.save(plan);
   }
 

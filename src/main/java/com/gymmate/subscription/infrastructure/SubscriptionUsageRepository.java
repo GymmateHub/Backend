@@ -23,9 +23,9 @@ public interface SubscriptionUsageRepository extends JpaRepository<SubscriptionU
 
     List<SubscriptionUsage> findBySubscriptionId(UUID subscriptionId);
 
-    @Query("SELECT su FROM SubscriptionUsage su WHERE su.subscription.gymId = :gymId " +
+    @Query("SELECT su FROM SubscriptionUsage su WHERE su.subscription.organisationId = :organisationId " +
            "ORDER BY su.billingPeriodStart DESC")
-    List<SubscriptionUsage> findByGymId(@Param("gymId") UUID gymId);
+    List<SubscriptionUsage> findByOrganisationId(@Param("organisationId") UUID organisationId);
 
     @Query("SELECT su FROM SubscriptionUsage su WHERE su.isBilled = false " +
            "AND su.billingPeriodEnd < :now")

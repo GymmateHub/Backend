@@ -18,6 +18,7 @@ import java.util.UUID;
 @Table(name = "classes")
 public class GymClass extends TenantEntity {
 
+
   @Column(name = "category_id")
   private UUID categoryId;
 

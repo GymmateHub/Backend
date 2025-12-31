@@ -17,6 +17,9 @@ import java.math.BigDecimal;
 @Table(name = "membership_plans")
 public class MembershipPlan extends TenantEntity {
 
+  @Column(name = "gym_id", nullable = false)
+  private java.util.UUID gymId;
+
   @Column(nullable = false)
   private String name;
 

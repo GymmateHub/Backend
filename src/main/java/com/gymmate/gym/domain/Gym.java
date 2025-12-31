@@ -68,7 +68,11 @@ public class Gym extends BaseAuditEntity {
   @Column(name = "logo_url", length = 500)
   private String logoUrl;
 
-  // Owner reference (should be nullable as per schema - not all gyms may have owner assigned initially)
+  // Organisation reference (replaces ownerId in multi-tenant architecture)
+  @Column(name = "organisation_id")
+  private UUID organisationId;
+
+  // Owner reference (deprecated - will be removed after migration)
   @Column(name = "owner_id")
   private UUID ownerId;
 
