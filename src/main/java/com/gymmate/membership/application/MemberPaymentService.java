@@ -10,6 +10,8 @@ import com.gymmate.membership.infrastructure.MembershipPlanRepository;
 import com.gymmate.payment.application.StripeConnectService;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
+import com.gymmate.user.domain.Member;
+import com.gymmate.user.infrastructure.MemberRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
 import com.stripe.model.PaymentMethod;
@@ -41,6 +43,7 @@ public class MemberPaymentService {
     private final StripeConfig stripeConfig;
     private final StripeConnectService connectService;
     private final GymRepository gymRepository;
+    private final MemberRepository memberRepository;
     private final MemberPaymentMethodRepository paymentMethodRepository;
     private final MemberMembershipRepository membershipRepository;
     private final MemberInvoiceRepository invoiceRepository;
@@ -208,7 +211,6 @@ public class MemberPaymentService {
                     .classCreditsRemaining(plan.getClassCredits())
                     .guestPassesRemaining(plan.getGuestPasses())
                     .trainerSessionsRemaining(plan.getTrainerSessions())
-                    .gymId(gymId)
                     .build();
 
             membershipRepository.save(membership);
@@ -241,7 +243,11 @@ public class MemberPaymentService {
             return;
         }
 
-        Gym gym = getGym(membership.getGymId());
+        // Get gymId from Member since MemberMembership no longer has direct gymId reference
+        Member member = memberRepository.findById(membership.getMemberId())
+                .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
+
+        Gym gym = getGym(member.getGymId());
         validateStripeConfigured();
 
         try {
@@ -317,7 +323,6 @@ public class MemberPaymentService {
                 .classCreditsRemaining(plan.getClassCredits())
                 .guestPassesRemaining(plan.getGuestPasses())
                 .trainerSessionsRemaining(plan.getTrainerSessions())
-                .gymId(gymId)
                 .build();
 
         return membershipRepository.save(membership);
@@ -336,7 +341,6 @@ public class MemberPaymentService {
                 .expiryMonth(card != null ? card.getExpMonth().intValue() : null)
                 .expiryYear(card != null ? card.getExpYear().intValue() : null)
                 .isDefault(isDefault)
-                .gymId(gymId)
                 .build();
 
         return paymentMethodRepository.save(method);
