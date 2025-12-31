@@ -1,5 +1,6 @@
-package com.gymmate.payment.domain;
+package com.gymmate.payment.infrastructure;
 
+import com.gymmate.payment.domain.StripeWebhookEvent;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
