@@ -19,8 +19,6 @@ import java.util.UUID;
 @Table(name = "member_payment_methods")
 public class MemberPaymentMethod extends TenantEntity {
 
-    @Column(name = "gym_id", nullable = false)
-    private UUID gymId;
 
     @Column(name = "member_id", nullable = false)
     private UUID memberId;

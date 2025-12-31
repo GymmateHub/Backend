@@ -85,11 +85,7 @@ public class Organisation extends BaseAuditEntity {
     @Column(name = "contact_phone", length = 20)
     private String contactPhone;
 
-    // Status
-    @Column(name = "is_active")
-    @Builder.Default
-    private boolean isActive = true;
-
+    // Status - Note: isActive is inherited from BaseAuditEntity as 'active' field
     @Column(name = "onboarding_completed")
     @Builder.Default
     private boolean onboardingCompleted = false;
@@ -106,11 +102,11 @@ public class Organisation extends BaseAuditEntity {
     }
 
     public void activate() {
-        this.isActive = true;
+        this.setActive(true);
     }
 
     public void deactivate() {
-        this.isActive = false;
+        this.setActive(false);
     }
 
     public void completeOnboarding() {
@@ -133,17 +129,17 @@ public class Organisation extends BaseAuditEntity {
     }
 
     public boolean isSubscriptionActive() {
-        return isActive &&
+        return isActive() &&
                ("active".equals(subscriptionStatus) || isTrialActive());
     }
 
     public boolean canAddGym() {
-        return isActive &&
+        return isActive() &&
                (maxGyms == null || maxGyms == -1); // -1 = unlimited
     }
 
     public boolean canAddMember(int currentMemberCount) {
-        return isActive &&
+        return isActive() &&
                (maxMembers == null || maxMembers == -1 || currentMemberCount < maxMembers);
     }
 }

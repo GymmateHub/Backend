@@ -49,10 +49,10 @@ public class OrganisationService {
                 .maxGyms(1)
                 .maxMembers(200)
                 .maxStaff(10)
-                .isActive(true)
                 .onboardingCompleted(false)
                 .build();
 
+        // Note: isActive defaults to true via BaseAuditEntity
         Organisation saved = organisationRepository.save(organisation);
         log.info("Organisation created successfully: {} (ID: {})", saved.getName(), saved.getId());
 
