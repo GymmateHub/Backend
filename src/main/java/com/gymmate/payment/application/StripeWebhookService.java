@@ -3,8 +3,8 @@ package com.gymmate.payment.application;
 import com.gymmate.payment.domain.*;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.subscription.domain.GymSubscription;
-import com.gymmate.subscription.domain.GymSubscriptionRepository;
+import com.gymmate.subscription.domain.Subscription;
+import com.gymmate.subscription.domain.SubscriptionRepository;
 import com.gymmate.subscription.domain.SubscriptionStatus;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.*;
@@ -32,7 +32,7 @@ public class StripeWebhookService {
 
     private final StripeConfig stripeConfig;
     private final StripeWebhookEventRepository webhookEventRepository;
-    private final GymSubscriptionRepository subscriptionRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final GymInvoiceRepository invoiceRepository;
     private final StripeConnectService connectService;
     private final PaymentNotificationService notificationService;
@@ -220,7 +220,7 @@ public class StripeWebhookService {
 
                     // Send cancellation notification
                     notificationService.sendSubscriptionCancelledNotification(
-                            subscription.getGymId(),
+                            subscription.getOrganisationId(),
                             subscription.getCurrentPeriodEnd()
                     );
                 });
@@ -234,7 +234,7 @@ public class StripeWebhookService {
                 .ifPresent(subscription -> {
                     log.info("Trial ending soon for subscription {}", subscription.getId());
                     // Send trial ending notification email
-                    notificationService.sendTrialEndingReminder(subscription.getGymId(), subscription);
+                    notificationService.sendTrialEndingReminder(subscription.getOrganisationId(), subscription);
                 });
     }
 
@@ -317,7 +317,7 @@ public class StripeWebhookService {
                             BigDecimal amount = BigDecimal.valueOf(stripeInvoice.getAmountDue())
                                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
                             notificationService.sendPaymentFailedNotification(
-                                    subscription.getGymId(),
+                                    subscription.getOrganisationId(),
                                     amount,
                                     failureReason,
                                     nextRetryDate
@@ -339,8 +339,9 @@ public class StripeWebhookService {
         // Find subscription by customer ID and create/update invoice
         subscriptionRepository.findByStripeCustomerId(stripeInvoice.getCustomer())
                 .ifPresent(subscription -> {
+                    // TODO: GymInvoice should be renamed to OrganisationInvoice since subscriptions are now org-level
                     GymInvoice invoice = invoiceRepository.findByStripeInvoiceId(stripeInvoice.getId())
-                            .orElseGet(() -> createInvoiceFromStripe(stripeInvoice, subscription.getGymId()));
+                            .orElseGet(() -> createInvoiceFromStripe(stripeInvoice, null));
 
                     invoice.setStatus(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()));
                     invoice.setInvoicePdfUrl(stripeInvoice.getInvoicePdf());
