@@ -32,7 +32,7 @@ public class MemberController {
      */
     @PostMapping
     public ResponseEntity<ApiResponse<MemberResponse>> createMember(@Valid @RequestBody MemberCreateRequest request) {
-        Member member = memberService.createMember(request.userId(), request.membershipNumber());
+        Member member = memberService.createMember(request.userId(), request.gymId(), request.membershipNumber());
         MemberResponse response = MemberResponse.fromEntity(member);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Member created successfully"));

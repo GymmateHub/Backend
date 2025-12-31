@@ -17,6 +17,7 @@ import java.util.UUID;
 @Table(name = "class_bookings")
 public class ClassBooking extends TenantEntity {
 
+
   @Column(name = "member_id", nullable = false)
   private UUID memberId;
 

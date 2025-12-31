@@ -53,7 +53,7 @@ public class MembershipController {
 
     return ResponseEntity
       .status(HttpStatus.CREATED)
-      .body(ApiResponse.success(MemberMembershipResponse.from(membership), "Member subscribed successfully"));
+      .body(ApiResponse.success(MemberMembershipResponse.from(membership, gymId), "Member subscribed successfully"));
   }
 
   @GetMapping("/{membershipId}")
@@ -96,7 +96,7 @@ public class MembershipController {
     }
 
     List<MemberMembershipResponse> responses = memberships.stream()
-      .map(MemberMembershipResponse::from)
+      .map(m -> MemberMembershipResponse.from(m, gymId))
       .collect(Collectors.toList());
 
     return ResponseEntity.ok(ApiResponse.success(responses));
@@ -111,7 +111,7 @@ public class MembershipController {
 
     List<MemberMembership> memberships = membershipService.getExpiringMemberships(gymId, daysAhead);
     List<MemberMembershipResponse> responses = memberships.stream()
-      .map(MemberMembershipResponse::from)
+      .map(m -> MemberMembershipResponse.from(m, gymId))
       .collect(Collectors.toList());
 
     return ResponseEntity.ok(ApiResponse.success(responses));
