@@ -3,7 +3,6 @@ package com.gymmate.payment.application;
 import com.gymmate.payment.domain.*;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.subscription.domain.Subscription;
 import com.gymmate.subscription.domain.SubscriptionRepository;
 import com.gymmate.subscription.domain.SubscriptionStatus;
 import com.stripe.exception.SignatureVerificationException;
@@ -172,7 +171,7 @@ public class StripeWebhookService {
     // Platform event handlers
 
     private void handleSubscriptionUpdated(Event event) {
-        Subscription stripeSubscription = extractEventObject(event, Subscription.class);
+        com.stripe.model.Subscription stripeSubscription = extractEventObject(event, com.stripe.model.Subscription.class);
         if (stripeSubscription == null) return;
 
         subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
@@ -208,7 +207,7 @@ public class StripeWebhookService {
     }
 
     private void handleSubscriptionDeleted(Event event) {
-        Subscription stripeSubscription = extractEventObject(event, Subscription.class);
+        com.stripe.model.Subscription stripeSubscription = extractEventObject(event, com.stripe.model.Subscription.class);
         if (stripeSubscription == null) return;
 
         subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
@@ -227,7 +226,7 @@ public class StripeWebhookService {
     }
 
     private void handleTrialWillEnd(Event event) {
-        Subscription stripeSubscription = extractEventObject(event, Subscription.class);
+        com.stripe.model.Subscription stripeSubscription = extractEventObject(event, com.stripe.model.Subscription.class);
         if (stripeSubscription == null) return;
 
         subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
