@@ -70,7 +70,6 @@ public class MembershipService {
       .status(MembershipStatus.ACTIVE)
       .autoRenew(true)
       .frozen(false)
-      .gymId(gymId)
       .build();
 
     return membershipRepository.save(membership);

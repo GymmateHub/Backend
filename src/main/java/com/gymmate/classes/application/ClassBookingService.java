@@ -39,10 +39,8 @@ public class ClassBookingService {
       throw new DomainException("SCHEDULE_NOT_AVAILABLE", "Class schedule is not open for booking");
     }
 
-    // Validate that the schedule belongs to the specified gym
-    if (!schedule.getGymId().equals(gymId)) {
-      throw new DomainException("INVALID_GYM", "Class schedule does not belong to the specified gym");
-    }
+    // Note: gymId validation removed as schedule no longer has direct gymId reference
+    // Gym ownership is validated through ClassSchedule -> GymClass -> ClassCategory chain
 
     // prevent duplicate booking
     if (bookingRepository.existsByScheduleIdAndMemberId(scheduleId, memberId)) {
@@ -66,7 +64,6 @@ public class ClassBookingService {
       .memberId(memberId)
       .classScheduleId(scheduleId)
       .memberNotes(memberNotes)
-      .gymId(gymId)
       .build();
 
 
