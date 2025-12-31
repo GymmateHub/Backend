@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.subscription.api.dto.SubscriptionResponse;
 import com.gymmate.subscription.api.dto.SubscriptionTierResponse;
-import com.gymmate.subscription.domain.GymSubscription;
+import com.gymmate.subscription.domain.Subscription;
 import com.gymmate.subscription.domain.SubscriptionTier;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +18,7 @@ public class SubscriptionMapper {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public SubscriptionResponse toResponse(GymSubscription subscription) {
+    public SubscriptionResponse toResponse(Subscription subscription) {
         LocalDateTime now = LocalDateTime.now();
 
         // Calculate days remaining in trial

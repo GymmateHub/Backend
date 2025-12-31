@@ -17,19 +17,19 @@ import java.util.UUID;
 public class RateLimitService {
 
     private final ApiRateLimitRepository rateLimitRepository;
-    private final GymSubscriptionRepository subscriptionRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final SubscriptionUsageRepository usageRepository;
 
     /**
-     * Check if a gym can make an API request based on their rate limits
+     * Check if an organisation can make an API request based on their rate limits
      * @return true if allowed, false if rate limited
      */
-    public boolean checkRateLimit(UUID gymId, String windowType, String endpoint, String ipAddress) {
-        GymSubscription subscription = subscriptionRepository.findByGymId(gymId)
-            .orElseThrow(() -> new IllegalArgumentException("No subscription found for gym: " + gymId));
+    public boolean checkRateLimit(UUID organisationId, String windowType, String endpoint, String ipAddress) {
+        Subscription subscription = subscriptionRepository.findByOrganisationId(organisationId)
+            .orElseThrow(() -> new IllegalArgumentException("No subscription found for organisation: " + organisationId));
 
         if (!subscription.canAccess()) {
-            log.warn("Gym {} subscription is not active, blocking request", gymId);
+            log.warn("Organisation {} subscription is not active, blocking request", organisationId);
             return false;
         }
 
@@ -38,18 +38,18 @@ public class RateLimitService {
         LocalDateTime windowEnd = calculateWindowEnd(windowStart, windowType);
 
         ApiRateLimit rateLimit = rateLimitRepository
-            .findCurrentWindow(gymId, now, windowType)
-            .orElseGet(() -> createNewWindow(gymId, windowStart, windowEnd, windowType, subscription.getTier()));
+            .findCurrentWindow(organisationId, now, windowType)
+            .orElseGet(() -> createNewWindow(organisationId, windowStart, windowEnd, windowType, subscription.getTier()));
 
         // Check if currently blocked
         if (rateLimit.isCurrentlyBlocked()) {
-            log.warn("Gym {} is currently rate limited until {}", gymId, rateLimit.getBlockedUntil());
+            log.warn("Organisation {} is currently rate limited until {}", organisationId, rateLimit.getBlockedUntil());
             return false;
         }
 
         // Check if window has expired, create new one
         if (rateLimit.isExpired()) {
-            rateLimit = createNewWindow(gymId, windowStart, windowEnd, windowType, subscription.getTier());
+            rateLimit = createNewWindow(organisationId, windowStart, windowEnd, windowType, subscription.getTier());
         }
 
         // Increment request count
@@ -64,8 +64,8 @@ public class RateLimitService {
         // If blocked, record the hit
         if (rateLimit.isCurrentlyBlocked()) {
             recordRateLimitHit(subscription.getId());
-            log.warn("Gym {} has been rate limited. Requests: {}/{}",
-                gymId, rateLimit.getRequestCount(), rateLimit.getLimitThreshold());
+            log.warn("Organisation {} has been rate limited. Requests: {}/{}",
+                organisationId, rateLimit.getRequestCount(), rateLimit.getLimitThreshold());
             return false;
         }
 
@@ -73,24 +73,24 @@ public class RateLimitService {
     }
 
     /**
-     * Get current rate limit status for a gym
+     * Get current rate limit status for an organisation
      */
-    public RateLimitStatus getRateLimitStatus(UUID gymId) {
-        GymSubscription subscription = subscriptionRepository.findByGymId(gymId)
-            .orElseThrow(() -> new IllegalArgumentException("No subscription found for gym: " + gymId));
+    public RateLimitStatus getRateLimitStatus(UUID organisationId) {
+        Subscription subscription = subscriptionRepository.findByOrganisationId(organisationId)
+            .orElseThrow(() -> new IllegalArgumentException("No subscription found for organisation: " + organisationId));
 
         LocalDateTime now = LocalDateTime.now();
 
         ApiRateLimit hourlyLimit = rateLimitRepository
-            .findCurrentWindow(gymId, now, "hourly")
+            .findCurrentWindow(organisationId, now, "hourly")
             .orElse(null);
 
         ApiRateLimit burstLimit = rateLimitRepository
-            .findCurrentWindow(gymId, now, "burst")
+            .findCurrentWindow(organisationId, now, "burst")
             .orElse(null);
 
         return RateLimitStatus.builder()
-            .gymId(gymId)
+            .gymId(organisationId) // Note: field name in DTO might need updating
             .tierName(subscription.getTier().getName())
             .hourlyLimit(subscription.getTier().getApiRequestsPerHour())
             .hourlyRemaining(hourlyLimit != null ? hourlyLimit.getRemainingRequests() : subscription.getTier().getApiRequestsPerHour())
@@ -104,35 +104,35 @@ public class RateLimitService {
     }
 
     /**
-     * Manually unblock a gym (admin action)
+     * Manually unblock an organisation (admin action)
      */
-    public void unblockGym(UUID gymId) {
+    public void unblockOrganisation(UUID organisationId) {
         LocalDateTime now = LocalDateTime.now();
-        var activeBlocks = rateLimitRepository.findActiveBlocks(gymId, now);
+        var activeBlocks = rateLimitRepository.findActiveBlocks(organisationId, now);
 
         for (ApiRateLimit block : activeBlocks) {
             block.unblock();
             rateLimitRepository.save(block);
         }
 
-        log.info("Manually unblocked gym {}", gymId);
+        log.info("Manually unblocked organisation {}", organisationId);
     }
 
     /**
-     * Get rate limit statistics for a gym
+     * Get rate limit statistics for an organisation
      */
-    public RateLimitStatistics getStatistics(UUID gymId, LocalDateTime since) {
-        Long blockCount = rateLimitRepository.countBlocksSince(gymId, since);
+    public RateLimitStatistics getStatistics(UUID organisationId, LocalDateTime since) {
+        Long blockCount = rateLimitRepository.countBlocksSince(organisationId, since);
 
-        GymSubscription subscription = subscriptionRepository.findByGymId(gymId)
-            .orElseThrow(() -> new IllegalArgumentException("No subscription found for gym: " + gymId));
+        Subscription subscription = subscriptionRepository.findByOrganisationId(organisationId)
+            .orElseThrow(() -> new IllegalArgumentException("No subscription found for organisation: " + organisationId));
 
         var currentUsage = usageRepository
             .findBySubscriptionAndPeriod(subscription.getId(), LocalDateTime.now())
             .orElse(null);
 
         return RateLimitStatistics.builder()
-            .gymId(gymId)
+            .gymId(organisationId) // Note: field name in DTO might need updating
             .totalRequests(currentUsage != null ? currentUsage.getApiRequests() : 0)
             .totalBlocks(blockCount.intValue())
             .rateLimitHits(currentUsage != null ? currentUsage.getApiRateLimitHits() : 0)
@@ -150,7 +150,7 @@ public class RateLimitService {
         log.info("Cleaned up rate limit records older than {}", cutoffDate);
     }
 
-    private ApiRateLimit createNewWindow(UUID gymId, LocalDateTime windowStart,
+    private ApiRateLimit createNewWindow(UUID organisationId, LocalDateTime windowStart,
                                         LocalDateTime windowEnd, String windowType,
                                         SubscriptionTier tier) {
         Integer threshold = "burst".equals(windowType)
@@ -158,7 +158,7 @@ public class RateLimitService {
             : tier.getApiRequestsPerHour();
 
         ApiRateLimit rateLimit = ApiRateLimit.builder()
-            .gymId(gymId)
+            .organisationId(organisationId)
             .windowStart(windowStart)
             .windowEnd(windowEnd)
             .windowType(windowType)
