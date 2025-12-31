@@ -17,6 +17,7 @@ import java.util.UUID;
 @Table(name = "class_schedules")
 public class ClassSchedule extends TenantEntity {
 
+
   @Column(name = "class_id", nullable = false)
   private UUID classId;
 

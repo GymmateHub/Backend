@@ -9,24 +9,24 @@ import java.util.UUID;
 
 /**
  * Base entity for multi-tenant entities.
- * Extends BaseAuditEntity and adds gymId for tenant isolation.
+ * Extends BaseAuditEntity and adds organisationId for tenant isolation.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
 public abstract class TenantEntity extends BaseAuditEntity {
 
-  @Column(name = "gym_id", nullable = true)
-  private UUID gymId;
+  @Column(name = "organisation_id", nullable = true)
+  private UUID organisationId;
 
-  @Override
+  @PrePersist
   protected void prePersist() {
     super.prePersist();
 
-    if (gymId == null) {
+    if (organisationId == null) {
       UUID currentTenantId = TenantContext.getCurrentTenantId();
       if (currentTenantId != null) {
-        gymId = currentTenantId;
+        organisationId = currentTenantId;
       }
     }
   }
