@@ -1,9 +1,9 @@
 package com.gymmate.classes.application;
 
 import com.gymmate.classes.domain.*;
-import com.gymmate.classes.infrastructure.ClassBookingRepository;
-import com.gymmate.classes.infrastructure.ClassScheduleRepository;
-import com.gymmate.classes.infrastructure.GymClassRepository;
+import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
+import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
+import com.gymmate.classes.infrastructure.GymClassJpaRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
@@ -22,9 +22,9 @@ import java.util.UUID;
 @Transactional
 public class ClassBookingService {
 
-  private final ClassBookingRepository bookingRepository;
-  private final ClassScheduleRepository scheduleRepository;
-  private final GymClassRepository classRepository;
+  private final ClassBookingJpaRepository bookingRepository;
+  private final ClassScheduleJpaRepository scheduleRepository;
+  private final GymClassJpaRepository classRepository;
   private final MemberMembershipRepository membershipRepository;
 
   /**
@@ -43,7 +43,7 @@ public class ClassBookingService {
     // Gym ownership is validated through ClassSchedule -> GymClass -> ClassCategory chain
 
     // prevent duplicate booking
-    if (bookingRepository.existsByScheduleIdAndMemberId(scheduleId, memberId)) {
+    if (bookingRepository.existsByClassScheduleIdAndMemberId(scheduleId, memberId)) {
       throw new DomainException("ALREADY_BOOKED", "Member already has a booking for this schedule");
     }
 
@@ -100,7 +100,7 @@ public class ClassBookingService {
   }
 
   public List<ClassBooking> getBookingsBySchedule(UUID scheduleId) {
-    return bookingRepository.findByScheduleId(scheduleId);
+    return bookingRepository.findByClassScheduleId(scheduleId);
   }
 
   public List<ClassBooking> getWaitlist(UUID scheduleId) {
@@ -125,7 +125,7 @@ public class ClassBookingService {
       // promote first waitlisted
       List<ClassBooking> waitlist = bookingRepository.findWaitlistByScheduleId(booking.getClassScheduleId());
       if (!waitlist.isEmpty()) {
-        ClassBooking first = waitlist.getFirst();
+        ClassBooking first = waitlist.get(0);
         first.setStatus(BookingStatus.CONFIRMED);
         // consume membership credit if any
         membershipRepository.findActiveMembershipByMemberId(first.getMemberId()).ifPresent(membership -> {

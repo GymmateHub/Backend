@@ -1,6 +1,6 @@
 -- ============================================
 -- GymMate SaaS Subscription & Rate Limiting
--- Migration V1.6
+-- Migration V1.7
 -- ============================================
 
 -- ============================================
@@ -263,6 +263,49 @@ CREATE TABLE IF NOT EXISTS subscription_events (
 );
 
 -- ============================================
+-- 8. PAYMENT REFUNDS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS payment_refunds (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    gym_id UUID NOT NULL REFERENCES gyms(id) ON DELETE CASCADE,
+
+    -- Stripe References
+    stripe_refund_id VARCHAR(255) UNIQUE NOT NULL,
+    stripe_payment_intent_id VARCHAR(255) NOT NULL,
+    stripe_charge_id VARCHAR(255),
+
+    -- Refund Details
+    amount DECIMAL(10,2) NOT NULL,
+    currency VARCHAR(3) DEFAULT 'USD',
+    status VARCHAR(30) NOT NULL, -- pending, succeeded, failed, canceled
+
+    -- Reason
+    reason VARCHAR(50), -- duplicate, fraudulent, requested_by_customer
+    custom_reason TEXT,
+
+    -- Related Entities (optional)
+    subscription_id UUID REFERENCES gym_subscriptions(id) ON DELETE SET NULL,
+    invoice_id UUID REFERENCES subscription_invoices(id) ON DELETE SET NULL,
+
+    -- Actor Information
+    requested_by UUID, -- user_id who initiated the refund
+    requested_by_type VARCHAR(20) DEFAULT 'user', -- user, system, admin, webhook
+
+    -- Stripe Metadata
+    failure_reason VARCHAR(255),
+    receipt_number VARCHAR(255),
+
+    -- Timestamps from Stripe
+    stripe_created_at TIMESTAMP,
+
+    -- Metadata
+    metadata JSONB,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
 
@@ -303,6 +346,14 @@ CREATE INDEX idx_subscription_events_subscription_id ON subscription_events(subs
 CREATE INDEX idx_subscription_events_type ON subscription_events(event_type);
 CREATE INDEX idx_subscription_events_created_at ON subscription_events(created_at);
 
+-- Payment Refunds
+CREATE INDEX idx_payment_refunds_gym_id ON payment_refunds(gym_id);
+CREATE INDEX idx_payment_refunds_stripe_refund_id ON payment_refunds(stripe_refund_id);
+CREATE INDEX idx_payment_refunds_stripe_payment_intent_id ON payment_refunds(stripe_payment_intent_id);
+CREATE INDEX idx_payment_refunds_status ON payment_refunds(status);
+CREATE INDEX idx_payment_refunds_created_at ON payment_refunds(created_at);
+CREATE INDEX idx_payment_refunds_subscription_id ON payment_refunds(subscription_id) WHERE subscription_id IS NOT NULL;
+
 -- ============================================
 -- SEED DEFAULT SUBSCRIPTION TIERS
 -- ============================================
@@ -337,4 +388,5 @@ COMMENT ON TABLE api_rate_limits IS 'Tracks API rate limit windows and violation
 COMMENT ON TABLE payment_methods IS 'Stores gym payment methods for subscription billing';
 COMMENT ON TABLE subscription_invoices IS 'Generated invoices for subscription billing';
 COMMENT ON TABLE subscription_events IS 'Audit log of subscription lifecycle events';
+COMMENT ON TABLE payment_refunds IS 'Tracks all payment refunds for audit and analytics purposes';
 
