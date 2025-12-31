@@ -154,21 +154,21 @@ public class SubscriptionController {
     }
 
     @GetMapping("/usage/history")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get usage history", description = "Get historical usage records")
     public ResponseEntity<ApiResponse<List<SubscriptionUsage>>> getUsageHistory() {
-        UUID gymId = TenantContext.getCurrentTenantId();
-        List<SubscriptionUsage> usageHistory = subscriptionService.getGymUsageHistory(gymId);
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        List<SubscriptionUsage> usageHistory = subscriptionService.getOrganisationUsageHistory(organisationId);
 
         return ResponseEntity.ok(ApiResponse.success(usageHistory));
     }
 
     @GetMapping("/rate-limit/status")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get rate limit status", description = "Get current rate limit status")
     public ResponseEntity<ApiResponse<RateLimitStatus>> getRateLimitStatus() {
-        UUID gymId = TenantContext.getCurrentTenantId();
-        RateLimitStatus status = rateLimitService.getRateLimitStatus(gymId);
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        RateLimitStatus status = rateLimitService.getRateLimitStatus(organisationId);
 
         return ResponseEntity.ok(ApiResponse.success(status));
     }

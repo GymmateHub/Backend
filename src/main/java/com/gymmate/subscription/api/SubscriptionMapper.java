@@ -37,7 +37,7 @@ public class SubscriptionMapper {
 
         return SubscriptionResponse.builder()
             .id(subscription.getId())
-            .gymId(subscription.getGymId())
+            .organisationId(subscription.getOrganisationId())
             .tierName(subscription.getTier().getName())
             .tierDisplayName(subscription.getTier().getDisplayName())
             .status(subscription.getStatus().name())

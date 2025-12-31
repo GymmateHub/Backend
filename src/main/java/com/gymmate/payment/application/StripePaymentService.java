@@ -37,7 +37,7 @@ public class StripePaymentService {
 
     private final StripeConfig stripeConfig;
     private final GymRepository gymRepository;
-    private final GymSubscriptionRepository subscriptionRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final GymPaymentMethodRepository paymentMethodRepository;
     private final GymInvoiceRepository invoiceRepository;
 
@@ -47,7 +47,7 @@ public class StripePaymentService {
     @Transactional
     public String createOrGetStripeCustomer(UUID gymId) {
         Gym gym = getGym(gymId);
-        GymSubscription subscription = getSubscription(gymId);
+        Subscription subscription = getSubscription(gymId);
 
         // Return existing customer ID if present
         if (subscription.getStripeCustomerId() != null) {
@@ -167,7 +167,7 @@ public class StripePaymentService {
     @Transactional
     public void createStripeSubscription(UUID gymId, SubscriptionTier tier, boolean startTrial) {
         String customerId = createOrGetStripeCustomer(gymId);
-        GymSubscription subscription = getSubscription(gymId);
+        Subscription subscription = getSubscription(gymId);
 
         validateStripeConfigured();
 
@@ -199,13 +199,14 @@ public class StripePaymentService {
                 paramsBuilder.setTrialPeriodDays(tier.getTrialDays().longValue());
             }
 
-            Subscription stripeSubscription = Subscription.create(paramsBuilder.build());
+            // Create Stripe subscription using fully qualified class name
+            com.stripe.model.Subscription stripeSubData = com.stripe.model.Subscription.create(paramsBuilder.build());
 
             // Update our subscription with Stripe ID
-            subscription.setStripeSubscriptionId(stripeSubscription.getId());
+            subscription.setStripeSubscriptionId(stripeSubData.getId());
             subscriptionRepository.save(subscription);
 
-            log.info("Created Stripe subscription {} for gym {}", stripeSubscription.getId(), gymId);
+            log.info("Created Stripe subscription {} for gym {}", stripeSubData.getId(), gymId);
 
         } catch (StripeException e) {
             log.error("Failed to create Stripe subscription for gym {}: {}", gymId, e.getMessage());
@@ -219,7 +220,7 @@ public class StripePaymentService {
      */
     @Transactional
     public void cancelStripeSubscription(UUID gymId, boolean immediate) {
-        GymSubscription subscription = getSubscription(gymId);
+        Subscription subscription = getSubscription(gymId);
 
         if (subscription.getStripeSubscriptionId() == null) {
             log.info("Gym {} has no Stripe subscription to cancel", gymId);
@@ -229,14 +230,15 @@ public class StripePaymentService {
         validateStripeConfigured();
 
         try {
-            Subscription stripeSubscription = Subscription.retrieve(subscription.getStripeSubscriptionId());
+            // Retrieve from Stripe using fully qualified class name
+            com.stripe.model.Subscription stripeSubData = com.stripe.model.Subscription.retrieve(subscription.getStripeSubscriptionId());
 
             if (immediate) {
-                stripeSubscription.cancel();
+                stripeSubData.cancel();
                 log.info("Immediately cancelled Stripe subscription {} for gym {}",
                     subscription.getStripeSubscriptionId(), gymId);
             } else {
-                stripeSubscription.update(SubscriptionUpdateParams.builder()
+                stripeSubData.update(SubscriptionUpdateParams.builder()
                         .setCancelAtPeriodEnd(true)
                         .build());
                 log.info("Scheduled cancellation of Stripe subscription {} for gym {} at period end",
@@ -254,7 +256,7 @@ public class StripePaymentService {
      * Get invoices for a gym.
      */
     public List<InvoiceResponse> getInvoices(UUID gymId) {
-        GymSubscription subscription = getSubscription(gymId);
+        Subscription subscription = getSubscription(gymId);
 
         // Return from our database first
         List<GymInvoice> localInvoices = invoiceRepository.findByGymIdOrderByCreatedAtDesc(gymId);
@@ -306,10 +308,16 @@ public class StripePaymentService {
                 .orElseThrow(() -> new DomainException("GYM_NOT_FOUND", "Gym not found"));
     }
 
-    private GymSubscription getSubscription(UUID gymId) {
-        return subscriptionRepository.findByGymId(gymId)
+    private Subscription getSubscription(UUID gymId) {
+        // TODO: Update to use organisationId instead of gymId
+        // For now, we need to get the gym first, then get subscription by organisationId
+        Gym gym = getGym(gymId);
+        if (gym.getOrganisationId() == null) {
+            throw new DomainException("GYM_NO_ORGANISATION", "Gym is not associated with an organisation");
+        }
+        return subscriptionRepository.findByOrganisationId(gym.getOrganisationId())
                 .orElseThrow(() -> new DomainException("SUBSCRIPTION_NOT_FOUND",
-                    "No subscription found for this gym"));
+                    "No subscription found for this gym's organisation"));
     }
 
     private void validateStripeConfigured() {
@@ -344,7 +352,8 @@ public class StripePaymentService {
                             .gymId(gymId)
                             .stripeInvoiceId(stripeInvoice.getId())
                             .invoiceNumber(stripeInvoice.getNumber())
-                            .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue()).divide(BigDecimal.valueOf(100)))
+                            .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue())
+                                    .divide(BigDecimal.valueOf(100), 2, java.math.RoundingMode.HALF_UP))
                             .currency(stripeInvoice.getCurrency().toUpperCase())
                             .status(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()))
                             .description(stripeInvoice.getDescription())
