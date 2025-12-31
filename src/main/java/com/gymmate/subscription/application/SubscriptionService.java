@@ -221,8 +221,8 @@ public class SubscriptionService {
             .orElseThrow(() -> new IllegalStateException("No current usage record found"));
     }
 
-    public List<SubscriptionUsage> getGymUsageHistory(UUID gymId) {
-        return usageRepository.findByGymId(gymId);
+    public List<SubscriptionUsage> getOrganisationUsageHistory(UUID organisationId) {
+        return usageRepository.findByOrganisationId(organisationId);
     }
 
     private void createUsageRecord(Subscription subscription) {
