@@ -6,6 +6,8 @@ import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.UUID;
+
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
@@ -14,6 +16,9 @@ import lombok.*;
 @Builder
 @Table(name = "gym_areas")
 public class GymArea extends TenantEntity {
+
+  @Column(name = "gym_id", nullable = false)
+  private UUID gymId;
 
   @Column(nullable = false, length = 100)
   private String name;

@@ -12,17 +12,15 @@ public interface GymAreaMapper {
 
   @Mappings({
     @Mapping(target = "id", source = "id"),
-    @Mapping(target = "gymId", source = "gymId"),
     @Mapping(target = "name", source = "name"),
     @Mapping(target = "areaType", source = "areaType"),
     @Mapping(target = "capacity", source = "capacity")
   })
   AreaResponse toResponse(GymArea entity);
 
-  @Mappings({
-    @Mapping(target = "name", source = "name"),
-    @Mapping(target = "areaType", source = "areaType"),
-    @Mapping(target = "capacity", source = "capacity")
-  })
+  @Mapping(target = "gymId", ignore = true)
+  @Mapping(target = "amenities", ignore = true)
+  @Mapping(target = "requiresBooking", ignore = true)
+  @Mapping(target = "advanceBookingHours", ignore = true)
   GymArea toEntity(CreateAreaRequest dto);
 }
