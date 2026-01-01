@@ -51,8 +51,10 @@ public class MembershipPlanService {
       .peakHoursAccess(true)
       .offPeakOnly(false)
       .featured(false)
-      .gymId(gymId)
       .build();
+
+    // Set gymId from inherited GymScopedEntity (not in builder)
+    plan.setGymId(gymId);
 
     return membershipPlanRepository.save(plan);
   }

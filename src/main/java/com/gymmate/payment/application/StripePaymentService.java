@@ -4,9 +4,15 @@ import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.payment.api.dto.InvoiceResponse;
 import com.gymmate.payment.api.dto.PaymentMethodResponse;
+import com.gymmate.payment.api.dto.RefundRequest;
+import com.gymmate.payment.api.dto.RefundResponse;
 import com.gymmate.payment.domain.*;
 import com.gymmate.payment.infrastructure.GymInvoiceRepository;
 import com.gymmate.payment.infrastructure.PaymentMethodRepository;
+import com.gymmate.payment.infrastructure.GymInvoiceRepository;
+import com.gymmate.payment.infrastructure.PaymentMethodRepository;
+import com.gymmate.payment.infrastructure.PaymentRefundRepository;
+import com.gymmate.payment.domain.PaymentMethod;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.service.UtilityService;
@@ -43,6 +49,7 @@ public class StripePaymentService {
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final GymInvoiceRepository invoiceRepository;
+    private final PaymentRefundRepository paymentRefundRepository;
     private final UtilityService utilityService;
 
     /**
@@ -128,7 +135,7 @@ public class StripePaymentService {
      * Get all payment methods for a gym.
      */
     public List<PaymentMethodResponse> getPaymentMethods(UUID gymId) {
-        return paymentMethodRepository.findByGymIdOrderByIsDefaultDescCreatedAtDesc(gymId)
+        return paymentMethodRepository.findByGymForPlatform(gymId)
                 .stream()
                 .map(this::toPaymentMethodResponse)
                 .collect(Collectors.toList());
@@ -139,7 +146,7 @@ public class StripePaymentService {
      */
     @Transactional
     public void removePaymentMethod(UUID gymId, UUID paymentMethodId) {
-        com.gymmate.payment.domain.PaymentMethod method = paymentMethodRepository.findById(paymentMethodId)
+        PaymentMethod method = paymentMethodRepository.findById(paymentMethodId)
                 .orElseThrow(() -> new DomainException("PAYMENT_METHOD_NOT_FOUND", "Payment method not found"));
 
         if (!method.getGymId().equals(gymId)) {
@@ -338,12 +345,13 @@ public class StripePaymentService {
                 .ownerType(PaymentMethodOwnerType.GYM)
                 .ownerId(gymId)
                 .gymId(gymId)
+                .provider("stripe")
                 .providerPaymentMethodId(stripePaymentMethod.getId())
                 .methodType(PaymentMethodType.CARD)
                 .cardBrand(card != null ? card.getBrand() : null)
                 .cardLastFour(card != null ? card.getLast4() : null)
-                .cardExpiresMonth(card != null ? card.getExpMonth().intValue() : null)
-                .cardExpiresYear(card != null ? card.getExpYear().intValue() : null)
+                .cardExpiresMonth(card != null && card.getExpMonth() != null ? card.getExpMonth().intValue() : null)
+                .cardExpiresYear(card != null && card.getExpYear() != null ? card.getExpYear().intValue() : null)
                 .isDefault(isDefault)
                 .build();
 
@@ -383,7 +391,7 @@ public class StripePaymentService {
     private PaymentMethodResponse toPaymentMethodResponse(com.gymmate.payment.domain.PaymentMethod method) {
         return PaymentMethodResponse.builder()
                 .id(method.getId())
-                .type(method.getMethodType().name())
+                .type(method.getMethodType() != null ? method.getMethodType().name() : null)
                 .cardBrand(method.getCardBrand())
                 .lastFour(method.getLastFour())
                 .expiryMonth(method.getExpiryMonth())
@@ -409,5 +417,101 @@ public class StripePaymentService {
                 .createdAt(invoice.getCreatedAt())
                 .build();
     }
-}
 
+    /**
+     * Process a refund for a payment.
+     */
+    @Transactional
+    public RefundResponse processRefund(UUID gymId, RefundRequest request) {
+        validateStripeConfigured();
+
+        try {
+            RefundCreateParams.Builder paramsBuilder = RefundCreateParams.builder()
+                    .setPaymentIntent(request.getPaymentIntentId());
+
+            if (request.getAmount() != null) {
+                paramsBuilder.setAmount(request.getAmount().multiply(BigDecimal.valueOf(100)).longValue());
+            }
+
+            if (request.getReason() != null && !request.getReason().isEmpty()) {
+                paramsBuilder.setReason(RefundCreateParams.Reason.REQUESTED_BY_CUSTOMER);
+            }
+
+            Refund refund = Refund.create(paramsBuilder.build());
+
+            // Save refund to database
+            PaymentRefund paymentRefund = PaymentRefund.builder()
+                    .gymId(gymId)
+                    .stripeRefundId(refund.getId())
+                    .stripePaymentIntentId(request.getPaymentIntentId())
+                    .stripeChargeId(refund.getCharge())
+                    .amount(BigDecimal.valueOf(refund.getAmount()).divide(BigDecimal.valueOf(100)))
+                    .currency(refund.getCurrency().toUpperCase())
+                    .status(RefundStatus.valueOf(refund.getStatus().toUpperCase()))
+                    .reason(request.getReason())
+                    .receiptNumber(refund.getReceiptNumber())
+                    .stripeCreatedAt(utilityService.secondsToLocalDateTime(refund.getCreated()))
+                    .build();
+
+            paymentRefundRepository.save(paymentRefund);
+
+            log.info("Processed refund {} for gym {} on payment {}",
+                    refund.getId(), gymId, request.getPaymentIntentId());
+
+            return RefundResponse.builder()
+                    .refundId(refund.getId())
+                    .paymentIntentId(request.getPaymentIntentId())
+                    .amount(paymentRefund.getAmount())
+                    .currency(paymentRefund.getCurrency())
+                    .status(paymentRefund.getStatus().name())
+                    .reason(request.getReason())
+                    .createdAt(paymentRefund.getStripeCreatedAt())
+                    .build();
+
+        } catch (StripeException e) {
+            log.error("Failed to process refund for gym {}: {}", gymId, e.getMessage());
+            throw new DomainException("STRIPE_REFUND_FAILED",
+                    "Failed to process refund: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get refund history for a gym.
+     */
+    @Transactional(readOnly = true)
+    public List<RefundResponse> getRefundHistory(UUID gymId) {
+        return paymentRefundRepository.findByGymIdOrderByCreatedAtDesc(gymId)
+                .stream()
+                .map(this::toRefundResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get a specific refund.
+     */
+    @Transactional(readOnly = true)
+    public RefundResponse getRefund(UUID gymId, UUID refundId) {
+        PaymentRefund refund = paymentRefundRepository.findById(refundId)
+                .orElseThrow(() -> new DomainException("REFUND_NOT_FOUND",
+                        "Refund not found: " + refundId));
+
+        if (!refund.getGymId().equals(gymId)) {
+            throw new DomainException("REFUND_ACCESS_DENIED",
+                    "Access denied to refund: " + refundId);
+        }
+
+        return toRefundResponse(refund);
+    }
+
+    private RefundResponse toRefundResponse(PaymentRefund refund) {
+        return RefundResponse.builder()
+                .refundId(refund.getStripeRefundId())
+                .paymentIntentId(refund.getStripePaymentIntentId())
+                .amount(refund.getAmount())
+                .currency(refund.getCurrency())
+                .status(refund.getStatus().name())
+                .reason(refund.getReason())
+                .createdAt(refund.getStripeCreatedAt())
+                .build();
+    }
+}

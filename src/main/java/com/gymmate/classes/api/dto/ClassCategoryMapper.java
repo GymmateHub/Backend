@@ -20,10 +20,8 @@ public interface ClassCategoryMapper {
   })
   CategoryResponse toResponse(ClassCategory entity);
 
-  @Mappings({
-    @Mapping(target = "name", source = "name"),
-    @Mapping(target = "description", source = "description"),
-    @Mapping(target = "color", source = "color")
-  })
+  // Note: gymId and organisationId are inherited from GymScopedEntity
+  // and will be set automatically via TenantContext in prePersist.
+  @Mapping(target = "icon", ignore = true)
   ClassCategory toEntity(CreateCategoryRequest dto);
 }

@@ -1,5 +1,7 @@
 package com.gymmate.shared.security;
 
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.shared.domain.Organisation;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.DomainException;
@@ -42,6 +44,7 @@ public class AuthenticationService {
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final TotpService totpService;
     private final OrganisationService organisationService;
+    private final GymRepository gymRepository;
 
     private static final int OTP_VALIDITY_MINUTES = 5;
 
@@ -305,8 +308,13 @@ public class AuthenticationService {
     }
 
     /**
-     * Register a new gym admin/owner with organisation.
-     * Flow: 1. Create organisation, 2. Create user with organisationId, 3. Update organisation with owner_user_id
+     * Register a new gym admin/owner with organisation and default gym.
+     * Flow:
+     * 1. Create organisation
+     * 2. Create user with organisationId
+     * 3. Update organisation with owner_user_id
+     * 4. Create default gym for the organisation
+     *
      * Creates user as INACTIVE with emailVerified=false for OTP verification flow.
      */
     @Transactional
@@ -360,6 +368,18 @@ public class AuthenticationService {
 
         log.info("Organisation owner assigned: userId {} to organisationId {}",
             savedUser.getId(), organisation.getId());
+
+        // Step 4: Create default gym for the organisation
+        Gym defaultGym = Gym.createDefault(
+            organisationName,
+            email,
+            phone != null ? phone : "",
+            organisation.getId()
+        );
+        Gym savedGym = gymRepository.save(defaultGym);
+
+        log.info("Default gym created: {} (ID: {}) for organisation {}",
+            savedGym.getName(), savedGym.getId(), organisation.getId());
 
         return savedUser;
     }
