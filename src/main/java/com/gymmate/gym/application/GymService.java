@@ -147,9 +147,35 @@ public class GymService {
         return gymRepository.save(gym);
     }
 
+    // ========== Organisation-based queries (preferred) ==========
+
     /**
-     * Find all gyms owned by a specific user.
+     * Find all gyms belonging to an organisation.
      */
+    public List<Gym> getGymsByOrganisation(UUID organisationId) {
+        return gymRepository.findByOrganisationId(organisationId);
+    }
+
+    /**
+     * Find all active gyms belonging to an organisation.
+     */
+    public List<Gym> getActiveGymsByOrganisation(UUID organisationId) {
+        return gymRepository.findByOrganisationIdAndStatus(organisationId, GymStatus.ACTIVE);
+    }
+
+    /**
+     * Count gyms in an organisation.
+     */
+    public long countGymsByOrganisation(UUID organisationId) {
+        return gymRepository.countByOrganisationId(organisationId);
+    }
+
+    // ========== Deprecated owner-based queries ==========
+
+    /**
+     * @deprecated Use getGymsByOrganisation instead
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
     public List<Gym> getGymsByOwner(UUID ownerId) {
         return gymRepository.findByOwnerId(ownerId);
     }

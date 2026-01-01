@@ -12,17 +12,17 @@ public interface GymAreaMapper {
 
   @Mappings({
     @Mapping(target = "id", source = "id"),
-    @Mapping(target = "gymId", source = "organisationId"),
     @Mapping(target = "name", source = "name"),
     @Mapping(target = "areaType", source = "areaType"),
     @Mapping(target = "capacity", source = "capacity")
   })
   AreaResponse toResponse(GymArea entity);
 
-  @Mappings({
-    @Mapping(target = "name", source = "name"),
-    @Mapping(target = "areaType", source = "areaType"),
-    @Mapping(target = "capacity", source = "capacity")
-  })
+  // Note: gymId and organisationId are inherited from GymScopedEntity
+  // and will be set automatically via TenantContext in prePersist.
+  // These mappings tell MapStruct to not try to map them from the DTO.
+  @Mapping(target = "amenities", ignore = true)
+  @Mapping(target = "requiresBooking", constant = "false")
+  @Mapping(target = "advanceBookingHours", constant = "24")
   GymArea toEntity(CreateAreaRequest dto);
 }

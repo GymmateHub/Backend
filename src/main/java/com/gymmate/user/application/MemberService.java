@@ -56,13 +56,15 @@ public class MemberService {
         // Create member
         Member member = Member.builder()
                 .userId(userId)
-                .gymId(gymId)
                 .membershipNumber(membershipNumber)
                 .joinDate(LocalDate.now())
                 .status(MemberStatus.ACTIVE)
                 .waiverSigned(false)
                 .photoConsent(false)
                 .build();
+
+        // Set gymId from inherited GymScopedEntity (not in builder)
+        member.setGymId(gymId);
 
         return memberRepository.save(member);
     }

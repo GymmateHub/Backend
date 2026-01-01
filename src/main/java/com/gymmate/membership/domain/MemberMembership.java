@@ -1,6 +1,6 @@
 package com.gymmate.membership.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.domain.GymScopedEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +8,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * MemberMembership entity representing a member's subscription to a plan.
+ * Extends GymScopedEntity for automatic organisation and gym filtering.
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
@@ -15,9 +19,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "member_memberships")
-public class MemberMembership extends TenantEntity {
+public class MemberMembership extends GymScopedEntity {
 
-
+  // Note: gymId is inherited from GymScopedEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
   @Column(name = "member_id", nullable = false)
   private UUID memberId;
 
