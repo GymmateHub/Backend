@@ -146,6 +146,64 @@ public class OrganisationService {
     }
 
     /**
+     * Update organisation details.
+     */
+    @Transactional
+    public Organisation updateDetails(UUID organisationId, String name, String contactEmail,
+                                       String contactPhone, String billingEmail, String settings) {
+        Organisation organisation = getById(organisationId);
+
+        if (name != null && !name.isBlank()) {
+            organisation.setName(name);
+        }
+        if (contactEmail != null && !contactEmail.isBlank()) {
+            organisation.setContactEmail(contactEmail);
+        }
+        if (contactPhone != null) {
+            organisation.setContactPhone(contactPhone);
+        }
+        if (billingEmail != null && !billingEmail.isBlank()) {
+            organisation.setBillingEmail(billingEmail);
+        }
+        if (settings != null) {
+            organisation.setSettings(settings);
+        }
+
+        log.info("Updated organisation details for: {}", organisationId);
+        return organisationRepository.save(organisation);
+    }
+
+    /**
+     * Update organisation limits (admin only).
+     */
+    @Transactional
+    public Organisation updateLimits(UUID organisationId, Integer maxGyms, Integer maxMembers, Integer maxStaff) {
+        Organisation organisation = getById(organisationId);
+
+        if (maxGyms != null && maxGyms > 0) {
+            organisation.setMaxGyms(maxGyms);
+        }
+        if (maxMembers != null && maxMembers > 0) {
+            organisation.setMaxMembers(maxMembers);
+        }
+        if (maxStaff != null && maxStaff > 0) {
+            organisation.setMaxStaff(maxStaff);
+        }
+
+        log.info("Updated organisation limits for: {} - maxGyms={}, maxMembers={}, maxStaff={}",
+            organisationId, organisation.getMaxGyms(), organisation.getMaxMembers(), organisation.getMaxStaff());
+        return organisationRepository.save(organisation);
+    }
+
+    /**
+     * Check if user belongs to organisation.
+     */
+    public boolean userBelongsToOrganisation(UUID userId, UUID organisationId) {
+        Organisation organisation = getById(organisationId);
+        return organisation.getOwnerUserId() != null && organisation.getOwnerUserId().equals(userId);
+    }
+
+    /**
      * Generate a unique slug from organisation name.
      */
     public String generateSlug(String name) {

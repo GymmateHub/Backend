@@ -6,6 +6,7 @@ import com.gymmate.classes.api.dto.ClassCategoryMapper;
 import com.gymmate.classes.application.ClassCategoryService;
 import com.gymmate.classes.domain.ClassCategory;
 import com.gymmate.shared.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/class-categories")
 @RequiredArgsConstructor
+@Tag(name = "Category", description = "Category management operations")
 public class ClassCategoryController {
   private final ClassCategoryService categoryService;
   private final ClassCategoryMapper mapper;

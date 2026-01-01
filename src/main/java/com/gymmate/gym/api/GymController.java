@@ -4,9 +4,13 @@ import com.gymmate.gym.api.dto.*;
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.JwtService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,9 +22,11 @@ import java.util.UUID;
 /**
  * REST controller for gym management operations.
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/gyms")
 @RequiredArgsConstructor
+@Tag(name = "Gyms", description = "Gym Management APIs")
 public class GymController {
 
     private final GymService gymService;
@@ -86,19 +92,36 @@ public class GymController {
     }
 
     /**
-     * Get all gyms owned by the authenticated user.
-     * Validates that the authenticated user can only access their own gyms.
+     * Get all gyms in the authenticated user's organisation.
+     * This is the preferred method for getting gyms.
      */
     @GetMapping("/my-gyms")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'SUPER_ADMIN')")
+    @Operation(summary = "Get my gyms", description = "Get all gyms in the authenticated user's organisation")
     public ResponseEntity<ApiResponse<List<GymResponse>>> getMyGyms(
             @RequestHeader("Authorization") String authHeader) {
 
-        // Extract token from Authorization header
-        String token = authHeader.substring(7); // Remove "Bearer " prefix
-        UUID userId = jwtService.extractUserId(token);
+        // Get organisation ID from tenant context (preferred) or JWT
+        UUID organisationId = TenantContext.getCurrentTenantId();
 
-        List<GymResponse> gyms = gymService.getGymsByOwner(userId).stream()
+        if (organisationId == null) {
+            // Fallback to extracting from JWT
+            String token = authHeader.substring(7);
+            organisationId = jwtService.extractOrganisationId(token);
+        }
+
+        if (organisationId == null) {
+            // Legacy fallback - use deprecated owner-based query
+            log.warn("No organisation context found, falling back to owner-based query (deprecated)");
+            String token = authHeader.substring(7);
+            UUID userId = jwtService.extractUserId(token);
+            List<GymResponse> gyms = gymService.getGymsByOwner(userId).stream()
+                    .map(GymResponse::fromEntity)
+                    .toList();
+            return ResponseEntity.ok(ApiResponse.success(gyms));
+        }
+
+        List<GymResponse> gyms = gymService.getGymsByOrganisation(organisationId).stream()
                 .map(GymResponse::fromEntity)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(gyms));
@@ -106,11 +129,14 @@ public class GymController {
 
     /**
      * Get all gyms owned by a specific user (ADMIN/SUPER_ADMIN only).
-     * Regular owners should use /my-gyms endpoint.
+     * @deprecated Use /api/organisations/current/gyms instead
      */
+    @Deprecated(since = "1.0", forRemoval = true)
     @GetMapping("/owner/{ownerId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
+    @Operation(summary = "Get gyms by owner (deprecated)", description = "Deprecated: Use /api/organisations/current/gyms instead")
     public ResponseEntity<ApiResponse<List<GymResponse>>> getGymsByOwner(@PathVariable UUID ownerId) {
+        log.warn("Deprecated endpoint /owner/{} called - use /api/organisations/current/gyms instead", ownerId);
         List<GymResponse> gyms = gymService.getGymsByOwner(ownerId).stream()
                 .map(GymResponse::fromEntity)
                 .toList();
