@@ -4,8 +4,11 @@ import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.domain.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,4 +39,15 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // Count queries for analytics
     long countByOrganisationIdAndRole(UUID organisationId, UserRole role);
     long countByOrganisationIdAndRoleAndStatus(UUID organisationId, UserRole role, UserStatus status);
+
+    // Count users with multiple roles (for staff count)
+    @Query("SELECT COUNT(u) FROM User u WHERE u.organisationId = :organisationId AND u.role IN :roles")
+    long countByOrganisationIdAndRoleIn(@Param("organisationId") UUID organisationId,
+                                         @Param("roles") Collection<UserRole> roles);
+
+    // Count active users with multiple roles (for staff count)
+    @Query("SELECT COUNT(u) FROM User u WHERE u.organisationId = :organisationId AND u.role IN :roles AND u.status = :status")
+    long countByOrganisationIdAndRoleInAndStatus(@Param("organisationId") UUID organisationId,
+                                                   @Param("roles") Collection<UserRole> roles,
+                                                   @Param("status") UserStatus status);
 }
