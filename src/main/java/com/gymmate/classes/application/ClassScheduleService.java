@@ -21,7 +21,7 @@ public class ClassScheduleService {
   private final ClassBookingJpaRepository bookingRepository;
 
   public ClassSchedule createSchedule(ClassSchedule schedule) {
-    if (schedule.getGymId() == null) throw new DomainException("MISSING_GYM", "Gym id is required");
+    if (schedule.getClassId() == null) throw new DomainException("MISSING_CLASS", "Class id is required");
     // check trainer/area conflicts
     if (schedule.getTrainerId() != null && scheduleRepository.hasTrainerConflict(schedule.getTrainerId(), schedule.getStartTime(), schedule.getEndTime())) {
       throw new DomainException("TRAINER_CONFLICT", "Trainer has another scheduled class in this time range");

@@ -16,9 +16,9 @@ import java.util.UUID;
 public class GymClassService {
   private final GymClassJpaRepository classRepository;
 
-  public GymClass createClass(GymClass gymClass) {
-    if (gymClass.getGymId() == null) throw new DomainException("MISSING_GYM", "Gym id is required");
-    if (classRepository.existsByGymIdAndName(gymClass.getGymId(), gymClass.getName())) {
+  public GymClass createClass(GymClass gymClass, UUID gymId) {
+    if (gymClass.getCategoryId() == null) throw new DomainException("MISSING_CATEGORY", "Category id is required");
+    if (classRepository.existsByGymIdAndName(gymId, gymClass.getName())) {
       throw new DomainException("DUPLICATE_CLASS", "Class with this name already exists");
     }
     return classRepository.save(gymClass);
