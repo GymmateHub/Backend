@@ -27,6 +27,7 @@ import java.util.UUID;
 @Builder
 @Table(name = "payment_methods", indexes = {
     @Index(name = "idx_pm_owner", columnList = "owner_type, owner_id"),
+    @Index(name = "idx_pm_organisation", columnList = "organisation_id"),
     @Index(name = "idx_pm_gym", columnList = "gym_id"),
     @Index(name = "idx_pm_provider_id", columnList = "provider_payment_method_id"),
     @Index(name = "idx_pm_default", columnList = "owner_type, owner_id, is_default")
@@ -34,23 +35,29 @@ import java.util.UUID;
 public class PaymentMethod extends BaseAuditEntity {
 
     /**
-     * Type of owner: GYM or MEMBER
+     * Organisation ID - the billing entity that owns this payment method.
+     * Primary filter for multi-tenant operations.
+     */
+    @Column(name = "organisation_id")
+    private UUID organisationId;
+
+    /**
+     * Type of owner: GYM, ORGANISATION, or MEMBER
      */
     @Enumerated(EnumType.STRING)
     @Column(name = "owner_type", nullable = false, length = 20)
     private PaymentMethodOwnerType ownerType;
 
     /**
-     * ID of the owner (gym_id for GYM type, member_id for MEMBER type)
+     * ID of the owner (organisation_id for ORGANISATION type, gym_id for GYM type, member_id for MEMBER type)
      */
     @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
 
     /**
-     * Gym ID - always populated (for GYM type it's the same as owner_id,
-     * for MEMBER type it's the gym the member belongs to)
+     * Gym ID - optional, for gym-specific payment methods or member context
      */
-    @Column(name = "gym_id", nullable = false)
+    @Column(name = "gym_id")
     private UUID gymId;
 
     /**
