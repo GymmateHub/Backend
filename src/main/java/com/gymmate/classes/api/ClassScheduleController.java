@@ -28,7 +28,6 @@ public class ClassScheduleController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> create(@Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = mapper.toEntity(req);
-    s.setGymId(req.getGymId());
     ClassSchedule created = scheduleService.createSchedule(s);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Schedule created"));
   }

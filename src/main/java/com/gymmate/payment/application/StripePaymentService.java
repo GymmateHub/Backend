@@ -4,7 +4,13 @@ import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.payment.api.dto.InvoiceResponse;
 import com.gymmate.payment.api.dto.PaymentMethodResponse;
+import com.gymmate.payment.api.dto.RefundRequest;
+import com.gymmate.payment.api.dto.RefundResponse;
 import com.gymmate.payment.domain.*;
+import com.gymmate.payment.infrastructure.GymInvoiceRepository;
+import com.gymmate.payment.infrastructure.PaymentMethodRepository;
+import com.gymmate.payment.infrastructure.PaymentRefundRepository;
+import com.gymmate.payment.domain.PaymentMethod;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.subscription.domain.Subscription;
@@ -38,8 +44,9 @@ public class StripePaymentService {
     private final StripeConfig stripeConfig;
     private final GymRepository gymRepository;
     private final SubscriptionRepository subscriptionRepository;
-    private final GymPaymentMethodRepository paymentMethodRepository;
+    private final PaymentMethodRepository paymentMethodRepository;
     private final GymInvoiceRepository invoiceRepository;
+    private final PaymentRefundRepository paymentRefundRepository;
 
     /**
      * Create a Stripe customer for a gym.
@@ -89,8 +96,8 @@ public class StripePaymentService {
 
         try {
             // Attach payment method to customer
-            PaymentMethod paymentMethod = PaymentMethod.retrieve(stripePaymentMethodId);
-            paymentMethod.attach(PaymentMethodAttachParams.builder()
+            com.stripe.model.PaymentMethod paymentMethod = com.stripe.model.PaymentMethod.retrieve(stripePaymentMethodId);
+            paymentMethod.attach(com.stripe.param.PaymentMethodAttachParams.builder()
                     .setCustomer(customerId)
                     .build());
 
@@ -108,7 +115,7 @@ public class StripePaymentService {
             }
 
             // Save payment method to our database
-            GymPaymentMethod savedMethod = savePaymentMethod(gymId, paymentMethod, setAsDefault);
+            PaymentMethod savedMethod = savePaymentMethod(gymId, paymentMethod, setAsDefault);
 
             log.info("Attached payment method {} to gym {}", stripePaymentMethodId, gymId);
             return toPaymentMethodResponse(savedMethod);
@@ -124,7 +131,7 @@ public class StripePaymentService {
      * Get all payment methods for a gym.
      */
     public List<PaymentMethodResponse> getPaymentMethods(UUID gymId) {
-        return paymentMethodRepository.findByGymIdOrderByIsDefaultDescCreatedAtDesc(gymId)
+        return paymentMethodRepository.findByGymForPlatform(gymId)
                 .stream()
                 .map(this::toPaymentMethodResponse)
                 .collect(Collectors.toList());
@@ -135,7 +142,7 @@ public class StripePaymentService {
      */
     @Transactional
     public void removePaymentMethod(UUID gymId, UUID paymentMethodId) {
-        GymPaymentMethod method = paymentMethodRepository.findById(paymentMethodId)
+        PaymentMethod method = paymentMethodRepository.findById(paymentMethodId)
                 .orElseThrow(() -> new DomainException("PAYMENT_METHOD_NOT_FOUND", "Payment method not found"));
 
         if (!method.getGymId().equals(gymId)) {
@@ -146,7 +153,7 @@ public class StripePaymentService {
 
         try {
             // Detach from Stripe
-            PaymentMethod stripeMethod = PaymentMethod.retrieve(method.getStripePaymentMethodId());
+            com.stripe.model.PaymentMethod stripeMethod = com.stripe.model.PaymentMethod.retrieve(method.getStripePaymentMethodId());
             stripeMethod.detach();
 
             // Delete from our database
@@ -327,17 +334,20 @@ public class StripePaymentService {
         }
     }
 
-    private GymPaymentMethod savePaymentMethod(UUID gymId, PaymentMethod paymentMethod, boolean isDefault) {
-        PaymentMethod.Card card = paymentMethod.getCard();
+    private PaymentMethod savePaymentMethod(UUID gymId, com.stripe.model.PaymentMethod paymentMethod, boolean isDefault) {
+        com.stripe.model.PaymentMethod.Card card = paymentMethod.getCard();
 
-        GymPaymentMethod method = GymPaymentMethod.builder()
+        PaymentMethod method = PaymentMethod.builder()
+                .ownerType(com.gymmate.payment.domain.PaymentMethodOwnerType.GYM)
+                .ownerId(gymId)
                 .gymId(gymId)
-                .stripePaymentMethodId(paymentMethod.getId())
-                .type(paymentMethod.getType())
+                .provider("stripe")
+                .providerPaymentMethodId(paymentMethod.getId())
+                .methodType(com.gymmate.payment.domain.PaymentMethodType.CARD)
                 .cardBrand(card != null ? card.getBrand() : null)
-                .lastFour(card != null ? card.getLast4() : null)
-                .expiryMonth(card != null ? card.getExpMonth().intValue() : null)
-                .expiryYear(card != null ? card.getExpYear().intValue() : null)
+                .cardLastFour(card != null ? card.getLast4() : null)
+                .cardExpiresMonth(card != null && card.getExpMonth() != null ? card.getExpMonth().intValue() : null)
+                .cardExpiresYear(card != null && card.getExpYear() != null ? card.getExpYear().intValue() : null)
                 .isDefault(isDefault)
                 .build();
 
@@ -378,10 +388,10 @@ public class StripePaymentService {
         return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSeconds), ZoneId.systemDefault());
     }
 
-    private PaymentMethodResponse toPaymentMethodResponse(GymPaymentMethod method) {
+    private PaymentMethodResponse toPaymentMethodResponse(PaymentMethod method) {
         return PaymentMethodResponse.builder()
                 .id(method.getId())
-                .type(method.getType())
+                .type(method.getMethodType() != null ? method.getMethodType().name() : null)
                 .cardBrand(method.getCardBrand())
                 .lastFour(method.getLastFour())
                 .expiryMonth(method.getExpiryMonth())
@@ -407,5 +417,101 @@ public class StripePaymentService {
                 .createdAt(invoice.getCreatedAt())
                 .build();
     }
-}
 
+    /**
+     * Process a refund for a payment.
+     */
+    @Transactional
+    public RefundResponse processRefund(UUID gymId, RefundRequest request) {
+        validateStripeConfigured();
+
+        try {
+            RefundCreateParams.Builder paramsBuilder = RefundCreateParams.builder()
+                    .setPaymentIntent(request.getPaymentIntentId());
+
+            if (request.getAmount() != null) {
+                paramsBuilder.setAmount(request.getAmount().multiply(BigDecimal.valueOf(100)).longValue());
+            }
+
+            if (request.getReason() != null && !request.getReason().isEmpty()) {
+                paramsBuilder.setReason(RefundCreateParams.Reason.REQUESTED_BY_CUSTOMER);
+            }
+
+            Refund refund = Refund.create(paramsBuilder.build());
+
+            // Save refund to database
+            PaymentRefund paymentRefund = PaymentRefund.builder()
+                    .gymId(gymId)
+                    .stripeRefundId(refund.getId())
+                    .stripePaymentIntentId(request.getPaymentIntentId())
+                    .stripeChargeId(refund.getCharge())
+                    .amount(BigDecimal.valueOf(refund.getAmount()).divide(BigDecimal.valueOf(100)))
+                    .currency(refund.getCurrency().toUpperCase())
+                    .status(RefundStatus.valueOf(refund.getStatus().toUpperCase()))
+                    .reason(request.getReason())
+                    .receiptNumber(refund.getReceiptNumber())
+                    .stripeCreatedAt(toLocalDateTime(refund.getCreated()))
+                    .build();
+
+            paymentRefundRepository.save(paymentRefund);
+
+            log.info("Processed refund {} for gym {} on payment {}",
+                    refund.getId(), gymId, request.getPaymentIntentId());
+
+            return RefundResponse.builder()
+                    .refundId(refund.getId())
+                    .paymentIntentId(request.getPaymentIntentId())
+                    .amount(paymentRefund.getAmount())
+                    .currency(paymentRefund.getCurrency())
+                    .status(paymentRefund.getStatus().name())
+                    .reason(request.getReason())
+                    .createdAt(paymentRefund.getStripeCreatedAt())
+                    .build();
+
+        } catch (StripeException e) {
+            log.error("Failed to process refund for gym {}: {}", gymId, e.getMessage());
+            throw new DomainException("STRIPE_REFUND_FAILED",
+                    "Failed to process refund: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get refund history for a gym.
+     */
+    @Transactional(readOnly = true)
+    public List<RefundResponse> getRefundHistory(UUID gymId) {
+        return paymentRefundRepository.findByGymIdOrderByCreatedAtDesc(gymId)
+                .stream()
+                .map(this::toRefundResponse)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get a specific refund.
+     */
+    @Transactional(readOnly = true)
+    public RefundResponse getRefund(UUID gymId, UUID refundId) {
+        PaymentRefund refund = paymentRefundRepository.findById(refundId)
+                .orElseThrow(() -> new DomainException("REFUND_NOT_FOUND",
+                        "Refund not found: " + refundId));
+
+        if (!refund.getGymId().equals(gymId)) {
+            throw new DomainException("REFUND_ACCESS_DENIED",
+                    "Access denied to refund: " + refundId);
+        }
+
+        return toRefundResponse(refund);
+    }
+
+    private RefundResponse toRefundResponse(PaymentRefund refund) {
+        return RefundResponse.builder()
+                .refundId(refund.getStripeRefundId())
+                .paymentIntentId(refund.getStripePaymentIntentId())
+                .amount(refund.getAmount())
+                .currency(refund.getCurrency())
+                .status(refund.getStatus().name())
+                .reason(refund.getReason())
+                .createdAt(refund.getStripeCreatedAt())
+                .build();
+    }
+}

@@ -28,8 +28,7 @@ public class ClassController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ClassResponse>> createClass(@Valid @RequestBody CreateClassRequest req) {
     GymClass gc = mapper.toEntity(req);
-    gc.setGymId(req.getGymId());
-    GymClass created = classService.createClass(gc);
+    GymClass created = classService.createClass(gc, req.getGymId());
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Class created"));
   }
 
