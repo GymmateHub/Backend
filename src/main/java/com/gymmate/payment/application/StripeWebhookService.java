@@ -1,6 +1,8 @@
 package com.gymmate.payment.application;
 
 import com.gymmate.payment.domain.*;
+import com.gymmate.payment.infrastructure.GymInvoiceRepository;
+import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.subscription.domain.SubscriptionRepository;
@@ -461,4 +463,3 @@ public class StripeWebhookService {
         return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSeconds), ZoneId.systemDefault());
     }
 }
-
