@@ -12,7 +12,6 @@ public interface GymClassMapper {
 
   @Mappings({
     @Mapping(target = "id", source = "id"),
-    @Mapping(target = "gymId", source = "gymId"),
     @Mapping(target = "categoryId", source = "categoryId"),
     @Mapping(target = "name", source = "name"),
     @Mapping(target = "description", source = "description"),
@@ -30,14 +29,11 @@ public interface GymClassMapper {
   })
   ClassResponse toResponse(GymClass entity);
 
-  @Mappings({
-    @Mapping(target = "categoryId", source = "categoryId"),
-    @Mapping(target = "name", source = "name"),
-    @Mapping(target = "description", source = "description"),
-    @Mapping(target = "durationMinutes", source = "durationMinutes"),
-    @Mapping(target = "capacity", source = "capacity"),
-    @Mapping(target = "price", source = "price"),
-    @Mapping(target = "creditsRequired", source = "creditsRequired")
-  })
+  @Mapping(target = "skillLevel", ignore = true)
+  @Mapping(target = "ageRestriction", ignore = true)
+  @Mapping(target = "equipmentNeeded", ignore = true)
+  @Mapping(target = "imageUrl", ignore = true)
+  @Mapping(target = "videoUrl", ignore = true)
+  @Mapping(target = "instructions", ignore = true)
   GymClass toEntity(CreateClassRequest dto);
 }
