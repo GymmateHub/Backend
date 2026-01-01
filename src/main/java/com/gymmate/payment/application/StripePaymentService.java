@@ -5,8 +5,11 @@ import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.payment.api.dto.InvoiceResponse;
 import com.gymmate.payment.api.dto.PaymentMethodResponse;
 import com.gymmate.payment.domain.*;
+import com.gymmate.payment.infrastructure.GymInvoiceRepository;
+import com.gymmate.payment.infrastructure.PaymentMethodRepository;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.service.UtilityService;
 import com.gymmate.subscription.domain.Subscription;
 import com.gymmate.subscription.domain.SubscriptionRepository;
 import com.gymmate.subscription.domain.SubscriptionTier;
@@ -38,8 +41,9 @@ public class StripePaymentService {
     private final StripeConfig stripeConfig;
     private final GymRepository gymRepository;
     private final SubscriptionRepository subscriptionRepository;
-    private final GymPaymentMethodRepository paymentMethodRepository;
+    private final PaymentMethodRepository paymentMethodRepository;
     private final GymInvoiceRepository invoiceRepository;
+    private final UtilityService utilityService;
 
     /**
      * Create a Stripe customer for a gym.
@@ -89,8 +93,8 @@ public class StripePaymentService {
 
         try {
             // Attach payment method to customer
-            PaymentMethod paymentMethod = PaymentMethod.retrieve(stripePaymentMethodId);
-            paymentMethod.attach(PaymentMethodAttachParams.builder()
+            com.stripe.model.PaymentMethod stripePaymentMethod = com.stripe.model.PaymentMethod.retrieve(stripePaymentMethodId);
+            stripePaymentMethod.attach(PaymentMethodAttachParams.builder()
                     .setCustomer(customerId)
                     .build());
 
@@ -108,7 +112,7 @@ public class StripePaymentService {
             }
 
             // Save payment method to our database
-            GymPaymentMethod savedMethod = savePaymentMethod(gymId, paymentMethod, setAsDefault);
+            com.gymmate.payment.domain.PaymentMethod savedMethod = savePaymentMethod(gymId, stripePaymentMethod, setAsDefault);
 
             log.info("Attached payment method {} to gym {}", stripePaymentMethodId, gymId);
             return toPaymentMethodResponse(savedMethod);
@@ -135,7 +139,7 @@ public class StripePaymentService {
      */
     @Transactional
     public void removePaymentMethod(UUID gymId, UUID paymentMethodId) {
-        GymPaymentMethod method = paymentMethodRepository.findById(paymentMethodId)
+        com.gymmate.payment.domain.PaymentMethod method = paymentMethodRepository.findById(paymentMethodId)
                 .orElseThrow(() -> new DomainException("PAYMENT_METHOD_NOT_FOUND", "Payment method not found"));
 
         if (!method.getGymId().equals(gymId)) {
@@ -146,7 +150,7 @@ public class StripePaymentService {
 
         try {
             // Detach from Stripe
-            PaymentMethod stripeMethod = PaymentMethod.retrieve(method.getStripePaymentMethodId());
+            com.stripe.model.PaymentMethod stripeMethod = com.stripe.model.PaymentMethod.retrieve(method.getStripePaymentMethodId());
             stripeMethod.detach();
 
             // Delete from our database
@@ -327,17 +331,19 @@ public class StripePaymentService {
         }
     }
 
-    private GymPaymentMethod savePaymentMethod(UUID gymId, PaymentMethod paymentMethod, boolean isDefault) {
-        PaymentMethod.Card card = paymentMethod.getCard();
+    private com.gymmate.payment.domain.PaymentMethod savePaymentMethod(UUID gymId, com.stripe.model.PaymentMethod stripePaymentMethod, boolean isDefault) {
+        com.stripe.model.PaymentMethod.Card card = stripePaymentMethod.getCard();
 
-        GymPaymentMethod method = GymPaymentMethod.builder()
+        com.gymmate.payment.domain.PaymentMethod method = com.gymmate.payment.domain.PaymentMethod.builder()
+                .ownerType(PaymentMethodOwnerType.GYM)
+                .ownerId(gymId)
                 .gymId(gymId)
-                .stripePaymentMethodId(paymentMethod.getId())
-                .type(paymentMethod.getType())
+                .providerPaymentMethodId(stripePaymentMethod.getId())
+                .methodType(PaymentMethodType.CARD)
                 .cardBrand(card != null ? card.getBrand() : null)
-                .lastFour(card != null ? card.getLast4() : null)
-                .expiryMonth(card != null ? card.getExpMonth().intValue() : null)
-                .expiryYear(card != null ? card.getExpYear().intValue() : null)
+                .cardLastFour(card != null ? card.getLast4() : null)
+                .cardExpiresMonth(card != null ? card.getExpMonth().intValue() : null)
+                .cardExpiresYear(card != null ? card.getExpYear().intValue() : null)
                 .isDefault(isDefault)
                 .build();
 
@@ -358,14 +364,14 @@ public class StripePaymentService {
                             .status(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()))
                             .description(stripeInvoice.getDescription())
                             .periodStart(stripeInvoice.getPeriodStart() != null ?
-                                toLocalDateTime(stripeInvoice.getPeriodStart()) : null)
+                              utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodStart()) : null)
                             .periodEnd(stripeInvoice.getPeriodEnd() != null ?
-                                toLocalDateTime(stripeInvoice.getPeriodEnd()) : null)
+                              utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodEnd()) : null)
                             .dueDate(stripeInvoice.getDueDate() != null ?
-                                toLocalDateTime(stripeInvoice.getDueDate()) : null)
+                                utilityService.secondsToLocalDateTime(stripeInvoice.getDueDate()) : null)
                             .paidAt(stripeInvoice.getStatusTransitions() != null &&
                                     stripeInvoice.getStatusTransitions().getPaidAt() != null ?
-                                toLocalDateTime(stripeInvoice.getStatusTransitions().getPaidAt()) : null)
+                              utilityService.secondsToLocalDateTime(stripeInvoice.getStatusTransitions().getPaidAt()) : null)
                             .invoicePdfUrl(stripeInvoice.getInvoicePdf())
                             .hostedInvoiceUrl(stripeInvoice.getHostedInvoiceUrl())
                             .build();
@@ -374,14 +380,10 @@ public class StripePaymentService {
                 });
     }
 
-    private LocalDateTime toLocalDateTime(Long epochSeconds) {
-        return LocalDateTime.ofInstant(Instant.ofEpochSecond(epochSeconds), ZoneId.systemDefault());
-    }
-
-    private PaymentMethodResponse toPaymentMethodResponse(GymPaymentMethod method) {
+    private PaymentMethodResponse toPaymentMethodResponse(com.gymmate.payment.domain.PaymentMethod method) {
         return PaymentMethodResponse.builder()
                 .id(method.getId())
-                .type(method.getType())
+                .type(method.getMethodType().name())
                 .cardBrand(method.getCardBrand())
                 .lastFour(method.getLastFour())
                 .expiryMonth(method.getExpiryMonth())
