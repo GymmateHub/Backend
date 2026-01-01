@@ -44,7 +44,7 @@ class ClassBookingServiceTest {
 
     ClassSchedule schedule = ClassSchedule.builder().classId(classId).startTime(LocalDateTime.now().plusDays(1)).endTime(LocalDateTime.now().plusDays(1).plusHours(1)).build();
     schedule.setId(scheduleId);
-    schedule.setGymId(gymId);
+    schedule.setOrganisationId(gymId);
     when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
     when(bookingRepository.existsByClassScheduleIdAndMemberId(scheduleId, memberId)).thenReturn(false);
 
@@ -76,7 +76,7 @@ class ClassBookingServiceTest {
 
     ClassSchedule schedule = ClassSchedule.builder().classId(classId).build();
     schedule.setId(scheduleId);
-    schedule.setGymId(gymId);
+    schedule.setOrganisationId(gymId);
     when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
     when(bookingRepository.existsByClassScheduleIdAndMemberId(scheduleId, memberId)).thenReturn(false);
 
