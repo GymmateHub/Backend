@@ -12,7 +12,7 @@ public interface ClassScheduleMapper {
 
   @Mappings({
     @Mapping(target = "id", source = "id"),
-    @Mapping(target = "gymId", source = "gymId"),
+    @Mapping(target = "gymId", source = "organisationId"),
     @Mapping(target = "classId", source = "classId"),
     @Mapping(target = "trainerId", source = "trainerId"),
     @Mapping(target = "areaId", source = "areaId"),

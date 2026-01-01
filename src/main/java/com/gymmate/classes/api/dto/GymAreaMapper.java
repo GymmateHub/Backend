@@ -12,7 +12,7 @@ public interface GymAreaMapper {
 
   @Mappings({
     @Mapping(target = "id", source = "id"),
-    @Mapping(target = "gymId", source = "gymId"),
+    @Mapping(target = "gymId", source = "organisationId"),
     @Mapping(target = "name", source = "name"),
     @Mapping(target = "areaType", source = "areaType"),
     @Mapping(target = "capacity", source = "capacity")
