@@ -23,7 +23,7 @@ class GymDomainTest {
         @DisplayName("Should create gym with constructor")
         void createGym_WithConstructor_Success() {
             // Arrange
-            UUID ownerId = UUID.randomUUID();
+            UUID organisationId = UUID.randomUUID();
 
             // Act
             Gym gym = new Gym(
@@ -31,7 +31,7 @@ class GymDomainTest {
                     "A great fitness center",
                     "contact@testgym.com",
                     "+1234567890",
-                    ownerId
+                    organisationId
             );
 
             // Assert
@@ -39,7 +39,7 @@ class GymDomainTest {
             assertThat(gym.getDescription()).isEqualTo("A great fitness center");
             assertThat(gym.getEmail()).isEqualTo("contact@testgym.com");
             assertThat(gym.getPhone()).isEqualTo("+1234567890");
-            assertThat(gym.getOwnerId()).isEqualTo(ownerId);
+            assertThat(gym.getOrganisationId()).isEqualTo(organisationId);
             assertThat(gym.getSlug()).isNotNull();
         }
 

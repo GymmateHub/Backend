@@ -10,7 +10,6 @@ import java.util.UUID;
 @Data
 public class ScheduleResponse {
   private UUID id;
-  private UUID gymId;
   private UUID classId;
   private UUID trainerId;
   private UUID areaId;
@@ -28,7 +27,6 @@ public class ScheduleResponse {
   public static ScheduleResponse from(ClassSchedule s) {
     ScheduleResponse r = new ScheduleResponse();
     r.id = s.getId();
-    r.gymId = s.getGymId();
     r.classId = s.getClassId();
     r.trainerId = s.getTrainerId();
     r.areaId = s.getAreaId();

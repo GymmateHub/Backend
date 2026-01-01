@@ -12,7 +12,6 @@ public interface ClassScheduleMapper {
 
   @Mappings({
     @Mapping(target = "id", source = "id"),
-    @Mapping(target = "gymId", source = "organisationId"),
     @Mapping(target = "classId", source = "classId"),
     @Mapping(target = "trainerId", source = "trainerId"),
     @Mapping(target = "areaId", source = "areaId"),
@@ -27,14 +26,9 @@ public interface ClassScheduleMapper {
   })
   ScheduleResponse toResponse(ClassSchedule entity);
 
-  @Mappings({
-    @Mapping(target = "classId", source = "classId"),
-    @Mapping(target = "trainerId", source = "trainerId"),
-    @Mapping(target = "areaId", source = "areaId"),
-    @Mapping(target = "startTime", source = "startTime"),
-    @Mapping(target = "endTime", source = "endTime"),
-    @Mapping(target = "capacityOverride", source = "capacityOverride"),
-    @Mapping(target = "priceOverride", source = "priceOverride")
-  })
+  @Mapping(target = "status", ignore = true)
+  @Mapping(target = "cancellationReason", ignore = true)
+  @Mapping(target = "instructorNotes", ignore = true)
+  @Mapping(target = "adminNotes", ignore = true)
   ClassSchedule toEntity(CreateScheduleRequest dto);
 }

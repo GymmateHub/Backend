@@ -8,7 +8,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Repository interface for Gym aggregate (moved to infrastructure).
+ * Repository interface for Gym aggregate.
+ * Provides multi-tenant aware operations.
  */
 public interface GymRepository {
 
@@ -16,7 +17,29 @@ public interface GymRepository {
 
     Optional<Gym> findById(UUID id);
 
-    List<Gym> findByOwnerId(UUID ownerId);
+    // ========== Organisation-based queries (preferred) ==========
+
+    /**
+     * Find all gyms belonging to an organisation.
+     */
+    List<Gym> findByOrganisationId(UUID organisationId);
+
+    /**
+     * Find all active gyms belonging to an organisation.
+     */
+    List<Gym> findByOrganisationIdAndStatus(UUID organisationId, GymStatus status);
+
+    /**
+     * Count gyms in an organisation.
+     */
+    long countByOrganisationId(UUID organisationId);
+
+    /**
+     * Find gym by slug.
+     */
+    Optional<Gym> findBySlug(String slug);
+
+    // ========== General queries ==========
 
     List<Gym> findByStatus(GymStatus status);
 
@@ -27,5 +50,13 @@ public interface GymRepository {
     void deleteById(UUID id);
 
     boolean existsById(UUID id);
+
+    // ========== Deprecated owner-based queries ==========
+
+    /**
+     * @deprecated Use findByOrganisationId instead
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
+    List<Gym> findByOwnerId(UUID ownerId);
 }
 

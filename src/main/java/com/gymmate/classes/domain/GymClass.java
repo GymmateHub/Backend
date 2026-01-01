@@ -1,6 +1,6 @@
 package com.gymmate.classes.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.domain.GymScopedEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
@@ -9,6 +9,10 @@ import lombok.*;
 import java.math.BigDecimal;
 import java.util.UUID;
 
+/**
+ * GymClass entity representing a class type offered at a gym.
+ * Extends GymScopedEntity for automatic organisation and gym filtering.
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
@@ -16,9 +20,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "classes")
-public class GymClass extends TenantEntity {
+public class GymClass extends GymScopedEntity {
 
-
+  // Note: gymId is inherited from GymScopedEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
   @Column(name = "category_id")
   private UUID categoryId;
 
