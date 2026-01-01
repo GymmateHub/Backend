@@ -183,6 +183,14 @@ public class GymService {
     /**
      * Activate a gym.
      */
+    /**
+     * Save a gym entity directly (for use by OrganisationController).
+     */
+    @Transactional
+    public Gym saveGym(Gym gym) {
+        return gymRepository.save(gym);
+    }
+
     @Transactional
     public Gym activateGym(UUID id) {
         Gym gym = getGymById(id);

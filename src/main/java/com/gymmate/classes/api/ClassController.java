@@ -6,6 +6,7 @@ import com.gymmate.classes.api.dto.GymClassMapper;
 import com.gymmate.classes.application.GymClassService;
 import com.gymmate.classes.domain.GymClass;
 import com.gymmate.shared.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/classes")
 @RequiredArgsConstructor
+@Tag(name = "Class", description = "Class management operations")
 public class ClassController {
   private final GymClassService classService;
   private final GymClassMapper mapper;

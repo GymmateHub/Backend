@@ -8,6 +8,7 @@ import com.gymmate.user.api.dto.UserResponse;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -23,6 +24,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
+@Tag(name = "User", description = "User management operations")
 public class UserController {
     private final UserService userService;
 
