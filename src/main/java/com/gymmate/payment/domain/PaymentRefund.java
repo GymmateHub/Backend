@@ -17,10 +17,21 @@ import java.util.UUID;
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "payment_refunds")
+@Table(name = "payment_refunds", indexes = {
+    @Index(name = "idx_pr_organisation", columnList = "organisation_id"),
+    @Index(name = "idx_pr_gym", columnList = "gym_id"),
+    @Index(name = "idx_pr_stripe_refund", columnList = "stripe_refund_id")
+})
 public class PaymentRefund extends BaseAuditEntity {
 
-    @Column(name = "gym_id", nullable = false)
+    /**
+     * Organisation ID - the billing entity this refund belongs to.
+     * Primary filter for multi-tenant operations.
+     */
+    @Column(name = "organisation_id")
+    private UUID organisationId;
+
+    @Column(name = "gym_id")
     private UUID gymId;
 
     @Column(name = "stripe_refund_id", unique = true, nullable = false)

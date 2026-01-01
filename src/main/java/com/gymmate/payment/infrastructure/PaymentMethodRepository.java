@@ -60,6 +60,23 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UU
     }
 
     // ============================================
+    // Organisation-specific queries (preferred)
+    // ============================================
+
+    @Query("SELECT p FROM PaymentMethod p WHERE p.organisationId = :organisationId ORDER BY p.isDefault DESC, p.createdAt DESC")
+    List<PaymentMethod> findByOrganisationId(UUID organisationId);
+
+    @Query("SELECT p FROM PaymentMethod p WHERE p.organisationId = :organisationId AND p.isDefault = true")
+    Optional<PaymentMethod> findDefaultForOrganisation(UUID organisationId);
+
+    @Modifying
+    @Query("UPDATE PaymentMethod p SET p.isDefault = false WHERE p.organisationId = :organisationId")
+    void clearDefaultForOrganisation(UUID organisationId);
+
+    @Query("SELECT COUNT(p) > 0 FROM PaymentMethod p WHERE p.organisationId = :organisationId")
+    boolean existsForOrganisation(UUID organisationId);
+
+    // ============================================
     // Member-specific queries (Gym payments)
     // ============================================
 
