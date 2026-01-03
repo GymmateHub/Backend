@@ -1,6 +1,6 @@
 package com.gymmate.membership.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.domain.GymScopedEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -8,6 +8,10 @@ import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 
+/**
+ * MembershipPlan entity representing a membership plan offered by a gym.
+ * Extends GymScopedEntity for automatic organisation and gym filtering.
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
@@ -15,7 +19,10 @@ import java.math.BigDecimal;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "membership_plans")
-public class MembershipPlan extends TenantEntity {
+public class MembershipPlan extends GymScopedEntity {
+
+  // Note: gymId is inherited from GymScopedEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
 
   @Column(nullable = false)
   private String name;

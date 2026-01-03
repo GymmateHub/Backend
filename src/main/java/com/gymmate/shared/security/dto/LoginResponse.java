@@ -20,6 +20,6 @@ public class LoginResponse {
     private String firstName;
     private String lastName;
     private UserRole role;
-    private UUID gymId;
+    private UUID organisationId;
     private boolean emailVerified;
 }

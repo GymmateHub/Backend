@@ -21,7 +21,7 @@ spring:
     password: ${PG_PASSWORD}
     hikari:
       maximum-pool-size: 10
-      minimum-idle: 5
+      minimum-idle: 2
       max-lifetime: 1800000
       connection-timeout: 20000
 
@@ -87,9 +87,9 @@ springdoc:
     filter: true
     try-it-out-enabled: true
     persist-authorization: true
-  show-actuator: true
+  show-actuator: false
   cache:
-    disabled: true
+    disabled: false
 
 # Logging Configuration
 logging:

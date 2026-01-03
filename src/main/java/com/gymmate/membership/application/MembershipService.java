@@ -72,7 +72,6 @@ public class MembershipService {
       .frozen(false)
       .build();
 
-    membership.setGymId(gymId);
     return membershipRepository.save(membership);
   }
 

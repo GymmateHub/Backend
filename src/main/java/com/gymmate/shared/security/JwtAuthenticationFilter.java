@@ -53,9 +53,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    // Set tenant context for SUPER_ADMIN or if user has a gym association
-                    if (user.getGymId() != null) {
-                        TenantContext.setCurrentTenantId(user.getGymId());
+                    // Set tenant context for SUPER_ADMIN or if user has an organisation association
+                    if (user.getOrganisationId() != null) {
+                        TenantContext.setCurrentTenantId(user.getOrganisationId());
                     }
                 } else {
                     // Invalid token - clear security context and let Spring Security handle it
