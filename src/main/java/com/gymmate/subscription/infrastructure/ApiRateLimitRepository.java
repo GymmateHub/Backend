@@ -14,25 +14,25 @@ import java.util.UUID;
 @Repository
 public interface ApiRateLimitRepository extends JpaRepository<ApiRateLimit, UUID> {
 
-    Optional<ApiRateLimit> findByGymIdAndWindowStartAndWindowType(
-        UUID gymId,
+    Optional<ApiRateLimit> findByOrganisationIdAndWindowStartAndWindowType(
+        UUID organisationId,
         LocalDateTime windowStart,
         String windowType
     );
 
-    @Query("SELECT arl FROM ApiRateLimit arl WHERE arl.gymId = :gymId " +
+    @Query("SELECT arl FROM ApiRateLimit arl WHERE arl.organisationId = :organisationId " +
            "AND arl.windowStart <= :now AND arl.windowEnd > :now " +
            "AND arl.windowType = :windowType")
     Optional<ApiRateLimit> findCurrentWindow(
-        @Param("gymId") UUID gymId,
+        @Param("organisationId") UUID organisationId,
         @Param("now") LocalDateTime now,
         @Param("windowType") String windowType
     );
 
-    @Query("SELECT arl FROM ApiRateLimit arl WHERE arl.gymId = :gymId " +
+    @Query("SELECT arl FROM ApiRateLimit arl WHERE arl.organisationId = :organisationId " +
            "AND arl.isBlocked = true AND arl.blockedUntil > :now")
     List<ApiRateLimit> findActiveBlocks(
-        @Param("gymId") UUID gymId,
+        @Param("organisationId") UUID organisationId,
         @Param("now") LocalDateTime now
     );
 
@@ -41,8 +41,8 @@ public interface ApiRateLimitRepository extends JpaRepository<ApiRateLimit, UUID
 
     void deleteByWindowEndBefore(LocalDateTime cutoffDate);
 
-    @Query("SELECT COUNT(arl) FROM ApiRateLimit arl WHERE arl.gymId = :gymId " +
-           "AND arl.isBlocked = true AND arl.createdAt > :since")
-    Long countBlocksSince(@Param("gymId") UUID gymId, @Param("since") LocalDateTime since);
+    @Query("SELECT COUNT(arl) FROM ApiRateLimit arl WHERE arl.organisationId = :organisationId " +
+           "AND arl.isBlocked = true AND arl.blockedUntil >= :since")
+    Long countBlocksSince(@Param("organisationId") UUID organisationId, @Param("since") LocalDateTime since);
 }
 

@@ -6,6 +6,7 @@ import com.gymmate.user.api.dto.StaffResponse;
 import com.gymmate.user.api.dto.StaffUpdateRequest;
 import com.gymmate.user.application.StaffService;
 import com.gymmate.user.domain.Staff;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/staff")
 @RequiredArgsConstructor
+@Tag(name = "Staff", description = "Staff management operations")
 public class StaffController {
 
     private final StaffService staffService;

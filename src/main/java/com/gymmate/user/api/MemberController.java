@@ -1,16 +1,23 @@
 package com.gymmate.user.api;
 
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.shared.service.OrganisationLimitService;
 import com.gymmate.user.api.dto.MemberCreateRequest;
 import com.gymmate.user.api.dto.MemberResponse;
 import com.gymmate.user.api.dto.MemberUpdateRequest;
 import com.gymmate.user.application.MemberService;
 import com.gymmate.user.domain.Member;
 import com.gymmate.user.domain.MemberStatus;
+import com.gymmate.user.infrastructure.MemberRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -20,19 +27,32 @@ import java.util.UUID;
 /**
  * REST controller for member management operations.
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/members")
 @RequiredArgsConstructor
+@Tag(name = "Members", description = "Member Management APIs")
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberRepository memberRepository;
+    private final OrganisationLimitService limitService;
 
     /**
      * Create a new member profile.
+     * Checks organisation member limit before creating.
      */
     @PostMapping
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @Operation(summary = "Create member", description = "Create a new member profile")
     public ResponseEntity<ApiResponse<MemberResponse>> createMember(@Valid @RequestBody MemberCreateRequest request) {
-        Member member = memberService.createMember(request.userId(), request.membershipNumber());
+        // Check organisation member limit
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        if (organisationId != null) {
+            limitService.checkCanAddMember(organisationId);
+        }
+
+        Member member = memberService.createMember(request.userId(), request.gymId(), request.membershipNumber());
         MemberResponse response = MemberResponse.fromEntity(member);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(response, "Member created successfully"));
@@ -69,11 +89,63 @@ public class MemberController {
     }
 
     /**
-     * Get all members.
+     * Get all members in current organisation.
      */
     @GetMapping
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @Operation(summary = "Get all members", description = "Get all members in the current organisation")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getAllMembers() {
-        List<Member> members = memberService.findAll();
+        UUID organisationId = TenantContext.getCurrentTenantId();
+
+        List<Member> members;
+        if (organisationId != null) {
+            members = memberRepository.findByOrganisationId(organisationId);
+        } else {
+            members = memberService.findAll();
+        }
+
+        List<MemberResponse> responses = members.stream()
+                .map(MemberResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
+    /**
+     * Get members by gym ID within the organisation.
+     */
+    @GetMapping("/gym/{gymId}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @Operation(summary = "Get members by gym", description = "Get all members for a specific gym")
+    public ResponseEntity<ApiResponse<List<MemberResponse>>> getMembersByGym(@PathVariable UUID gymId) {
+        UUID organisationId = TenantContext.getCurrentTenantId();
+
+        List<Member> members;
+        if (organisationId != null) {
+            members = memberRepository.findByOrganisationIdAndGymId(organisationId, gymId);
+        } else {
+            members = memberRepository.findByGymId(gymId);
+        }
+
+        List<MemberResponse> responses = members.stream()
+                .map(MemberResponse::fromEntity)
+                .toList();
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
+    /**
+     * Get all members across organisation (organisation-scoped).
+     */
+    @GetMapping("/organisation")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @Operation(summary = "Get organisation members", description = "Get all members across all gyms in the organisation")
+    public ResponseEntity<ApiResponse<List<MemberResponse>>> getOrganisationMembers() {
+        UUID organisationId = TenantContext.getCurrentTenantId();
+
+        if (organisationId == null) {
+            return ResponseEntity.ok(ApiResponse.success(List.of()));
+        }
+
+        List<Member> members = memberRepository.findByOrganisationId(organisationId);
         List<MemberResponse> responses = members.stream()
                 .map(MemberResponse::fromEntity)
                 .toList();
@@ -84,6 +156,8 @@ public class MemberController {
      * Get active members.
      */
     @GetMapping("/active")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @Operation(summary = "Get active members", description = "Get all active members")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getActiveMembers() {
         List<Member> members = memberService.findActiveMembers();
         List<MemberResponse> responses = members.stream()

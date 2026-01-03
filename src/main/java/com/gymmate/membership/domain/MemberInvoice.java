@@ -1,6 +1,6 @@
 package com.gymmate.membership.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.domain.GymScopedEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,6 +11,7 @@ import java.util.UUID;
 /**
  * Entity representing an invoice for a member's membership.
  * These are invoices from the gym to the member.
+ * Extends GymScopedEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -19,8 +20,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "member_invoices")
-public class MemberInvoice extends TenantEntity {
+public class MemberInvoice extends GymScopedEntity {
 
+  // Note: gymId is inherited from GymScopedEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
     @Column(name = "member_id", nullable = false)
     private UUID memberId;
 

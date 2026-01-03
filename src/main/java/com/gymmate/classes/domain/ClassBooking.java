@@ -1,6 +1,6 @@
 package com.gymmate.classes.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.domain.GymScopedEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -8,6 +8,10 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * ClassBooking entity representing a member's booking for a class.
+ * Extends GymScopedEntity for automatic organisation and gym filtering.
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
@@ -15,8 +19,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "class_bookings")
-public class ClassBooking extends TenantEntity {
+public class ClassBooking extends GymScopedEntity {
 
+  // Note: gymId is inherited from GymScopedEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
   @Column(name = "member_id", nullable = false)
   private UUID memberId;
 
