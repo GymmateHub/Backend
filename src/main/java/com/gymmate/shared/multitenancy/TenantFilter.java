@@ -64,6 +64,14 @@ public class TenantFilter extends OncePerRequestFilter {
                     && authentication.getPrincipal() instanceof TenantAwareUserDetails) {
 
                 TenantAwareUserDetails userDetails = (TenantAwareUserDetails) authentication.getPrincipal();
+
+                // SUPER_ADMIN can bypass tenant context requirement
+                if (isSuperAdmin(userDetails)) {
+                  log.debug("SUPER_ADMIN user {} bypassing tenant context requirement", userDetails.getUsername());
+                  filterChain.doFilter(request, response);
+                  return;
+                }
+
                 UUID organisationId = userDetails.getOrganisationId();
 
                 if (organisationId != null) {
@@ -113,5 +121,11 @@ public class TenantFilter extends OncePerRequestFilter {
 
         ApiResponse<?> apiResponse = ApiResponse.error(message);
         objectMapper.writeValue(response.getWriter(), apiResponse);
+    }
+
+    private boolean isSuperAdmin(TenantAwareUserDetails userDetails) {
+      return userDetails.getAuthorities().stream()
+        .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPER_ADMIN")
+          || auth.getAuthority().equals("SUPER_ADMIN"));
     }
 }
