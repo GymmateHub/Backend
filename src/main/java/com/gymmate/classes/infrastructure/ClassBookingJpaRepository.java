@@ -16,9 +16,11 @@ import java.util.UUID;
 public interface ClassBookingJpaRepository extends JpaRepository<ClassBooking, UUID> {
   List<ClassBooking> findByMemberId(UUID memberId);
   List<ClassBooking> findByClassScheduleId(UUID classScheduleId);
-  List<ClassBooking> findByGymId(UUID gymId);
 
-  @Query("SELECT cb FROM ClassBooking cb WHERE cb.gymId = :gymId AND cb.status = :status ORDER BY cb.bookingDate DESC")
+  @Query("SELECT cb FROM ClassBooking cb JOIN Member m ON cb.memberId = m.userId WHERE m.gymId = :gymId")
+  List<ClassBooking> findByGymId(@Param("gymId") UUID gymId);
+
+  @Query("SELECT cb FROM ClassBooking cb JOIN Member m ON cb.memberId = m.userId WHERE m.gymId = :gymId AND cb.status = :status ORDER BY cb.bookingDate DESC")
   List<ClassBooking> findByGymIdAndStatus(@Param("gymId") UUID gymId, @Param("status") BookingStatus status);
 
   Optional<ClassBooking> findByClassScheduleIdAndMemberId(UUID classScheduleId, UUID memberId);

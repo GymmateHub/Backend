@@ -25,7 +25,7 @@ class GymTest {
         @DisplayName("Should create gym with valid data")
         void createGym_WithValidData_Success() {
             // Arrange
-            UUID ownerId = UUID.randomUUID();
+            UUID organisationId = UUID.randomUUID();
 
             // Act
             Gym gym = new Gym(
@@ -33,7 +33,7 @@ class GymTest {
                     "A premium fitness center",
                     "contact@fitnessworld.com",
                     "+1234567890",
-                    ownerId
+                    organisationId
             );
 
             // Assert
@@ -41,7 +41,7 @@ class GymTest {
             assertThat(gym.getDescription()).isEqualTo("A premium fitness center");
             assertThat(gym.getContactEmail()).isEqualTo("contact@fitnessworld.com");
             assertThat(gym.getContactPhone()).isEqualTo("+1234567890");
-            assertThat(gym.getOwnerId()).isEqualTo(ownerId);
+            assertThat(gym.getOrganisationId()).isEqualTo(organisationId);
         }
 
         @Test
@@ -56,9 +56,9 @@ class GymTest {
                     UUID.randomUUID()
             );
 
-            // Assert
+            // Assert - slug now includes timestamp suffix for uniqueness
             assertThat(gym.getSlug()).isNotNull();
-            assertThat(gym.getSlug()).isEqualTo("fitness-world");
+            assertThat(gym.getSlug()).startsWith("fitness-world-");
         }
 
         @Test
@@ -270,8 +270,8 @@ class GymTest {
                     UUID.randomUUID()
             );
 
-            // Assert
-            assertThat(gym.getSlug()).isEqualTo("fitness-world");
+            // Assert - slug now includes timestamp suffix for uniqueness
+            assertThat(gym.getSlug()).startsWith("fitness-world-");
         }
 
         @Test
@@ -286,8 +286,8 @@ class GymTest {
                     UUID.randomUUID()
             );
 
-            // Assert
-            assertThat(gym.getSlug()).isEqualTo("my-awesome-gym");
+            // Assert - slug now includes timestamp suffix for uniqueness
+            assertThat(gym.getSlug()).startsWith("my-awesome-gym-");
         }
 
         @Test

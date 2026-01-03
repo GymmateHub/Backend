@@ -5,6 +5,7 @@ import com.gymmate.classes.api.dto.CreateBookingRequest;
 import com.gymmate.classes.application.ClassBookingService;
 import com.gymmate.classes.domain.ClassBooking;
 import com.gymmate.shared.dto.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/bookings")
 @RequiredArgsConstructor
+@Tag(name = "Booking", description = "Booking management operations")
 public class ClassBookingController {
 
   private final ClassBookingService bookingService;

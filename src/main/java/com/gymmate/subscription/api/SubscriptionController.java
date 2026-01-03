@@ -7,7 +7,7 @@ import com.gymmate.subscription.application.RateLimitService;
 import com.gymmate.subscription.application.RateLimitStatistics;
 import com.gymmate.subscription.application.RateLimitStatus;
 import com.gymmate.subscription.application.SubscriptionService;
-import com.gymmate.subscription.domain.GymSubscription;
+import com.gymmate.subscription.domain.Subscription;
 import com.gymmate.subscription.domain.SubscriptionTier;
 import com.gymmate.subscription.domain.SubscriptionUsage;
 import io.swagger.v3.oas.annotations.Operation;
@@ -35,14 +35,14 @@ public class SubscriptionController {
     private final SubscriptionMapper mapper;
 
     @PostMapping
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Create a new subscription", description = "Create a subscription for a gym with optional Stripe billing")
+    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Create a new subscription", description = "Create a subscription for an organisation with optional Stripe billing")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> createSubscription(
             @Valid @RequestBody CreateSubscriptionRequest request) {
 
-        UUID gymId = TenantContext.getCurrentTenantId();
-        GymSubscription subscription = subscriptionService.createSubscription(
-            gymId,
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        Subscription subscription = subscriptionService.createSubscription(
+            organisationId,
             request.getTierName(),
             Boolean.TRUE.equals(request.getStartTrial()),
             request.getPaymentMethodId(),
@@ -58,49 +58,49 @@ public class SubscriptionController {
     }
 
     @GetMapping("/current")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Get current subscription", description = "Get the current subscription for the gym")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Get current subscription", description = "Get the current subscription for the organisation")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> getCurrentSubscription() {
-        UUID gymId = TenantContext.getCurrentTenantId();
-        GymSubscription subscription = subscriptionService.getGymSubscription(gymId);
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        Subscription subscription = subscriptionService.getSubscription(organisationId);
 
         return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(subscription)));
     }
 
     @PostMapping("/upgrade")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Upgrade subscription", description = "Upgrade to a higher tier")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> upgradeSubscription(
             @Valid @RequestBody ChangeTierRequest request) {
 
-        UUID gymId = TenantContext.getCurrentTenantId();
-        GymSubscription subscription = subscriptionService.upgradeSubscription(gymId, request.getNewTierName());
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        Subscription subscription = subscriptionService.upgradeSubscription(organisationId, request.getNewTierName());
 
         return ResponseEntity.ok(
             ApiResponse.success(mapper.toResponse(subscription), "Subscription upgraded successfully"));
     }
 
     @PostMapping("/downgrade")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Downgrade subscription", description = "Downgrade to a lower tier")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> downgradeSubscription(
             @Valid @RequestBody ChangeTierRequest request) {
 
-        UUID gymId = TenantContext.getCurrentTenantId();
-        GymSubscription subscription = subscriptionService.downgradeSubscription(gymId, request.getNewTierName());
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        Subscription subscription = subscriptionService.downgradeSubscription(organisationId, request.getNewTierName());
 
         return ResponseEntity.ok(
             ApiResponse.success(mapper.toResponse(subscription), "Subscription downgraded successfully"));
     }
 
     @PostMapping("/cancel")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Cancel subscription", description = "Cancel the subscription")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> cancelSubscription(
             @RequestParam(defaultValue = "false") boolean immediate) {
 
-        UUID gymId = TenantContext.getCurrentTenantId();
-        GymSubscription subscription = subscriptionService.cancelSubscription(gymId, immediate);
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        Subscription subscription = subscriptionService.cancelSubscription(organisationId, immediate);
 
         String message = immediate
             ? "Subscription cancelled immediately"
@@ -110,11 +110,11 @@ public class SubscriptionController {
     }
 
     @PostMapping("/reactivate")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Reactivate subscription", description = "Reactivate a cancelled subscription")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> reactivateSubscription() {
-        UUID gymId = TenantContext.getCurrentTenantId();
-        GymSubscription subscription = subscriptionService.reactivateSubscription(gymId);
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        Subscription subscription = subscriptionService.reactivateSubscription(organisationId);
 
         return ResponseEntity.ok(
             ApiResponse.success(mapper.toResponse(subscription), "Subscription reactivated successfully"));
@@ -143,59 +143,59 @@ public class SubscriptionController {
     }
 
     @GetMapping("/usage/current")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get current usage", description = "Get current billing period usage")
     public ResponseEntity<ApiResponse<SubscriptionUsage>> getCurrentUsage() {
-        UUID gymId = TenantContext.getCurrentTenantId();
-        GymSubscription subscription = subscriptionService.getGymSubscription(gymId);
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        Subscription subscription = subscriptionService.getSubscription(organisationId);
         SubscriptionUsage usage = subscriptionService.getCurrentUsage(subscription.getId());
 
         return ResponseEntity.ok(ApiResponse.success(usage));
     }
 
     @GetMapping("/usage/history")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get usage history", description = "Get historical usage records")
     public ResponseEntity<ApiResponse<List<SubscriptionUsage>>> getUsageHistory() {
-        UUID gymId = TenantContext.getCurrentTenantId();
-        List<SubscriptionUsage> usageHistory = subscriptionService.getGymUsageHistory(gymId);
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        List<SubscriptionUsage> usageHistory = subscriptionService.getOrganisationUsageHistory(organisationId);
 
         return ResponseEntity.ok(ApiResponse.success(usageHistory));
     }
 
     @GetMapping("/rate-limit/status")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get rate limit status", description = "Get current rate limit status")
     public ResponseEntity<ApiResponse<RateLimitStatus>> getRateLimitStatus() {
-        UUID gymId = TenantContext.getCurrentTenantId();
-        RateLimitStatus status = rateLimitService.getRateLimitStatus(gymId);
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        RateLimitStatus status = rateLimitService.getRateLimitStatus(organisationId);
 
         return ResponseEntity.ok(ApiResponse.success(status));
     }
 
     @GetMapping("/rate-limit/statistics")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get rate limit statistics", description = "Get rate limit statistics")
     public ResponseEntity<ApiResponse<RateLimitStatistics>> getRateLimitStatistics(
             @RequestParam(required = false) Integer days) {
 
-        UUID gymId = TenantContext.getCurrentTenantId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         LocalDateTime since = days != null
             ? LocalDateTime.now().minusDays(days)
             : LocalDateTime.now().minusDays(30);
 
-        RateLimitStatistics statistics = rateLimitService.getStatistics(gymId, since);
+        RateLimitStatistics statistics = rateLimitService.getStatistics(organisationId, since);
 
         return ResponseEntity.ok(ApiResponse.success(statistics));
     }
 
     @PostMapping("/rate-limit/unblock")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Unblock gym", description = "Manually unblock a rate-limited gym (Admin only)")
-    public ResponseEntity<ApiResponse<Void>> unblockGym(@RequestParam UUID gymId) {
-        rateLimitService.unblockGym(gymId);
+    @Operation(summary = "Unblock organisation", description = "Manually unblock a rate-limited organisation (Admin only)")
+    public ResponseEntity<ApiResponse<Void>> unblockOrganisation(@RequestParam UUID organisationId) {
+        rateLimitService.unblockOrganisation(organisationId);
 
-        return ResponseEntity.ok(ApiResponse.success(null, "Gym unblocked successfully"));
+        return ResponseEntity.ok(ApiResponse.success(null, "Organisation unblocked successfully"));
     }
 }
 

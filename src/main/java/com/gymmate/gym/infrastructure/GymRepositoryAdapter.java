@@ -29,10 +29,29 @@ public class GymRepositoryAdapter implements GymRepository {
         return jpaRepository.findById(id);
     }
 
+    // ========== Organisation-based queries ==========
+
     @Override
-    public List<Gym> findByOwnerId(UUID ownerId) {
-        return jpaRepository.findByOwnerId(ownerId);
+    public List<Gym> findByOrganisationId(UUID organisationId) {
+        return jpaRepository.findByOrganisationId(organisationId);
     }
+
+    @Override
+    public List<Gym> findByOrganisationIdAndStatus(UUID organisationId, GymStatus status) {
+        return jpaRepository.findByOrganisationIdAndStatus(organisationId, status);
+    }
+
+    @Override
+    public long countByOrganisationId(UUID organisationId) {
+        return jpaRepository.countByOrganisationId(organisationId);
+    }
+
+    @Override
+    public Optional<Gym> findBySlug(String slug) {
+        return jpaRepository.findBySlug(slug);
+    }
+
+    // ========== General queries ==========
 
     @Override
     public List<Gym> findByStatus(GymStatus status) {
@@ -57,5 +76,13 @@ public class GymRepositoryAdapter implements GymRepository {
     @Override
     public boolean existsById(UUID id) {
         return jpaRepository.existsById(id);
+    }
+
+    // ========== Deprecated owner-based queries ==========
+
+    @Override
+    @Deprecated(since = "1.0", forRemoval = true)
+    public List<Gym> findByOwnerId(UUID ownerId) {
+        return jpaRepository.findByOwnerId(ownerId);
     }
 }

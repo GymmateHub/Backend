@@ -1,5 +1,8 @@
 package com.gymmate.shared.security;
 
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.shared.domain.Organisation;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.InvalidTokenException;
@@ -8,6 +11,7 @@ import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.dto.*;
 import com.gymmate.shared.service.EmailService;
+import com.gymmate.shared.service.OrganisationService;
 import com.gymmate.shared.service.PasswordService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
@@ -39,6 +43,8 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final TotpService totpService;
+    private final OrganisationService organisationService;
+    private final GymRepository gymRepository;
 
     private static final int OTP_VALIDITY_MINUTES = 5;
 
@@ -111,7 +117,7 @@ public class AuthenticationService {
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())
                         .role(user.getRole())
-                        .gymId(user.getGymId())
+                        .organisationId(user.getOrganisationId())
                         .emailVerified(false)
                         .build();
             }
@@ -134,7 +140,7 @@ public class AuthenticationService {
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
                     .role(user.getRole())
-                    .gymId(user.getGymId())
+                    .organisationId(user.getOrganisationId())
                     .emailVerified(true)
                     .build();
 
@@ -254,11 +260,11 @@ public class AuthenticationService {
                 "OWNER registration must use the OTP verification flow");
         }
 
-        // Check if user already exists in current gym context
-        UUID currentGymId = TenantContext.getCurrentTenantId();
-        if (currentGymId != null && userRepository.findByEmailAndGymId(email, currentGymId).isPresent()) {
+        // Check if user already exists in current organisation context
+        UUID currentOrganisationId = TenantContext.getCurrentTenantId();
+        if (currentOrganisationId != null && userRepository.findByEmailAndOrganisationId(email, currentOrganisationId).isPresent()) {
             throw new DomainException("USER_ALREADY_EXISTS",
-                "A user with email '" + email + "' already exists in this gym");
+                "A user with email '" + email + "' already exists in this organisation");
         }
 
         // For ADMIN role (gym owners/admins), check system-wide unique email
@@ -302,7 +308,13 @@ public class AuthenticationService {
     }
 
     /**
-     * Register a new gym admin/owner.
+     * Register a new gym admin/owner with organisation and default gym.
+     * Flow:
+     * 1. Create organisation
+     * 2. Create user with organisationId
+     * 3. Update organisation with owner_user_id
+     * 4. Create default gym for the organisation
+     *
      * Creates user as INACTIVE with emailVerified=false for OTP verification flow.
      */
     @Transactional
@@ -319,31 +331,55 @@ public class AuthenticationService {
         // Validate password requirements
         validatePassword(plainPassword);
 
-        // Encode password
+        // Step 1: Create organisation (without owner yet)
+        String organisationName = firstName + "'s Gym Organization";
+        String slug = organisationService.generateSlug(organisationName);
+        Organisation organisation = organisationService.createOrganisation(
+            organisationName,
+            slug,
+            email
+        );
+
+        log.info("Organisation created: {} (ID: {})", organisation.getName(), organisation.getId());
+
+        // Step 2: Create user with organisationId
         String passwordHash = passwordService.encode(plainPassword);
 
-        // Create new gym owner with INACTIVE status and emailVerified=false
-        // User will be activated after OTP verification
         User user = User.builder()
                 .email(email)
                 .firstName(firstName)
                 .lastName(lastName)
                 .passwordHash(passwordHash)
                 .phone(phone)
+                .organisationId(organisation.getId())
                 .role(UserRole.OWNER)
                 .status(UserStatus.INACTIVE)
                 .emailVerified(false)
                 .build();
 
-        log.info("User object created - email: {}, phone: {}, role: {}, status: {}, emailVerified: {}",
-            user.getEmail(), user.getPhone(), user.getRole(), user.getStatus(), user.isEmailVerified());
-
-        // Save and return
         User savedUser = userRepository.save(user);
 
-        log.info("User saved - ID: {}, email: {}, phone: {}, role: {}, status: {}, emailVerified: {}, isActive: {}",
-            savedUser.getId(), savedUser.getEmail(), savedUser.getPhone(), savedUser.getRole(),
-            savedUser.getStatus(), savedUser.isEmailVerified(), savedUser.isActive());
+        log.info("User saved - ID: {}, email: {}, organisationId: {}, role: {}, status: {}, emailVerified: {}",
+            savedUser.getId(), savedUser.getEmail(), savedUser.getOrganisationId(), savedUser.getRole(),
+            savedUser.getStatus(), savedUser.isEmailVerified());
+
+        // Step 3: Update organisation with owner_user_id
+        organisationService.assignOwner(organisation.getId(), savedUser.getId());
+
+        log.info("Organisation owner assigned: userId {} to organisationId {}",
+            savedUser.getId(), organisation.getId());
+
+        // Step 4: Create default gym for the organisation
+        Gym defaultGym = Gym.createDefault(
+            organisationName,
+            email,
+            phone != null ? phone : "",
+            organisation.getId()
+        );
+        Gym savedGym = gymRepository.save(defaultGym);
+
+        log.info("Default gym created: {} (ID: {}) for organisation {}",
+            savedGym.getName(), savedGym.getId(), organisation.getId());
 
         return savedUser;
     }

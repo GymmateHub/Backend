@@ -5,10 +5,12 @@ import java.util.UUID;
 /**
  * DTO for creating a new member.
  */
-public record MemberCreateRequest(UUID userId, String membershipNumber) {
+public record MemberCreateRequest(UUID userId, UUID gymId, String membershipNumber) {
   public MemberCreateRequest{
     if (userId == null)
       throw new IllegalArgumentException("User ID is required");
+    if (gymId == null)
+      throw new IllegalArgumentException("Gym ID is required");
     if (membershipNumber == null)
       throw new IllegalArgumentException("Membership number is required");
     if (membershipNumber.isBlank())

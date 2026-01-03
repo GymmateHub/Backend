@@ -15,7 +15,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class SubscriptionResponse {
     private UUID id;
-    private UUID gymId;
+    private UUID organisationId;
     private String tierName;
     private String tierDisplayName;
     private String status;

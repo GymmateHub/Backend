@@ -9,17 +9,21 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Subscription entity representing a subscription for an entire organisation.
+ * Each organisation has one subscription that covers all their gyms/locations.
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "gym_subscriptions")
-public class GymSubscription extends BaseAuditEntity {
+@Table(name = "subscriptions")
+public class Subscription extends BaseAuditEntity {
 
-    @Column(name = "gym_id", nullable = false)
-    private UUID gymId;
+    @Column(name = "organisation_id", nullable = false, unique = true)
+    private UUID organisationId;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "tier_id", nullable = false)

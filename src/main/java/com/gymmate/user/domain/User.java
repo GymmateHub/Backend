@@ -1,6 +1,6 @@
 package com.gymmate.user.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.domain.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -8,6 +8,7 @@ import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -16,7 +17,10 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "users")
-public class User extends TenantEntity {
+public class User extends BaseAuditEntity {
+
+  @Column(name = "organisation_id", nullable = true)
+  private UUID organisationId;
 
   @Column(nullable = false)
   private String email;

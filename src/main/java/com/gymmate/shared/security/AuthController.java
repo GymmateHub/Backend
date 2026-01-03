@@ -1,23 +1,38 @@
 package com.gymmate.shared.security;
 
+import com.gymmate.gym.application.GymService;
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.shared.api.dto.GymSwitchResponse;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.dto.*;
 import com.gymmate.user.api.dto.GymAdminRegistrationRequest;
 import com.gymmate.user.api.dto.MemberRegistrationRequest;
 import com.gymmate.user.api.dto.UserRegistrationRequest;
 import com.gymmate.user.api.dto.UserResponse;
 import com.gymmate.user.domain.User;
+import com.gymmate.user.infrastructure.UserRepository;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
+@Tag(name = "Authentication", description = "Authentication and authorization APIs")
 public class AuthController {
   private final AuthenticationService authenticationService;
+  private final GymService gymService;
+  private final JwtService jwtService;
+  private final UserRepository userRepository;
 
   /**
    * Step 2: Resend OTP (rate limited to 60 seconds)
@@ -138,4 +153,85 @@ public class AuthController {
       return ResponseEntity.ok(ApiResponse.success(response, "Tokens refreshed successfully"));
   }
 
+  /**
+   * Switch gym context for the authenticated user.
+   * Returns new JWT tokens with the selected gym context.
+   * The gym must belong to the user's organisation.
+   */
+  @PostMapping("/switch-gym/{gymId}")
+  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+  @Operation(summary = "Switch gym context", description = "Switch to a different gym within your organisation and get new tokens")
+  public ResponseEntity<ApiResponse<GymSwitchResponse>> switchGym(
+          @PathVariable UUID gymId,
+          @RequestHeader("Authorization") String authHeader) {
+
+      // Extract current user info from token
+      String token = authHeader.substring(7);
+      UUID userId = jwtService.extractUserId(token);
+      UUID organisationId = jwtService.extractOrganisationId(token);
+
+      if (organisationId == null) {
+          throw new DomainException("NO_ORGANISATION", "User is not associated with an organisation");
+      }
+
+      // Verify gym exists and belongs to user's organisation
+      Gym gym = gymService.getGymById(gymId);
+      if (!organisationId.equals(gym.getOrganisationId())) {
+          throw new DomainException("GYM_ACCESS_DENIED",
+              "The selected gym does not belong to your organisation");
+      }
+
+      // Get user for token generation
+      User user = userRepository.findById(userId)
+          .orElseThrow(() -> new DomainException("USER_NOT_FOUND", "User not found"));
+
+      // Generate new tokens with gym context
+      String newAccessToken = jwtService.generateToken(user, gymId);
+      String newRefreshToken = jwtService.generateRefreshToken(user);
+
+      GymSwitchResponse response = GymSwitchResponse.builder()
+              .gymId(gym.getId())
+              .gymName(gym.getName())
+              .organisationId(organisationId)
+              .accessToken(newAccessToken)
+              .refreshToken(newRefreshToken)
+              .message("Switched to gym: " + gym.getName())
+              .build();
+
+      return ResponseEntity.ok(ApiResponse.success(response, "Gym context switched successfully"));
+  }
+
+  /**
+   * Get current gym context from token.
+   */
+  @GetMapping("/current-gym")
+  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+  @Operation(summary = "Get current gym context", description = "Get the current gym context from the JWT token")
+  public ResponseEntity<ApiResponse<GymSwitchResponse>> getCurrentGym(
+          @RequestHeader("Authorization") String authHeader) {
+
+      String token = authHeader.substring(7);
+      UUID gymId = jwtService.extractGymId(token);
+      UUID organisationId = jwtService.extractOrganisationId(token);
+
+      if (gymId == null) {
+          return ResponseEntity.ok(ApiResponse.success(
+              GymSwitchResponse.builder()
+                  .organisationId(organisationId)
+                  .message("No gym context set. Use /switch-gym/{gymId} to select a gym.")
+                  .build()
+          ));
+      }
+
+      Gym gym = gymService.getGymById(gymId);
+
+      GymSwitchResponse response = GymSwitchResponse.builder()
+              .gymId(gym.getId())
+              .gymName(gym.getName())
+              .organisationId(organisationId)
+              .message("Current gym: " + gym.getName())
+              .build();
+
+      return ResponseEntity.ok(ApiResponse.success(response));
+  }
 }

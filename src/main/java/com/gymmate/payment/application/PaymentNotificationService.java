@@ -3,7 +3,7 @@ package com.gymmate.payment.application;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.payment.domain.GymInvoice;
-import com.gymmate.subscription.domain.GymSubscription;
+import com.gymmate.subscription.domain.Subscription;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -44,8 +44,10 @@ public class PaymentNotificationService {
      * Send trial ending reminder (3 days before trial ends).
      */
     @Async
-    public void sendTrialEndingReminder(UUID gymId, GymSubscription subscription) {
-        Gym gym = getGym(gymId);
+    public void sendTrialEndingReminder(UUID organisationId, Subscription subscription) {
+        // For now, send to first gym's contact email or use organisation contact
+        // TODO: Update to send to organisation owner's email instead
+        Gym gym = getGym(organisationId);
         if (gym == null) return;
 
         String subject = "Your GymMate Trial Ends in 3 Days";
@@ -56,7 +58,7 @@ public class PaymentNotificationService {
         String htmlContent = buildTrialEndingEmail(gym.getName(), tierName, price, trialEnd);
 
         sendEmail(gym.getContactEmail(), subject, htmlContent);
-        log.info("Sent trial ending reminder to gym {}", gymId);
+        log.info("Sent trial ending reminder to organisation {}", organisationId);
     }
 
     /**

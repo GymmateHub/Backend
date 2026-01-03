@@ -67,19 +67,19 @@ class SubscriptionDomainTest {
         @DisplayName("Should create gym subscription with builder")
         void createSubscription_WithBuilder_Success() {
             // Arrange
-            UUID gymId = UUID.randomUUID();
+            UUID organisationId = UUID.randomUUID();
             LocalDateTime now = LocalDateTime.now();
 
             // Act
-            GymSubscription subscription = GymSubscription.builder()
-                    .gymId(gymId)
+            Subscription subscription = Subscription.builder()
+                    .organisationId(organisationId)
                     .status(SubscriptionStatus.ACTIVE)
                     .currentPeriodStart(now)
                     .currentPeriodEnd(now.plusMonths(1))
                     .build();
 
             // Assert
-            assertThat(subscription.getGymId()).isEqualTo(gymId);
+            assertThat(subscription.getOrganisationId()).isEqualTo(organisationId);
             assertThat(subscription.getStatus()).isEqualTo(SubscriptionStatus.ACTIVE);
         }
 
@@ -87,7 +87,7 @@ class SubscriptionDomainTest {
         @DisplayName("Should track Stripe subscription ID")
         void setStripeSubscriptionId_ValidId_Stored() {
             // Arrange
-            GymSubscription subscription = GymSubscription.builder()
+            Subscription subscription = Subscription.builder()
                     .stripeSubscriptionId("sub_test123")
                     .build();
 
@@ -101,7 +101,7 @@ class SubscriptionDomainTest {
             // Arrange
             LocalDateTime trialEnd = LocalDateTime.now().plusDays(14);
 
-            GymSubscription subscription = GymSubscription.builder()
+            Subscription subscription = Subscription.builder()
                     .trialEnd(trialEnd)
                     .build();
 
@@ -113,7 +113,7 @@ class SubscriptionDomainTest {
         @DisplayName("Should cancel subscription")
         void cancelSubscription_ShouldUpdateStatus() {
             // Arrange
-            GymSubscription subscription = GymSubscription.builder()
+            Subscription subscription = Subscription.builder()
                     .status(SubscriptionStatus.ACTIVE)
                     .build();
 
@@ -209,12 +209,12 @@ class SubscriptionDomainTest {
         @DisplayName("Should create rate limit config with builder")
         void createRateLimit_WithBuilder_Success() {
             // Arrange
-            UUID gymId = UUID.randomUUID();
+            UUID organisationId = UUID.randomUUID();
             LocalDateTime now = LocalDateTime.now();
 
             // Act
             ApiRateLimit rateLimit = ApiRateLimit.builder()
-                    .gymId(gymId)
+                    .organisationId(organisationId)
                     .windowStart(now)
                     .windowEnd(now.plusHours(1))
                     .windowType("hourly")
@@ -224,7 +224,7 @@ class SubscriptionDomainTest {
                     .build();
 
             // Assert
-            assertThat(rateLimit.getGymId()).isEqualTo(gymId);
+            assertThat(rateLimit.getOrganisationId()).isEqualTo(organisationId);
             assertThat(rateLimit.getRequestCount()).isEqualTo(100);
             assertThat(rateLimit.getLimitThreshold()).isEqualTo(1000);
             assertThat(rateLimit.getEndpointPath()).isEqualTo("/api/members");

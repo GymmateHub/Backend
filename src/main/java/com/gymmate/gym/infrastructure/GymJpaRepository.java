@@ -8,25 +8,87 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Spring Data JPA repository for Gym entity.
+ * Provides multi-tenant aware queries.
  */
 @Repository
 public interface GymJpaRepository extends JpaRepository<Gym, UUID> {
 
-    List<Gym> findByOwnerId(UUID ownerId);
+    // ========== Organisation-based queries (preferred) ==========
+
+    /**
+     * Find all gyms belonging to an organisation.
+     */
+    List<Gym> findByOrganisationId(UUID organisationId);
+
+    /**
+     * Find all active gyms belonging to an organisation.
+     */
+    List<Gym> findByOrganisationIdAndStatus(UUID organisationId, GymStatus status);
+
+    /**
+     * Count gyms in an organisation.
+     */
+    @Query("SELECT COUNT(g) FROM Gym g WHERE g.organisationId = :organisationId")
+    long countByOrganisationId(@Param("organisationId") UUID organisationId);
+
+    /**
+     * Count active gyms in an organisation.
+     */
+    @Query("SELECT COUNT(g) FROM Gym g WHERE g.organisationId = :organisationId AND g.status = :status")
+    long countByOrganisationIdAndStatus(@Param("organisationId") UUID organisationId, @Param("status") GymStatus status);
+
+    /**
+     * Sum of maxMembers across all gyms in an organisation.
+     */
+    @Query("SELECT COALESCE(SUM(g.maxMembers), 0) FROM Gym g WHERE g.organisationId = :organisationId")
+    Integer sumMaxMembersByOrganisationId(@Param("organisationId") UUID organisationId);
+
+    /**
+     * Find gym by slug (globally unique).
+     */
+    Optional<Gym> findBySlug(String slug);
+
+    /**
+     * Check if slug exists.
+     */
+    boolean existsBySlug(String slug);
+
+    // ========== General queries ==========
 
     List<Gym> findByStatus(GymStatus status);
 
     List<Gym> findByCity(String city);
 
+    // ========== Deprecated owner-based queries (for backward compatibility) ==========
+
+    /**
+     * @deprecated Use findByOrganisationId instead
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
+    List<Gym> findByOwnerId(UUID ownerId);
+
+    /**
+     * @deprecated Use findByOrganisationIdAndStatus instead
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
     List<Gym> findByOwnerIdAndStatus(UUID ownerId, GymStatus status);
 
+    /**
+     * @deprecated Use sumMaxMembersByOrganisationId instead
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
     @Query("SELECT COALESCE(SUM(g.maxMembers), 0) FROM Gym g WHERE g.ownerId = :ownerId")
     Integer sumMaxMembersByOwnerId(@Param("ownerId") UUID ownerId);
 
+    /**
+     * @deprecated Use countByOrganisationIdAndStatus instead
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
     @Query("SELECT COUNT(g) FROM Gym g WHERE g.ownerId = :ownerId AND g.status = :status")
     Long countByOwnerIdAndStatus(@Param("ownerId") UUID ownerId, @Param("status") GymStatus status);
 }

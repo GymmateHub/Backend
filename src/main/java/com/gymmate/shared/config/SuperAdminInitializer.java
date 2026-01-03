@@ -45,10 +45,9 @@ public class SuperAdminInitializer {
                         .role(UserRole.SUPER_ADMIN)
                         .status(UserStatus.ACTIVE)
                         .emailVerified(true)
+                        .organisationId(null) // Super admin is not associated with any organisation
                         .build();
 
-                // Super admin is not associated with any gym
-                superAdmin.setGymId(null);
 
                 userRepository.save(superAdmin);
                 log.info("Successfully created super admin user");

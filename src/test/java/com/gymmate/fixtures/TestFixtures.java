@@ -51,7 +51,7 @@ public class TestFixtures {
                 .status(UserStatus.ACTIVE)
                 .emailVerified(true)
                 .build();
-        user.setGymId(gymId);
+        user.setOrganisationId(gymId);
         return user;
     }
 
@@ -65,7 +65,7 @@ public class TestFixtures {
                 .status(UserStatus.ACTIVE)
                 .emailVerified(true)
                 .build();
-        user.setGymId(gymId);
+        user.setOrganisationId(gymId);
         return user;
     }
 
