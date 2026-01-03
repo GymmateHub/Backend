@@ -5,15 +5,16 @@ import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.membership.domain.*;
 import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
+import com.gymmate.membership.infrastructure.MemberPaymentMethodRepository;
 import com.gymmate.membership.infrastructure.MembershipPlanRepository;
 import com.gymmate.payment.application.StripeConnectService;
-import com.gymmate.payment.domain.PaymentMethod;
-import com.gymmate.payment.domain.PaymentMethodType;
-import com.gymmate.payment.infrastructure.PaymentMethodRepository;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
+import com.gymmate.user.domain.Member;
+import com.gymmate.user.infrastructure.MemberRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
+import com.stripe.model.PaymentMethod;
 import com.stripe.model.Subscription;
 import com.stripe.net.RequestOptions;
 import com.stripe.param.*;
@@ -42,7 +43,8 @@ public class MemberPaymentService {
     private final StripeConfig stripeConfig;
     private final StripeConnectService connectService;
     private final GymRepository gymRepository;
-    private final PaymentMethodRepository paymentMethodRepository;
+    private final MemberRepository memberRepository;
+    private final MemberPaymentMethodRepository paymentMethodRepository;
     private final MemberMembershipRepository membershipRepository;
     private final MemberInvoiceRepository invoiceRepository;
     private final MembershipPlanRepository planRepository;
@@ -104,8 +106,8 @@ public class MemberPaymentService {
             RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
 
             // Attach payment method to customer
-            com.stripe.model.PaymentMethod stripePaymentMethod = com.stripe.model.PaymentMethod.retrieve(stripePaymentMethodId, connectOptions);
-            stripePaymentMethod.attach(PaymentMethodAttachParams.builder()
+            PaymentMethod paymentMethod = PaymentMethod.retrieve(stripePaymentMethodId, connectOptions);
+            paymentMethod.attach(PaymentMethodAttachParams.builder()
                     .setCustomer(customerId)
                     .build(), connectOptions);
 
@@ -119,11 +121,11 @@ public class MemberPaymentService {
                                 .build(), connectOptions);
 
                 // Clear existing defaults
-                paymentMethodRepository.clearDefaultForMember(memberId);
+                paymentMethodRepository.clearDefaultForMember(memberId, gymId);
             }
 
             // Save to our database
-            PaymentMethod savedMethod = saveMemberPaymentMethod(gymId, memberId, stripePaymentMethod, setAsDefault);
+            MemberPaymentMethod savedMethod = saveMemberPaymentMethod(gymId, memberId, paymentMethod, setAsDefault);
 
             log.info("Attached payment method {} for member {} on gym {}", stripePaymentMethodId, memberId, gymId);
             return toPaymentMethodResponse(savedMethod);
@@ -139,9 +141,8 @@ public class MemberPaymentService {
      * Get all payment methods for a member at a specific gym.
      */
     public List<MemberPaymentMethodResponse> getMemberPaymentMethods(UUID gymId, UUID memberId) {
-        return paymentMethodRepository.findByMember(memberId)
+        return paymentMethodRepository.findByMemberIdAndGymIdOrderByIsDefaultDescCreatedAtDesc(memberId, gymId)
                 .stream()
-                .filter(pm -> pm.getGymId().equals(gymId))
                 .map(this::toPaymentMethodResponse)
                 .collect(Collectors.toList());
     }
@@ -212,7 +213,6 @@ public class MemberPaymentService {
                     .trainerSessionsRemaining(plan.getTrainerSessions())
                     .build();
 
-            membership.setGymId(gymId);
             membershipRepository.save(membership);
 
             log.info("Created membership {} with Stripe subscription {} for member {} at gym {}",
@@ -243,7 +243,11 @@ public class MemberPaymentService {
             return;
         }
 
-        Gym gym = getGym(membership.getGymId());
+        // Get gymId from Member since MemberMembership no longer has direct gymId reference
+        Member member = memberRepository.findById(membership.getMemberId())
+                .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
+
+        Gym gym = getGym(member.getGymId());
         validateStripeConfigured();
 
         try {
@@ -321,23 +325,23 @@ public class MemberPaymentService {
                 .trainerSessionsRemaining(plan.getTrainerSessions())
                 .build();
 
-        membership.setGymId(gymId);
         return membershipRepository.save(membership);
     }
 
-    private PaymentMethod saveMemberPaymentMethod(UUID gymId, UUID memberId,
-                                                         com.stripe.model.PaymentMethod stripePaymentMethod, boolean isDefault) {
-        com.stripe.model.PaymentMethod.Card card = stripePaymentMethod.getCard();
+    private MemberPaymentMethod saveMemberPaymentMethod(UUID gymId, UUID memberId,
+                                                         PaymentMethod paymentMethod, boolean isDefault) {
+        PaymentMethod.Card card = paymentMethod.getCard();
 
-        PaymentMethod method = PaymentMethod.forMember(memberId, gymId, stripePaymentMethod.getId(),
-                PaymentMethodType.fromStripeType(stripePaymentMethod.getType()));
-
-        method.setProviderCustomerId(stripePaymentMethod.getCustomer());
-        method.setCardBrand(card != null ? card.getBrand() : null);
-        method.setCardLastFour(card != null ? card.getLast4() : null);
-        method.setCardExpiresMonth(card != null ? card.getExpMonth().intValue() : null);
-        method.setCardExpiresYear(card != null ? card.getExpYear().intValue() : null);
-        method.setIsDefault(isDefault);
+        MemberPaymentMethod method = MemberPaymentMethod.builder()
+                .memberId(memberId)
+                .stripePaymentMethodId(paymentMethod.getId())
+                .type(paymentMethod.getType())
+                .cardBrand(card != null ? card.getBrand() : null)
+                .lastFour(card != null ? card.getLast4() : null)
+                .expiryMonth(card != null ? card.getExpMonth().intValue() : null)
+                .expiryYear(card != null ? card.getExpYear().intValue() : null)
+                .isDefault(isDefault)
+                .build();
 
         return paymentMethodRepository.save(method);
     }
@@ -346,10 +350,10 @@ public class MemberPaymentService {
         return LocalDate.ofInstant(Instant.ofEpochSecond(epochSeconds), ZoneId.systemDefault());
     }
 
-    private MemberPaymentMethodResponse toPaymentMethodResponse(PaymentMethod method) {
+    private MemberPaymentMethodResponse toPaymentMethodResponse(MemberPaymentMethod method) {
         return MemberPaymentMethodResponse.builder()
                 .id(method.getId())
-                .type(method.getMethodType() != null ? method.getMethodType().name().toLowerCase() : null)
+                .type(method.getType())
                 .cardBrand(method.getCardBrand())
                 .lastFour(method.getLastFour())
                 .expiryMonth(method.getExpiryMonth())

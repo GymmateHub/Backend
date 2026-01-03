@@ -12,7 +12,7 @@ import java.util.UUID;
  */
 public record UserResponse(
     UUID id,
-    UUID gymId,
+    UUID organisationId,
     String email,
     String firstName,
     String lastName,
@@ -28,7 +28,7 @@ public record UserResponse(
     public static UserResponse fromEntity(User user) {
         return new UserResponse(
                 user.getId(),
-                user.getGymId(),
+                user.getOrganisationId(),
                 user.getEmail(),
                 user.getFirstName(),
                 user.getLastName(),

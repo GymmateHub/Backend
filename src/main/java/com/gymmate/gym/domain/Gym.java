@@ -1,6 +1,6 @@
 package com.gymmate.gym.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.domain.TenantEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -15,14 +15,20 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Gym domain entity representing a gym facility.
+ * Gym domain entity representing a gym facility/location.
+ * Extends TenantEntity for automatic organisation filtering.
+ *
+ * A Gym belongs to an Organisation (1:N relationship).
+ * Members, Classes, Schedules, etc. belong to a specific Gym.
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "gyms")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Gym extends BaseAuditEntity {
+public class Gym extends TenantEntity {
+
+  // Note: organisationId is inherited from TenantEntity
 
   @Column(nullable = false)
   private String name;
@@ -68,7 +74,11 @@ public class Gym extends BaseAuditEntity {
   @Column(name = "logo_url", length = 500)
   private String logoUrl;
 
-  // Owner reference (should be nullable as per schema - not all gyms may have owner assigned initially)
+  /**
+   * @deprecated Use organisationId from TenantEntity instead.
+   * Kept for backward compatibility during migration.
+   */
+  @Deprecated(since = "1.0", forRemoval = true)
   @Column(name = "owner_id")
   private UUID ownerId;
 
@@ -83,7 +93,7 @@ public class Gym extends BaseAuditEntity {
   @Column(name = "business_hours", columnDefinition = "jsonb")
   private String businessHours;
 
-  // SaaS subscription
+  // Note: Subscription is now at Organisation level, but gyms may have specific features
   @Column(name = "subscription_plan", length = 50)
   private String subscriptionPlan = "starter";
 
@@ -122,28 +132,47 @@ public class Gym extends BaseAuditEntity {
   @Column(name = "onboarding_completed")
   private boolean onboardingCompleted = false;
 
-  public Gym(String name, String description, String contactEmail, String contactPhone, UUID ownerId) {
+  /**
+   * Create a new Gym with organisation context.
+   * This is the preferred constructor for multi-tenant architecture.
+   */
+  public Gym(String name, String description, String contactEmail, String contactPhone, UUID organisationId) {
     validateInputs(name, contactEmail, contactPhone);
 
     this.name = name.trim();
     this.slug = generateSlug(name);
     this.description = description;
     this.contactEmail = contactEmail.toLowerCase().trim();
-    this.email = contactEmail.toLowerCase().trim(); // Set both email fields
+    this.email = contactEmail.toLowerCase().trim();
     this.contactPhone = contactPhone.trim();
-    this.phone = contactPhone.trim(); // Set both phone fields
-    this.ownerId = ownerId;
+    this.phone = contactPhone.trim();
+    setOrganisationId(organisationId); // Use setter from TenantEntity
     this.status = GymStatus.ACTIVE;
     this.subscriptionPlan = "starter";
     this.featuresEnabled = "[]";
   }
 
+  /**
+   * Static factory method to create a default gym for a new organisation.
+   */
+  public static Gym createDefault(String orgName, String contactEmail, String contactPhone, UUID organisationId) {
+    String gymName = orgName.contains("Organization")
+        ? orgName.replace(" Organization", " - Main Location")
+        : orgName + " - Main Location";
+
+    Gym gym = new Gym(gymName, "Default gym location", contactEmail, contactPhone, organisationId);
+    gym.setOnboardingCompleted(false);
+    return gym;
+  }
+
   private String generateSlug(String name) {
-    return name.toLowerCase()
+    String baseSlug = name.toLowerCase()
             .replaceAll("[^a-z0-9\\s-]", "")
             .replaceAll("\\s+", "-")
             .replaceAll("-+", "-")
             .trim();
+    // Add timestamp suffix to ensure uniqueness
+    return baseSlug + "-" + System.currentTimeMillis() % 100000;
   }
 
   public void updateDetails(String name, String description, String contactEmail, String contactPhone, String website) {

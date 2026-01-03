@@ -29,10 +29,14 @@ public record MemberMembershipResponse(
   LocalDateTime createdAt,
   LocalDateTime updatedAt
 ) {
-  public static MemberMembershipResponse from(MemberMembership membership) {
+  /**
+   * Create response from membership entity.
+   * Note: gymId is obtained through Member relationship (member.gymId)
+   */
+  public static MemberMembershipResponse from(MemberMembership membership, UUID gymId) {
     return new MemberMembershipResponse(
       membership.getId(),
-      membership.getGymId(),
+      gymId,
       membership.getMemberId(),
       membership.getMembershipPlanId(),
       membership.getStartDate(),
@@ -51,5 +55,13 @@ public record MemberMembershipResponse(
       membership.getCreatedAt(),
       membership.getUpdatedAt()
     );
+  }
+
+  /**
+   * Create response from membership entity without gymId (sets null).
+   * Used when gymId is not readily available in the controller context.
+   */
+  public static MemberMembershipResponse from(MemberMembership membership) {
+    return from(membership, null);
   }
 }

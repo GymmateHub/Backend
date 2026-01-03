@@ -30,10 +30,16 @@ public class MemberService {
      * Create a new member profile for an existing user.
      */
     @Transactional
-    public Member createMember(UUID userId, String membershipNumber) {
+    public Member createMember(UUID userId, UUID gymId, String membershipNumber) {
         // Verify user exists
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
+
+        // Verify gymId is provided
+        if (gymId == null) {
+            throw new DomainException("GYM_ID_REQUIRED",
+                    "Gym ID is required when creating a member");
+        }
 
         // Check if member profile already exists
         if (memberRepository.existsByUserId(userId)) {
@@ -56,6 +62,9 @@ public class MemberService {
                 .waiverSigned(false)
                 .photoConsent(false)
                 .build();
+
+        // Set gymId from inherited GymScopedEntity (not in builder)
+        member.setGymId(gymId);
 
         return memberRepository.save(member);
     }
