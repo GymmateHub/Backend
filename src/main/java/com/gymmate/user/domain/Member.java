@@ -1,6 +1,6 @@
 package com.gymmate.user.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.domain.GymScopedEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
@@ -9,6 +9,13 @@ import lombok.*;
 import java.time.LocalDate;
 import java.util.UUID;
 
+/**
+ * Member entity representing a gym member.
+ * Extends GymScopedEntity for automatic organisation and gym filtering.
+ *
+ * A member belongs to a specific gym but the User they reference
+ * belongs to the organisation (allowing multi-gym membership if org allows).
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
@@ -16,10 +23,13 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "members")
-public class Member extends BaseAuditEntity {
+public class Member extends GymScopedEntity {
 
   @Column(name = "user_id", nullable = false)
   private UUID userId;
+
+  // Note: gymId is inherited from GymScopedEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
 
   @Column(name = "membership_number", unique = true, length = 50)
   private String membershipNumber;

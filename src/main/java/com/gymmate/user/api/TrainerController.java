@@ -6,6 +6,7 @@ import com.gymmate.user.api.dto.TrainerResponse;
 import com.gymmate.user.api.dto.TrainerUpdateRequest;
 import com.gymmate.user.application.TrainerService;
 import com.gymmate.user.domain.Trainer;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/trainers")
 @RequiredArgsConstructor
+@Tag(name = "Trainer", description = "Trainer management operations")
 public class TrainerController {
 
     private final TrainerService trainerService;

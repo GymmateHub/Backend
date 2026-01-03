@@ -1,9 +1,13 @@
 package com.gymmate.classes.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.domain.GymScopedEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+/**
+ * ClassCategory entity representing a category for classes.
+ * Extends GymScopedEntity for automatic organisation and gym filtering.
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
@@ -11,7 +15,10 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "class_categories")
-public class ClassCategory extends TenantEntity {
+public class ClassCategory extends GymScopedEntity {
+
+  // Note: gymId is inherited from GymScopedEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
 
   @Column(nullable = false, length = 100)
   private String name;

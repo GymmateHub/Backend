@@ -9,8 +9,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Entity representing an invoice for a gym's platform subscription.
- * These are invoices from GymMate to the gym.
+ * Entity representing an invoice for an organisation's platform subscription.
+ * These are invoices from GymMate to the organisation (billing entity).
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -18,10 +18,24 @@ import java.util.UUID;
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "gym_invoices")
+@Table(name = "gym_invoices", indexes = {
+    @Index(name = "idx_gi_organisation", columnList = "organisation_id"),
+    @Index(name = "idx_gi_stripe_invoice", columnList = "stripe_invoice_id")
+})
 public class GymInvoice extends BaseAuditEntity {
 
-    @Column(name = "gym_id", nullable = false)
+    /**
+     * Organisation ID - the billing entity this invoice belongs to.
+     * Primary filter for multi-tenant operations.
+     */
+    @Column(name = "organisation_id")
+    private UUID organisationId;
+
+    /**
+     * @deprecated Use organisationId instead. Kept for backward compatibility.
+     */
+    @Deprecated(since = "1.0", forRemoval = true)
+    @Column(name = "gym_id")
     private UUID gymId;
 
     @Column(name = "stripe_invoice_id", unique = true)

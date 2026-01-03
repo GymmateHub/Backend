@@ -1,9 +1,9 @@
 package com.gymmate.classes.application;
 
 import com.gymmate.classes.domain.*;
-import com.gymmate.classes.infrastructure.ClassBookingRepository;
-import com.gymmate.classes.infrastructure.ClassScheduleRepository;
-import com.gymmate.classes.infrastructure.GymClassRepository;
+import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
+import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
+import com.gymmate.classes.infrastructure.GymClassJpaRepository;
 import com.gymmate.membership.domain.MemberMembership;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
 import com.gymmate.shared.exception.DomainException;
@@ -20,17 +20,17 @@ import static org.mockito.Mockito.*;
 
 class ClassBookingServiceTest {
 
-  private ClassBookingRepository bookingRepository;
-  private ClassScheduleRepository scheduleRepository;
-  private GymClassRepository classRepository;
+  private ClassBookingJpaRepository bookingRepository;
+  private ClassScheduleJpaRepository scheduleRepository;
+  private GymClassJpaRepository classRepository;
   private MemberMembershipRepository membershipRepository;
   private ClassBookingService bookingService;
 
   @BeforeEach
   void setUp() {
-    bookingRepository = mock(ClassBookingRepository.class);
-    scheduleRepository = mock(ClassScheduleRepository.class);
-    classRepository = mock(GymClassRepository.class);
+    bookingRepository = mock(ClassBookingJpaRepository.class);
+    scheduleRepository = mock(ClassScheduleJpaRepository.class);
+    classRepository = mock(GymClassJpaRepository.class);
     membershipRepository = mock(MemberMembershipRepository.class);
     bookingService = new ClassBookingService(bookingRepository, scheduleRepository, classRepository, membershipRepository);
   }
@@ -44,9 +44,9 @@ class ClassBookingServiceTest {
 
     ClassSchedule schedule = ClassSchedule.builder().classId(classId).startTime(LocalDateTime.now().plusDays(1)).endTime(LocalDateTime.now().plusDays(1).plusHours(1)).build();
     schedule.setId(scheduleId);
-    schedule.setGymId(gymId);
+    schedule.setOrganisationId(gymId);
     when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
-    when(bookingRepository.existsByScheduleIdAndMemberId(scheduleId, memberId)).thenReturn(false);
+    when(bookingRepository.existsByClassScheduleIdAndMemberId(scheduleId, memberId)).thenReturn(false);
 
     GymClass gymClass = GymClass.builder().capacity(2).build();
     gymClass.setId(classId);
@@ -76,9 +76,9 @@ class ClassBookingServiceTest {
 
     ClassSchedule schedule = ClassSchedule.builder().classId(classId).build();
     schedule.setId(scheduleId);
-    schedule.setGymId(gymId);
+    schedule.setOrganisationId(gymId);
     when(scheduleRepository.findById(scheduleId)).thenReturn(Optional.of(schedule));
-    when(bookingRepository.existsByScheduleIdAndMemberId(scheduleId, memberId)).thenReturn(false);
+    when(bookingRepository.existsByClassScheduleIdAndMemberId(scheduleId, memberId)).thenReturn(false);
 
     GymClass gymClass = GymClass.builder().capacity(1).build();
     gymClass.setId(classId);

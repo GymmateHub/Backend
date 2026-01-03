@@ -18,7 +18,7 @@ public class SubscriptionUsage extends BaseAuditEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_id", nullable = false)
-    private GymSubscription subscription;
+    private Subscription subscription;
 
     // Billing Period
     @Column(name = "billing_period_start", nullable = false)

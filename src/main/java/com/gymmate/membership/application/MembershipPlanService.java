@@ -53,7 +53,9 @@ public class MembershipPlanService {
       .featured(false)
       .build();
 
+    // Set gymId from inherited GymScopedEntity (not in builder)
     plan.setGymId(gymId);
+
     return membershipPlanRepository.save(plan);
   }
 

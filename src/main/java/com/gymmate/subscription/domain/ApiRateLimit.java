@@ -16,8 +16,8 @@ import java.util.UUID;
 @Table(name = "api_rate_limits")
 public class ApiRateLimit extends BaseAuditEntity {
 
-    @Column(name = "gym_id", nullable = false)
-    private UUID gymId;
+    @Column(name = "organisation_id", nullable = false)
+    private UUID organisationId;
 
     // Rate Limit Window
     @Column(name = "window_start", nullable = false)
