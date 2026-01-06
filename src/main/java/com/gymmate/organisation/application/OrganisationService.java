@@ -1,19 +1,22 @@
-package com.gymmate.shared.service;
+package com.gymmate.organisation.application;
 
-import com.gymmate.shared.domain.Organisation;
+import com.gymmate.organisation.domain.Organisation;
+import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import com.gymmate.shared.infrastructure.OrganisationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Service for managing organisations (multi-tenant entities).
+ * Provides business logic for organisation CRUD operations and lifecycle management.
  */
 @Slf4j
 @Service
@@ -52,7 +55,6 @@ public class OrganisationService {
                 .onboardingCompleted(false)
                 .build();
 
-        // Note: isActive defaults to true via BaseAuditEntity
         Organisation saved = organisationRepository.save(organisation);
         log.info("Organisation created successfully: {} (ID: {})", saved.getName(), saved.getId());
 
@@ -90,6 +92,13 @@ public class OrganisationService {
     }
 
     /**
+     * Find organisation by ID (returns Optional).
+     */
+    public Optional<Organisation> findById(UUID id) {
+        return organisationRepository.findById(id);
+    }
+
+    /**
      * Get organisation by slug.
      */
     public Organisation getBySlug(String slug) {
@@ -103,6 +112,13 @@ public class OrganisationService {
     public Organisation getByOwnerUserId(UUID ownerUserId) {
         return organisationRepository.findByOwnerUserId(ownerUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organisation", "owner", ownerUserId.toString()));
+    }
+
+    /**
+     * Find organisation by owner user ID (returns Optional).
+     */
+    public Optional<Organisation> findByOwnerUserId(UUID ownerUserId) {
+        return organisationRepository.findByOwnerUserId(ownerUserId);
     }
 
     /**
@@ -152,22 +168,7 @@ public class OrganisationService {
     public Organisation updateDetails(UUID organisationId, String name, String contactEmail,
                                        String contactPhone, String billingEmail, String settings) {
         Organisation organisation = getById(organisationId);
-
-        if (name != null && !name.isBlank()) {
-            organisation.setName(name);
-        }
-        if (contactEmail != null && !contactEmail.isBlank()) {
-            organisation.setContactEmail(contactEmail);
-        }
-        if (contactPhone != null) {
-            organisation.setContactPhone(contactPhone);
-        }
-        if (billingEmail != null && !billingEmail.isBlank()) {
-            organisation.setBillingEmail(billingEmail);
-        }
-        if (settings != null) {
-            organisation.setSettings(settings);
-        }
+        organisation.updateDetails(name, contactEmail, contactPhone, billingEmail, settings);
 
         log.info("Updated organisation details for: {}", organisationId);
         return organisationRepository.save(organisation);
@@ -179,16 +180,7 @@ public class OrganisationService {
     @Transactional
     public Organisation updateLimits(UUID organisationId, Integer maxGyms, Integer maxMembers, Integer maxStaff) {
         Organisation organisation = getById(organisationId);
-
-        if (maxGyms != null && maxGyms > 0) {
-            organisation.setMaxGyms(maxGyms);
-        }
-        if (maxMembers != null && maxMembers > 0) {
-            organisation.setMaxMembers(maxMembers);
-        }
-        if (maxStaff != null && maxStaff > 0) {
-            organisation.setMaxStaff(maxStaff);
-        }
+        organisation.updateLimits(maxGyms, maxMembers, maxStaff);
 
         log.info("Updated organisation limits for: {} - maxGyms={}, maxMembers={}, maxStaff={}",
             organisationId, organisation.getMaxGyms(), organisation.getMaxMembers(), organisation.getMaxStaff());
@@ -196,7 +188,7 @@ public class OrganisationService {
     }
 
     /**
-     * Check if user belongs to organisation.
+     * Check if user belongs to organisation (is owner).
      */
     public boolean userBelongsToOrganisation(UUID userId, UUID organisationId) {
         Organisation organisation = getById(organisationId);
@@ -222,6 +214,48 @@ public class OrganisationService {
         }
 
         return slug;
+    }
+
+    /**
+     * Get all active organisations.
+     */
+    public List<Organisation> getAllActive() {
+        return organisationRepository.findAllActive();
+    }
+
+    /**
+     * Get organisations by subscription status.
+     */
+    public List<Organisation> getBySubscriptionStatus(String status) {
+        return organisationRepository.findBySubscriptionStatus(status);
+    }
+
+    /**
+     * Get organisations with trials ending before a specific date.
+     */
+    public List<Organisation> getTrialsEndingBefore(LocalDateTime date) {
+        return organisationRepository.findTrialsEndingBefore(date);
+    }
+
+    /**
+     * Get organisations with subscriptions expiring between dates.
+     */
+    public List<Organisation> getSubscriptionsExpiringBetween(LocalDateTime start, LocalDateTime end) {
+        return organisationRepository.findSubscriptionsExpiringBetween(start, end);
+    }
+
+    /**
+     * Count active organisations.
+     */
+    public long countActive() {
+        return organisationRepository.countActive();
+    }
+
+    /**
+     * Check if slug exists.
+     */
+    public boolean slugExists(String slug) {
+        return organisationRepository.existsBySlug(slug);
     }
 }
 

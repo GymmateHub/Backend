@@ -2,6 +2,8 @@ package com.gymmate.payment.application;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.organisation.domain.Organisation;
+import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import com.gymmate.payment.api.dto.InvoiceResponse;
 import com.gymmate.payment.api.dto.PaymentMethodResponse;
 import com.gymmate.payment.api.dto.RefundRequest;
@@ -11,9 +13,7 @@ import com.gymmate.payment.infrastructure.GymInvoiceRepository;
 import com.gymmate.payment.infrastructure.PaymentMethodRepository;
 import com.gymmate.payment.infrastructure.PaymentRefundRepository;
 import com.gymmate.shared.config.StripeConfig;
-import com.gymmate.shared.domain.Organisation;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.shared.infrastructure.OrganisationRepository;
 import com.gymmate.shared.service.UtilityService;
 import com.gymmate.subscription.domain.Subscription;
 import com.gymmate.subscription.domain.SubscriptionRepository;

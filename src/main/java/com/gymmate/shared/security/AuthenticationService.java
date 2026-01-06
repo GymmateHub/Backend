@@ -2,7 +2,8 @@ package com.gymmate.shared.security;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.shared.domain.Organisation;
+import com.gymmate.organisation.application.OrganisationService;
+import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.InvalidTokenException;
@@ -11,7 +12,6 @@ import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.dto.*;
 import com.gymmate.shared.service.EmailService;
-import com.gymmate.shared.service.OrganisationService;
 import com.gymmate.shared.service.PasswordService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
