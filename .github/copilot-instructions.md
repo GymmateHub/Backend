@@ -1,7 +1,7 @@
-# GymMate Backend - Copilot Coding Instructions
+# GymMateHub Backend - Copilot Coding Instructions
 
 ## Repository Overview
-**GymMate Backend** is a Spring Boot modular monolith for gym management with **98 Java files** using clean/hexagonal architecture.
+**GymMateHub Backend** is a Spring Boot modular monolith for gym management with **98 Java files** using clean/hexagonal architecture.
 
 **Tech Stack:** Java 21, Spring Boot 3.5.6, Maven Wrapper, PostgreSQL/H2, Flyway, JWT + Spring Security, SpringDoc OpenAPI, Lombok + MapStruct
 
@@ -20,9 +20,9 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 ```
 
 ### Build Commands
-1. **Build (no tests):** `./mvnw clean package -DskipTests` (~18-30s) → `target/gymmate-backend-0.0.1-SNAPSHOT.jar`
+1. **Build (no tests):** `./mvnw clean package -DskipTests` (~18-30s) → `target/GymMateHub-backend-0.0.1-SNAPSHOT.jar`
 2. **Build + install (CI):** `./mvnw clean install` (~20-35s)
-3. **Run tests:** `./mvnw test` (no tests exist yet)
+3. **Run tests:** `./mvnw test`
 4. **Run app:** `./mvnw spring-boot:run` (port 8080, requires `.env`)
 
 ### Environment Setup
@@ -31,7 +31,7 @@ export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 **Minimum required variables:**
 ```properties
 # JWT Configuration
-JWT_SECRET=gymmate_jwt_secret_key_change_me
+JWT_SECRET=GymMateHub_jwt_secret_key_change_me
 JWT_EXPIRATION=86400000
 JWT_REFRESH_EXPIRATION=604800000
 
@@ -52,7 +52,7 @@ CORS_ALLOW_CREDENTIALS=true
 
 # Logging
 LOG_LEVEL_ROOT=INFO
-LOG_LEVEL_GYMMATE=DEBUG
+LOG_LEVEL_GymMateHub=DEBUG
 ```
 
 **Additional variables needed for full functionality:**
@@ -79,14 +79,14 @@ FLYWAY_ENABLED=false
 JPA_DDL_AUTO=update
 ```
 
-**Note:** `.env` loaded via `dotenv-java` in `GymMateApplication.main()`. Missing `.env` causes startup failure.
+**Note:** `.env` loaded via `dotenv-java` in `GymMateHubApplication.main()`. Missing `.env` causes startup failure.
 
 ## Project Architecture
 
 ### Module Structure
 ```
-src/main/java/com/gymmate/
-├── GymMateApplication.java       # Entry point (@SpringBootApplication, @EnableScheduling)
+src/main/java/com/GymMateHub/
+├── GymMateHubApplication.java       # Entry point (@SpringBootApplication, @EnableScheduling)
 │
 ├── shared/                       # Cross-cutting concerns
 │   ├── config/                   # SecurityConfig, CorsConfig, JpaAuditingConfig, etc.
@@ -122,7 +122,7 @@ src/main/java/com/gymmate/
 
 ### Key Files
 - `pom.xml`, `application.yml`, `application-dev.yml`, `src/main/resources/db/migration/`, `.editorconfig` (2 spaces, LF)
-- `GymMateApplication.java` - Loads `.env`, starts app
+- `GymMateHubApplication.java` - Loads `.env`, starts app
 - `shared/config/SecurityConfig.java` - Security + JWT config
 - `shared/exception/GlobalExceptionHandler.java` - Exception handling
 - `user/domain/User.java` - User entity (roles: SUPER_ADMIN, OWNER, STAFF, TRAINER, MEMBER)

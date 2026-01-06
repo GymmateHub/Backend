@@ -1,6 +1,6 @@
-package com.gymmate.shared.api.dto;
+package com.gymmate.organisation.api.dto;
 
-import com.gymmate.shared.service.OrganisationLimitService.OrganisationUsage;
+import com.gymmate.organisation.application.OrganisationLimitService.OrganisationUsage;
 import lombok.Builder;
 import lombok.Data;
 

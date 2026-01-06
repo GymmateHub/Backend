@@ -1,9 +1,9 @@
-package com.gymmate.shared.service;
+package com.gymmate.organisation.application;
 
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.shared.domain.Organisation;
+import com.gymmate.organisation.domain.Organisation;
+import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.shared.infrastructure.OrganisationRepository;
 import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.domain.UserStatus;
 import com.gymmate.user.infrastructure.MemberRepository;

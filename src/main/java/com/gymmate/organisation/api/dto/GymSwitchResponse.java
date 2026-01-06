@@ -1,4 +1,4 @@
-package com.gymmate.shared.api.dto;
+package com.gymmate.organisation.api.dto;
 
 import lombok.Builder;
 import lombok.Data;

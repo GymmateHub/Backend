@@ -1,5 +1,6 @@
-package com.gymmate.shared.domain;
+package com.gymmate.organisation.domain;
 
+import com.gymmate.shared.domain.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -11,6 +12,9 @@ import java.util.UUID;
 /**
  * Organisation entity representing a tenant in the multi-tenant SaaS architecture.
  * An organisation can own multiple gyms and has its own subscription/billing.
+ *
+ * This is the root aggregate for multi-tenancy - all gyms, members, and resources
+ * belong to an organisation.
  */
 @Entity
 @Table(name = "organisations")
@@ -141,6 +145,37 @@ public class Organisation extends BaseAuditEntity {
     public boolean canAddMember(int currentMemberCount) {
         return isActive() &&
                (maxMembers == null || maxMembers == -1 || currentMemberCount < maxMembers);
+    }
+
+    public void updateLimits(Integer maxGyms, Integer maxMembers, Integer maxStaff) {
+        if (maxGyms != null && maxGyms > 0) {
+            this.maxGyms = maxGyms;
+        }
+        if (maxMembers != null && maxMembers > 0) {
+            this.maxMembers = maxMembers;
+        }
+        if (maxStaff != null && maxStaff > 0) {
+            this.maxStaff = maxStaff;
+        }
+    }
+
+    public void updateDetails(String name, String contactEmail, String contactPhone,
+                             String billingEmail, String settings) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
+        if (contactEmail != null && !contactEmail.isBlank()) {
+            this.contactEmail = contactEmail;
+        }
+        if (contactPhone != null) {
+            this.contactPhone = contactPhone;
+        }
+        if (billingEmail != null && !billingEmail.isBlank()) {
+            this.billingEmail = billingEmail;
+        }
+        if (settings != null) {
+            this.settings = settings;
+        }
     }
 }
 

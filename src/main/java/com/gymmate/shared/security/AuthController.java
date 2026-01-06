@@ -2,7 +2,7 @@ package com.gymmate.shared.security;
 
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
-import com.gymmate.shared.api.dto.GymSwitchResponse;
+import com.gymmate.organisation.api.dto.GymSwitchResponse;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
