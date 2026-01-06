@@ -52,10 +52,6 @@ public class FreezePolicy extends GymScopedEntity {
   @Builder.Default
   private Boolean isDefaultPolicy = false;
 
-  @Column(name = "is_active")
-  @Builder.Default
-  private Boolean isActive = true;
-
   public boolean canFreeze(MemberMembership membership) {
     // Check if membership has been active long enough
     if (minMembershipDaysBeforeFreeze != null && membership.getStartDate() != null) {

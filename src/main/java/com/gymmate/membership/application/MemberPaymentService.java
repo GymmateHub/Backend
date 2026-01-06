@@ -339,11 +339,9 @@ public class MemberPaymentService {
             RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
             Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
 
-            // Resume the subscription by removing pause_collection
+            // Resume the subscription by clearing pause_collection using EmptyParam
             SubscriptionUpdateParams updateParams = SubscriptionUpdateParams.builder()
-                    .setPauseCollection(SubscriptionUpdateParams.PauseCollection.builder()
-                            .setNullify(true)
-                            .build())
+                    .setPauseCollection(com.stripe.param.common.EmptyParam.EMPTY)
                     .build();
 
             subscription.update(updateParams, connectOptions);

@@ -1,6 +1,8 @@
 package com.gymmate.membership.application;
 
+import com.gymmate.membership.domain.FreezePolicy;
 import com.gymmate.membership.domain.MemberMembership;
+import com.gymmate.membership.infrastructure.FreezePolicyRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
 import com.gymmate.membership.domain.MembershipPlan;
 import com.gymmate.membership.infrastructure.MembershipPlanRepository;
@@ -23,12 +25,16 @@ class MembershipServiceTest {
   private MemberMembershipRepository membershipRepository;
   private MembershipPlanRepository planRepository;
   private MembershipService membershipService;
+  private FreezePolicyRepository freezePolicyRepository;
+  private MemberPaymentService memberPaymentService;
 
   @BeforeEach
   void setUp() {
     membershipRepository = mock(MemberMembershipRepository.class);
     planRepository = mock(MembershipPlanRepository.class);
-    membershipService = new MembershipService(membershipRepository, planRepository);
+    freezePolicyRepository = mock(FreezePolicyRepository.class);
+    memberPaymentService = mock(MemberPaymentService.class);
+    membershipService = new MembershipService(membershipRepository, planRepository, freezePolicyRepository, memberPaymentService);
   }
 
   @Test
