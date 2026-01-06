@@ -1,6 +1,7 @@
 package com.gymmate.membership.application;
 
 import com.gymmate.membership.domain.*;
+import com.gymmate.membership.infrastructure.FreezePolicyRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
 import com.gymmate.membership.infrastructure.MembershipPlanRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +29,8 @@ public class MembershipService {
 
   private final MemberMembershipRepository membershipRepository;
   private final MembershipPlanRepository planRepository;
+  private final FreezePolicyRepository freezePolicyRepository;
+  private final MemberPaymentService memberPaymentService;
 
   /**
    * Subscribe a member to a membership plan.
@@ -138,9 +142,76 @@ public class MembershipService {
       throw new DomainException("CANNOT_FREEZE", "Only active memberships can be frozen");
     }
 
+    // Get freeze policy for gym (or default)
+    FreezePolicy policy = freezePolicyRepository.findActiveByGymId(membership.getGymId())
+      .or(() -> freezePolicyRepository.findDefaultPolicyByOrganisation(membership.getOrganisationId()))
+      .or(() -> freezePolicyRepository.findDefaultPolicy())
+      .orElse(createDefaultFreezePolicy());
+
+    // Validate against policy
+    if (!policy.canFreeze(membership)) {
+      int daysSinceStart = (int) ChronoUnit.DAYS.between(membership.getStartDate(), LocalDate.now());
+      if (daysSinceStart < policy.getMinMembershipDaysBeforeFreeze()) {
+        throw new DomainException("FREEZE_TOO_EARLY",
+          String.format("Membership must be active for at least %d days before freezing. Current: %d days",
+            policy.getMinMembershipDaysBeforeFreeze(), daysSinceStart));
+      }
+
+      int remainingDays = policy.getRemainingFreezeDays(membership);
+      if (remainingDays <= 0) {
+        throw new DomainException("FREEZE_LIMIT_EXCEEDED",
+          String.format("Annual freeze limit exceeded. Maximum: %d days, Used: %d days",
+            policy.getMaxFreezeDaysPerYear(), membership.getTotalDaysFrozen()));
+      }
+    }
+
+    // Validate freeze duration
+    int requestedDays = (int) ChronoUnit.DAYS.between(LocalDate.now(), freezeUntil);
+    if (!policy.isFreezeDurationValid(requestedDays)) {
+      throw new DomainException("FREEZE_DURATION_INVALID",
+        String.format("Freeze duration exceeds maximum. Maximum: %d days, Requested: %d days",
+          policy.getMaxConsecutiveFreezeDays(), requestedDays));
+    }
+
+    // Check remaining freeze days
+    int remainingDays = policy.getRemainingFreezeDays(membership);
+    if (requestedDays > remainingDays) {
+      throw new DomainException("INSUFFICIENT_FREEZE_DAYS",
+        String.format("Requested freeze duration exceeds remaining days. Remaining: %d days, Requested: %d days",
+          remainingDays, requestedDays));
+    }
+
     membership.freeze(freezeUntil, reason);
-    log.info("Froze membership {} until {}", membershipId, freezeUntil);
-    return membershipRepository.save(membership);
+    MemberMembership savedMembership = membershipRepository.save(membership);
+
+    // Pause Stripe subscription if exists
+    try {
+      memberPaymentService.pauseMemberSubscription(membershipId);
+    } catch (Exception e) {
+      log.error("Failed to pause Stripe subscription for membership {}: {}", membershipId, e.getMessage());
+      // Continue - membership is still frozen even if Stripe pause fails
+    }
+
+    log.info("Froze membership {} until {} (policy: {})", membershipId, freezeUntil, policy.getPolicyName());
+    return savedMembership;
+  }
+
+  /**
+   * Create a default freeze policy if none exists.
+   */
+  private FreezePolicy createDefaultFreezePolicy() {
+    return FreezePolicy.builder()
+      .policyName("Default Policy")
+      .maxFreezeDaysPerYear(90)
+      .maxConsecutiveFreezeDays(60)
+      .minMembershipDaysBeforeFreeze(30)
+      .coolingOffPeriodDays(30)
+      .freezeFeeAmount(0.0)
+      .freezeFeeFrequency("NONE")
+      .allowPartialMonthFreeze(true)
+      .isDefaultPolicy(true)
+      .isActive(true)
+      .build();
   }
 
   /**
@@ -154,8 +225,18 @@ public class MembershipService {
     }
 
     membership.unfreeze();
+    MemberMembership savedMembership = membershipRepository.save(membership);
+
+    // Resume Stripe subscription if exists
+    try {
+      memberPaymentService.resumeMemberSubscription(membershipId);
+    } catch (Exception e) {
+      log.error("Failed to resume Stripe subscription for membership {}: {}", membershipId, e.getMessage());
+      // Continue - membership is still unfrozen even if Stripe resume fails
+    }
+
     log.info("Unfroze membership {}", membershipId);
-    return membershipRepository.save(membership);
+    return savedMembership;
   }
 
   /**
@@ -242,6 +323,42 @@ public class MembershipService {
   @Transactional(readOnly = true)
   public long getActiveMembershipCount(UUID gymId) {
     return membershipRepository.countActiveByGymId(gymId);
+  }
+
+  /**
+   * Process expired freezes - automatically unfreeze memberships past their freeze end date.
+   * Called by scheduled task.
+   */
+  public int processExpiredFreezes() {
+    LocalDate today = LocalDate.now();
+    List<MemberMembership> frozenMemberships = membershipRepository.findFrozenMembershipsToUnfreeze(today);
+
+    int unfrozenCount = 0;
+    for (MemberMembership membership : frozenMemberships) {
+      try {
+        membership.unfreeze();
+        membershipRepository.save(membership);
+
+        // Resume Stripe subscription if exists
+        try {
+          memberPaymentService.resumeMemberSubscription(membership.getId());
+        } catch (Exception e) {
+          log.error("Failed to resume Stripe subscription for auto-unfrozen membership {}: {}",
+            membership.getId(), e.getMessage());
+        }
+
+        log.info("Auto-unfroze membership {} (frozen until: {})", membership.getId(), membership.getFrozenUntil());
+        unfrozenCount++;
+      } catch (Exception e) {
+        log.error("Error auto-unfreezing membership {}: {}", membership.getId(), e.getMessage());
+      }
+    }
+
+    if (unfrozenCount > 0) {
+      log.info("Auto-unfroze {} memberships", unfrozenCount);
+    }
+
+    return unfrozenCount;
   }
 
   /**

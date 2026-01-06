@@ -275,6 +275,88 @@ public class MemberPaymentService {
     }
 
     /**
+     * Pause a member's Stripe subscription when freezing membership.
+     */
+    @Transactional
+    public void pauseMemberSubscription(UUID membershipId) {
+        MemberMembership membership = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> new DomainException("MEMBERSHIP_NOT_FOUND", "Membership not found"));
+
+        if (membership.getStripeSubscriptionId() == null) {
+            // No Stripe subscription, nothing to pause
+            log.info("Membership {} has no Stripe subscription, skipping pause", membershipId);
+            return;
+        }
+
+        Member member = memberRepository.findById(membership.getMemberId())
+                .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
+
+        Gym gym = getGym(member.getGymId());
+        validateStripeConfigured();
+
+        try {
+            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
+
+            // Pause the subscription by setting pause_collection
+            SubscriptionUpdateParams updateParams = SubscriptionUpdateParams.builder()
+                    .setPauseCollection(SubscriptionUpdateParams.PauseCollection.builder()
+                            .setBehavior(SubscriptionUpdateParams.PauseCollection.Behavior.VOID)
+                            .build())
+                    .build();
+
+            subscription.update(updateParams, connectOptions);
+            log.info("Paused Stripe subscription {} for membership {}", membership.getStripeSubscriptionId(), membershipId);
+
+        } catch (StripeException e) {
+            log.error("Failed to pause Stripe subscription for membership {}: {}", membershipId, e.getMessage());
+            throw new DomainException("STRIPE_SUBSCRIPTION_PAUSE_FAILED",
+                    "Failed to pause subscription: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Resume a member's Stripe subscription when unfreezing membership.
+     */
+    @Transactional
+    public void resumeMemberSubscription(UUID membershipId) {
+        MemberMembership membership = membershipRepository.findById(membershipId)
+                .orElseThrow(() -> new DomainException("MEMBERSHIP_NOT_FOUND", "Membership not found"));
+
+        if (membership.getStripeSubscriptionId() == null) {
+            // No Stripe subscription, nothing to resume
+            log.info("Membership {} has no Stripe subscription, skipping resume", membershipId);
+            return;
+        }
+
+        Member member = memberRepository.findById(membership.getMemberId())
+                .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
+
+        Gym gym = getGym(member.getGymId());
+        validateStripeConfigured();
+
+        try {
+            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
+
+            // Resume the subscription by removing pause_collection
+            SubscriptionUpdateParams updateParams = SubscriptionUpdateParams.builder()
+                    .setPauseCollection(SubscriptionUpdateParams.PauseCollection.builder()
+                            .setNullify(true)
+                            .build())
+                    .build();
+
+            subscription.update(updateParams, connectOptions);
+            log.info("Resumed Stripe subscription {} for membership {}", membership.getStripeSubscriptionId(), membershipId);
+
+        } catch (StripeException e) {
+            log.error("Failed to resume Stripe subscription for membership {}: {}", membershipId, e.getMessage());
+            throw new DomainException("STRIPE_SUBSCRIPTION_RESUME_FAILED",
+                    "Failed to resume subscription: " + e.getMessage());
+        }
+    }
+
+    /**
      * Get invoices for a member's membership.
      */
     public List<MemberInvoiceResponse> getMemberInvoices(UUID gymId, UUID memberId) {
