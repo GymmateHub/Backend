@@ -1,16 +1,16 @@
-package com.gymmate.shared.api;
+package com.gymmate.organisation.api;
 
 import com.gymmate.gym.api.dto.GymResponse;
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
-import com.gymmate.shared.api.dto.*;
-import com.gymmate.shared.domain.Organisation;
+import com.gymmate.organisation.api.dto.*;
+import com.gymmate.organisation.application.OrganisationLimitService;
+import com.gymmate.organisation.application.OrganisationLimitService.OrganisationUsage;
+import com.gymmate.organisation.application.OrganisationService;
+import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.shared.service.OrganisationLimitService;
-import com.gymmate.shared.service.OrganisationLimitService.OrganisationUsage;
-import com.gymmate.shared.service.OrganisationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

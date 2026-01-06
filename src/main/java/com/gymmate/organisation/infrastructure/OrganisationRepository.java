@@ -1,6 +1,6 @@
-package com.gymmate.shared.infrastructure;
+package com.gymmate.organisation.infrastructure;
 
-import com.gymmate.shared.domain.Organisation;
+import com.gymmate.organisation.domain.Organisation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +11,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * JPA Repository for Organisation entity.
+ * Provides data access methods for organisation management.
+ */
 @Repository
 public interface OrganisationRepository extends JpaRepository<Organisation, UUID> {
 
@@ -42,5 +46,11 @@ public interface OrganisationRepository extends JpaRepository<Organisation, UUID
 
     @Query("SELECT COUNT(o) FROM Organisation o WHERE o.subscriptionStatus = :status")
     long countBySubscriptionStatus(@Param("status") String status);
+
+    @Query("SELECT o FROM Organisation o WHERE o.trialEndsAt BETWEEN :start AND :end AND o.subscriptionStatus = 'trial'")
+    List<Organisation> findTrialsEndingBetween(
+        @Param("start") LocalDateTime start,
+        @Param("end") LocalDateTime end
+    );
 }
 

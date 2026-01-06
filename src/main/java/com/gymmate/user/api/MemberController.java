@@ -1,8 +1,8 @@
 package com.gymmate.user.api;
 
+import com.gymmate.organisation.application.OrganisationLimitService;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.shared.service.OrganisationLimitService;
 import com.gymmate.user.api.dto.MemberCreateRequest;
 import com.gymmate.user.api.dto.MemberResponse;
 import com.gymmate.user.api.dto.MemberUpdateRequest;
