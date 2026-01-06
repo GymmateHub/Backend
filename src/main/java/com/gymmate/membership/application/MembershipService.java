@@ -210,7 +210,7 @@ public class MembershipService {
       .freezeFeeFrequency("NONE")
       .allowPartialMonthFreeze(true)
       .isDefaultPolicy(true)
-      .isActive(true)
+
       .build();
   }
 
