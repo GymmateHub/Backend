@@ -46,4 +46,7 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
   // Use native query to avoid Spring Data property resolution issues with generated method names
   @Query(value = "SELECT COUNT(*) FROM member_memberships mm WHERE mm.plan_id = :planId", nativeQuery = true)
   long countByPlanId(@Param("planId") UUID planId);
+
+  @Query("SELECT mm FROM MemberMembership mm WHERE mm.frozen = true AND mm.frozenUntil < :date")
+  List<MemberMembership> findFrozenMembershipsToUnfreeze(@Param("date") java.time.LocalDate date);
 }
