@@ -38,6 +38,8 @@ public interface MemberMembershipRepository {
 
   long countByPlanId(UUID planId);
 
+  List<MemberMembership> findFrozenMembershipsToUnfreeze(java.time.LocalDate date);
+
   void delete(MemberMembership membership);
 }
 
