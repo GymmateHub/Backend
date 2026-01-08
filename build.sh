@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Build script for GymMate Backend
+# Build script for GymMateHub Backend
 # Ensures the correct Java version (21) is used for building
 
 set -e
@@ -12,7 +12,7 @@ echo "Using Java version:"
 java -version
 
 echo ""
-echo "Building GymMate Backend..."
+echo "Building GymMateHub Backend..."
 mvn clean package
 
 echo ""
