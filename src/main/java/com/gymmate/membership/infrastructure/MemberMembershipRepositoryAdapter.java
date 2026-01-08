@@ -81,6 +81,11 @@ public class MemberMembershipRepositoryAdapter implements MemberMembershipReposi
   }
 
   @Override
+  public List<MemberMembership> findFrozenMembershipsToUnfreeze(java.time.LocalDate date) {
+    return jpaRepository.findFrozenMembershipsToUnfreeze(date);
+  }
+
+  @Override
   public void delete(MemberMembership membership) {
     jpaRepository.delete(membership);
   }
