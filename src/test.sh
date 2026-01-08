@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Build script for GymMateHub Backend
+# Test script for GymMateHub Backend
 # Ensures the correct Java version (21) is used for building
 
 set -e
@@ -13,8 +13,8 @@ java -version
 
 echo ""
 echo "Building GymMateHub Backend..."
-mvn clean package
+mvn test
 
 echo ""
-echo "Build completed successfully!"
+echo "Test completed successfully!"
 echo "JAR file location: $(ls -1 target/*.jar | head -1)"
