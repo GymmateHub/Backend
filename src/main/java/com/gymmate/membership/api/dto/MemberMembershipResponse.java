@@ -24,8 +24,12 @@ public record MemberMembershipResponse(
   MembershipStatus status,
   Boolean autoRenew,
   Boolean frozen,
+  LocalDate frozenFrom,
   LocalDate frozenUntil,
   String freezeReason,
+  Integer totalDaysFrozen,
+  Integer freezeCount,
+  Integer freezeDaysRemaining,
   LocalDateTime createdAt,
   LocalDateTime updatedAt
 ) {
@@ -50,8 +54,12 @@ public record MemberMembershipResponse(
       membership.getStatus(),
       membership.isAutoRenew(),
       membership.isFrozen(),
+      membership.getFrozenFrom(),
       membership.getFrozenUntil(),
       membership.getFreezeReason(),
+      membership.getTotalDaysFrozen(),
+      membership.getFreezeCount(),
+      membership.getFreezeDaysRemaining(),
       membership.getCreatedAt(),
       membership.getUpdatedAt()
     );
