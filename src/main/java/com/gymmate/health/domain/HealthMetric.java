@@ -1,5 +1,6 @@
 package com.gymmate.health.domain;
 
+import com.gymmate.health.domain.Enums.MetricType;
 import com.gymmate.shared.domain.GymScopedEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;

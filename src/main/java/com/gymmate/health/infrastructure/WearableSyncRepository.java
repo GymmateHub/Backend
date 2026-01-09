@@ -1,4 +1,7 @@
-package com.gymmate.health.domain;
+package com.gymmate.health.infrastructure;
+
+import com.gymmate.health.domain.Enums.WearableSource;
+import com.gymmate.health.domain.WearableSync;
 
 import java.time.LocalDateTime;
 import java.util.List;

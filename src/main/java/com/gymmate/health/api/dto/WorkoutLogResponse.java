@@ -1,8 +1,8 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.domain.WorkoutIntensity;
+import com.gymmate.health.domain.Enums.WorkoutIntensity;
 import com.gymmate.health.domain.WorkoutLog;
-import com.gymmate.health.domain.WorkoutStatus;
+import com.gymmate.health.domain.Enums.WorkoutStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;

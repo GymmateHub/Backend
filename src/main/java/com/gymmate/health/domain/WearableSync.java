@@ -1,5 +1,6 @@
 package com.gymmate.health.domain;
 
+import com.gymmate.health.domain.Enums.WearableSource;
 import com.gymmate.shared.domain.GymScopedEntity;
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,6 +1,9 @@
-package com.gymmate.health.domain;
+package com.gymmate.health.infrastructure;
 
-import java.time.LocalDate;
+import com.gymmate.health.domain.FitnessGoal;
+import com.gymmate.health.domain.Enums.GoalStatus;
+import com.gymmate.health.domain.Enums.GoalType;
+
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;

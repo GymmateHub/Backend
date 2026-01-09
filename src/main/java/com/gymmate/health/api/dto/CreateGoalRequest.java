@@ -1,7 +1,6 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.domain.GoalType;
-import jakarta.validation.constraints.Future;
+import com.gymmate.health.domain.Enums.GoalType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

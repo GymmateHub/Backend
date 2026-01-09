@@ -1,7 +1,6 @@
 package com.gymmate.health.infrastructure;
 
 import com.gymmate.health.domain.ProgressPhoto;
-import com.gymmate.health.domain.ProgressPhotoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

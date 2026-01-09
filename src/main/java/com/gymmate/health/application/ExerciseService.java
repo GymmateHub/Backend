@@ -1,6 +1,8 @@
 package com.gymmate.health.application;
 
 import com.gymmate.health.domain.*;
+import com.gymmate.health.infrastructure.ExerciseCategoryRepository;
+import com.gymmate.health.infrastructure.ExerciseRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +42,7 @@ public class ExerciseService {
     public ExerciseCategory getCategoryById(UUID categoryId) {
         log.debug("Fetching exercise category: {}", categoryId);
         return categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new ResourceNotFoundException("Exercise category not found with ID: " + categoryId));
+            .orElseThrow(() -> new ResourceNotFoundException("Exercise category", categoryId.toString()));
     }
 
     /**
@@ -91,7 +93,7 @@ public class ExerciseService {
 
         // Verify category exists
         categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new ResourceNotFoundException("Exercise category not found with ID: " + categoryId));
+            .orElseThrow(() -> new ResourceNotFoundException("Exercise category", categoryId.toString()));
 
         return exerciseRepository.findByCategory(categoryId);
     }
@@ -133,7 +135,7 @@ public class ExerciseService {
     public Exercise getExerciseById(UUID exerciseId) {
         log.debug("Fetching exercise: {}", exerciseId);
         return exerciseRepository.findById(exerciseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Exercise not found with ID: " + exerciseId));
+            .orElseThrow(() -> new ResourceNotFoundException("Exercise", exerciseId.toString()));
     }
 
     /**
@@ -156,7 +158,7 @@ public class ExerciseService {
 
         // Verify category exists
         categoryRepository.findById(categoryId)
-            .orElseThrow(() -> new ResourceNotFoundException("Exercise category not found with ID: " + categoryId));
+            .orElseThrow(() -> new ResourceNotFoundException("Exercise category", categoryId.toString()));
 
         // Check if gym already has an exercise with this name
         if (exerciseRepository.existsByNameAndGymId(name, gymId)) {
@@ -207,7 +209,7 @@ public class ExerciseService {
         log.info("Updating custom exercise {} for gym {}", exerciseId, gymId);
 
         Exercise exercise = exerciseRepository.findById(exerciseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Exercise not found with ID: " + exerciseId));
+            .orElseThrow(() -> new ResourceNotFoundException("Exercise", exerciseId.toString()));
 
         // Verify this is a custom exercise owned by this gym
         if (exercise.isPublic() || !gymId.equals(exercise.getCreatedByGymId())) {
@@ -218,7 +220,7 @@ public class ExerciseService {
         // Verify category exists if changed
         if (categoryId != null && !categoryId.equals(exercise.getCategoryId())) {
             categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new ResourceNotFoundException("Exercise category not found with ID: " + categoryId));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise category", categoryId.toString()));
             exercise.setCategoryId(categoryId);
         }
 
@@ -243,7 +245,7 @@ public class ExerciseService {
         log.info("Deleting custom exercise {} for gym {}", exerciseId, gymId);
 
         Exercise exercise = exerciseRepository.findById(exerciseId)
-            .orElseThrow(() -> new ResourceNotFoundException("Exercise not found with ID: " + exerciseId));
+            .orElseThrow(() -> new ResourceNotFoundException("Exercise", exerciseId.toString()));
 
         // Verify this is a custom exercise owned by this gym
         if (exercise.isPublic() || !gymId.equals(exercise.getCreatedByGymId())) {

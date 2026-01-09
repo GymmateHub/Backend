@@ -1,6 +1,9 @@
 package com.gymmate.health.application;
 
 import com.gymmate.health.domain.*;
+import com.gymmate.health.domain.Enums.GoalStatus;
+import com.gymmate.health.domain.Enums.GoalType;
+import com.gymmate.health.infrastructure.FitnessGoalRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -45,8 +48,6 @@ public class FitnessGoalService {
         log.info("Creating fitness goal for member {}: {}", memberId, title);
 
         FitnessGoal goal = FitnessGoal.builder()
-            .organisationId(organisationId)
-            .gymId(gymId)
             .memberId(memberId)
             .goalType(goalType)
             .title(title)
@@ -59,6 +60,9 @@ public class FitnessGoalService {
             .deadlineDate(deadlineDate)
             .status(GoalStatus.ACTIVE)
             .build();
+
+        // Set gym ID manually (organisationId will be set by prePersist from TenantContext)
+        goal.setGymId(gymId);
 
         // Validate goal
         goal.validate();
@@ -77,7 +81,7 @@ public class FitnessGoalService {
         log.info("Updating progress for goal {}: {}", goalId, newCurrentValue);
 
         FitnessGoal goal = fitnessGoalRepository.findById(goalId)
-            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal not found with ID: " + goalId));
+            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal", goalId.toString()));
 
         if (goal.getStatus() != GoalStatus.ACTIVE) {
             throw new DomainException("GOAL_NOT_ACTIVE",
@@ -104,7 +108,7 @@ public class FitnessGoalService {
         log.info("Manually achieving goal: {}", goalId);
 
         FitnessGoal goal = fitnessGoalRepository.findById(goalId)
-            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal not found with ID: " + goalId));
+            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal", goalId.toString()));
 
         goal.achieve();
 
@@ -122,7 +126,7 @@ public class FitnessGoalService {
         log.info("Abandoning goal {}: {}", goalId, reason);
 
         FitnessGoal goal = fitnessGoalRepository.findById(goalId)
-            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal not found with ID: " + goalId));
+            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal", goalId.toString()));
 
         goal.abandon(reason);
 
@@ -140,7 +144,7 @@ public class FitnessGoalService {
         log.info("Pausing goal: {}", goalId);
 
         FitnessGoal goal = fitnessGoalRepository.findById(goalId)
-            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal not found with ID: " + goalId));
+            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal", goalId.toString()));
 
         goal.pauseGoal();
 
@@ -158,7 +162,7 @@ public class FitnessGoalService {
         log.info("Resuming goal: {}", goalId);
 
         FitnessGoal goal = fitnessGoalRepository.findById(goalId)
-            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal not found with ID: " + goalId));
+            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal", goalId.toString()));
 
         goal.resumeGoal();
 
@@ -175,7 +179,7 @@ public class FitnessGoalService {
     public FitnessGoal getGoalById(UUID goalId) {
         log.debug("Fetching goal: {}", goalId);
         return fitnessGoalRepository.findById(goalId)
-            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal not found with ID: " + goalId));
+            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal", goalId.toString()));
     }
 
     /**
@@ -315,7 +319,7 @@ public class FitnessGoalService {
         log.info("Deleting goal: {}", goalId);
 
         FitnessGoal goal = fitnessGoalRepository.findById(goalId)
-            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal not found with ID: " + goalId));
+            .orElseThrow(() -> new ResourceNotFoundException("Fitness goal", goalId.toString()));
 
         fitnessGoalRepository.delete(goal);
         log.info("Successfully deleted goal: {}", goalId);

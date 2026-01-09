@@ -1,4 +1,6 @@
-package com.gymmate.health.domain;
+package com.gymmate.health.infrastructure;
+
+import com.gymmate.health.domain.Exercise;
 
 import java.util.List;
 import java.util.Optional;
