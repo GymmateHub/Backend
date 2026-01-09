@@ -1,8 +1,8 @@
 package com.gymmate.health.infrastructure;
 
 import com.gymmate.health.domain.FitnessGoal;
-import com.gymmate.health.domain.GoalStatus;
-import com.gymmate.health.domain.GoalType;
+import com.gymmate.health.domain.Enums.GoalStatus;
+import com.gymmate.health.domain.Enums.GoalType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

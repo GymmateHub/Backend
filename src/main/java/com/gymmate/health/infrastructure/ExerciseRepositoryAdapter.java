@@ -1,7 +1,6 @@
 package com.gymmate.health.infrastructure;
 
 import com.gymmate.health.domain.Exercise;
-import com.gymmate.health.domain.ExerciseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

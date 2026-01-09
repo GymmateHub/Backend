@@ -1,4 +1,7 @@
-package com.gymmate.health.domain;
+package com.gymmate.health.infrastructure;
+
+import com.gymmate.health.domain.HealthMetric;
+import com.gymmate.health.domain.Enums.MetricType;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -66,3 +69,4 @@ public interface HealthMetricRepository {
      */
     void delete(HealthMetric healthMetric);
 }
+

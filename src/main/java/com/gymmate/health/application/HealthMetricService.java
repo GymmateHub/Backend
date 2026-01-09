@@ -1,9 +1,8 @@
 package com.gymmate.health.application;
 
 import com.gymmate.health.domain.HealthMetric;
-import com.gymmate.health.domain.HealthMetricRepository;
-import com.gymmate.health.domain.MetricType;
-import com.gymmate.shared.exception.DomainException;
+import com.gymmate.health.domain.Enums.MetricType;
+import com.gymmate.health.infrastructure.HealthMetricRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,8 +46,6 @@ public class HealthMetricService {
 
         // Create metric
         HealthMetric metric = HealthMetric.builder()
-            .organisationId(organisationId)
-            .gymId(gymId)
             .memberId(memberId)
             .measurementDate(LocalDateTime.now())
             .metricType(metricType)
@@ -57,6 +54,9 @@ public class HealthMetricService {
             .notes(notes)
             .recordedByUserId(recordedByUserId)
             .build();
+
+        // Set gym ID manually (organisationId will be set by prePersist from TenantContext)
+        metric.setGymId(gymId);
 
         // Validate
         metric.validate();
@@ -205,7 +205,7 @@ public class HealthMetricService {
         log.info("Deleting health metric: {}", metricId);
 
         HealthMetric metric = healthMetricRepository.findById(metricId)
-            .orElseThrow(() -> new ResourceNotFoundException("Health metric not found with ID: " + metricId));
+            .orElseThrow(() -> new ResourceNotFoundException("Health metric", metricId.toString()));
 
         healthMetricRepository.delete(metric);
         log.info("Successfully deleted health metric: {}", metricId);

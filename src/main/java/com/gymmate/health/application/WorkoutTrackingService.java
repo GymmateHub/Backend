@@ -1,6 +1,11 @@
 package com.gymmate.health.application;
 
 import com.gymmate.health.domain.*;
+import com.gymmate.health.domain.Enums.WorkoutIntensity;
+import com.gymmate.health.domain.Enums.WorkoutStatus;
+import com.gymmate.health.infrastructure.ExerciseRepository;
+import com.gymmate.health.infrastructure.WorkoutExerciseRepository;
+import com.gymmate.health.infrastructure.WorkoutLogRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -64,13 +69,11 @@ public class WorkoutTrackingService {
         // Verify all exercises exist
         for (WorkoutExerciseDetail detail : exercises) {
             exerciseRepository.findById(detail.exerciseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Exercise not found with ID: " + detail.exerciseId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Exercise", detail.exerciseId().toString()));
         }
 
         // Create workout log
         WorkoutLog workoutLog = WorkoutLog.builder()
-            .organisationId(organisationId)
-            .gymId(gymId)
             .memberId(memberId)
             .workoutDate(workoutDate)
             .workoutName(workoutName)
@@ -81,7 +84,9 @@ public class WorkoutTrackingService {
             .status(WorkoutStatus.COMPLETED)
             .build();
 
-        workoutLog.validate();
+        // Set gym ID manually (organisationId will be set by prePersist from TenantContext)
+        workoutLog.setGymId(gymId);
+
         WorkoutLog savedWorkout = workoutLogRepository.save(workoutLog);
 
         // Create workout exercises
@@ -122,7 +127,7 @@ public class WorkoutTrackingService {
         log.debug("Fetching workout: {}", workoutId);
 
         WorkoutLog workout = workoutLogRepository.findById(workoutId)
-            .orElseThrow(() -> new ResourceNotFoundException("Workout not found with ID: " + workoutId));
+            .orElseThrow(() -> new ResourceNotFoundException("Workout", workoutId.toString()));
 
         List<WorkoutExercise> exercises = workoutExerciseRepository.findByWorkoutLogIdOrderByExerciseOrder(workoutId);
 
@@ -226,7 +231,7 @@ public class WorkoutTrackingService {
         log.info("Deleting workout: {}", workoutId);
 
         WorkoutLog workout = workoutLogRepository.findById(workoutId)
-            .orElseThrow(() -> new ResourceNotFoundException("Workout not found with ID: " + workoutId));
+            .orElseThrow(() -> new ResourceNotFoundException("Workout", workoutId.toString()));
 
         // Soft delete associated exercises
         workoutExerciseRepository.deleteByWorkoutLogId(workoutId);

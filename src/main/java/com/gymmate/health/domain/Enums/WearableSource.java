@@ -1,4 +1,4 @@
-package com.gymmate.health.domain;
+package com.gymmate.health.domain.Enums;
 
 /**
  * Enum representing supported wearable device and fitness app integrations.

@@ -1,6 +1,12 @@
 package com.gymmate.health.application;
 
 import com.gymmate.health.domain.*;
+import com.gymmate.health.domain.Enums.GoalType;
+import com.gymmate.health.domain.Enums.MetricType;
+import com.gymmate.health.domain.Enums.WorkoutIntensity;
+import com.gymmate.health.infrastructure.FitnessGoalRepository;
+import com.gymmate.health.infrastructure.HealthMetricRepository;
+import com.gymmate.health.infrastructure.WorkoutLogRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
