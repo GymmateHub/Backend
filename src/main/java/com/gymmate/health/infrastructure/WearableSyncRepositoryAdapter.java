@@ -1,8 +1,7 @@
 package com.gymmate.health.infrastructure;
 
-import com.gymmate.health.domain.WearableSource;
+import com.gymmate.health.domain.Enums.WearableSource;
 import com.gymmate.health.domain.WearableSync;
-import com.gymmate.health.domain.WearableSyncRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

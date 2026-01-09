@@ -1,8 +1,7 @@
 package com.gymmate.health.infrastructure;
 
 import com.gymmate.health.domain.HealthMetric;
-import com.gymmate.health.domain.HealthMetricRepository;
-import com.gymmate.health.domain.MetricType;
+import com.gymmate.health.domain.Enums.MetricType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

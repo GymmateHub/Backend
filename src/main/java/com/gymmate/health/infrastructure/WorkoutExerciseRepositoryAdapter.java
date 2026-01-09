@@ -1,7 +1,6 @@
 package com.gymmate.health.infrastructure;
 
 import com.gymmate.health.domain.WorkoutExercise;
-import com.gymmate.health.domain.WorkoutExerciseRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
