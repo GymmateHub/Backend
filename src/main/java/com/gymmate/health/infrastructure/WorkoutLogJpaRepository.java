@@ -1,7 +1,7 @@
 package com.gymmate.health.infrastructure;
 
 import com.gymmate.health.domain.WorkoutLog;
-import com.gymmate.health.domain.WorkoutStatus;
+import com.gymmate.health.domain.Enums.WorkoutStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
