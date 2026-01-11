@@ -8,7 +8,7 @@
 -- ============================================================================
 -- Exercise Categories Table
 -- ============================================================================
-CREATE TABLE exercise_categories (
+CREATE TABLE IF NOT EXISTS  exercise_categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(50) UNIQUE NOT NULL,
     description TEXT,
@@ -30,7 +30,7 @@ COMMENT ON TABLE exercise_categories IS 'Exercise categories for organizing exer
 -- ============================================================================
 -- Exercises Table
 -- ============================================================================
-CREATE TABLE exercises (
+CREATE TABLE IF NOT EXISTS  exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -73,7 +73,7 @@ COMMENT ON COLUMN exercises.instructions IS 'Step-by-step instructions stored as
 -- ============================================================================
 -- Workout Logs Table
 -- ============================================================================
-CREATE TABLE workout_logs (
+CREATE TABLE IF NOT EXISTS  workout_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organisation_id UUID NOT NULL REFERENCES organisations(id),
     gym_id UUID NOT NULL REFERENCES gyms(id),
@@ -112,7 +112,7 @@ COMMENT ON COLUMN workout_logs.status IS 'Workout status: PLANNED, IN_PROGRESS, 
 -- ============================================================================
 -- Workout Exercises Table
 -- ============================================================================
-CREATE TABLE workout_exercises (
+CREATE TABLE IF NOT EXISTS  workout_exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     workout_log_id UUID NOT NULL REFERENCES workout_logs(id) ON DELETE CASCADE,
     exercise_id UUID NOT NULL REFERENCES exercises(id),
@@ -153,7 +153,7 @@ COMMENT ON COLUMN workout_exercises.duration_seconds IS 'Duration for timed exer
 -- ============================================================================
 -- Health Metrics Table
 -- ============================================================================
-CREATE TABLE health_metrics (
+CREATE TABLE IF NOT EXISTS  health_metrics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organisation_id UUID NOT NULL REFERENCES organisations(id),
     gym_id UUID NOT NULL REFERENCES gyms(id),
@@ -195,7 +195,7 @@ COMMENT ON COLUMN health_metrics.unit IS 'Measurement unit: kg, lbs, %, cm, in, 
 -- ============================================================================
 -- Fitness Goals Table
 -- ============================================================================
-CREATE TABLE fitness_goals (
+CREATE TABLE IF NOT EXISTS  fitness_goals (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organisation_id UUID NOT NULL REFERENCES organisations(id),
     gym_id UUID NOT NULL REFERENCES gyms(id),
@@ -245,7 +245,7 @@ COMMENT ON COLUMN fitness_goals.current_value IS 'Current progress value, update
 -- ============================================================================
 -- Progress Photos Table
 -- ============================================================================
-CREATE TABLE progress_photos (
+CREATE TABLE IF NOT EXISTS  progress_photos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organisation_id UUID NOT NULL REFERENCES organisations(id),
     gym_id UUID NOT NULL REFERENCES gyms(id),
@@ -279,7 +279,7 @@ COMMENT ON COLUMN progress_photos.is_public IS 'Privacy control: false = private
 -- ============================================================================
 -- Wearable Syncs Table
 -- ============================================================================
-CREATE TABLE wearable_syncs (
+CREATE TABLE IF NOT EXISTS  wearable_syncs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organisation_id UUID NOT NULL REFERENCES organisations(id),
     gym_id UUID NOT NULL REFERENCES gyms(id),
