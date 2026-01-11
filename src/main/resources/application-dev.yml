@@ -9,18 +9,23 @@ spring:
     password: ${PG_PASSWORD:gymmate_password}
   jpa:
     hibernate:
-      ddl-auto: update
+      # Use 'validate' to ensure entities match DB schema
+      # Use 'update' only for quick prototyping (can cause schema drift)
+      ddl-auto: validate
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
         show_sql: false
 
+  # Flyway Configuration - ENABLED for proper schema management
   flyway:
-    enabled: false
+    enabled: true
     baseline-on-migrate: true
     baseline-version: 0
-    validate-on-migrate: false
+    validate-on-migrate: true
+    clean-disabled: false
+    locations: classpath:db/migration
 
 # CORS Configuration for development
 cors:
