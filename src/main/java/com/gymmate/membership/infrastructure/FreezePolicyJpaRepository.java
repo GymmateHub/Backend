@@ -20,4 +20,8 @@ public interface FreezePolicyJpaRepository extends JpaRepository<FreezePolicy, U
 
   @Query("SELECT fp FROM FreezePolicy fp WHERE fp.organisationId = :organisationId AND fp.isDefaultPolicy = true AND fp.active = true")
   Optional<FreezePolicy> findDefaultPolicyByOrganisation(@Param("organisationId") UUID organisationId);
+
+  Optional<FreezePolicy> findByGymIdAndActiveTrue(UUID gymId);
+
+  Optional<FreezePolicy> findByOrganisationIdAndIsDefaultPolicyTrueAndActiveTrue(UUID organisationId);
 }

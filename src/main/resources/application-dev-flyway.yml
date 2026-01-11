@@ -4,13 +4,13 @@ server:
 spring:
   datasource:
     url: ${PG_URI:jdbc:postgresql://localhost:5432/gymmate}
-    driver-class-name: ${DB_DRIVER}
+    driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
     username: ${PG_USER:gymmate}
     password: ${PG_PASSWORD:gymmate_password}
+
   jpa:
     hibernate:
-      # Use 'validate' to ensure entities match DB schema
-      # Use 'update' only for quick prototyping (can cause schema drift)
+      # Use 'validate' when Flyway manages schema, 'update' for quick dev
       ddl-auto: validate
     properties:
       hibernate:
@@ -24,8 +24,10 @@ spring:
     baseline-on-migrate: true
     baseline-version: 0
     validate-on-migrate: true
-    clean-disabled: false
+    clean-disabled: false  # Allow flyway:clean in dev
     locations: classpath:db/migration
+    # For fresh start, uncomment the next line temporarily
+    # clean-on-validation-error: true
 
 # CORS Configuration for development
 cors:
@@ -43,3 +45,11 @@ app:
     password: DevAdmin#@1357
     firstName: Development
     lastName: Administrator
+
+# Logging - more verbose for development
+logging:
+  level:
+    org.flywaydb: DEBUG
+    com.gymmate: DEBUG
+    org.hibernate.SQL: DEBUG
+
