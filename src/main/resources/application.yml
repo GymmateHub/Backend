@@ -108,6 +108,10 @@ logging:
 jwt:
   secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}
+  token:
+    validity: ${JWT_TOKEN_VALIDITY}
+    header: Authorization
+    prefix: Bearer
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
 # CORS Configuration (additional to programmatic config)
