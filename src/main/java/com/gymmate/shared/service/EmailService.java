@@ -102,4 +102,31 @@ public class EmailService {
             log.warn("Continuing despite welcome email failure");
         }
     }
+
+    /**
+     * Send a generic HTML email with custom subject and body.
+     * Used for newsletters and other custom emails.
+     *
+     * @param to       recipient email address
+     * @param subject  email subject line
+     * @param htmlBody HTML content for the email body
+     */
+    @Async
+    public void sendHtmlEmail(String to, String subject, String htmlBody) {
+        try {
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(htmlBody, true);
+
+            emailSender.send(message);
+            log.info("HTML email sent to: {} with subject: {}", to, subject);
+        } catch (MessagingException e) {
+            log.error("Failed to send HTML email to: {}", to, e);
+            throw new RuntimeException("Failed to send HTML email", e);
+        }
+    }
 }
