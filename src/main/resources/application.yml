@@ -87,9 +87,10 @@ springdoc:
     filter: true
     try-it-out-enabled: true
     persist-authorization: true
-  show-actuator: false
+  show-actuator: true
   cache:
     disabled: false
+  show-login-endpoint: true
 
 # Logging Configuration
 logging:
