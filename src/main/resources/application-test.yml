@@ -16,3 +16,8 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
+  
+  # Disable Flyway for tests - H2 doesn't support PostgreSQL functions like uuidv7()
+  flyway:
+    enabled: false
+
