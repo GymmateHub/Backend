@@ -2,40 +2,64 @@
 -- V2: Newsletter & Message Templating Schema
 -- ============================================================================
 -- Migration for newsletter templates, campaigns, and recipient tracking.
--- Generated: 2026-01-27
+-- All entities inherit from BaseAuditEntity which requires audit columns.
+-- Generated: 2026-01-27 (Fixed: 2026-01-28)
 -- ============================================================================
 
 -- ============================================================================
 -- SECTION 1: NEWSLETTER TEMPLATES
+-- Inherits from GymScopedEntity -> TenantEntity -> BaseAuditEntity
+-- Required columns: id, organisation_id, gym_id, created_by, created_at,
+--                   updated_at, updated_by, is_active
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS newsletter_templates (
+    -- BaseEntity
     id UUID PRIMARY KEY DEFAULT uuidv7(),
+    
+    -- TenantEntity columns
     organisation_id UUID NOT NULL,
+    
+    -- GymScopedEntity columns
     gym_id UUID,
+    
+    -- NewsletterTemplate specific columns
     name VARCHAR(100) NOT NULL,
     subject VARCHAR(255) NOT NULL,
     body TEXT NOT NULL,
     template_type VARCHAR(20) DEFAULT 'EMAIL',
     placeholders JSONB DEFAULT '[]',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by UUID,
-    active BOOLEAN DEFAULT TRUE
+
+    -- BaseAuditEntity columns
+    created_by VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    updated_by VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE
 );
 
 CREATE INDEX IF NOT EXISTS idx_newsletter_templates_org ON newsletter_templates(organisation_id);
 CREATE INDEX IF NOT EXISTS idx_newsletter_templates_gym ON newsletter_templates(gym_id);
-CREATE INDEX IF NOT EXISTS idx_newsletter_templates_active ON newsletter_templates(gym_id, active);
+CREATE INDEX IF NOT EXISTS idx_newsletter_templates_active ON newsletter_templates(gym_id, is_active);
 
 -- ============================================================================
 -- SECTION 2: NEWSLETTER CAMPAIGNS
+-- Inherits from GymScopedEntity -> TenantEntity -> BaseAuditEntity
+-- Required columns: id, organisation_id, gym_id, created_by, created_at,
+--                   updated_at, updated_by, is_active
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS newsletter_campaigns (
+    -- BaseEntity
     id UUID PRIMARY KEY DEFAULT uuidv7(),
+    
+    -- TenantEntity columns
     organisation_id UUID NOT NULL,
+    
+    -- GymScopedEntity columns
     gym_id UUID NOT NULL,
+    
+    -- NewsletterCampaign specific columns
     template_id UUID,
     name VARCHAR(100),
     subject VARCHAR(255) NOT NULL,
@@ -49,10 +73,13 @@ CREATE TABLE IF NOT EXISTS newsletter_campaigns (
     failed_count INTEGER DEFAULT 0,
     status VARCHAR(20) DEFAULT 'DRAFT',
     sent_by_user_id UUID,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    created_by UUID,
-    active BOOLEAN DEFAULT TRUE
+
+    -- BaseAuditEntity columns
+    created_by VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    updated_by VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE
 );
 
 CREATE INDEX IF NOT EXISTS idx_newsletter_campaigns_org ON newsletter_campaigns(organisation_id);
@@ -62,10 +89,15 @@ CREATE INDEX IF NOT EXISTS idx_newsletter_campaigns_template ON newsletter_campa
 
 -- ============================================================================
 -- SECTION 3: CAMPAIGN RECIPIENTS
+-- Inherits from BaseAuditEntity
+-- Required columns: id, created_by, created_at, updated_at, updated_by, is_active
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS campaign_recipients (
+    -- BaseEntity
     id UUID PRIMARY KEY DEFAULT uuidv7(),
+    
+    -- CampaignRecipient specific columns
     campaign_id UUID NOT NULL,
     member_id UUID NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -73,12 +105,23 @@ CREATE TABLE IF NOT EXISTS campaign_recipients (
     sent_at TIMESTAMP,
     delivered_at TIMESTAMP,
     error_message TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    
+    -- Multi-channel support columns
+    channel_used VARCHAR(20) DEFAULT 'EMAIL',
+    fallback_used BOOLEAN DEFAULT FALSE,
+
+    -- BaseAuditEntity columns
+    created_by VARCHAR(255),
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP,
+    updated_by VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE
 );
 
 CREATE INDEX IF NOT EXISTS idx_campaign_recipients_campaign ON campaign_recipients(campaign_id);
 CREATE INDEX IF NOT EXISTS idx_campaign_recipients_member ON campaign_recipients(member_id);
 CREATE INDEX IF NOT EXISTS idx_campaign_recipients_status ON campaign_recipients(campaign_id, status);
+CREATE INDEX IF NOT EXISTS idx_campaign_recipients_channel ON campaign_recipients(channel_used);
 
 -- ============================================================================
 -- SECTION 4: FOREIGN KEY CONSTRAINTS
@@ -135,7 +178,10 @@ $$;
 -- MIGRATION COMPLETE
 -- ============================================================================
 -- Tables created: 3
---   - newsletter_templates: Reusable message templates
---   - newsletter_campaigns: Bulk email campaigns
---   - campaign_recipients: Individual recipient tracking
+--   - newsletter_templates: Reusable message templates (GymScopedEntity)
+--   - newsletter_campaigns: Bulk email campaigns (GymScopedEntity)
+--   - campaign_recipients: Individual recipient tracking (BaseAuditEntity)
+--
+-- All tables include BaseAuditEntity columns:
+--   - id, created_by, created_at, updated_at, updated_by, is_active
 -- ============================================================================
