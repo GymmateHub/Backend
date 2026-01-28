@@ -8,7 +8,6 @@ import com.gymmate.notification.infrastructure.NewsletterCampaignRepository;
 import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.shared.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -23,6 +22,7 @@ import java.util.UUID;
 
 /**
  * Service for managing newsletter campaigns.
+ * Sends via organisation's preferred channel with email fallback.
  */
 @Service
 @Slf4j
@@ -34,7 +34,7 @@ public class NewsletterCampaignService {
     private final CampaignRecipientRepository recipientRepository;
     private final AudienceResolver audienceResolver;
     private final NewsletterTemplateService templateService;
-    private final EmailService emailService;
+    private final BroadcastService broadcastService;
 
     /**
      * Create a new campaign.
@@ -157,7 +157,7 @@ public class NewsletterCampaignService {
     }
 
     /**
-     * Asynchronously send emails to all recipients.
+     * Asynchronously send messages to all recipients via preferred channel.
      */
     @Async
     public void sendCampaignAsync(NewsletterCampaign campaign) {
@@ -184,11 +184,20 @@ public class NewsletterCampaignService {
                 String subject = templateService.renderSubject(campaign.getSubject(), variables);
                 String body = templateService.renderTemplate(campaign.getBody(), variables);
 
-                // Send email
-                sendNewsletterEmail(recipient.email(), recipient.firstName(), subject, body);
+                // Send via preferred channel with email fallback
+                BroadcastService.BroadcastResult result = broadcastService.send(
+                        recipient.email(), // phone number would go here when available
+                        recipient.email(),
+                        subject,
+                        body);
 
-                campaignRecipient.markSent();
-                deliveredCount++;
+                if (result.success()) {
+                    campaignRecipient.markSent(result.channelUsed(), result.fallbackUsed());
+                    deliveredCount++;
+                } else {
+                    campaignRecipient.markFailed(result.errorMessage());
+                    failedCount++;
+                }
             } catch (Exception e) {
                 log.error("Failed to send to {}: {}", recipient.email(), e.getMessage());
                 campaignRecipient.markFailed(e.getMessage());
@@ -218,13 +227,6 @@ public class NewsletterCampaignService {
         variables.put("last_name", lastName);
         variables.put("email", recipient.email());
         return variables;
-    }
-
-    /**
-     * Send a newsletter email using the email service.
-     */
-    private void sendNewsletterEmail(String to, String firstName, String subject, String htmlBody) {
-        emailService.sendHtmlEmail(to, subject, htmlBody);
     }
 
     /**
