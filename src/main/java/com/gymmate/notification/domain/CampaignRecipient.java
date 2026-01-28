@@ -42,12 +42,29 @@ public class CampaignRecipient extends BaseAuditEntity {
     @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "channel_used", length = 20)
+    private NotificationChannel channelUsed;
+
+    @Column(name = "fallback_used")
+    @Builder.Default
+    private boolean fallbackUsed = false;
+
     /**
-     * Mark as sent successfully.
+     * Mark as sent successfully via a specific channel.
      */
-    public void markSent() {
+    public void markSent(NotificationChannel channel, boolean usedFallback) {
         this.status = RecipientStatus.SENT;
         this.sentAt = LocalDateTime.now();
+        this.channelUsed = channel;
+        this.fallbackUsed = usedFallback;
+    }
+
+    /**
+     * Mark as sent successfully (legacy method, defaults to EMAIL).
+     */
+    public void markSent() {
+        markSent(NotificationChannel.EMAIL, false);
     }
 
     /**

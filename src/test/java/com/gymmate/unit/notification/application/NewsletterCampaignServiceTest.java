@@ -3,6 +3,7 @@ package com.gymmate.unit.notification.application;
 import com.gymmate.notification.api.dto.AudiencePreviewResponse;
 import com.gymmate.notification.api.dto.CreateCampaignRequest;
 import com.gymmate.notification.application.AudienceResolver;
+import com.gymmate.notification.application.BroadcastService;
 import com.gymmate.notification.application.NewsletterCampaignService;
 import com.gymmate.notification.application.NewsletterTemplateService;
 import com.gymmate.notification.domain.*;
@@ -11,7 +12,6 @@ import com.gymmate.notification.infrastructure.NewsletterCampaignRepository;
 import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.shared.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -51,7 +51,7 @@ class NewsletterCampaignServiceTest {
     private NewsletterTemplateService templateService;
 
     @Mock
-    private EmailService emailService;
+    private BroadcastService broadcastService;
 
     private NewsletterCampaignService campaignService;
 
@@ -67,7 +67,7 @@ class NewsletterCampaignServiceTest {
                 recipientRepository,
                 audienceResolver,
                 templateService,
-                emailService);
+                broadcastService);
         gymId = UUID.randomUUID();
         organisationId = UUID.randomUUID();
         createdBy = UUID.randomUUID();
