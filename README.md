@@ -1,6 +1,6 @@
-# GymMate Backend (Spring Boot Modular Monolith)
+# GymMateHub Backend (Spring Boot Modular Monolith)
 
-GymMate is a modular monolith built with Spring Boot, designed to provide a comprehensive gym management system. It organizes features into cohesive modules while maintaining a single deployable unit for simplicity and speed during MVP development.
+GymMateHub is a modular monolith built with Spring Boot, designed to provide a comprehensive gym management system. It organizes features into cohesive modules while maintaining a single deployable unit for simplicity and speed during MVP development.
 
 ## 📢 Recent Updates
 
@@ -61,7 +61,7 @@ Each feature module follows a clean architecture pattern with four layers:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/gymmate-backend.git
+   git clone https://github.com/GymMateHub/backend.git
    cd gymmate-backend
    ```
 
