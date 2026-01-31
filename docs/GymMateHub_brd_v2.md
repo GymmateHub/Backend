@@ -1,11 +1,25 @@
 # GymMateHub – Comprehensive Gym Management SaaS Platform
-## Business Requirements Document (BRD) v2.0
+## Business Requirements Document (BRD) v2.1
 
 | Field | Value |
 |-------|-------|
-| **Version** | 2.0 |
-| **Last Updated** | January 13, 2026 |
+| **Version** | 2.1 |
+| **Last Updated** | January 31, 2026 |
 | **Status** | MVP Complete – Active Development |
+| **Previous Version** | 2.0 (January 13, 2026) |
+
+---
+
+## Changelog (v2.1)
+
+| Change | Description |
+|--------|-------------|
+| **Added** | Newsletter & Campaign Management feature (Section 7.9) |
+| **Added** | Multi-Channel Notification infrastructure (Section 10.3) |
+| **Updated** | Module Architecture to include new modules |
+| **Updated** | Database Schema with new migrations (V2, V3) |
+| **Added** | Implementation Gaps & Technical Debt section (Section 17) |
+| **Updated** | Test Coverage Analysis (Section 18) |
 
 ---
 
@@ -70,6 +84,8 @@ Most gyms rely on fragmented tools for payments, attendance, scheduling, and mem
 | Reporting & analytics | ✅ Complete | Health dashboard, analytics services |
 | Mobile & web API access | ✅ Complete | RESTful API with OpenAPI documentation |
 | Authentication & security | ✅ Complete | JWT, 2FA (TOTP), password reset, token blacklist |
+| **Newsletter & Campaign Management** | ✅ Complete | **NEW** - Email templates, bulk campaigns, recipient tracking |
+| **Multi-Channel Notification** | 🔄 Partial | **NEW** - Email complete, SMS/WhatsApp infrastructure ready |
 
 ### 5.2 Out of Scope (Future Phases)
 
@@ -93,11 +109,12 @@ Most gyms rely on fragmented tools for payments, attendance, scheduling, and mem
 | **Build** | Maven 3.x | Via Maven Wrapper (mvnw) |
 | **Database** | PostgreSQL 15+ | Production database |
 | **Dev Database** | H2 | In-memory for development |
-| **Migrations** | Flyway | Schema versioning |
+| **Migrations** | Flyway | Schema versioning (4 migrations) |
 | **Security** | Spring Security + JWT | With TOTP 2FA support |
 | **API Docs** | SpringDoc OpenAPI 3.x | Swagger UI available |
 | **Payments** | Stripe (with Connect) | Platform & connected accounts |
 | **Code Gen** | Lombok + MapStruct | Boilerplate reduction |
+| **Caching** | Redis | Session and rate limiting |
 | **Containers** | Docker | Multi-stage builds |
 | **CI/CD** | GitHub Actions | Automated testing & deployment |
 | **Hosting** | Railway | Cloud deployment |
@@ -110,11 +127,12 @@ The backend follows a **hexagonal/clean architecture** pattern:
 src/main/java/com/gymmate/
 ├── GymMateApplication.java          # Entry point
 ├── shared/                          # Cross-cutting concerns
-│   ├── config/                      # Configuration classes
-│   ├── security/                    # JWT, Auth, Token management
-│   ├── exception/                   # Global exception handling
+│   ├── config/                      # Configuration classes (9 files)
+│   ├── security/                    # JWT, Auth, Token management (25 files)
+│   ├── exception/                   # Global exception handling (9 files)
 │   ├── service/                     # Shared services (Email, Password)
-│   └── multitenancy/                # Tenant context & filtering
+│   ├── multitenancy/                # Tenant context & filtering
+│   └── domain/                      # Base entities
 ├── organisation/                    # Organisation (tenant) management
 ├── user/                            # User, Member, Staff, Trainer
 ├── gym/                             # Gym profiles and areas
@@ -123,7 +141,13 @@ src/main/java/com/gymmate/
 ├── membership/                      # Membership plans & subscriptions
 ├── payment/                         # Stripe, webhooks, refunds
 ├── inventory/                       # Equipment, stock, maintenance
-└── health/                          # Exercise, workouts, metrics, goals
+├── health/                          # Exercise, workouts, metrics, goals
+├── notification/                    # NEW: Newsletter & multi-channel messaging
+├── access/                          # Reserved: Access control (scaffolded)
+├── ai/                              # Reserved: AI/ML features (scaffolded)
+├── analytics/                       # Reserved: Advanced analytics (scaffolded)
+├── booking/                         # Reserved: General booking (scaffolded)
+└── dashboard/                       # Reserved: Dashboard features (scaffolded)
 ```
 
 ### 6.3 Implemented API Endpoints
@@ -137,9 +161,12 @@ src/main/java/com/gymmate/
 | **Subscription** | SubscriptionController | `/api/subscriptions/**` |
 | **Classes** | ClassController, ClassScheduleController, ClassBookingController, ClassCategoryController, GymAreaController | `/api/classes/**`, `/api/schedules/**`, `/api/bookings/**` |
 | **Membership** | MembershipController, MembershipPlanController, MemberPaymentController | `/api/memberships/**`, `/api/membership-plans/**` |
-| **Payment** | PaymentController, ConnectController, StripeWebhookController, RefundControllers | `/api/payments/**`, `/api/connect/**`, `/api/webhooks/**` |
+| **Payment** | PaymentController, ConnectController, StripeWebhookController, GymOwnerRefundController, MemberRefundController | `/api/payments/**`, `/api/connect/**`, `/api/webhooks/**` |
 | **Inventory** | EquipmentController, InventoryController, MaintenanceController, SupplierController | `/api/equipment/**`, `/api/inventory/**`, `/api/maintenance/**` |
 | **Health** | ExerciseController, WorkoutController, HealthMetricController, FitnessGoalController, HealthDashboardController | `/api/exercises/**`, `/api/workouts/**`, `/api/health/**` |
+| **Newsletter** | NewsletterTemplateController, NewsletterCampaignController | `/api/newsletters/**`, `/api/campaigns/**` |
+
+**Total Controllers: 33**
 
 ---
 
@@ -184,7 +211,7 @@ src/main/java/com/gymmate/
 | Online payments | ✅ | Stripe payment intents, Connect for gym payouts |
 | Invoices & receipts | ✅ | `MemberInvoice`, `GymInvoice` entities |
 | Refund processing | ✅ | `RefundRequest`, `PaymentRefund` with audit log |
-| Revenue tracking | ✅ | Via invoices and subscription usage |
+| Revenue tracking | ⚠️ | Via invoices (calculation methods pending) |
 | Webhook handling | ✅ | `StripeWebhookService` with event deduplication |
 
 ### 7.5 Scheduling & Bookings ✅ Implemented
@@ -215,7 +242,7 @@ src/main/java/com/gymmate/
 | Health metrics | ✅ | `HealthMetric` with various metric types |
 | Fitness goals | ✅ | `FitnessGoal` with progress tracking |
 | Progress photos | ✅ | `ProgressPhoto` entity |
-| Wearable sync | ✅ | `WearableSync` entity for integration |
+| Wearable sync | ⚠️ | `WearableSync` entity exists, integration pending |
 
 ### 7.8 Equipment & Inventory ✅ Implemented
 
@@ -226,6 +253,27 @@ src/main/java/com/gymmate/
 | Maintenance scheduling | ✅ | `MaintenanceRecord`, `MaintenanceSchedule` |
 | Supplier management | ✅ | `Supplier` entity |
 
+### 7.9 Newsletter & Campaign Management ✅ Implemented (NEW)
+
+| Requirement | Status | Implementation |
+|-------------|--------|----------------|
+| Newsletter templates | ✅ | `NewsletterTemplate` entity with placeholders |
+| Bulk email campaigns | ✅ | `NewsletterCampaign` with audience targeting |
+| Recipient tracking | ✅ | `CampaignRecipient` with delivery status |
+| Audience segmentation | ⚠️ | `AudienceType` enum (some filters pending integration) |
+| Scheduled sending | ✅ | `scheduled_at` field with status tracking |
+| Delivery analytics | ✅ | `delivered_count`, `failed_count` tracking |
+
+**Supported Audience Types:**
+- `ALL_MEMBERS` - All active gym members
+- `ACTIVE_MEMBERS` - Members with active memberships
+- `INACTIVE_MEMBERS` - Members with expired/frozen memberships
+- `NEW_MEMBERS` - Recently joined members
+- `CLASS_ATTENDEES` - Members enrolled in specific classes (pending integration)
+- `UPCOMING_BOOKINGS` - Members with upcoming class bookings (pending integration)
+- `MEMBERSHIP_PLAN` - Members on specific plans (pending integration)
+- `SPECIFIC_MEMBERS` - Manually selected members (pending integration)
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -235,19 +283,29 @@ src/main/java/com/gymmate/
 | High availability | 99.9% uptime | ✅ Railway cloud hosting |
 | Horizontal scalability | Auto-scaling | ✅ Containerized deployment |
 | Data isolation per tenant | Complete isolation | ✅ `organisation_id` filtering |
-| GDPR-aligned data handling | Compliant | 🔄 In progress |
+| GDPR-aligned data handling | Compliant | ❌ Not implemented |
 | Encryption (at rest) | AES-256 | ✅ Database-level |
 | Encryption (in transit) | TLS 1.3 | ✅ HTTPS enforced |
 | API-first architecture | RESTful | ✅ OpenAPI documented |
 | Rate limiting | Per tenant | ✅ `RateLimitService` |
+| Caching | Redis-based | ✅ Session and data caching |
 
 ---
 
 ## 9. Database Schema Overview
 
-The complete schema is defined in `src/main/resources/db/migration/V1__Complete_Schema.sql`.
+The schema is defined across multiple Flyway migrations in `src/main/resources/db/migration/`.
 
-### 9.1 Core Tables
+### 9.1 Migrations
+
+| Version | File | Description |
+|---------|------|-------------|
+| V1 | `V1__Complete_Schema.sql` | Core schema (46KB) |
+| V1.1 | `V1_1__Add_Missing_Columns_To_Equipment.sql` | Equipment table fixes |
+| V2 | `V2__Newsletter_Tables.sql` | Newsletter templates, campaigns, recipients |
+| V3 | `V3__Multi_Channel_Support.sql` | Multi-channel support columns |
+
+### 9.2 Core Tables
 
 | Domain | Tables |
 |--------|--------|
@@ -260,12 +318,13 @@ The complete schema is defined in `src/main/resources/db/migration/V1__Complete_
 | **Health** | `exercise_categories`, `exercises`, `workout_logs`, `workout_exercises`, `health_metrics`, `fitness_goals`, `progress_photos`, `wearable_syncs` |
 | **Inventory** | `equipment`, `inventory_items`, `stock_movements`, `maintenance_records`, `maintenance_schedules`, `suppliers` |
 | **Security** | `pending_registrations`, `password_reset_tokens`, `token_blacklist` |
+| **Newsletter** | `newsletter_templates`, `newsletter_campaigns`, `campaign_recipients` |
 
-### 9.2 Key Design Decisions
+### 9.3 Key Design Decisions
 
 - **UUID Primary Keys**: All tables use `uuidv7()` for globally unique, time-sortable IDs
-- **Soft Deletes**: `active` boolean flag on most entities
-- **Audit Fields**: `created_at`, `updated_at`, `created_by` on all entities
+- **Soft Deletes**: `is_active` boolean flag on most entities
+- **Audit Fields**: `created_at`, `updated_at`, `created_by`, `updated_by` on all entities
 - **Multi-tenancy**: `organisation_id` and/or `gym_id` on tenant-scoped data
 - **JSON Fields**: Flexible storage for settings, preferences, certifications
 
@@ -275,20 +334,48 @@ The complete schema is defined in `src/main/resources/db/migration/V1__Complete_
 
 ### 10.1 Implemented
 
-| Integration | Provider | Purpose |
-|-------------|----------|---------|
-| Payment Processing | **Stripe** | Subscriptions, one-time payments, Connect for gym payouts |
-| Webhook Events | **Stripe Webhooks** | Real-time payment status updates |
-| Email | Configurable (Mailtrap dev) | Transactional emails, OTP |
+| Integration | Provider | Purpose | Status |
+|-------------|----------|---------|--------|
+| Payment Processing | **Stripe** | Subscriptions, one-time payments, Connect for gym payouts | ✅ Complete |
+| Webhook Events | **Stripe Webhooks** | Real-time payment status updates | ✅ Complete |
+| Email | **SMTP (Mailtrap dev)** | Transactional emails, newsletters, OTP | ✅ Complete |
 
 ### 10.2 Planned
 
-| Integration | Provider | Purpose |
-|-------------|----------|---------|
-| SMS Notifications | Twilio | Booking reminders, alerts |
-| WhatsApp Messaging | WhatsApp Business API | Member communication |
-| Fitness Wearables | Apple Health, Google Fit, Fitbit | Activity data sync |
-| Accounting | QuickBooks, Xero | Financial reconciliation |
+| Integration | Provider | Purpose | Status |
+|-------------|----------|---------|--------|
+| SMS Notifications | Twilio | Booking reminders, alerts | 🔄 Infrastructure ready |
+| WhatsApp Messaging | WhatsApp Business API | Member communication | 🔄 Infrastructure ready |
+| Fitness Wearables | Apple Health, Google Fit, Fitbit | Activity data sync | ⏳ Schema only |
+| Accounting | QuickBooks, Xero | Financial reconciliation | ⏳ Not started |
+
+### 10.3 Multi-Channel Notification Infrastructure (NEW)
+
+The `notification` module provides a channel-agnostic broadcasting system:
+
+```
+notification/
+├── api/                    # REST controllers
+├── application/
+│   ├── BroadcastService    # Multi-channel orchestrator
+│   ├── AudienceResolver    # Member filtering by audience type
+│   ├── NewsletterCampaignService
+│   ├── NewsletterTemplateService
+│   └── channel/
+│       ├── ChannelSender (interface)
+│       ├── EmailChannelSender     ✅ Implemented
+│       ├── SmsChannelSender       ⚠️ Stub (Twilio pending)
+│       └── WhatsAppChannelSender  ⚠️ Stub (API pending)
+├── domain/
+│   ├── NewsletterTemplate
+│   ├── NewsletterCampaign
+│   ├── CampaignRecipient
+│   ├── NotificationChannel (EMAIL, SMS, WHATSAPP, PUSH)
+│   └── NotificationSettings
+└── infrastructure/         # Repository implementations
+```
+
+**Fallback Behavior**: If preferred channel fails, system automatically falls back to email.
 
 ---
 
@@ -305,6 +392,7 @@ The complete schema is defined in `src/main/resources/db/migration/V1__Complete_
 - PostgreSQL 15+ for production
 - Stripe account required for payments
 - Environment variables required (`.env` file)
+- H2 database for tests (no `uuidv7()` support - Flyway disabled)
 
 ---
 
@@ -314,9 +402,10 @@ The complete schema is defined in `src/main/resources/db/migration/V1__Complete_
 |------|-------------|--------|------------|
 | Payment gateway downtime | Low | High | Webhook retry logic, monitoring |
 | Tenant data isolation failure | Low | Critical | Strict `organisation_id` filtering, security audits |
-| Regulatory changes (GDPR, etc.) | Medium | Medium | Privacy-by-design, data retention policies |
+| Regulatory changes (GDPR, etc.) | Medium | Medium | Privacy-by-design, data retention policies (pending) |
 | Scalability bottlenecks | Medium | High | Load testing, horizontal scaling |
 | Key personnel departure | Medium | Medium | Documentation, knowledge sharing |
+| Low test coverage | Medium | High | Prioritize critical path testing |
 
 ---
 
@@ -339,6 +428,7 @@ The complete schema is defined in `src/main/resources/db/migration/V1__Complete_
 |-------|----------|-------|--------|
 | **Phase 1** | Q1-Q2 2025 | MVP Development | ✅ Complete |
 | **Phase 2** | Q3-Q4 2025 | Feature Expansion (Health, Inventory) | ✅ Complete |
+| **Phase 2.5** | Q1 2026 | Newsletter & Multi-Channel Notifications | ✅ Complete |
 | **Phase 3** | Q1-Q2 2026 | Enterprise & White-label | 🔄 In Progress |
 | **Phase 4** | Q3-Q4 2026 | Advanced Analytics & AI | 📋 Planned |
 | **Phase 5** | 2027 | Marketplace & Ecosystem | 📋 Planned |
@@ -351,6 +441,7 @@ The complete schema is defined in `src/main/resources/db/migration/V1__Complete_
 - Java 21
 - Maven 3.x (or use Maven Wrapper)
 - PostgreSQL 15+ (or H2 for dev)
+- Redis (for caching)
 - `.env` file with required variables
 
 ### Commands
@@ -363,7 +454,7 @@ export JAVA_HOME=/path/to/java-21
 ./mvnw clean package -DskipTests
 
 # Run tests
-./mvnw test
+./mvnw test -Dspring.profiles.active=test
 
 # Run application
 ./mvnw spring-boot:run
@@ -379,7 +470,100 @@ docker build -t gymmatehub-backend .
 
 ---
 
-## 16. Approval
+## 16. CI/CD Pipeline
+
+The project uses GitHub Actions for continuous integration and deployment:
+
+```yaml
+Workflow: main.yml
+Triggers: push/PR to main, dev branches
+
+Jobs:
+1. build
+   - Checkout, setup JDK 21
+   - Build with Maven (skip tests)
+   - Run tests with H2 (Flyway disabled)
+
+2. docker (on push to main/dev)
+   - Build multi-stage Docker image
+   - Push to Docker Hub with branch tag
+
+3. deploy-to-railway (on push to main/dev)
+   - Deploy to Railway cloud platform
+```
+
+---
+
+## 17. Implementation Gaps & Technical Debt
+
+### 17.1 Known TODOs (20 items)
+
+| Priority | Area | Description | Files |
+|----------|------|-------------|-------|
+| 🔴 High | Payments | Revenue calculation methods not implemented | `GymService.java` |
+| 🔴 High | Webhooks | Member payment failure notification missing | `StripeWebhookService.java` |
+| 🔴 High | Webhooks | Stripe Connect deauthorization handling missing | `StripeWebhookService.java` |
+| 🟡 Medium | Subscriptions | Event notifications not sent | `SubscriptionService.java` |
+| 🟡 Medium | Newsletter | Audience filters not fully integrated | `AudienceResolver.java` |
+| 🟡 Medium | Payments | Email recipient should be org owner | `PaymentNotificationService.java` |
+| 🟢 Low | SMS | Twilio integration pending | `SmsChannelSender.java` |
+| 🟢 Low | WhatsApp | Business API integration pending | `WhatsAppChannelSender.java` |
+
+### 17.2 GDPR Compliance (Not Implemented)
+
+Required implementations:
+- [ ] Data export endpoints (right to access)
+- [ ] Data deletion endpoints (right to erasure)
+- [ ] Consent management
+- [ ] Data retention policies
+- [ ] Audit logging for PII access
+
+### 17.3 Empty Module Scaffolds
+
+The following modules have directory structures but no implementation:
+- `ai/` - Reserved for Phase 4 AI/ML features
+- `analytics/` - Reserved for Phase 4 Advanced Analytics
+- `dashboard/` - Reserved for dashboard aggregation
+- `booking/` - Reserved for general booking beyond classes
+- `access/` - Reserved for biometric/access control
+
+---
+
+## 18. Test Coverage
+
+### 18.1 Current State
+
+| Metric | Value |
+|--------|-------|
+| Total Test Files | 24 |
+| Total Services | 42 |
+| Service Tests | 5 (12%) |
+
+### 18.2 Test Coverage by Module
+
+| Module | Services | Tests | Coverage |
+|--------|----------|-------|----------|
+| Classes | 5 | 1 | 20% |
+| Gym | 1 | 0 | 0% |
+| Health | 5 | 0 | 0% |
+| Inventory | 4 | 0 | 0% |
+| Membership | 3 | 1 | 33% |
+| Notification | 3 | 2 | 67% |
+| Organisation | 2 | 0 | 0% |
+| Payment | 5 | 1 | 20% |
+| Shared/Security | 8 | 0 | 0% |
+| Subscription | 2 | 0 | 0% |
+| User | 4 | 0 | 0% |
+
+### 18.3 Critical Test Gaps
+
+- ❌ Authentication & Security services (security-critical)
+- ❌ Payment services (financial-critical)
+- ❌ User management services (core functionality)
+
+---
+
+## 19. Approval
 
 This document serves as the authoritative business reference for GymMateHub development and scaling.
 
@@ -391,7 +575,6 @@ This document serves as the authoritative business reference for GymMateHub deve
 
 ---
 
-**Document Version**: 2.0
-**Last Updated**: January 13, 2026
+**Document Version**: 2.1  
+**Last Updated**: January 31, 2026  
 **Classification**: Internal Use Only
-
