@@ -1,4 +1,4 @@
-package com.gymmate.shared.security;
+package com.gymmate.shared.security.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,12 +9,13 @@ import java.util.UUID;
 
 /**
  * Entity to track blacklisted JWT tokens.
- * Tokens are added to blacklist when users logout or when tokens need to be revoked.
+ * Tokens are added to blacklist when users logout or when tokens need to be
+ * revoked.
  */
 @Entity
 @Table(name = "token_blacklist", indexes = {
-    @Index(name = "idx_token", columnList = "token"),
-    @Index(name = "idx_expires_at", columnList = "expires_at")
+        @Index(name = "idx_token", columnList = "token"),
+        @Index(name = "idx_expires_at", columnList = "expires_at")
 })
 @Data
 @Builder
@@ -43,9 +44,6 @@ public class TokenBlacklist {
     @Column(name = "reason", length = 255)
     private String reason;
 
-    /**
-     * Factory method to create a blacklisted token entry
-     */
     public static TokenBlacklist create(String token, UUID userId, Date expiresAt) {
         return TokenBlacklist.builder()
                 .token(token)
@@ -56,9 +54,6 @@ public class TokenBlacklist {
                 .build();
     }
 
-    /**
-     * Factory method to create a blacklisted token entry with custom reason
-     */
     public static TokenBlacklist create(String token, UUID userId, Date expiresAt, String reason) {
         return TokenBlacklist.builder()
                 .token(token)
@@ -69,11 +64,7 @@ public class TokenBlacklist {
                 .build();
     }
 
-    /**
-     * Check if this blacklist entry has expired
-     */
     public boolean isExpired() {
         return expiresAt.before(new Date());
     }
 }
-
