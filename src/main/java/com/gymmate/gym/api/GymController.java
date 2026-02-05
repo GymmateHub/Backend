@@ -5,7 +5,7 @@ import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.shared.security.JwtService;
+import com.gymmate.shared.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -57,13 +57,11 @@ public class GymController {
                 request.city(),
                 request.state(),
                 request.postalCode(),
-                request.country()
-        );
+                request.country());
 
         return ResponseEntity.ok(ApiResponse.success(
                 GymResponse.fromEntity(gym),
-                "Gym address updated successfully"
-        ));
+                "Gym address updated successfully"));
     }
 
     /**
@@ -78,8 +76,7 @@ public class GymController {
 
         return ResponseEntity.ok(ApiResponse.success(
                 GymResponse.fromEntity(gym),
-                "Gym details updated successfully"
-        ));
+                "Gym details updated successfully"));
     }
 
     /**
@@ -129,6 +126,7 @@ public class GymController {
 
     /**
      * Get all gyms owned by a specific user (ADMIN/SUPER_ADMIN only).
+     * 
      * @deprecated Use /api/organisations/current/gyms instead
      */
     @Deprecated(since = "1.0", forRemoval = true)
@@ -279,8 +277,7 @@ public class GymController {
                 id,
                 request.timezone(),
                 request.currency(),
-                request.businessHours()
-        );
+                request.businessHours());
 
         if (request.maxMembers() != null) {
             gym = gymService.updateMaxMembers(id, request.maxMembers());
@@ -290,7 +287,8 @@ public class GymController {
             gym = gymService.updateFeatures(id, request.featuresEnabled());
         }
 
-        return ResponseEntity.ok(ApiResponse.success(GymResponse.fromEntity(gym), "Business settings updated successfully"));
+        return ResponseEntity
+                .ok(ApiResponse.success(GymResponse.fromEntity(gym), "Business settings updated successfully"));
     }
 
     /**
@@ -312,7 +310,8 @@ public class GymController {
 
     /**
      * Get analytics for a specific gym.
-     * Validates that the authenticated user owns the gym before returning analytics.
+     * Validates that the authenticated user owns the gym before returning
+     * analytics.
      */
     @GetMapping("/{gymId}/analytics")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")

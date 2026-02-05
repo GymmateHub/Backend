@@ -1,5 +1,6 @@
-package com.gymmate.shared.security;
+package com.gymmate.shared.security.repository;
 
+import com.gymmate.shared.security.domain.TokenBlacklist;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,29 +16,14 @@ import java.util.UUID;
 @Repository
 public interface TokenBlacklistRepository extends JpaRepository<TokenBlacklist, UUID> {
 
-    /**
-     * Check if a token is blacklisted
-     */
     boolean existsByToken(String token);
 
-    /**
-     * Find a blacklisted token entry by token string
-     */
     Optional<TokenBlacklist> findByToken(String token);
 
-    /**
-     * Delete all expired tokens from the blacklist.
-     * This should be run periodically as a cleanup job.
-     */
     @Modifying
     @Query("DELETE FROM TokenBlacklist t WHERE t.expiresAt < :now")
     void deleteExpiredTokens(Date now);
 
-    /**
-     * Count expired tokens
-     */
     @Query("SELECT COUNT(t) FROM TokenBlacklist t WHERE t.expiresAt < :now")
     long countExpiredTokens(Date now);
 }
-
-
