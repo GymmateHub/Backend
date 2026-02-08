@@ -43,3 +43,6 @@ app:
     password: DevAdmin#@1357
     firstName: Development
     lastName: Administrator
+  password-reset:
+    expiration-minutes: 30
+  frontend-url: http://localhost:3000
