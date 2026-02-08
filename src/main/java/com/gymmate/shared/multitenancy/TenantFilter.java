@@ -2,7 +2,7 @@ package com.gymmate.shared.multitenancy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.shared.dto.ApiResponse;
-import com.gymmate.shared.security.JwtService;
+import com.gymmate.shared.security.service.JwtService;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,24 +31,23 @@ public class TenantFilter extends OncePerRequestFilter {
 
     // Endpoints that don't require tenant context
     private static final List<String> NON_TENANT_ENDPOINTS = Arrays.asList(
-        "/api/auth",
-        "/api/gyms/register",
-        "/api/gyms/my-gyms",
-        "/api/gyms/active",
-        "/api/gyms/city",
-        "/api/organisations/current",
-        "/api/users/register",
-        "/api/users/verify-otp",
-        "/api/users/resend-otp",
-        "/v3/api-docs",
-        "/swagger-ui",
-        "/actuator"
-    );
+            "/api/auth",
+            "/api/gyms/register",
+            "/api/gyms/my-gyms",
+            "/api/gyms/active",
+            "/api/gyms/city",
+            "/api/organisations/current",
+            "/api/users/register",
+            "/api/users/verify-otp",
+            "/api/users/resend-otp",
+            "/v3/api-docs",
+            "/swagger-ui",
+            "/actuator");
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                  HttpServletResponse response,
-                                  FilterChain filterChain) throws ServletException, IOException {
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
         try {
             // Skip tenant filtering for public/non-tenant endpoints
             if (shouldSkipTenantFilter(request)) {
@@ -67,9 +66,9 @@ public class TenantFilter extends OncePerRequestFilter {
 
                 // SUPER_ADMIN can bypass tenant context requirement
                 if (isSuperAdmin(userDetails)) {
-                  log.debug("SUPER_ADMIN user {} bypassing tenant context requirement", userDetails.getUsername());
-                  filterChain.doFilter(request, response);
-                  return;
+                    log.debug("SUPER_ADMIN user {} bypassing tenant context requirement", userDetails.getUsername());
+                    filterChain.doFilter(request, response);
+                    return;
                 }
 
                 UUID organisationId = userDetails.getOrganisationId();
@@ -95,7 +94,8 @@ public class TenantFilter extends OncePerRequestFilter {
                     handleNoTenantError(response, userDetails.getUsername());
                 }
             } else {
-                // For unauthenticated or non-tenant-aware requests, proceed without tenant context
+                // For unauthenticated or non-tenant-aware requests, proceed without tenant
+                // context
                 log.debug("No tenant-aware authentication found, proceeding without tenant context");
                 filterChain.doFilter(request, response);
             }
@@ -114,18 +114,17 @@ public class TenantFilter extends OncePerRequestFilter {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
         String message = String.format(
-            "Organisation context required. User '%s' is not associated with any organisation. " +
-            "Please contact support or complete organisation setup.",
-            username
-        );
+                "Organisation context required. User '%s' is not associated with any organisation. " +
+                        "Please contact support or complete organisation setup.",
+                username);
 
         ApiResponse<?> apiResponse = ApiResponse.error(message);
         objectMapper.writeValue(response.getWriter(), apiResponse);
     }
 
     private boolean isSuperAdmin(TenantAwareUserDetails userDetails) {
-      return userDetails.getAuthorities().stream()
-        .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPER_ADMIN")
-          || auth.getAuthority().equals("SUPER_ADMIN"));
+        return userDetails.getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPER_ADMIN")
+                        || auth.getAuthority().equals("SUPER_ADMIN"));
     }
 }
