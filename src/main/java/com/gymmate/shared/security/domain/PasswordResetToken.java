@@ -1,4 +1,4 @@
-package com.gymmate.shared.security;
+package com.gymmate.shared.security.domain;
 
 import com.gymmate.shared.domain.BaseAuditEntity;
 import com.gymmate.user.domain.User;
@@ -9,6 +9,9 @@ import lombok.Setter;
 
 import java.time.LocalDateTime;
 
+/**
+ * Entity for password reset tokens.
+ */
 @Entity
 @Table(name = "password_reset_tokens")
 @Getter
