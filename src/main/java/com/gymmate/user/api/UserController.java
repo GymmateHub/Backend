@@ -1,7 +1,7 @@
 package com.gymmate.user.api;
 
 import com.gymmate.shared.dto.ApiResponse;
-import com.gymmate.shared.security.AuthenticationService;
+import com.gymmate.shared.security.service.AuthenticationService;
 import com.gymmate.user.api.dto.UserProfileUpdateRequest;
 import com.gymmate.user.api.dto.UserRegistrationRequest;
 import com.gymmate.user.api.dto.UserResponse;
@@ -39,8 +39,8 @@ public class UserController {
     }
 
     /**
-    * Get all users.
-   */
+     * Get all users.
+     */
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
         List<User> users = userService.findAll();
@@ -50,7 +50,7 @@ public class UserController {
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
-  /**
+    /**
      * Update user profile.
      */
     @PutMapping("/{id}/profile")

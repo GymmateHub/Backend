@@ -4,7 +4,7 @@ import com.gymmate.notification.api.dto.*;
 import com.gymmate.notification.application.NewsletterCampaignService;
 import com.gymmate.notification.domain.NewsletterCampaign;
 import com.gymmate.shared.dto.ApiResponse;
-import com.gymmate.shared.security.JwtService;
+import com.gymmate.shared.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
