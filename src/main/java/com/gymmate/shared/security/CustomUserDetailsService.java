@@ -32,8 +32,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
 
-        // Allow INACTIVE users to proceed if they are just unverified (emailVerified = false)
-        // The AuthenticationService will handle the unverified email case by sending OTP
+        // Allow INACTIVE users to proceed if they are just unverified (emailVerified =
+        // false)
+        // The AuthenticationService will handle the unverified email case by sending
+        // OTP
         if (!user.isActive() && user.isEmailVerified()) {
             log.warn("Inactive user attempted to authenticate: {}", email);
             throw new UsernameNotFoundException("User account is not active");
@@ -43,4 +45,3 @@ public class CustomUserDetailsService implements UserDetailsService {
         return new TenantAwareUserDetails(user);
     }
 }
-
