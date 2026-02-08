@@ -1,5 +1,6 @@
-package com.gymmate.shared.security;
+package com.gymmate.shared.security.task;
 
+import com.gymmate.shared.security.repository.TokenBlacklistRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,7 +11,7 @@ import java.util.Date;
 
 /**
  * Scheduled task to clean up expired tokens from the blacklist.
- * Runs daily at 2 AM to remove tokens that have already expired.
+ * Runs daily at 2 AM.
  */
 @Slf4j
 @Component
@@ -19,15 +20,10 @@ public class TokenBlacklistCleanupTask {
 
     private final TokenBlacklistRepository tokenBlacklistRepository;
 
-    /**
-     * Clean up expired tokens from the blacklist.
-     * Runs every day at 2:00 AM
-     */
     @Scheduled(cron = "0 0 2 * * ?")
     @Transactional
     public void cleanupExpiredTokens() {
         log.info("Starting token blacklist cleanup task");
-
         try {
             Date now = new Date();
             long expiredCount = tokenBlacklistRepository.countExpiredTokens(now);
@@ -44,13 +40,9 @@ public class TokenBlacklistCleanupTask {
         }
     }
 
-    /**
-     * Clean up expired tokens immediately (for manual triggering)
-     */
     @Transactional
     public void cleanupNow() {
         log.info("Manual token blacklist cleanup triggered");
         cleanupExpiredTokens();
     }
 }
-
