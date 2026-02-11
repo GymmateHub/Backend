@@ -1,4 +1,4 @@
-package com.gymmate.shared.service;
+package com.gymmate.notification.application;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
