@@ -11,15 +11,7 @@ public enum PaymentMethodOwnerType {
     ORGANISATION,
 
     /**
-     * Gym owner - for platform subscription payments (Gym → GymMate)
-     * @deprecated Use ORGANISATION instead for new implementations.
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    GYM,
-
-    /**
      * Member - for gym service payments (Member → Gym)
      */
     MEMBER
 }
-

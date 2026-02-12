@@ -77,12 +77,4 @@ public class GymRepositoryAdapter implements GymRepository {
     public boolean existsById(UUID id) {
         return jpaRepository.existsById(id);
     }
-
-    // ========== Deprecated owner-based queries ==========
-
-    @Override
-    @Deprecated(since = "1.0", forRemoval = true)
-    public List<Gym> findByOwnerId(UUID ownerId) {
-        return jpaRepository.findByOwnerId(ownerId);
-    }
 }
