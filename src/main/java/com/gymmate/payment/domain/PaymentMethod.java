@@ -26,11 +26,11 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "payment_methods", indexes = {
-    @Index(name = "idx_pm_owner", columnList = "owner_type, owner_id"),
-    @Index(name = "idx_pm_organisation", columnList = "organisation_id"),
-    @Index(name = "idx_pm_gym", columnList = "gym_id"),
-    @Index(name = "idx_pm_provider_id", columnList = "provider_payment_method_id"),
-    @Index(name = "idx_pm_default", columnList = "owner_type, owner_id, is_default")
+        @Index(name = "idx_pm_owner", columnList = "owner_type, owner_id"),
+        @Index(name = "idx_pm_organisation", columnList = "organisation_id"),
+        @Index(name = "idx_pm_gym", columnList = "gym_id"),
+        @Index(name = "idx_pm_provider_id", columnList = "provider_payment_method_id"),
+        @Index(name = "idx_pm_default", columnList = "owner_type, owner_id, is_default")
 })
 public class PaymentMethod extends BaseAuditEntity {
 
@@ -49,7 +49,8 @@ public class PaymentMethod extends BaseAuditEntity {
     private PaymentMethodOwnerType ownerType;
 
     /**
-     * ID of the owner (organisation_id for ORGANISATION type, gym_id for GYM type, member_id for MEMBER type)
+     * ID of the owner (organisation_id for ORGANISATION type, gym_id for GYM type,
+     * member_id for MEMBER type)
      */
     @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
@@ -114,7 +115,8 @@ public class PaymentMethod extends BaseAuditEntity {
     @Builder.Default
     private Boolean isDefault = false;
 
-    // Note: isActive is inherited from BaseAuditEntity (mapped to 'is_active' column as 'active' field)
+    // Note: isActive is inherited from BaseAuditEntity (mapped to 'is_active'
+    // column as 'active' field)
 
     @Column(name = "is_verified")
     @Builder.Default
@@ -138,12 +140,14 @@ public class PaymentMethod extends BaseAuditEntity {
     // ============================================
 
     /**
-     * Create a payment method for a gym (platform payments)
+     * Create a payment method for an organisation (platform payments)
      */
-    public static PaymentMethod forGym(UUID gymId, String providerPaymentMethodId, PaymentMethodType methodType) {
+    public static PaymentMethod forOrganisation(UUID organisationId, UUID gymId, String providerPaymentMethodId,
+            PaymentMethodType methodType) {
         return PaymentMethod.builder()
-                .ownerType(PaymentMethodOwnerType.GYM)
-                .ownerId(gymId)
+                .ownerType(PaymentMethodOwnerType.ORGANISATION)
+                .ownerId(organisationId)
+                .organisationId(organisationId)
                 .gymId(gymId)
                 .providerPaymentMethodId(providerPaymentMethodId)
                 .methodType(methodType)
@@ -153,7 +157,8 @@ public class PaymentMethod extends BaseAuditEntity {
     /**
      * Create a payment method for a member (gym payments)
      */
-    public static PaymentMethod forMember(UUID memberId, UUID gymId, String providerPaymentMethodId, PaymentMethodType methodType) {
+    public static PaymentMethod forMember(UUID memberId, UUID gymId, String providerPaymentMethodId,
+            PaymentMethodType methodType) {
         return PaymentMethod.builder()
                 .ownerType(PaymentMethodOwnerType.MEMBER)
                 .ownerId(memberId)
@@ -185,7 +190,8 @@ public class PaymentMethod extends BaseAuditEntity {
     }
 
     /**
-     * Accessor for isActive - delegates to inherited 'active' field from BaseAuditEntity
+     * Accessor for isActive - delegates to inherited 'active' field from
+     * BaseAuditEntity
      */
     public Boolean getIsActive() {
         return this.isActive();
@@ -200,12 +206,8 @@ public class PaymentMethod extends BaseAuditEntity {
         this.verifiedAt = LocalDateTime.now();
     }
 
-    public boolean isGymPaymentMethod() {
-        return PaymentMethodOwnerType.GYM.equals(this.ownerType);
-    }
-
-    public boolean isMemberPaymentMethod() {
-        return PaymentMethodOwnerType.MEMBER.equals(this.ownerType);
+    public boolean isOrganisationPaymentMethod() {
+        return PaymentMethodOwnerType.ORGANISATION.equals(this.ownerType);
     }
 
     public boolean isCard() {
@@ -242,4 +244,3 @@ public class PaymentMethod extends BaseAuditEntity {
         return this.cardExpiresYear;
     }
 }
-

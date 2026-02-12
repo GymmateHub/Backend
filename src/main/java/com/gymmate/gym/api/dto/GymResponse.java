@@ -10,18 +10,17 @@ import java.util.UUID;
  * DTO for gym responses as a record.
  */
 public record GymResponse(
-    UUID id,
-    String name,
-    String description,
-    AddressResponse address,
-    String contactEmail,
-    String contactPhone,
-    UUID ownerId,
-    GymStatus status,
-    LocalDateTime createdAt,
-    LocalDateTime updatedAt,
-    boolean active
-) {
+        UUID id,
+        String name,
+        String description,
+        AddressResponse address,
+        String contactEmail,
+        String contactPhone,
+        UUID organisationId,
+        GymStatus status,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt,
+        boolean active) {
 
     public static GymResponse fromEntity(Gym gym) {
         AddressResponse addressResponse = null;
@@ -31,8 +30,7 @@ public record GymResponse(
                     gym.getCity(),
                     gym.getState(),
                     gym.getPostalCode(),
-                    gym.getCountry()
-            );
+                    gym.getCountry());
         }
 
         return new GymResponse(
@@ -42,12 +40,11 @@ public record GymResponse(
                 addressResponse,
                 gym.getContactEmail(),
                 gym.getContactPhone(),
-                gym.getOwnerId(),
+                gym.getOrganisationId(),
                 gym.getStatus(),
                 gym.getCreatedAt(),
                 gym.getUpdatedAt(),
-                gym.isActive()
-        );
+                gym.isActive());
     }
 
     public record AddressResponse(
@@ -55,6 +52,6 @@ public record GymResponse(
             String city,
             String state,
             String postalCode,
-            String country
-    ) {}
+            String country) {
+    }
 }
