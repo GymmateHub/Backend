@@ -40,7 +40,8 @@ public interface GymJpaRepository extends JpaRepository<Gym, UUID> {
      * Count active gyms in an organisation.
      */
     @Query("SELECT COUNT(g) FROM Gym g WHERE g.organisationId = :organisationId AND g.status = :status")
-    long countByOrganisationIdAndStatus(@Param("organisationId") UUID organisationId, @Param("status") GymStatus status);
+    long countByOrganisationIdAndStatus(@Param("organisationId") UUID organisationId,
+            @Param("status") GymStatus status);
 
     /**
      * Sum of maxMembers across all gyms in an organisation.
@@ -63,32 +64,4 @@ public interface GymJpaRepository extends JpaRepository<Gym, UUID> {
     List<Gym> findByStatus(GymStatus status);
 
     List<Gym> findByCity(String city);
-
-    // ========== Deprecated owner-based queries (for backward compatibility) ==========
-
-    /**
-     * @deprecated Use findByOrganisationId instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    List<Gym> findByOwnerId(UUID ownerId);
-
-    /**
-     * @deprecated Use findByOrganisationIdAndStatus instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    List<Gym> findByOwnerIdAndStatus(UUID ownerId, GymStatus status);
-
-    /**
-     * @deprecated Use sumMaxMembersByOrganisationId instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    @Query("SELECT COALESCE(SUM(g.maxMembers), 0) FROM Gym g WHERE g.ownerId = :ownerId")
-    Integer sumMaxMembersByOwnerId(@Param("ownerId") UUID ownerId);
-
-    /**
-     * @deprecated Use countByOrganisationIdAndStatus instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    @Query("SELECT COUNT(g) FROM Gym g WHERE g.ownerId = :ownerId AND g.status = :status")
-    Long countByOwnerIdAndStatus(@Param("ownerId") UUID ownerId, @Param("status") GymStatus status);
 }

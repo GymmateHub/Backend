@@ -52,16 +52,16 @@ public class RefundRequestService {
         // Validate requested amount doesn't exceed original
         if (dto.getRequestedRefundAmount().compareTo(dto.getOriginalPaymentAmount()) > 0) {
             throw new DomainException("INVALID_REFUND_AMOUNT",
-                "Requested refund amount cannot exceed original payment amount");
+                    "Requested refund amount cannot exceed original payment amount");
         }
 
         // Check for existing pending request for same payment
         refundRequestRepository.findByStripePaymentIntentIdAndStatus(
                 dto.getStripePaymentIntentId(), RefundRequestStatus.PENDING)
-            .ifPresent(existing -> {
-                throw new DomainException("DUPLICATE_REFUND_REQUEST",
-                    "A pending refund request already exists for this payment");
-            });
+                .ifPresent(existing -> {
+                    throw new DomainException("DUPLICATE_REFUND_REQUEST",
+                            "A pending refund request already exists for this payment");
+                });
 
         // Create refund request
         RefundRequestEntity request = RefundRequestEntity.builder()
@@ -92,7 +92,7 @@ public class RefundRequestService {
         auditLogRepository.save(auditLog);
 
         log.info("Created refund request {} for payment {} by user {} ({})",
-            saved.getId(), dto.getStripePaymentIntentId(), requestedByUserId, requestedByType);
+                saved.getId(), dto.getStripePaymentIntentId(), requestedByUserId, requestedByType);
 
         return toResponse(saved);
     }
@@ -153,10 +153,9 @@ public class RefundRequestService {
 
         if (!request.canBeApproved()) {
             throw new DomainException("CANNOT_APPROVE_REQUEST",
-                "Refund request cannot be approved in current status: " + request.getStatus());
+                    "Refund request cannot be approved in current status: " + request.getStatus());
         }
 
-        String oldStatus = request.getStatus().name();
         request.approve(approverId, approverType, notes);
         RefundRequestEntity saved = refundRequestRepository.save(request);
 
@@ -184,7 +183,7 @@ public class RefundRequestService {
 
         if (!request.canBeApproved()) {
             throw new DomainException("CANNOT_REJECT_REQUEST",
-                "Refund request cannot be rejected in current status: " + request.getStatus());
+                    "Refund request cannot be rejected in current status: " + request.getStatus());
         }
 
         request.reject(rejecterId, rejecterType, rejectionReason, notes);
@@ -195,7 +194,7 @@ public class RefundRequestService {
         auditLogRepository.save(auditLog);
 
         log.info("Refund request {} rejected by {} ({}): {}",
-            requestId, rejecterId, rejecterType, rejectionReason);
+                requestId, rejecterId, rejecterType, rejectionReason);
 
         return toResponse(saved);
     }
@@ -213,7 +212,7 @@ public class RefundRequestService {
 
         if (request.getStatus() != RefundRequestStatus.APPROVED) {
             throw new DomainException("REQUEST_NOT_APPROVED",
-                "Refund request must be approved before processing");
+                    "Refund request must be approved before processing");
         }
 
         // Create the refund request DTO for Stripe
@@ -225,12 +224,12 @@ public class RefundRequestService {
 
         // Process the actual refund via Stripe
         RefundResponse refundResponse = stripePaymentService.processRefund(
-            request.getGymId(), stripeRequest);
+                request.getGymId(), stripeRequest);
 
         // Update the PaymentRefund with additional tracking info
         PaymentRefund paymentRefund = paymentRefundRepository
-            .findByStripeRefundId(refundResponse.getRefundId())
-            .orElseThrow(() -> new DomainException("REFUND_NOT_FOUND", "Processed refund not found"));
+                .findByStripeRefundId(refundResponse.getRefundId())
+                .orElseThrow(() -> new DomainException("REFUND_NOT_FOUND", "Processed refund not found"));
 
         paymentRefund.setRefundToUserId(request.getRefundToUserId());
         paymentRefund.setRefundToType(request.getRefundToType());
@@ -249,7 +248,7 @@ public class RefundRequestService {
         auditLogRepository.save(auditLog);
 
         log.info("Refund request {} processed successfully. Stripe refund: {}",
-            requestId, refundResponse.getRefundId());
+                requestId, refundResponse.getRefundId());
 
         return refundResponse;
     }
@@ -263,14 +262,14 @@ public class RefundRequestService {
 
         if (!request.canBeCancelled()) {
             throw new DomainException("CANNOT_CANCEL_REQUEST",
-                "Refund request cannot be cancelled in current status: " + request.getStatus());
+                    "Refund request cannot be cancelled in current status: " + request.getStatus());
         }
 
         // Only the requester or an admin can cancel
         if (!request.getRequestedByUserId().equals(userId) &&
-            !userType.equals("SUPER_ADMIN") && !userType.equals("GYM_OWNER")) {
+                !userType.equals("SUPER_ADMIN") && !userType.equals("GYM_OWNER")) {
             throw new DomainException("CANCEL_NOT_ALLOWED",
-                "Only the requester or an admin can cancel this request");
+                    "Only the requester or an admin can cancel this request");
         }
 
         request.cancel();
@@ -304,7 +303,7 @@ public class RefundRequestService {
         auditLogRepository.save(auditLog);
 
         log.info("Refund request {} escalated to {} by {} ({})",
-            requestId, escalateTo, escalatedBy, escalatedByType);
+                requestId, escalateTo, escalatedBy, escalatedByType);
 
         return toResponse(saved);
     }
@@ -332,8 +331,8 @@ public class RefundRequestService {
 
     private RefundRequestEntity findRequestById(UUID requestId) {
         return refundRequestRepository.findById(requestId)
-            .orElseThrow(() -> new DomainException("REFUND_REQUEST_NOT_FOUND",
-                "Refund request not found: " + requestId));
+                .orElseThrow(() -> new DomainException("REFUND_REQUEST_NOT_FOUND",
+                        "Refund request not found: " + requestId));
     }
 
     private RefundRequestResponse toResponse(RefundRequestEntity request) {
@@ -393,4 +392,3 @@ public class RefundRequestService {
         return builder.build();
     }
 }
-
