@@ -6,10 +6,10 @@ import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.gym.domain.GymStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import com.gymmate.user.domain.Member;
+
 import com.gymmate.user.domain.MemberStatus;
 import com.gymmate.user.domain.User;
-import com.gymmate.user.domain.UserStatus;
+
 import com.gymmate.user.infrastructure.MemberRepository;
 import com.gymmate.user.infrastructure.UserRepository;
 import com.gymmate.user.domain.UserRole;
@@ -43,24 +43,25 @@ public class GymService {
         User owner = userRepository.findById(request.ownerId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.ownerId().toString()));
 
-        if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN && owner.getRole() != UserRole.OWNER) {
+        if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN
+                && owner.getRole() != UserRole.OWNER) {
             throw new DomainException("INVALID_OWNER",
-                "Only users with OWNER, ADMIN or SUPER_ADMIN role can register gyms");
+                    "Only users with OWNER, ADMIN or SUPER_ADMIN role can register gyms");
         }
 
         if (!owner.isActive()) {
             throw new DomainException("INACTIVE_OWNER",
-                "Owner account must be active to register a gym");
+                    "Owner account must be active to register a gym");
         }
 
         if (owner.getOrganisationId() == null) {
             throw new DomainException("NO_ORGANISATION",
-                "Owner must be associated with an organisation to register a gym");
+                    "Owner must be associated with an organisation to register a gym");
         }
 
         // Create gym with required fields
         Gym gym = new Gym(request.name(), request.description(), request.contactEmail(),
-                         request.contactPhone(), request.ownerId());
+                request.contactPhone(), request.ownerId());
 
         // Set organisation ID from owner
         gym.setOrganisationId(owner.getOrganisationId());
@@ -84,9 +85,9 @@ public class GymService {
 
         // Set address if provided
         if (request.street() != null || request.city() != null || request.state() != null ||
-            request.postalCode() != null || request.country() != null) {
+                request.postalCode() != null || request.country() != null) {
             gym.updateAddress(request.street(), request.city(), request.state(),
-                            request.country(), request.postalCode());
+                    request.country(), request.postalCode());
         }
 
         // Save and return
@@ -106,7 +107,7 @@ public class GymService {
      */
     @Transactional
     public Gym updateGymAddress(UUID id, String street, String city, String state,
-                              String postalCode, String country) {
+            String postalCode, String country) {
         Gym gym = getGymById(id);
         gym.updateAddress(street, city, state, country, postalCode);
         return gymRepository.save(gym);
@@ -121,13 +122,13 @@ public class GymService {
 
         // Update basic details
         gym.updateDetails(request.name(), request.description(), request.contactEmail(),
-                         request.contactPhone(), request.website());
+                request.contactPhone(), request.website());
 
         // Update address if provided
         if (request.street() != null || request.city() != null || request.state() != null ||
-            request.postalCode() != null || request.country() != null) {
+                request.postalCode() != null || request.country() != null) {
             gym.updateAddress(request.street(), request.city(), request.state(),
-                            request.country(), request.postalCode());
+                    request.country(), request.postalCode());
         }
 
         // Update other fields
@@ -168,16 +169,6 @@ public class GymService {
      */
     public long countGymsByOrganisation(UUID organisationId) {
         return gymRepository.countByOrganisationId(organisationId);
-    }
-
-    // ========== Deprecated owner-based queries ==========
-
-    /**
-     * @deprecated Use getGymsByOrganisation instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    public List<Gym> getGymsByOwner(UUID ownerId) {
-        return gymRepository.findByOwnerId(ownerId);
     }
 
     /**
@@ -338,15 +329,19 @@ public class GymService {
 
     /**
      * Get analytics for all gyms owned by a specific user.
-     * This is a SaaS multi-tenant method that aggregates data across all gyms owned by the user.
+     * This is a SaaS multi-tenant method that aggregates data across all gyms owned
+     * by the user.
      */
     public GymAnalyticsResponse getOwnerAnalytics(UUID ownerId) {
         // Validate owner exists
         User owner = userRepository.findById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
 
-        // Get all gyms owned by this user
-        List<Gym> ownedGyms = gymRepository.findByOwnerId(ownerId);
+        // Get all gyms owned by this user via their organisation
+        if (owner.getOrganisationId() == null) {
+            throw new DomainException("NO_ORGANISATION", "User is not associated with an organisation");
+        }
+        List<Gym> ownedGyms = gymRepository.findByOrganisationId(owner.getOrganisationId());
 
         // Calculate total gyms
         int totalGyms = ownedGyms.size();
@@ -379,9 +374,9 @@ public class GymService {
         // Count staff and trainers at organisation level
         if (owner.getOrganisationId() != null) {
             totalStaff = (int) userRepository.countByOrganisationIdAndRole(
-                owner.getOrganisationId(), UserRole.STAFF);
+                    owner.getOrganisationId(), UserRole.STAFF);
             totalTrainers = (int) userRepository.countByOrganisationIdAndRole(
-                owner.getOrganisationId(), UserRole.TRAINER);
+                    owner.getOrganisationId(), UserRole.TRAINER);
         }
 
         // Calculate average utilization across all gyms
@@ -390,7 +385,8 @@ public class GymService {
             avgUtilization = (totalMembers * 100.0) / totalCapacity;
         }
 
-        // TODO: Calculate total revenue this month (requires payment/subscription integration)
+        // TODO: Calculate total revenue this month (requires payment/subscription
+        // integration)
         BigDecimal totalRevenue = BigDecimal.ZERO;
 
         return GymAnalyticsResponse.builder()
@@ -411,12 +407,16 @@ public class GymService {
      * Validates that the gym belongs to the owner before returning analytics.
      */
     public GymAnalyticsResponse getGymAnalytics(UUID gymId, UUID ownerId) {
-        // Get gym and verify ownership
+        // Get gym and verify ownership through organisation
         Gym gym = getGymById(gymId);
 
-        if (!gym.getOwnerId().equals(ownerId)) {
+        // Get the owner's organisation and verify the gym belongs to it
+        User owner = userRepository.findById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
+
+        if (owner.getOrganisationId() == null || !gym.getOrganisationId().equals(owner.getOrganisationId())) {
             throw new DomainException("ACCESS_DENIED",
-                "You do not have permission to view analytics for this gym");
+                    "You do not have permission to view analytics for this gym");
         }
 
         // Calculate gym-specific metrics
