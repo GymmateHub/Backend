@@ -13,7 +13,7 @@ import java.util.UUID;
 
 /**
  * Repository for unified payment methods.
- * Supports both gym (platform) and member payment methods.
+ * Supports both organisation (platform) and member payment methods.
  */
 @Repository
 public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UUID> {
@@ -37,27 +37,6 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UU
     boolean existsByOwnerTypeAndOwnerId(PaymentMethodOwnerType ownerType, UUID ownerId);
 
     void deleteByOwnerTypeAndOwnerIdAndId(PaymentMethodOwnerType ownerType, UUID ownerId, UUID id);
-
-    // ============================================
-    // Gym-specific queries (Platform payments)
-    // ============================================
-
-    default List<PaymentMethod> findByGymForPlatform(UUID gymId) {
-        return findByOwnerTypeAndOwnerIdOrderByIsDefaultDescCreatedAtDesc(PaymentMethodOwnerType.GYM, gymId);
-    }
-
-    default Optional<PaymentMethod> findDefaultForGym(UUID gymId) {
-        return findByOwnerTypeAndOwnerIdAndIsDefaultTrue(PaymentMethodOwnerType.GYM, gymId);
-    }
-
-    @Modifying
-    default void clearDefaultForGym(UUID gymId) {
-        clearDefaultForOwner(PaymentMethodOwnerType.GYM, gymId);
-    }
-
-    default boolean existsForGym(UUID gymId) {
-        return existsByOwnerTypeAndOwnerId(PaymentMethodOwnerType.GYM, gymId);
-    }
 
     // ============================================
     // Organisation-specific queries (preferred)
@@ -124,18 +103,4 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UU
     default Optional<PaymentMethod> findByStripePaymentMethodId(String stripePaymentMethodId) {
         return findByProviderPaymentMethodId(stripePaymentMethodId);
     }
-
-    // Legacy method for GymPaymentMethodRepository compatibility
-    default List<PaymentMethod> findByGymIdOrderByIsDefaultDescCreatedAtDesc(UUID gymId) {
-        return findByGymForPlatform(gymId);
-    }
-
-    default Optional<PaymentMethod> findByGymIdAndIsDefaultTrue(UUID gymId) {
-        return findDefaultForGym(gymId);
-    }
-
-    default boolean existsByGymId(UUID gymId) {
-        return existsForGym(gymId);
-    }
 }
-
