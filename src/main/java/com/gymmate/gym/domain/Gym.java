@@ -74,14 +74,6 @@ public class Gym extends TenantEntity {
   @Column(name = "logo_url", length = 500)
   private String logoUrl;
 
-  /**
-   * @deprecated Use organisationId from TenantEntity instead.
-   * Kept for backward compatibility during migration.
-   */
-  @Deprecated(since = "1.0", forRemoval = true)
-  @Column(name = "owner_id")
-  private UUID ownerId;
-
   // Business settings
   @Column(length = 50)
   private String timezone = "UTC";
@@ -93,7 +85,8 @@ public class Gym extends TenantEntity {
   @Column(name = "business_hours", columnDefinition = "jsonb")
   private String businessHours;
 
-  // Note: Subscription is now at Organisation level, but gyms may have specific features
+  // Note: Subscription is now at Organisation level, but gyms may have specific
+  // features
   @Column(name = "subscription_plan", length = 50)
   private String subscriptionPlan = "starter";
 
@@ -167,10 +160,10 @@ public class Gym extends TenantEntity {
 
   private String generateSlug(String name) {
     String baseSlug = name.toLowerCase()
-            .replaceAll("[^a-z0-9\\s-]", "")
-            .replaceAll("\\s+", "-")
-            .replaceAll("-+", "-")
-            .trim();
+        .replaceAll("[^a-z0-9\\s-]", "")
+        .replaceAll("\\s+", "-")
+        .replaceAll("-+", "-")
+        .trim();
     // Add timestamp suffix to ensure uniqueness
     return baseSlug + "-" + System.currentTimeMillis() % 100000;
   }
