@@ -45,4 +45,7 @@ public interface InventoryItemJpaRepository extends JpaRepository<InventoryItem,
   long countByOrganisationId(UUID organisationId);
 
   boolean existsBySku(String sku);
+
+  @Query("SELECT COUNT(i) FROM InventoryItem i WHERE i.gymId = :gymId AND i.currentStock < i.minimumStock")
+  long countByGymIdAndCurrentStockLessThanMinimumStock(@Param("gymId") UUID gymId);
 }

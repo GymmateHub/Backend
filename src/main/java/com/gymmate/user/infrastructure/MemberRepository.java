@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -44,6 +45,7 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
     // ========== User lookup ==========
 
     Optional<Member> findByUserId(UUID userId);
+
     boolean existsByUserId(UUID userId);
 
     /**
@@ -59,27 +61,38 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
     // ========== Gym queries ==========
 
     List<Member> findByGymId(UUID gymId);
+
     long countByGymId(UUID gymId);
+
     long countByGymIdAndStatus(UUID gymId, MemberStatus status);
 
     // ========== Membership number lookup ==========
 
     Optional<Member> findByMembershipNumber(String membershipNumber);
+
     boolean existsByMembershipNumber(String membershipNumber);
 
     // ========== Status queries ==========
 
     List<Member> findByStatus(MemberStatus status);
+
     long countByStatus(MemberStatus status);
 
     // ========== Date queries ==========
 
     List<Member> findByJoinDateBetween(LocalDate startDate, LocalDate endDate);
+
     List<Member> findByJoinDateAfter(LocalDate date);
 
     // ========== Waiver queries ==========
 
     List<Member> findByWaiverSigned(boolean signed);
-    List<Member> findByWaiverSignedFalse();
-}
 
+    List<Member> findByWaiverSignedFalse();
+
+    // ========== Analytics queries ==========
+
+    @Query("SELECT COUNT(m) FROM Member m WHERE m.gymId = :gymId AND m.createdAt BETWEEN :startDate AND :endDate")
+    long countByGymIdAndCreatedAtBetween(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate,
+            @Param("endDate") LocalDateTime endDate);
+}

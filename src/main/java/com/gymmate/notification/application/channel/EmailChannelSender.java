@@ -1,7 +1,8 @@
 package com.gymmate.notification.application.channel;
 
+import com.gymmate.notification.application.EmailService;
 import com.gymmate.notification.domain.NotificationChannel;
-import com.gymmate.shared.service.EmailService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
