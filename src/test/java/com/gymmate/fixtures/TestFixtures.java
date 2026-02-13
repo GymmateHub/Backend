@@ -90,8 +90,7 @@ public class TestFixtures {
                 "Description for " + name,
                 "contact@" + name.toLowerCase().replace(" ", "") + ".com",
                 "+1234567890",
-                ownerId
-        );
+                ownerId);
         gym.setCity("Test City");
         gym.setState("TS");
         gym.setCountry("USA");
@@ -110,8 +109,9 @@ public class TestFixtures {
 
     // ==================== PAYMENT FIXTURES ====================
 
-    public static PaymentMethod createGymPaymentMethod(UUID gymId) {
-        PaymentMethod method = PaymentMethod.forGym(gymId, "pm_test" + System.currentTimeMillis(), PaymentMethodType.CARD);
+    public static PaymentMethod createOrganisationPaymentMethod(UUID organisationId) {
+        PaymentMethod method = PaymentMethod.forOrganisation(organisationId, null,
+                "pm_test" + System.currentTimeMillis(), PaymentMethodType.CARD);
         method.setId(UUID.randomUUID());
         method.setCardBrand("visa");
         method.setCardLastFour("4242");
@@ -121,7 +121,8 @@ public class TestFixtures {
     }
 
     public static PaymentMethod createMemberPaymentMethod(UUID memberId, UUID gymId) {
-        PaymentMethod method = PaymentMethod.forMember(memberId, gymId, "pm_member" + System.currentTimeMillis(), PaymentMethodType.CARD);
+        PaymentMethod method = PaymentMethod.forMember(memberId, gymId, "pm_member" + System.currentTimeMillis(),
+                PaymentMethodType.CARD);
         method.setId(UUID.randomUUID());
         method.setCardBrand("mastercard");
         method.setCardLastFour("5555");
@@ -131,6 +132,11 @@ public class TestFixtures {
     }
 
     public static PaymentRefund createRefund(UUID gymId, BigDecimal amount) {
+        // Refund is still gym-specific for Member Payments, but let's check
+        // PaymentRefund entity if it uses gymId or organisationId
+        // Assuming PaymentRefund uses GymId for member payments refund. Let's keep
+        // gymId here if PaymentRefund entity wasn't changed.
+        // But previously I saw PaymentRefund has both.
         PaymentRefund refund = PaymentRefund.builder()
                 .gymId(gymId)
                 .stripeRefundId("re_test" + System.currentTimeMillis())
@@ -141,12 +147,14 @@ public class TestFixtures {
                 .refundType(RefundType.MEMBER_PAYMENT)
                 .build();
         refund.setId(UUID.randomUUID());
+        // For platform payments (Organisation), refund might need organisationId.
+        // But this fixture seems to create member payment refund.
         return refund;
     }
 
-    public static GymInvoice createInvoice(UUID gymId, UUID subscriptionId) {
+    public static GymInvoice createInvoice(UUID organisationId, UUID subscriptionId) {
         return GymInvoice.builder()
-                .gymId(gymId)
+                .organisationId(organisationId)
                 .stripeInvoiceId("inv_test" + System.currentTimeMillis())
                 .invoiceNumber("INV-" + System.currentTimeMillis())
                 .amount(new BigDecimal("29.99"))
