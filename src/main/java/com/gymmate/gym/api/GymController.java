@@ -108,34 +108,11 @@ public class GymController {
         }
 
         if (organisationId == null) {
-            // Legacy fallback - use deprecated owner-based query
-            log.warn("No organisation context found, falling back to owner-based query (deprecated)");
-            String token = authHeader.substring(7);
-            UUID userId = jwtService.extractUserId(token);
-            List<GymResponse> gyms = gymService.getGymsByOwner(userId).stream()
-                    .map(GymResponse::fromEntity)
-                    .toList();
-            return ResponseEntity.ok(ApiResponse.success(gyms));
+            throw new com.gymmate.shared.exception.DomainException("NO_ORGANISATION_CONTEXT",
+                    "Unable to determine organisation context. Please ensure you are properly authenticated.");
         }
 
         List<GymResponse> gyms = gymService.getGymsByOrganisation(organisationId).stream()
-                .map(GymResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(gyms));
-    }
-
-    /**
-     * Get all gyms owned by a specific user (ADMIN/SUPER_ADMIN only).
-     * 
-     * @deprecated Use /api/organisations/current/gyms instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    @GetMapping("/owner/{ownerId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    @Operation(summary = "Get gyms by owner (deprecated)", description = "Deprecated: Use /api/organisations/current/gyms instead")
-    public ResponseEntity<ApiResponse<List<GymResponse>>> getGymsByOwner(@PathVariable UUID ownerId) {
-        log.warn("Deprecated endpoint /owner/{} called - use /api/organisations/current/gyms instead", ownerId);
-        List<GymResponse> gyms = gymService.getGymsByOwner(ownerId).stream()
                 .map(GymResponse::fromEntity)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(gyms));

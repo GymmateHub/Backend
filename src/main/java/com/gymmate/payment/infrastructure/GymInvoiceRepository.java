@@ -26,14 +26,4 @@ public interface GymInvoiceRepository extends JpaRepository<GymInvoice, UUID> {
 
     Optional<GymInvoice> findByStripeInvoiceId(String stripeInvoiceId);
 
-    // ============================================
-    // Gym-based queries (backward compatible)
-    // ============================================
-
-    @Deprecated(since = "1.0", forRemoval = true)
-    List<GymInvoice> findByGymIdOrderByCreatedAtDesc(UUID gymId);
-
-    @Deprecated(since = "1.0", forRemoval = true)
-    List<GymInvoice> findByGymIdAndStatus(UUID gymId, InvoiceStatus status);
 }
-
