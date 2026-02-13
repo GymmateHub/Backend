@@ -36,7 +36,8 @@ import java.util.stream.Collectors;
  * Manages customer creation, payment methods, subscriptions, and invoices.
  *
  * IMPORTANT: Subscriptions are at the ORGANISATION level, not gym level.
- * Payment methods and invoices can be gym-specific for Stripe Connect scenarios.
+ * Payment methods and invoices can be gym-specific for Stripe Connect
+ * scenarios.
  */
 @Service
 @RequiredArgsConstructor
@@ -89,7 +90,7 @@ public class StripePaymentService {
         } catch (StripeException e) {
             log.error("Failed to create Stripe customer for organisation {}: {}", organisationId, e.getMessage());
             throw new DomainException("STRIPE_CUSTOMER_CREATE_FAILED",
-                "Failed to create payment profile: " + e.getMessage());
+                    "Failed to create payment profile: " + e.getMessage());
         }
     }
 
@@ -97,7 +98,8 @@ public class StripePaymentService {
      * Create a Stripe subscription for an organisation.
      */
     @Transactional
-    public void createStripeSubscriptionForOrganisation(UUID organisationId, SubscriptionTier tier, boolean startTrial) {
+    public void createStripeSubscriptionForOrganisation(UUID organisationId, SubscriptionTier tier,
+            boolean startTrial) {
         String customerId = createOrGetStripeCustomerForOrganisation(organisationId);
         Subscription subscription = getSubscriptionByOrganisationId(organisationId);
 
@@ -105,14 +107,15 @@ public class StripePaymentService {
 
         // Skip if already has Stripe subscription
         if (subscription.getStripeSubscriptionId() != null) {
-            log.info("Organisation {} already has Stripe subscription {}", organisationId, subscription.getStripeSubscriptionId());
+            log.info("Organisation {} already has Stripe subscription {}", organisationId,
+                    subscription.getStripeSubscriptionId());
             return;
         }
 
         // Check if tier has a Stripe price ID configured
         if (tier.getStripePriceId() == null || tier.getStripePriceId().isBlank()) {
             log.warn("Tier {} does not have a Stripe price ID configured. Subscription created without Stripe billing.",
-                tier.getName());
+                    tier.getName());
             return;
         }
 
@@ -141,7 +144,7 @@ public class StripePaymentService {
         } catch (StripeException e) {
             log.error("Failed to create Stripe subscription for organisation {}: {}", organisationId, e.getMessage());
             throw new DomainException("STRIPE_SUBSCRIPTION_CREATE_FAILED",
-                "Failed to create subscription: " + e.getMessage());
+                    "Failed to create subscription: " + e.getMessage());
         }
     }
 
@@ -160,24 +163,25 @@ public class StripePaymentService {
         validateStripeConfigured();
 
         try {
-            com.stripe.model.Subscription stripeSubData = com.stripe.model.Subscription.retrieve(subscription.getStripeSubscriptionId());
+            com.stripe.model.Subscription stripeSubData = com.stripe.model.Subscription
+                    .retrieve(subscription.getStripeSubscriptionId());
 
             if (immediate) {
                 stripeSubData.cancel();
                 log.info("Immediately cancelled Stripe subscription {} for organisation {}",
-                    subscription.getStripeSubscriptionId(), organisationId);
+                        subscription.getStripeSubscriptionId(), organisationId);
             } else {
                 stripeSubData.update(SubscriptionUpdateParams.builder()
                         .setCancelAtPeriodEnd(true)
                         .build());
                 log.info("Scheduled cancellation of Stripe subscription {} for organisation {} at period end",
-                    subscription.getStripeSubscriptionId(), organisationId);
+                        subscription.getStripeSubscriptionId(), organisationId);
             }
 
         } catch (StripeException e) {
             log.error("Failed to cancel Stripe subscription for organisation {}: {}", organisationId, e.getMessage());
             throw new DomainException("STRIPE_SUBSCRIPTION_CANCEL_FAILED",
-                "Failed to cancel subscription: " + e.getMessage());
+                    "Failed to cancel subscription: " + e.getMessage());
         }
     }
 
@@ -229,34 +233,23 @@ public class StripePaymentService {
         }
     }
 
-    // ==================== Gym-level operations (backward compatible) ====================
+    // ==================== Organisation-level payment method operations
+    // ====================
 
     /**
-     * Create a Stripe customer for a gym (delegates to organisation).
-     * @deprecated Use createOrGetStripeCustomerForOrganisation instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    @Transactional
-    public String createOrGetStripeCustomer(UUID gymId) {
-        Gym gym = getGym(gymId);
-        UUID organisationId = getOrganisationIdFromGym(gym);
-        return createOrGetStripeCustomerForOrganisation(organisationId);
-    }
-
-    /**
-     * Attach a payment method to an organisation's Stripe customer via gym context.
+     * Attach a payment method to an organisation's Stripe customer.
      */
     @Transactional
-    public PaymentMethodResponse attachPaymentMethod(UUID gymId, String stripePaymentMethodId, boolean setAsDefault) {
-        Gym gym = getGym(gymId);
-        UUID organisationId = getOrganisationIdFromGym(gym);
+    public PaymentMethodResponse attachPaymentMethod(UUID organisationId, String stripePaymentMethodId,
+            boolean setAsDefault) {
         String customerId = createOrGetStripeCustomerForOrganisation(organisationId);
 
         validateStripeConfigured();
 
         try {
             // Attach payment method to customer
-            com.stripe.model.PaymentMethod stripePaymentMethod = com.stripe.model.PaymentMethod.retrieve(stripePaymentMethodId);
+            com.stripe.model.PaymentMethod stripePaymentMethod = com.stripe.model.PaymentMethod
+                    .retrieve(stripePaymentMethodId);
             stripePaymentMethod.attach(PaymentMethodAttachParams.builder()
                     .setCustomer(customerId)
                     .build());
@@ -275,25 +268,23 @@ public class StripePaymentService {
             }
 
             // Save payment method to our database
-            com.gymmate.payment.domain.PaymentMethod savedMethod = savePaymentMethod(organisationId, gymId, stripePaymentMethod, setAsDefault);
+            com.gymmate.payment.domain.PaymentMethod savedMethod = savePaymentMethod(organisationId, null,
+                    stripePaymentMethod, setAsDefault);
 
-            log.info("Attached payment method {} to organisation {} (via gym {})", stripePaymentMethodId, organisationId, gymId);
+            log.info("Attached payment method {} to organisation {}", stripePaymentMethodId, organisationId);
             return toPaymentMethodResponse(savedMethod);
 
         } catch (StripeException e) {
             log.error("Failed to attach payment method for organisation {}: {}", organisationId, e.getMessage());
             throw new DomainException("STRIPE_PAYMENT_METHOD_ATTACH_FAILED",
-                "Failed to attach payment method: " + e.getMessage());
+                    "Failed to attach payment method: " + e.getMessage());
         }
     }
 
     /**
-     * Get all payment methods for an organisation (via gym context).
+     * Get all payment methods for an organisation.
      */
-    public List<PaymentMethodResponse> getPaymentMethods(UUID gymId) {
-        Gym gym = getGym(gymId);
-        UUID organisationId = getOrganisationIdFromGym(gym);
-
+    public List<PaymentMethodResponse> getPaymentMethods(UUID organisationId) {
         return paymentMethodRepository.findByOrganisationId(organisationId)
                 .stream()
                 .map(this::toPaymentMethodResponse)
@@ -301,13 +292,10 @@ public class StripePaymentService {
     }
 
     /**
-     * Remove a payment method.
+     * Remove a payment method from an organisation.
      */
     @Transactional
-    public void removePaymentMethod(UUID gymId, UUID paymentMethodId) {
-        Gym gym = getGym(gymId);
-        UUID organisationId = getOrganisationIdFromGym(gym);
-
+    public void removePaymentMethod(UUID organisationId, UUID paymentMethodId) {
         com.gymmate.payment.domain.PaymentMethod method = paymentMethodRepository.findById(paymentMethodId)
                 .orElseThrow(() -> new DomainException("PAYMENT_METHOD_NOT_FOUND", "Payment method not found"));
 
@@ -320,7 +308,8 @@ public class StripePaymentService {
 
         try {
             // Detach from Stripe
-            com.stripe.model.PaymentMethod stripeMethod = com.stripe.model.PaymentMethod.retrieve(method.getStripePaymentMethodId());
+            com.stripe.model.PaymentMethod stripeMethod = com.stripe.model.PaymentMethod
+                    .retrieve(method.getStripePaymentMethodId());
             stripeMethod.detach();
 
             // Delete from our database
@@ -331,55 +320,8 @@ public class StripePaymentService {
         } catch (StripeException e) {
             log.error("Failed to remove payment method: {}", e.getMessage());
             throw new DomainException("STRIPE_PAYMENT_METHOD_REMOVE_FAILED",
-                "Failed to remove payment method: " + e.getMessage());
+                    "Failed to remove payment method: " + e.getMessage());
         }
-    }
-
-    /**
-     * Create a Stripe subscription for a gym (delegates to organisation).
-     * @deprecated Use createStripeSubscriptionForOrganisation instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    @Transactional
-    public void createStripeSubscription(UUID gymId, SubscriptionTier tier, boolean startTrial) {
-        Gym gym = getGym(gymId);
-        UUID organisationId = getOrganisationIdFromGym(gym);
-        createStripeSubscriptionForOrganisation(organisationId, tier, startTrial);
-    }
-
-    /**
-     * Cancel a Stripe subscription for a gym (delegates to organisation).
-     * @deprecated Use cancelStripeSubscriptionForOrganisation instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    @Transactional
-    public void cancelStripeSubscription(UUID gymId, boolean immediate) {
-        Gym gym = getGym(gymId);
-        UUID organisationId = getOrganisationIdFromGym(gym);
-        cancelStripeSubscriptionForOrganisation(organisationId, immediate);
-    }
-
-    /**
-     * Get invoices for a gym (delegates to organisation).
-     * @deprecated Use getInvoicesForOrganisation instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    public List<InvoiceResponse> getInvoices(UUID gymId) {
-        Gym gym = getGym(gymId);
-        UUID organisationId = getOrganisationIdFromGym(gym);
-        return getInvoicesForOrganisation(organisationId);
-    }
-
-    /**
-     * Fetch invoices from Stripe (delegates to organisation).
-     * @deprecated Use fetchInvoicesFromStripeForOrganisation instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    @Transactional
-    public List<InvoiceResponse> fetchInvoicesFromStripe(UUID gymId, String customerId) {
-        Gym gym = getGym(gymId);
-        UUID organisationId = getOrganisationIdFromGym(gym);
-        return fetchInvoicesFromStripeForOrganisation(organisationId, customerId);
     }
 
     /**
@@ -481,7 +423,8 @@ public class StripePaymentService {
 
     private Organisation getOrganisation(UUID organisationId) {
         return organisationRepository.findById(organisationId)
-                .orElseThrow(() -> new DomainException("ORGANISATION_NOT_FOUND", "Organisation not found: " + organisationId));
+                .orElseThrow(() -> new DomainException("ORGANISATION_NOT_FOUND",
+                        "Organisation not found: " + organisationId));
     }
 
     private Gym getGym(UUID gymId) {
@@ -499,13 +442,13 @@ public class StripePaymentService {
     private Subscription getSubscriptionByOrganisationId(UUID organisationId) {
         return subscriptionRepository.findByOrganisationId(organisationId)
                 .orElseThrow(() -> new DomainException("SUBSCRIPTION_NOT_FOUND",
-                    "No subscription found for organisation: " + organisationId));
+                        "No subscription found for organisation: " + organisationId));
     }
 
     private void validateStripeConfigured() {
         if (!stripeConfig.isConfigured()) {
             throw new DomainException("STRIPE_NOT_CONFIGURED",
-                "Payment processing is not configured. Please contact support.");
+                    "Payment processing is not configured. Please contact support.");
         }
     }
 
@@ -543,15 +486,20 @@ public class StripePaymentService {
                             .currency(stripeInvoice.getCurrency().toUpperCase())
                             .status(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()))
                             .description(stripeInvoice.getDescription())
-                            .periodStart(stripeInvoice.getPeriodStart() != null ?
-                              utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodStart()) : null)
-                            .periodEnd(stripeInvoice.getPeriodEnd() != null ?
-                              utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodEnd()) : null)
-                            .dueDate(stripeInvoice.getDueDate() != null ?
-                                utilityService.secondsToLocalDateTime(stripeInvoice.getDueDate()) : null)
+                            .periodStart(stripeInvoice.getPeriodStart() != null
+                                    ? utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodStart())
+                                    : null)
+                            .periodEnd(stripeInvoice.getPeriodEnd() != null
+                                    ? utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodEnd())
+                                    : null)
+                            .dueDate(stripeInvoice.getDueDate() != null
+                                    ? utilityService.secondsToLocalDateTime(stripeInvoice.getDueDate())
+                                    : null)
                             .paidAt(stripeInvoice.getStatusTransitions() != null &&
-                                    stripeInvoice.getStatusTransitions().getPaidAt() != null ?
-                              utilityService.secondsToLocalDateTime(stripeInvoice.getStatusTransitions().getPaidAt()) : null)
+                                    stripeInvoice.getStatusTransitions().getPaidAt() != null
+                                            ? utilityService.secondsToLocalDateTime(
+                                                    stripeInvoice.getStatusTransitions().getPaidAt())
+                                            : null)
                             .invoicePdfUrl(stripeInvoice.getInvoicePdf())
                             .hostedInvoiceUrl(stripeInvoice.getHostedInvoiceUrl())
                             .build();
