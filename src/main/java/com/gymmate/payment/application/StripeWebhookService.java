@@ -18,14 +18,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
+
 import java.util.UUID;
 
 /**
  * Service for handling Stripe webhook events.
- * Processes platform events (for gym subscriptions) and Connect events (for member payments).
+ * Processes platform events (for gym subscriptions) and Connect events (for
+ * member payments).
  */
 @Service
 @RequiredArgsConstructor
@@ -175,8 +175,10 @@ public class StripeWebhookService {
     // Platform event handlers
 
     private void handleSubscriptionUpdated(Event event) {
-        com.stripe.model.Subscription stripeSubscription = extractEventObject(event, com.stripe.model.Subscription.class);
-        if (stripeSubscription == null) return;
+        com.stripe.model.Subscription stripeSubscription = extractEventObject(event,
+                com.stripe.model.Subscription.class);
+        if (stripeSubscription == null)
+            return;
 
         subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
                 .ifPresent(subscription -> {
@@ -187,16 +189,20 @@ public class StripeWebhookService {
                     try {
                         com.google.gson.JsonObject rawJson = stripeSubscription.getRawJsonObject();
                         if (rawJson.has("current_period_start") && !rawJson.get("current_period_start").isJsonNull()) {
-                            subscription.setCurrentPeriodStart(utilityService.secondsToLocalDateTime(rawJson.get("current_period_start").getAsLong()));
+                            subscription.setCurrentPeriodStart(utilityService
+                                    .secondsToLocalDateTime(rawJson.get("current_period_start").getAsLong()));
                         }
                         if (rawJson.has("current_period_end") && !rawJson.get("current_period_end").isJsonNull()) {
-                            subscription.setCurrentPeriodEnd(utilityService.secondsToLocalDateTime(rawJson.get("current_period_end").getAsLong()));
+                            subscription.setCurrentPeriodEnd(utilityService
+                                    .secondsToLocalDateTime(rawJson.get("current_period_end").getAsLong()));
                         }
                         if (rawJson.has("trial_start") && !rawJson.get("trial_start").isJsonNull()) {
-                            subscription.setTrialStart(utilityService.secondsToLocalDateTime(rawJson.get("trial_start").getAsLong()));
+                            subscription.setTrialStart(
+                                    utilityService.secondsToLocalDateTime(rawJson.get("trial_start").getAsLong()));
                         }
                         if (rawJson.has("trial_end") && !rawJson.get("trial_end").isJsonNull()) {
-                            subscription.setTrialEnd(utilityService.secondsToLocalDateTime(rawJson.get("trial_end").getAsLong()));
+                            subscription.setTrialEnd(
+                                    utilityService.secondsToLocalDateTime(rawJson.get("trial_end").getAsLong()));
                         }
                         if (rawJson.has("cancel_at_period_end")) {
                             subscription.setCancelAtPeriodEnd(rawJson.get("cancel_at_period_end").getAsBoolean());
@@ -211,8 +217,10 @@ public class StripeWebhookService {
     }
 
     private void handleSubscriptionDeleted(Event event) {
-        com.stripe.model.Subscription stripeSubscription = extractEventObject(event, com.stripe.model.Subscription.class);
-        if (stripeSubscription == null) return;
+        com.stripe.model.Subscription stripeSubscription = extractEventObject(event,
+                com.stripe.model.Subscription.class);
+        if (stripeSubscription == null)
+            return;
 
         subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
                 .ifPresent(subscription -> {
@@ -224,14 +232,15 @@ public class StripeWebhookService {
                     // Send cancellation notification
                     notificationService.sendSubscriptionCancelledNotification(
                             subscription.getOrganisationId(),
-                            subscription.getCurrentPeriodEnd()
-                    );
+                            subscription.getCurrentPeriodEnd());
                 });
     }
 
     private void handleTrialWillEnd(Event event) {
-        com.stripe.model.Subscription stripeSubscription = extractEventObject(event, com.stripe.model.Subscription.class);
-        if (stripeSubscription == null) return;
+        com.stripe.model.Subscription stripeSubscription = extractEventObject(event,
+                com.stripe.model.Subscription.class);
+        if (stripeSubscription == null)
+            return;
 
         subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
                 .ifPresent(subscription -> {
@@ -243,22 +252,24 @@ public class StripeWebhookService {
 
     private void handleInvoicePaid(Event event) {
         Invoice stripeInvoice = extractEventObject(event, Invoice.class);
-        if (stripeInvoice == null) return;
+        if (stripeInvoice == null)
+            return;
 
         // Update or create invoice record
         GymInvoice invoice = invoiceRepository.findByStripeInvoiceId(stripeInvoice.getId())
                 .orElseGet(() -> createInvoiceFromStripe(stripeInvoice));
 
         invoice.markPaid(stripeInvoice.getStatusTransitions() != null &&
-                stripeInvoice.getStatusTransitions().getPaidAt() != null ?
-                utilityService.secondsToLocalDateTime(stripeInvoice.getStatusTransitions().getPaidAt()) : LocalDateTime.now());
+                stripeInvoice.getStatusTransitions().getPaidAt() != null
+                        ? utilityService.secondsToLocalDateTime(stripeInvoice.getStatusTransitions().getPaidAt())
+                        : LocalDateTime.now());
 
         invoiceRepository.save(invoice);
         log.info("Invoice {} marked as paid", stripeInvoice.getId());
 
         // Send payment success notification
-        if (invoice.getGymId() != null) {
-            notificationService.sendPaymentSuccessNotification(invoice.getGymId(), invoice);
+        if (invoice.getOrganisationId() != null) {
+            notificationService.sendPaymentSuccessNotification(invoice.getOrganisationId(), invoice);
         }
 
         // Update subscription status if it was past due
@@ -283,7 +294,8 @@ public class StripeWebhookService {
 
     private void handleInvoicePaymentFailed(Event event) {
         Invoice stripeInvoice = extractEventObject(event, Invoice.class);
-        if (stripeInvoice == null) return;
+        if (stripeInvoice == null)
+            return;
 
         // Update invoice status
         invoiceRepository.findByStripeInvoiceId(stripeInvoice.getId())
@@ -309,8 +321,10 @@ public class StripeWebhookService {
                             LocalDateTime nextRetryDate = LocalDateTime.now().plusDays(3);
 
                             try {
-                                if (rawJson.has("next_payment_attempt") && !rawJson.get("next_payment_attempt").isJsonNull()) {
-                                    nextRetryDate = utilityService.secondsToLocalDateTime(rawJson.get("next_payment_attempt").getAsLong());
+                                if (rawJson.has("next_payment_attempt")
+                                        && !rawJson.get("next_payment_attempt").isJsonNull()) {
+                                    nextRetryDate = utilityService
+                                            .secondsToLocalDateTime(rawJson.get("next_payment_attempt").getAsLong());
                                 }
                             } catch (Exception ex) {
                                 log.debug("Could not parse next_payment_attempt: {}", ex.getMessage());
@@ -323,8 +337,7 @@ public class StripeWebhookService {
                                     subscription.getOrganisationId(),
                                     amount,
                                     failureReason,
-                                    nextRetryDate
-                            );
+                                    nextRetryDate);
                         });
             }
         } catch (Exception e) {
@@ -334,15 +347,18 @@ public class StripeWebhookService {
 
     private void handleInvoiceUpdated(Event event) {
         Invoice stripeInvoice = extractEventObject(event, Invoice.class);
-        if (stripeInvoice == null) return;
+        if (stripeInvoice == null)
+            return;
 
         // Only process if we have a customer to link to
-        if (stripeInvoice.getCustomer() == null) return;
+        if (stripeInvoice.getCustomer() == null)
+            return;
 
         // Find subscription by customer ID and create/update invoice
         subscriptionRepository.findByStripeCustomerId(stripeInvoice.getCustomer())
                 .ifPresent(subscription -> {
-                    // TODO: GymInvoice should be renamed to OrganisationInvoice since subscriptions are now org-level
+                    // TODO: GymInvoice should be renamed to OrganisationInvoice since subscriptions
+                    // are now org-level
                     GymInvoice invoice = invoiceRepository.findByStripeInvoiceId(stripeInvoice.getId())
                             .orElseGet(() -> createInvoiceFromStripe(stripeInvoice, null));
 
@@ -358,14 +374,16 @@ public class StripeWebhookService {
 
     private void handleAccountUpdated(Event event) {
         Account account = extractEventObject(event, Account.class);
-        if (account == null) return;
+        if (account == null)
+            return;
 
         connectService.handleAccountUpdated(account.getId());
     }
 
     private void handleAccountDeauthorized(Event event) {
         Account account = extractEventObject(event, Account.class);
-        if (account == null) return;
+        if (account == null)
+            return;
 
         String gymIdStr = account.getMetadata().get("gym_id");
         if (gymIdStr != null) {
@@ -376,7 +394,8 @@ public class StripeWebhookService {
 
     private void handleConnectPaymentSucceeded(Event event) {
         PaymentIntent paymentIntent = extractEventObject(event, PaymentIntent.class);
-        if (paymentIntent == null) return;
+        if (paymentIntent == null)
+            return;
 
         log.info("Connect payment succeeded: {} for amount {}",
                 paymentIntent.getId(), paymentIntent.getAmount());
@@ -385,7 +404,8 @@ public class StripeWebhookService {
 
     private void handleConnectPaymentFailed(Event event) {
         PaymentIntent paymentIntent = extractEventObject(event, PaymentIntent.class);
-        if (paymentIntent == null) return;
+        if (paymentIntent == null)
+            return;
 
         log.warn("Connect payment failed: {} - {}",
                 paymentIntent.getId(), paymentIntent.getLastPaymentError());
@@ -418,32 +438,38 @@ public class StripeWebhookService {
     }
 
     private GymInvoice createInvoiceFromStripe(Invoice stripeInvoice) {
-        String gymIdStr = stripeInvoice.getMetadata().get("gym_id");
-        UUID gymId = gymIdStr != null ? UUID.fromString(gymIdStr) : null;
-        return createInvoiceFromStripe(stripeInvoice, gymId);
+        String orgIdStr = stripeInvoice.getMetadata().get("organisation_id");
+        UUID organisationId = orgIdStr != null ? UUID.fromString(orgIdStr) : null;
+        return createInvoiceFromStripe(stripeInvoice, organisationId);
     }
 
-    private GymInvoice createInvoiceFromStripe(Invoice stripeInvoice, UUID gymId) {
-        if (gymId == null) {
-            // Try to find gym by customer ID
-            subscriptionRepository.findByStripeCustomerId(stripeInvoice.getCustomer())
-                    .ifPresent(sub -> {});
+    private GymInvoice createInvoiceFromStripe(Invoice stripeInvoice, UUID organisationId) {
+        if (organisationId == null) {
+            // Try to find organisation by customer ID
+            var subscription = subscriptionRepository.findByStripeCustomerId(stripeInvoice.getCustomer());
+            if (subscription.isPresent()) {
+                organisationId = subscription.get().getOrganisationId();
+            }
         }
 
         return GymInvoice.builder()
-                .gymId(gymId)
+                .organisationId(organisationId)
                 .stripeInvoiceId(stripeInvoice.getId())
                 .invoiceNumber(stripeInvoice.getNumber())
-                .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP))
+                .amount(BigDecimal.valueOf(stripeInvoice.getAmountDue()).divide(BigDecimal.valueOf(100), 2,
+                        RoundingMode.HALF_UP))
                 .currency(stripeInvoice.getCurrency() != null ? stripeInvoice.getCurrency().toUpperCase() : "USD")
                 .status(InvoiceStatus.fromStripeStatus(stripeInvoice.getStatus()))
                 .description(stripeInvoice.getDescription())
-                .periodStart(stripeInvoice.getPeriodStart() != null ?
-                        utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodStart()) : null)
-                .periodEnd(stripeInvoice.getPeriodEnd() != null ?
-                        utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodEnd()) : null)
-                .dueDate(stripeInvoice.getDueDate() != null ?
-                        utilityService.secondsToLocalDateTime(stripeInvoice.getDueDate()) : null)
+                .periodStart(stripeInvoice.getPeriodStart() != null
+                        ? utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodStart())
+                        : null)
+                .periodEnd(stripeInvoice.getPeriodEnd() != null
+                        ? utilityService.secondsToLocalDateTime(stripeInvoice.getPeriodEnd())
+                        : null)
+                .dueDate(stripeInvoice.getDueDate() != null
+                        ? utilityService.secondsToLocalDateTime(stripeInvoice.getDueDate())
+                        : null)
                 .invoicePdfUrl(stripeInvoice.getInvoicePdf())
                 .hostedInvoiceUrl(stripeInvoice.getHostedInvoiceUrl())
                 .build();
