@@ -50,13 +50,4 @@ public interface GymRepository {
     void deleteById(UUID id);
 
     boolean existsById(UUID id);
-
-    // ========== Deprecated owner-based queries ==========
-
-    /**
-     * @deprecated Use findByOrganisationId instead
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    List<Gym> findByOwnerId(UUID ownerId);
 }
-

@@ -30,36 +30,36 @@ public class SubscriptionService {
     /**
      * Create a subscription with optional Stripe billing integration.
      *
-     * @param organisationId     The organisation ID
-     * @param tierName           The subscription tier name
-     * @param startTrial         Whether to start a trial period
-     * @param paymentMethodId    Stripe PaymentMethod ID (pm_xxx) for billing
+     * @param organisationId      The organisation ID
+     * @param tierName            The subscription tier name
+     * @param startTrial          Whether to start a trial period
+     * @param paymentMethodId     Stripe PaymentMethod ID (pm_xxx) for billing
      * @param enableStripeBilling Whether to create subscription in Stripe
      * @return The created subscription
      */
     public Subscription createSubscription(UUID organisationId, String tierName, boolean startTrial,
-                                               String paymentMethodId, boolean enableStripeBilling) {
+            String paymentMethodId, boolean enableStripeBilling) {
         // Check if organisation already has a subscription
         SubscriptionRepository.findByOrganisationId(organisationId)
-            .ifPresent(existing -> {
-                throw new IllegalStateException("Organisation already has an active subscription");
-            });
+                .ifPresent(existing -> {
+                    throw new IllegalStateException("Organisation already has an active subscription");
+                });
 
         SubscriptionTier tier = tierRepository.findByName(tierName)
-            .orElseThrow(() -> new IllegalArgumentException("Subscription tier not found: " + tierName));
+                .orElseThrow(() -> new IllegalArgumentException("Subscription tier not found: " + tierName));
 
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime periodEnd = now.plusMonths(1);
 
         Subscription subscription = Subscription.builder()
-            .organisationId(organisationId)
-            .tier(tier)
-            .status(startTrial ? SubscriptionStatus.TRIAL : SubscriptionStatus.ACTIVE)
-            .currentPeriodStart(now)
-            .currentPeriodEnd(periodEnd)
-            .currentMemberCount(0)
-            .currentLocationCount(1)
-            .build();
+                .organisationId(organisationId)
+                .tier(tier)
+                .status(startTrial ? SubscriptionStatus.TRIAL : SubscriptionStatus.ACTIVE)
+                .currentPeriodStart(now)
+                .currentPeriodEnd(periodEnd)
+                .currentMemberCount(0)
+                .currentLocationCount(1)
+                .build();
 
         if (startTrial) {
             int trialDays = tier.getTrialDays() != null ? tier.getTrialDays() : 14;
@@ -82,28 +82,30 @@ public class SubscriptionService {
                 }
 
                 // Create Stripe subscription
-                stripePaymentService.createStripeSubscription(organisationId, tier, startTrial);
+                stripePaymentService.createStripeSubscriptionForOrganisation(organisationId, tier, startTrial);
                 log.info("Created Stripe subscription for organisation {} with tier {}", organisationId, tierName);
             } catch (Exception e) {
                 log.warn("Failed to create Stripe subscription for organisation {}: {}. " +
-                         "Subscription created locally only.", organisationId, e.getMessage());
+                        "Subscription created locally only.", organisationId, e.getMessage());
                 // Continue with local subscription - Stripe can be configured later
             }
         }
 
-        log.info("Created subscription for organisation {} with tier {} (trial: {})", organisationId, tierName, startTrial);
+        log.info("Created subscription for organisation {} with tier {} (trial: {})", organisationId, tierName,
+                startTrial);
         return subscription;
     }
 
     public Subscription getSubscription(UUID organisationId) {
         return SubscriptionRepository.findByOrganisationId(organisationId)
-            .orElseThrow(() -> new IllegalArgumentException("No subscription found for organisation: " + organisationId));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No subscription found for organisation: " + organisationId));
     }
 
     public Subscription upgradeSubscription(UUID organisationId, String newTierName) {
         Subscription subscription = getSubscription(organisationId);
         SubscriptionTier newTier = tierRepository.findByName(newTierName)
-            .orElseThrow(() -> new IllegalArgumentException("Subscription tier not found: " + newTierName));
+                .orElseThrow(() -> new IllegalArgumentException("Subscription tier not found: " + newTierName));
 
         if (subscription.getTier().getPrice().compareTo(newTier.getPrice()) >= 0) {
             throw new IllegalArgumentException("New tier must be a higher tier");
@@ -119,7 +121,7 @@ public class SubscriptionService {
     public Subscription downgradeSubscription(UUID organisationId, String newTierName) {
         Subscription subscription = getSubscription(organisationId);
         SubscriptionTier newTier = tierRepository.findByName(newTierName)
-            .orElseThrow(() -> new IllegalArgumentException("Subscription tier not found: " + newTierName));
+                .orElseThrow(() -> new IllegalArgumentException("Subscription tier not found: " + newTierName));
 
         if (subscription.getTier().getPrice().compareTo(newTier.getPrice()) <= 0) {
             throw new IllegalArgumentException("New tier must be a lower tier");
@@ -128,9 +130,8 @@ public class SubscriptionService {
         // Check if current usage fits in new tier
         if (subscription.getCurrentMemberCount() > newTier.getMaxMembers()) {
             throw new IllegalArgumentException(
-                String.format("Cannot downgrade: Current member count (%d) exceeds new tier limit (%d)",
-                    subscription.getCurrentMemberCount(), newTier.getMaxMembers())
-            );
+                    String.format("Cannot downgrade: Current member count (%d) exceeds new tier limit (%d)",
+                            subscription.getCurrentMemberCount(), newTier.getMaxMembers()));
         }
 
         subscription.upgradeTier(newTier);
@@ -160,7 +161,8 @@ public class SubscriptionService {
         Subscription subscription = getSubscription(organisationId);
 
         if (subscription.getStatus() == SubscriptionStatus.CANCELLED) {
-            throw new IllegalStateException("Cannot reactivate a cancelled subscription. Please create a new subscription.");
+            throw new IllegalStateException(
+                    "Cannot reactivate a cancelled subscription. Please create a new subscription.");
         }
 
         subscription.reactivate();
@@ -183,7 +185,8 @@ public class SubscriptionService {
 
         // Check if upgrade notification is needed
         if (usage.needsUpgradeNotification()) {
-            log.warn("Organisation {} should consider upgrading - overage cost exceeds 50% of base cost", organisationId);
+            log.warn("Organisation {} should consider upgrading - overage cost exceeds 50% of base cost",
+                    organisationId);
             // TODO: Send notification
         }
     }
@@ -219,7 +222,7 @@ public class SubscriptionService {
     public SubscriptionUsage getCurrentUsage(UUID subscriptionId) {
         LocalDateTime now = LocalDateTime.now();
         return usageRepository.findBySubscriptionAndPeriod(subscriptionId, now)
-            .orElseThrow(() -> new IllegalStateException("No current usage record found"));
+                .orElseThrow(() -> new IllegalStateException("No current usage record found"));
     }
 
     public List<SubscriptionUsage> getOrganisationUsageHistory(UUID organisationId) {
@@ -228,13 +231,13 @@ public class SubscriptionService {
 
     private void createUsageRecord(Subscription subscription) {
         SubscriptionUsage usage = SubscriptionUsage.builder()
-            .subscription(subscription)
-            .billingPeriodStart(subscription.getCurrentPeriodStart())
-            .billingPeriodEnd(subscription.getCurrentPeriodEnd())
-            .memberCount(subscription.getCurrentMemberCount())
-            .baseCost(subscription.getTier().getPrice())
-            .totalCost(subscription.getTier().getPrice())
-            .build();
+                .subscription(subscription)
+                .billingPeriodStart(subscription.getCurrentPeriodStart())
+                .billingPeriodEnd(subscription.getCurrentPeriodEnd())
+                .memberCount(subscription.getCurrentMemberCount())
+                .baseCost(subscription.getTier().getPrice())
+                .totalCost(subscription.getTier().getPrice())
+                .build();
 
         usageRepository.save(usage);
     }
@@ -242,7 +245,7 @@ public class SubscriptionService {
     // Background job methods
     public void processExpiredSubscriptions() {
         List<Subscription> expiredSubscriptions = SubscriptionRepository
-            .findExpiredSubscriptions(LocalDateTime.now(), SubscriptionStatus.ACTIVE);
+                .findExpiredSubscriptions(LocalDateTime.now(), SubscriptionStatus.ACTIVE);
 
         for (Subscription subscription : expiredSubscriptions) {
             subscription.markExpired();
@@ -256,7 +259,7 @@ public class SubscriptionService {
         LocalDateTime threeDaysFromNow = now.plusDays(3);
 
         List<Subscription> upcomingRenewals = SubscriptionRepository
-            .findSubscriptionsExpiringBetween(now, threeDaysFromNow);
+                .findSubscriptionsExpiringBetween(now, threeDaysFromNow);
 
         for (Subscription subscription : upcomingRenewals) {
             log.info("Subscription renewal upcoming for organisation {} in 3 days", subscription.getOrganisationId());
@@ -269,7 +272,7 @@ public class SubscriptionService {
         LocalDateTime twoDaysFromNow = now.plusDays(2);
 
         List<Subscription> endingTrials = SubscriptionRepository
-            .findTrialsEndingBetween(now, twoDaysFromNow);
+                .findTrialsEndingBetween(now, twoDaysFromNow);
 
         for (Subscription subscription : endingTrials) {
             log.info("Trial ending soon for organisation {} in 2 days", subscription.getOrganisationId());
@@ -277,4 +280,3 @@ public class SubscriptionService {
         }
     }
 }
-
