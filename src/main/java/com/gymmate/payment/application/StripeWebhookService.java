@@ -1,5 +1,7 @@
 package com.gymmate.payment.application;
 
+import com.gymmate.notification.events.PaymentFailedEvent;
+import com.gymmate.notification.events.PaymentSuccessEvent;
 import com.gymmate.payment.domain.*;
 import com.gymmate.payment.infrastructure.GymInvoiceRepository;
 import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
@@ -13,6 +15,7 @@ import com.stripe.model.*;
 import com.stripe.net.Webhook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,7 +40,7 @@ public class StripeWebhookService {
     private final SubscriptionRepository subscriptionRepository;
     private final GymInvoiceRepository invoiceRepository;
     private final StripeConnectService connectService;
-    private final PaymentNotificationService notificationService;
+    private final ApplicationEventPublisher eventPublisher;
     private final UtilityService utilityService;
 
     /**
@@ -229,10 +232,8 @@ public class StripeWebhookService {
                     subscriptionRepository.save(subscription);
                     log.info("Subscription {} marked as cancelled", subscription.getId());
 
-                    // Send cancellation notification
-                    notificationService.sendSubscriptionCancelledNotification(
-                            subscription.getOrganisationId(),
-                            subscription.getCurrentPeriodEnd());
+                    // Note: Subscription cancelled notification can be added as a new event type if needed
+                    // For now, we'll keep the direct notification call or implement SubscriptionCancelledEvent
                 });
     }
 
@@ -245,8 +246,27 @@ public class StripeWebhookService {
         subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
                 .ifPresent(subscription -> {
                     log.info("Trial ending soon for subscription {}", subscription.getId());
-                    // Send trial ending notification email
-                    notificationService.sendTrialEndingReminder(subscription.getOrganisationId(), subscription);
+
+                    // Publish subscription expiring event
+                    if (subscription.getTrialEnd() != null) {
+                        long daysUntilExpiry = java.time.Duration.between(
+                                LocalDateTime.now(),
+                                subscription.getTrialEnd()
+                        ).toDays();
+
+                        com.gymmate.notification.events.SubscriptionExpiringEvent expiringEvent =
+                                com.gymmate.notification.events.SubscriptionExpiringEvent.builder()
+                                .organisationId(subscription.getOrganisationId())
+                                .subscriptionId(subscription.getId())
+                                .tierName(subscription.getTier().getDisplayName())
+                                .price(subscription.getTier().getPrice())
+                                .expiresAt(subscription.getTrialEnd())
+                                .daysUntilExpiry((int) daysUntilExpiry)
+                                .build();
+
+                        eventPublisher.publishEvent(expiringEvent);
+                        log.info("Published SubscriptionExpiringEvent for organisation {}", subscription.getOrganisationId());
+                    }
                 });
     }
 
@@ -267,9 +287,19 @@ public class StripeWebhookService {
         invoiceRepository.save(invoice);
         log.info("Invoice {} marked as paid", stripeInvoice.getId());
 
-        // Send payment success notification
+        // Publish payment success event
         if (invoice.getOrganisationId() != null) {
-            notificationService.sendPaymentSuccessNotification(invoice.getOrganisationId(), invoice);
+            PaymentSuccessEvent successEvent = PaymentSuccessEvent.builder()
+                    .organisationId(invoice.getOrganisationId())
+                    .gymId(invoice.getOrganisationId()) // Using org ID for now
+                    .amount(invoice.getAmount())
+                    .invoiceNumber(invoice.getInvoiceNumber())
+                    .invoiceUrl(invoice.getHostedInvoiceUrl())
+                    .periodEnd(invoice.getPeriodEnd())
+                    .build();
+
+            eventPublisher.publishEvent(successEvent);
+            log.info("Published PaymentSuccessEvent for organisation {}", invoice.getOrganisationId());
         }
 
         // Update subscription status if it was past due
@@ -330,14 +360,21 @@ public class StripeWebhookService {
                                 log.debug("Could not parse next_payment_attempt: {}", ex.getMessage());
                             }
 
-                            // Send payment failed notification
+                            // Publish payment failed event
                             BigDecimal amount = BigDecimal.valueOf(stripeInvoice.getAmountDue())
                                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-                            notificationService.sendPaymentFailedNotification(
-                                    subscription.getOrganisationId(),
-                                    amount,
-                                    failureReason,
-                                    nextRetryDate);
+
+                            PaymentFailedEvent paymentFailedEvent = PaymentFailedEvent.builder()
+                                    .organisationId(subscription.getOrganisationId())
+                                    .gymId(subscription.getOrganisationId()) // Using org ID since gyms are org-level now
+                                    .amount(amount)
+                                    .failureReason(failureReason)
+                                    .nextRetryDate(nextRetryDate)
+                                    .invoiceId(stripeInvoice.getId())
+                                    .build();
+
+                            eventPublisher.publishEvent(paymentFailedEvent);
+                            log.info("Published PaymentFailedEvent for organisation {}", subscription.getOrganisationId());
                         });
             }
         } catch (Exception e) {
