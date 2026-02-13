@@ -4,7 +4,7 @@ import com.gymmate.payment.api.dto.*;
 import com.gymmate.payment.application.RefundRequestService;
 import com.gymmate.payment.application.StripePaymentService;
 import com.gymmate.payment.domain.RefundAuditLog;
-import com.gymmate.payment.domain.RefundType;
+
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.TenantAwareUserDetails;
@@ -43,8 +43,7 @@ public class PaymentController {
         PaymentMethodResponse response = stripePaymentService.attachPaymentMethod(
                 gymId,
                 request.getStripePaymentMethodId(),
-                request.getSetAsDefault() != null ? request.getSetAsDefault() : true
-        );
+                request.getSetAsDefault() != null ? request.getSetAsDefault() : true);
 
         return ResponseEntity.ok(ApiResponse.success(response, "Payment method attached successfully"));
     }
@@ -69,10 +68,11 @@ public class PaymentController {
 
     @GetMapping("/invoices")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Get invoices", description = "Get all invoices for the gym's subscription")
+    @Operation(summary = "Get invoices", description = "Get all invoices for the organisation's subscription")
     public ResponseEntity<ApiResponse<List<InvoiceResponse>>> getInvoices() {
-        UUID gymId = TenantContext.getCurrentTenantId();
-        List<InvoiceResponse> invoices = stripePaymentService.getInvoices(gymId);
+        // Organisation ID is used for invoices - the tenant context provides this
+        UUID organisationId = TenantContext.getCurrentTenantId();
+        List<InvoiceResponse> invoices = stripePaymentService.getInvoicesForOrganisation(organisationId);
         return ResponseEntity.ok(ApiResponse.success(invoices));
     }
 
@@ -109,23 +109,22 @@ public class PaymentController {
 
     @PostMapping("/refund-requests")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Create refund request",
-               description = "Create a new refund request for platform subscription (Gym owners request refunds from GymMate)")
+    @Operation(summary = "Create refund request", description = "Create a new refund request for platform subscription (Gym owners request refunds from GymMate)")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> createPlatformRefundRequest(
             @Valid @RequestBody CreateRefundRequestDTO request,
             @AuthenticationPrincipal TenantAwareUserDetails currentUser) {
 
         UUID gymId = TenantContext.getCurrentTenantId();
 
-        // For platform subscription refunds, the gym owner is both requester and recipient
+        // For platform subscription refunds, the gym owner is both requester and
+        // recipient
         RefundRequestResponse response = refundRequestService.createRefundRequest(
                 gymId,
                 currentUser.getUserId(),
                 currentUser.getRole(),
                 currentUser.getUserId(), // Refund goes back to gym owner
                 "GYM_OWNER",
-                request
-        );
+                request);
 
         return ResponseEntity.ok(ApiResponse.success(response, "Refund request submitted successfully"));
     }
@@ -158,8 +157,7 @@ public class PaymentController {
 
     @PutMapping("/refund-requests/{requestId}/approve")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Approve refund request",
-               description = "Approve a platform subscription refund request (SUPER_ADMIN only)")
+    @Operation(summary = "Approve refund request", description = "Approve a platform subscription refund request (SUPER_ADMIN only)")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> approveRefundRequest(
             @PathVariable UUID requestId,
             @RequestParam(required = false) String notes,
@@ -169,16 +167,14 @@ public class PaymentController {
                 requestId,
                 currentUser.getUserId(),
                 currentUser.getRole(),
-                notes
-        );
+                notes);
 
         return ResponseEntity.ok(ApiResponse.success(response, "Refund request approved"));
     }
 
     @PutMapping("/refund-requests/{requestId}/reject")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Reject refund request",
-               description = "Reject a platform subscription refund request (SUPER_ADMIN only)")
+    @Operation(summary = "Reject refund request", description = "Reject a platform subscription refund request (SUPER_ADMIN only)")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> rejectRefundRequest(
             @PathVariable UUID requestId,
             @RequestParam String rejectionReason,
@@ -190,16 +186,14 @@ public class PaymentController {
                 currentUser.getUserId(),
                 currentUser.getRole(),
                 rejectionReason,
-                notes
-        );
+                notes);
 
         return ResponseEntity.ok(ApiResponse.success(response, "Refund request rejected"));
     }
 
     @PostMapping("/refund-requests/{requestId}/process")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Process approved refund",
-               description = "Execute the Stripe refund for an approved request (SUPER_ADMIN only)")
+    @Operation(summary = "Process approved refund", description = "Execute the Stripe refund for an approved request (SUPER_ADMIN only)")
     public ResponseEntity<ApiResponse<RefundResponse>> processRefundRequest(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal TenantAwareUserDetails currentUser) {
@@ -207,8 +201,7 @@ public class PaymentController {
         RefundResponse response = refundRequestService.processApprovedRequest(
                 requestId,
                 currentUser.getUserId(),
-                currentUser.getRole()
-        );
+                currentUser.getRole());
 
         return ResponseEntity.ok(ApiResponse.success(response, "Refund processed successfully"));
     }
@@ -223,8 +216,7 @@ public class PaymentController {
         RefundRequestResponse response = refundRequestService.cancelRequest(
                 requestId,
                 currentUser.getUserId(),
-                currentUser.getRole()
-        );
+                currentUser.getRole());
 
         return ResponseEntity.ok(ApiResponse.success(response, "Refund request cancelled"));
     }
@@ -237,4 +229,3 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(auditTrail));
     }
 }
-

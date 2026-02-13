@@ -16,7 +16,7 @@ import com.gymmate.shared.security.domain.TokenBlacklist;
 import com.gymmate.shared.security.dto.*;
 import com.gymmate.shared.security.repository.PasswordResetTokenRepository;
 import com.gymmate.shared.security.repository.TokenBlacklistRepository;
-import com.gymmate.shared.service.EmailService;
+import com.gymmate.notification.application.EmailService;
 import com.gymmate.shared.service.PasswordService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
