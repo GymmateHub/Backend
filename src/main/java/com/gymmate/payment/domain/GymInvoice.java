@@ -19,8 +19,8 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "gym_invoices", indexes = {
-    @Index(name = "idx_gi_organisation", columnList = "organisation_id"),
-    @Index(name = "idx_gi_stripe_invoice", columnList = "stripe_invoice_id")
+        @Index(name = "idx_gi_organisation", columnList = "organisation_id"),
+        @Index(name = "idx_gi_stripe_invoice", columnList = "stripe_invoice_id")
 })
 public class GymInvoice extends BaseAuditEntity {
 
@@ -30,13 +30,6 @@ public class GymInvoice extends BaseAuditEntity {
      */
     @Column(name = "organisation_id")
     private UUID organisationId;
-
-    /**
-     * @deprecated Use organisationId instead. Kept for backward compatibility.
-     */
-    @Deprecated(since = "1.0", forRemoval = true)
-    @Column(name = "gym_id")
-    private UUID gymId;
 
     @Column(name = "stripe_invoice_id", unique = true)
     private String stripeInvoiceId;
@@ -89,4 +82,3 @@ public class GymInvoice extends BaseAuditEntity {
         this.status = InvoiceStatus.VOID;
     }
 }
-
