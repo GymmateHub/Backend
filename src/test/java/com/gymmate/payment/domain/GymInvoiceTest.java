@@ -69,14 +69,14 @@ class GymInvoiceTest {
         @DisplayName("Should build with all fields")
         void build_AllFields_Success() {
             // Arrange
-            UUID gymId = UUID.randomUUID();
+            UUID organisationId = UUID.randomUUID();
             LocalDateTime periodStart = LocalDateTime.now().minusMonths(1);
             LocalDateTime periodEnd = LocalDateTime.now();
             LocalDateTime dueDate = LocalDateTime.now().plusDays(30);
 
             // Act
             GymInvoice invoice = GymInvoice.builder()
-                    .gymId(gymId)
+                    .organisationId(organisationId)
                     .stripeInvoiceId("in_test123")
                     .invoiceNumber("INV-001")
                     .amount(new BigDecimal("99.99"))
@@ -91,7 +91,7 @@ class GymInvoiceTest {
                     .build();
 
             // Assert
-            assertThat(invoice.getGymId()).isEqualTo(gymId);
+            assertThat(invoice.getOrganisationId()).isEqualTo(organisationId);
             assertThat(invoice.getStripeInvoiceId()).isEqualTo("in_test123");
             assertThat(invoice.getAmount()).isEqualByComparingTo(new BigDecimal("99.99"));
             assertThat(invoice.getCurrency()).isEqualTo("USD");
@@ -103,7 +103,7 @@ class GymInvoiceTest {
         void build_DefaultCurrency_Applied() {
             // Act
             GymInvoice invoice = GymInvoice.builder()
-                    .gymId(UUID.randomUUID())
+                    .organisationId(UUID.randomUUID())
                     .amount(new BigDecimal("50.00"))
                     .status(InvoiceStatus.DRAFT)
                     .build();
@@ -116,7 +116,7 @@ class GymInvoiceTest {
     // Helper method
     private GymInvoice createInvoice(InvoiceStatus status) {
         return GymInvoice.builder()
-                .gymId(UUID.randomUUID())
+                .organisationId(UUID.randomUUID())
                 .stripeInvoiceId("in_test123")
                 .amount(new BigDecimal("99.99"))
                 .status(status)
@@ -151,8 +151,7 @@ class InvoiceStatusTest {
                 InvoiceStatus.PAID,
                 InvoiceStatus.PAYMENT_FAILED,
                 InvoiceStatus.VOID,
-                InvoiceStatus.UNCOLLECTIBLE
-        );
+                InvoiceStatus.UNCOLLECTIBLE);
     }
 }
 
@@ -160,11 +159,13 @@ class InvoiceStatusTest {
 class PaymentMethodEntityTest {
 
     @Test
-    @DisplayName("Should build gym payment method with card details")
-    void build_GymPaymentMethod_Success() {
+    @DisplayName("Should build organisation payment method with card details")
+    void build_OrganisationPaymentMethod_Success() {
         // Arrange & Act
+        UUID organisationId = UUID.randomUUID();
         UUID gymId = UUID.randomUUID();
-        PaymentMethod method = PaymentMethod.forGym(gymId, "pm_test123", PaymentMethodType.CARD);
+        PaymentMethod method = PaymentMethod.forOrganisation(organisationId, gymId, "pm_test123",
+                PaymentMethodType.CARD);
         method.setCardBrand("visa");
         method.setCardLastFour("4242");
         method.setCardExpiresMonth(12);
@@ -172,9 +173,9 @@ class PaymentMethodEntityTest {
         method.setIsDefault(true);
 
         // Assert
-        assertThat(method.getOwnerType()).isEqualTo(PaymentMethodOwnerType.GYM);
-        assertThat(method.getOwnerId()).isEqualTo(gymId);
-        assertThat(method.getGymId()).isEqualTo(gymId);
+        assertThat(method.getOwnerType()).isEqualTo(PaymentMethodOwnerType.ORGANISATION);
+        assertThat(method.getOwnerId()).isEqualTo(organisationId);
+        assertThat(method.getOrganisationId()).isEqualTo(organisationId);
         assertThat(method.getMemberId()).isNull();
         assertThat(method.getMethodType()).isEqualTo(PaymentMethodType.CARD);
         assertThat(method.getCardBrand()).isEqualTo("visa");
@@ -182,8 +183,7 @@ class PaymentMethodEntityTest {
         assertThat(method.getExpiryMonth()).isEqualTo(12);
         assertThat(method.getExpiryYear()).isEqualTo(2025);
         assertThat(method.getIsDefault()).isTrue();
-        assertThat(method.isGymPaymentMethod()).isTrue();
-        assertThat(method.isMemberPaymentMethod()).isFalse();
+        assertThat(method.isOrganisationPaymentMethod()).isTrue();
     }
 
     @Test
@@ -199,15 +199,15 @@ class PaymentMethodEntityTest {
         assertThat(method.getOwnerId()).isEqualTo(memberId);
         assertThat(method.getGymId()).isEqualTo(gymId);
         assertThat(method.getMemberId()).isEqualTo(memberId);
-        assertThat(method.isGymPaymentMethod()).isFalse();
-        assertThat(method.isMemberPaymentMethod()).isTrue();
+        assertThat(method.isOrganisationPaymentMethod()).isFalse();
     }
 
     @Test
     @DisplayName("Should use default values")
     void build_DefaultValues_Applied() {
         // Act
-        PaymentMethod method = PaymentMethod.forGym(UUID.randomUUID(), "pm_test", PaymentMethodType.CARD);
+        PaymentMethod method = PaymentMethod.forOrganisation(UUID.randomUUID(), UUID.randomUUID(), "pm_test",
+                PaymentMethodType.CARD);
 
         // Assert
         assertThat(method.getIsDefault()).isFalse();
@@ -216,4 +216,3 @@ class PaymentMethodEntityTest {
         assertThat(method.getProvider()).isEqualTo("stripe");
     }
 }
-
