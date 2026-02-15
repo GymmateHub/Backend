@@ -83,7 +83,7 @@ spring:
     activate:
       on-profile: production
   mail:
-    port: 465
+    port: 587
     properties:
       mail:
         smtp:
@@ -91,4 +91,4 @@ spring:
             enable: true
           socketFactory:
             class: javax.net.ssl.SSLSocketFactory
-            port: 465
+            port: 587
