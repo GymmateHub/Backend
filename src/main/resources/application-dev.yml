@@ -1,6 +1,12 @@
 server:
   port: 8080
 
+# Disable mail health check in dev (mail server not reachable locally)
+management:
+  health:
+    mail:
+      enabled: false
+
 spring:
   datasource:
     url: ${PG_URI:jdbc:postgresql://localhost:5432/gymmate}
