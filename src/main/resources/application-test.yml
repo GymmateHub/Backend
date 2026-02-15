@@ -1,4 +1,8 @@
 spring:
+  mail:
+    host: localhost
+    port: 2525
+    test-connection: false
   jpa:
     show-sql: true
     properties:
@@ -21,3 +25,39 @@ spring:
   flyway:
     enabled: false
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+
+server:
+  port: 0
+
+logging:
+  level:
+    root: WARN
+    com.gymmate: DEBUG
+
+jwt:
+  secret: test-secret-key-that-is-long-enough-for-hmac-sha256-algorithm
+  expiration: 3600000
+  token:
+    validity: 3600000
+    header: Authorization
+    prefix: Bearer
+  refresh-expiration: 86400000
+
+cors:
+  allowed-origins: "http://localhost:3000"
+  allow-credentials: true
+
+file:
+  upload-dir: /tmp/gymmate-test-uploads
+  max-size: 10MB
+  max-request-size: 10MB
+
+management:
+  health:
+    mail:
+      enabled: false
