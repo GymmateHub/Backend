@@ -1,6 +1,7 @@
 package com.gymmate.user.api;
 
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.security.TenantAwareUserDetails;
 import com.gymmate.shared.security.service.AuthenticationService;
 import com.gymmate.user.api.dto.UserProfileUpdateRequest;
 import com.gymmate.user.api.dto.UserRegistrationRequest;
@@ -13,6 +14,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,6 +36,19 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(@PathVariable UUID id) {
         User user = userService.findById(id);
+        UserResponse response = UserResponse.fromEntity(user);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Get User profile by getting the user's id from the login token.
+     * 
+     * @return User profile information
+     */
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(
+            @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
+        User user = userService.findById(userDetails.getUserId());
         UserResponse response = UserResponse.fromEntity(user);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
