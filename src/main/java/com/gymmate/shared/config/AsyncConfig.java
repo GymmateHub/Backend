@@ -19,10 +19,9 @@ public class AsyncConfig implements AsyncConfigurer {
         executor.setCorePoolSize(5);
         executor.setMaxPoolSize(10);
         executor.setQueueCapacity(100);
-        executor.setThreadNamePrefix("async-email-");
+        executor.setThreadNamePrefix("async-task-");
         executor.initialize();
-        log.info("Async executor configured for email sending");
+        log.info("Async executor configured for background tasks");
         return executor;
     }
 }
-
