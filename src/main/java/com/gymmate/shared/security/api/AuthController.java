@@ -6,16 +6,25 @@ import com.gymmate.notification.infrastructure.SseEmitterRegistry;
 import com.gymmate.organisation.api.dto.GymSwitchResponse;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.shared.security.dto.*;
+import com.gymmate.shared.security.dto.LoginRequest;
+import com.gymmate.shared.security.dto.LoginResponse;
+import com.gymmate.shared.security.dto.PasswordResetConfirmRequest;
+import com.gymmate.shared.security.dto.PasswordResetRequest;
+import com.gymmate.shared.security.dto.RefreshTokenRequest;
+import com.gymmate.shared.security.dto.RegistrationResponse;
+import com.gymmate.shared.security.dto.ResendOtpRequest;
+import com.gymmate.shared.security.dto.TokenResponse;
+import com.gymmate.shared.security.dto.VerificationTokenResponse;
+import com.gymmate.shared.security.dto.VerifyOtpRequest;
 import com.gymmate.shared.security.service.AuthenticationService;
 import com.gymmate.shared.security.service.JwtService;
-import com.gymmate.user.api.dto.GymAdminRegistrationRequest;
+import com.gymmate.user.api.dto.InviteAcceptRequest;
 import com.gymmate.user.api.dto.MemberRegistrationRequest;
-import com.gymmate.user.api.dto.UnifiedRegistrationRequest;
-import com.gymmate.user.api.dto.UserRegistrationRequest;
+import com.gymmate.user.api.dto.OwnerRegistrationRequest;
 import com.gymmate.user.api.dto.UserResponse;
+import com.gymmate.user.api.dto.ValidateInviteResponse;
+import com.gymmate.user.application.InviteService;
 import com.gymmate.user.domain.User;
-import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.infrastructure.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -46,41 +55,44 @@ public class AuthController {
         private final JwtService jwtService;
         private final UserRepository userRepository;
         private final SseEmitterRegistry sseEmitterRegistry;
+        private final InviteService inviteService;
 
         // ==================== REGISTRATION ====================
 
-        @PostMapping("/register")
-        public ResponseEntity<ApiResponse<UserResponse>> registerUser(
-                        @Valid @RequestBody UserRegistrationRequest request) {
-                User user = authenticationService.register(new UnifiedRegistrationRequest(
-                                request.email(), request.firstName(), request.lastName(),
-                                request.password(), request.phone(), request.role()));
+        @PostMapping("/register/owner")
+        public ResponseEntity<ApiResponse<UserResponse>> registerOwner(
+                        @Valid @RequestBody OwnerRegistrationRequest request) {
+                User user = authenticationService.registerOwner(request);
+                authenticationService.sendOtpForUser(user);
                 return ResponseEntity.status(HttpStatus.CREATED)
                                 .body(ApiResponse.success(UserResponse.fromEntity(user),
-                                                "User registered successfully"));
+                                                "Gym owner registered successfully. An OTP has been sent to your email."));
         }
 
         @PostMapping("/register/member")
         public ResponseEntity<ApiResponse<UserResponse>> registerMember(
                         @Valid @RequestBody MemberRegistrationRequest request) {
-                User user = authenticationService.register(new UnifiedRegistrationRequest(
-                                request.email(), request.firstName(), request.lastName(),
-                                request.password(), request.phone(), UserRole.MEMBER));
-                return ResponseEntity.status(HttpStatus.CREATED)
-                                .body(ApiResponse.success(UserResponse.fromEntity(user),
-                                                "Member registered successfully"));
-        }
-
-        @PostMapping("/register/gym-admin")
-        public ResponseEntity<ApiResponse<UserResponse>> registerGymAdmin(
-                        @Valid @RequestBody GymAdminRegistrationRequest request) {
-                User user = authenticationService.register(new UnifiedRegistrationRequest(
-                                request.email(), request.firstName(), request.lastName(),
-                                request.password(), request.phone(), UserRole.OWNER));
+                User user = authenticationService.registerMember(request);
                 authenticationService.sendOtpForUser(user);
                 return ResponseEntity.status(HttpStatus.CREATED)
                                 .body(ApiResponse.success(UserResponse.fromEntity(user),
-                                                "Gym owner registered successfully. An OTP has been sent to your email."));
+                                                "Member registered successfully. An OTP has been sent to your email."));
+        }
+
+        // ==================== INVITES ====================
+
+        @GetMapping("/invite/validate")
+        public ResponseEntity<ApiResponse<ValidateInviteResponse>> validateInvite(
+                        @RequestParam String token) {
+                ValidateInviteResponse response = inviteService.validateInvite(token);
+                return ResponseEntity.ok(ApiResponse.success(response, "Invite validated"));
+        }
+
+        @PostMapping("/invite/accept")
+        public ResponseEntity<ApiResponse<LoginResponse>> acceptInvite(
+                        @Valid @RequestBody InviteAcceptRequest request) {
+                LoginResponse response = authenticationService.acceptInvite(request);
+                return ResponseEntity.ok(ApiResponse.success(response, "Invite accepted and user activated"));
         }
 
         // ==================== OTP VERIFICATION ====================
