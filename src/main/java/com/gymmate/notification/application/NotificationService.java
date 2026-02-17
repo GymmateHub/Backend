@@ -14,6 +14,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import com.gymmate.notification.domain.Notification.NotificationScope;
+import com.gymmate.notification.domain.Notification.RecipientRole;
+import com.gymmate.notification.events.NotificationPriority;
+import lombok.SneakyThrows;
+import java.util.Map;
+
 /**
  * Application service for notification management.
  * Provides CRUD operations and queries for notifications.
@@ -25,6 +31,63 @@ import java.util.UUID;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final com.gymmate.notification.infrastructure.SseEmitterRegistry sseEmitterRegistry;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+
+    /**
+     * Create and broadcast a notification to an entire organisation.
+     */
+    @Transactional
+    public Notification createAndBroadcast(String title, String message, UUID organisationId,
+            NotificationPriority priority, String eventType,
+            Map<String, Object> metadata) {
+        return createAndBroadcastInternal(title, message, organisationId, null, priority, eventType, metadata,
+                NotificationScope.ORGANISATION, RecipientRole.ADMIN);
+    }
+
+    /**
+     * Create and broadcast a notification to a specific gym.
+     */
+    @Transactional
+    public Notification createAndBroadcastToGym(String title, String message, UUID gymId, UUID organisationId,
+            NotificationPriority priority, String eventType,
+            Map<String, Object> metadata) {
+        return createAndBroadcastInternal(title, message, organisationId, gymId, priority, eventType, metadata,
+                NotificationScope.GYM, RecipientRole.STAFF);
+    }
+
+    @SneakyThrows
+    private Notification createAndBroadcastInternal(String title, String message, UUID organisationId, UUID gymId,
+            NotificationPriority priority, String eventType,
+            Map<String, Object> metadata, NotificationScope scope, RecipientRole role) {
+
+        String metadataJson = metadata != null ? objectMapper.writeValueAsString(metadata) : "{}";
+
+        Notification notification = Notification.builder()
+                .gymId(gymId)
+                .title(title)
+                .message(message)
+                .priority(priority)
+                .eventType(eventType)
+                .metadata(metadataJson)
+                .scope(scope)
+                .recipientRole(role)
+                .deliveredVia(Notification.DeliveryChannel.SSE)
+                .deliveredAt(LocalDateTime.now())
+                .build();
+
+        notification.setOrganisationId(organisationId);
+
+        Notification saved = notificationRepository.save(notification);
+
+        // Broadcast via SSE
+        sseEmitterRegistry.sendToOrganisation(organisationId, saved);
+
+        log.info("Created and broadcasted notification {} (type: {}) to organisation {}",
+                saved.getId(), eventType, organisationId);
+
+        return saved;
+    }
 
     /**
      * Get all notifications for an organisation with pagination.

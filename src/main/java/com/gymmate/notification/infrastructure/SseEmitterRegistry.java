@@ -15,7 +15,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Registry for managing SSE (Server-Sent Events) connections.
- * Maintains active connections per organisation and user for real-time notifications.
+ * Maintains active connections per organisation and user for real-time
+ * notifications.
  */
 @Component
 @Slf4j
@@ -24,8 +25,15 @@ public class SseEmitterRegistry {
 
     private final ObjectMapper objectMapper;
 
-    // Map: organisationId -> (userId -> SseEmitter)
+    // Map: organisationId -> (userId -> SseEmitter) — for authenticated
+    // notification streams
     private final Map<UUID, Map<UUID, ConnectionInfo>> connections = new ConcurrentHashMap<>();
+
+    // Map: userId (string) -> SseEmitter — for unauthenticated, short-lived email
+    // status streams
+    private final Map<String, SseEmitter> emailStatusEmitters = new ConcurrentHashMap<>();
+
+    private static final long EMAIL_STATUS_TIMEOUT = 60_000L; // 60 seconds
 
     /**
      * Register a new SSE connection for a user.
@@ -220,6 +228,77 @@ public class SseEmitterRegistry {
         return connections.values().stream().mapToInt(Map::size).sum();
     }
 
+    // ==================== EMAIL STATUS (Unauthenticated) ====================
+
+    /**
+     * Register a short-lived SSE connection for email delivery status.
+     * Used during registration/login before the user is authenticated.
+     *
+     * @param userId the user ID (as string)
+     * @return configured SseEmitter
+     */
+    public SseEmitter createEmailStatusEmitter(String userId) {
+        // Complete any existing emitter for this user
+        SseEmitter existing = emailStatusEmitters.remove(userId);
+        if (existing != null) {
+            existing.complete();
+        }
+
+        SseEmitter emitter = new SseEmitter(EMAIL_STATUS_TIMEOUT);
+
+        emitter.onCompletion(() -> {
+            log.debug("Email status SSE completed for userId: {}", userId);
+            emailStatusEmitters.remove(userId);
+        });
+        emitter.onTimeout(() -> {
+            log.debug("Email status SSE timed out for userId: {}", userId);
+            emailStatusEmitters.remove(userId);
+        });
+        emitter.onError(ex -> {
+            log.debug("Email status SSE error for userId: {}", userId);
+            emailStatusEmitters.remove(userId);
+        });
+
+        emailStatusEmitters.put(userId, emitter);
+        log.debug("Registered email status SSE for userId: {}", userId);
+
+        return emitter;
+    }
+
+    /**
+     * Send an email delivery status event to a client.
+     *
+     * @param userId  the user to notify
+     * @param status  "SENDING", "SENT", or "FAILED"
+     * @param message a human-readable message
+     */
+    public void sendEmailStatus(String userId, String status, String message) {
+        SseEmitter emitter = emailStatusEmitters.get(userId);
+        if (emitter == null) {
+            log.debug("No email status SSE emitter for userId: {} — client may not be listening", userId);
+            return;
+        }
+
+        try {
+            Map<String, Object> eventData = new HashMap<>();
+            eventData.put("status", status);
+            eventData.put("message", message);
+
+            emitter.send(SseEmitter.event()
+                    .name("email-status")
+                    .data(objectMapper.writeValueAsString(eventData)));
+
+            // Complete the emitter after a terminal event
+            if ("SENT".equals(status) || "FAILED".equals(status)) {
+                emitter.complete();
+                emailStatusEmitters.remove(userId);
+            }
+        } catch (IOException e) {
+            log.warn("Failed to send email status SSE to userId: {} — client likely disconnected", userId);
+            emailStatusEmitters.remove(userId);
+        }
+    }
+
     /**
      * Internal class to track connection info.
      */
@@ -243,4 +322,3 @@ public class SseEmitterRegistry {
     private record ConnectionToRemove(UUID organisationId, UUID userId) {
     }
 }
-

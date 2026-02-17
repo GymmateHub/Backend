@@ -4,6 +4,9 @@ import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
+import com.gymmate.subscription.application.SubscriptionService;
+import com.gymmate.user.domain.User;
+import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -13,10 +16,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.dao.DataIntegrityViolationException;
 
 /**
  * Service for managing organisations (multi-tenant entities).
- * Provides business logic for organisation CRUD operations and lifecycle management.
+ * Provides business logic for organisation CRUD operations and lifecycle
+ * management.
  */
 @Slf4j
 @Service
@@ -25,20 +30,52 @@ import java.util.UUID;
 public class OrganisationService {
 
     private final OrganisationRepository organisationRepository;
+    private final SubscriptionService subscriptionService;
+    private final UserRepository userRepository;
+
+    /**
+     * Orchestrates the creation of a new "Hub" (Organisation + Subscription + Owner
+     * Link).
+     * This is the main entry point for an authenticated OWNER to create their
+     * organisation.
+     */
+    @Transactional
+    public Organisation createHub(String name, String contactEmail, User owner) {
+        String slug = generateSlug(name);
+
+        // 1. Create Organisation
+        Organisation organisation = createOrganisation(name, slug, contactEmail);
+
+        // 2. Create Default Subscription (Starter/Trial)
+        subscriptionService.createSubscription(organisation.getId(), "starter", true);
+
+        // 3. Assign Owner and Link User
+        assignOwner(organisation.getId(), owner.getId());
+
+        // 4. Update User entity with organisationId
+        owner.setOrganisationId(organisation.getId());
+        userRepository.save(owner);
+
+        return organisation;
+    }
 
     /**
      * Create a new organisation without an owner (owner will be set later).
-     * This is step 1 in the registration flow.
+     * Internal method used by createHub.
      */
     @Transactional
     public Organisation createOrganisation(String name, String slug, String contactEmail) {
         log.debug("Creating organisation: {} with slug: {}", name, slug);
 
-        // Validate slug uniqueness
+        // Validate slug uniqueness initially (optimization)
         if (organisationRepository.existsBySlug(slug)) {
             throw new DomainException("SLUG_EXISTS", "Organisation slug already exists: " + slug);
         }
 
+        return createOrganisationWithRetry(name, slug, contactEmail, 0);
+    }
+
+    private Organisation createOrganisationWithRetry(String name, String slug, String contactEmail, int retryCount) {
         // Calculate trial end date (e.g., 14 days from now)
         LocalDateTime trialEndsAt = LocalDateTime.now().plusDays(14);
 
@@ -55,10 +92,21 @@ public class OrganisationService {
                 .onboardingCompleted(false)
                 .build();
 
-        Organisation saved = organisationRepository.save(organisation);
-        log.info("Organisation created successfully: {} (ID: {})", saved.getName(), saved.getId());
+        try {
+            Organisation saved = organisationRepository.save(organisation);
+            log.info("Organisation created successfully: {} (ID: {})", saved.getName(), saved.getId());
+            return saved;
+        } catch (DataIntegrityViolationException e) {
+            if (retryCount >= 3) {
+                log.error("Failed to create organisation after retries for slug: {}", slug, e);
+                throw new DomainException("CREATION_FAILED",
+                        "Failed to create organisation likely due to slug collision");
+            }
 
-        return saved;
+            String newSlug = slug + "-" + UUID.randomUUID().toString().substring(0, 4);
+            log.warn("Slug collision for {}, retrying with: {}", slug, newSlug);
+            return createOrganisationWithRetry(name, newSlug, contactEmail, retryCount + 1);
+        }
     }
 
     /**
@@ -74,7 +122,7 @@ public class OrganisationService {
 
         if (organisation.getOwnerUserId() != null) {
             throw new DomainException("OWNER_ALREADY_SET",
-                "Organisation already has an owner assigned");
+                    "Organisation already has an owner assigned");
         }
 
         organisation.assignOwner(userId);
@@ -166,7 +214,7 @@ public class OrganisationService {
      */
     @Transactional
     public Organisation updateDetails(UUID organisationId, String name, String contactEmail,
-                                       String contactPhone, String billingEmail, String settings) {
+            String contactPhone, String billingEmail, String settings) {
         Organisation organisation = getById(organisationId);
         organisation.updateDetails(name, contactEmail, contactPhone, billingEmail, settings);
 
@@ -183,7 +231,7 @@ public class OrganisationService {
         organisation.updateLimits(maxGyms, maxMembers, maxStaff);
 
         log.info("Updated organisation limits for: {} - maxGyms={}, maxMembers={}, maxStaff={}",
-            organisationId, organisation.getMaxGyms(), organisation.getMaxMembers(), organisation.getMaxStaff());
+                organisationId, organisation.getMaxGyms(), organisation.getMaxMembers(), organisation.getMaxStaff());
         return organisationRepository.save(organisation);
     }
 
@@ -258,4 +306,3 @@ public class OrganisationService {
         return organisationRepository.existsBySlug(slug);
     }
 }
-
