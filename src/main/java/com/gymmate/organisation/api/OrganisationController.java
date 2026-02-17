@@ -4,6 +4,11 @@ import com.gymmate.gym.api.dto.GymResponse;
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.organisation.api.dto.*;
+import com.gymmate.user.domain.User;
+import com.gymmate.user.infrastructure.UserRepository;
+import com.gymmate.shared.security.TenantAwareUserDetails;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import com.gymmate.organisation.application.OrganisationLimitService;
 import com.gymmate.organisation.application.OrganisationLimitService.OrganisationUsage;
 import com.gymmate.organisation.application.OrganisationService;
@@ -39,6 +44,42 @@ public class OrganisationController {
     private final OrganisationService organisationService;
     private final OrganisationLimitService limitService;
     private final GymService gymService;
+    private final UserRepository userRepository;
+
+    /**
+     * Create a new organisation (Hub) for the authenticated owner.
+     * This also creates a default subscription and links the user.
+     */
+    @PostMapping("/")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @Operation(summary = "Create organisation", description = "Create a new organisation (Hub) for the authenticated user")
+    public ResponseEntity<ApiResponse<OrganisationResponse>> createHub(
+            @Valid @RequestBody CreateHubRequest request) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof TenantAwareUserDetails)) {
+            throw new DomainException("UNAUTHORIZED", "User must be authenticated to create an organisation");
+        }
+
+        TenantAwareUserDetails userDetails = (TenantAwareUserDetails) authentication.getPrincipal();
+        UUID userId = userDetails.getUserId();
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new DomainException("USER_NOT_FOUND", "User not found"));
+
+        if (user.getOrganisationId() != null) {
+            throw new DomainException("USER_ALREADY_HAS_ORG", "User already belongs to an organisation");
+        }
+
+        Organisation organisation = organisationService.createHub(
+                request.getName(),
+                request.getContactEmail(),
+                user);
+
+        OrganisationResponse response = OrganisationResponse.fromEntity(organisation);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response, "Organisation created successfully"));
+    }
 
     /**
      * Get the current organisation details.
@@ -67,13 +108,12 @@ public class OrganisationController {
         UUID organisationId = requireOrganisationId();
 
         Organisation organisation = organisationService.updateDetails(
-            organisationId,
-            request.getName(),
-            request.getContactEmail(),
-            request.getContactPhone(),
-            request.getBillingEmail(),
-            request.getSettings()
-        );
+                organisationId,
+                request.getName(),
+                request.getContactEmail(),
+                request.getContactPhone(),
+                request.getBillingEmail(),
+                request.getSettings());
 
         OrganisationResponse response = OrganisationResponse.fromEntity(organisation);
         return ResponseEntity.ok(ApiResponse.success(response, "Organisation updated successfully"));
@@ -146,12 +186,11 @@ public class OrganisationController {
 
         // Create the gym
         Gym gym = new Gym(
-            request.getName(),
-            request.getDescription(),
-            request.getContactEmail(),
-            request.getContactPhone(),
-            organisationId
-        );
+                request.getName(),
+                request.getDescription(),
+                request.getContactEmail(),
+                request.getContactPhone(),
+                organisationId);
 
         // Set optional fields
         if (request.getAddress() != null) {
@@ -179,7 +218,7 @@ public class OrganisationController {
         Gym savedGym = gymService.saveGym(gym);
 
         log.info("Created new gym '{}' (ID: {}) for organisation {}",
-            savedGym.getName(), savedGym.getId(), organisationId);
+                savedGym.getName(), savedGym.getId(), organisationId);
 
         GymResponse response = GymResponse.fromEntity(savedGym);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -208,9 +247,8 @@ public class OrganisationController {
         UUID organisationId = TenantContext.getCurrentTenantId();
         if (organisationId == null) {
             throw new DomainException("NO_ORGANISATION_CONTEXT",
-                "No organisation context found. Please ensure you are authenticated.");
+                    "No organisation context found. Please ensure you are authenticated.");
         }
         return organisationId;
     }
 }
-
