@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.scheduling.annotation.Async;
 
 /**
  * Application service for user management use cases.
@@ -52,6 +53,7 @@ public class UserService {
      * Record user login.
      */
     @Transactional
+    @Async
     public void recordLogin(UUID userId) {
         User user = findById(userId);
         user.updateLastLogin();
