@@ -5,8 +5,17 @@ import com.gymmate.subscription.domain.*;
 import com.gymmate.subscription.infrastructure.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import com.gymmate.notification.application.EmailService;
+import com.gymmate.notification.application.NotificationService;
+import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.organisation.domain.Organisation;
+import com.gymmate.organisation.infrastructure.OrganisationRepository;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.Map;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +31,9 @@ public class SubscriptionService {
     private final SubscriptionTierRepository tierRepository;
     private final SubscriptionUsageRepository usageRepository;
     private final StripePaymentService stripePaymentService;
+    private final EmailService emailService;
+    private final NotificationService notificationService;
+    private final OrganisationRepository organisationRepository;
 
     public Subscription createSubscription(UUID organisationId, String tierName, boolean startTrial) {
         return createSubscription(organisationId, tierName, startTrial, null, true);
@@ -243,17 +255,50 @@ public class SubscriptionService {
     }
 
     // Background job methods
+    @Async
     public void processExpiredSubscriptions() {
         List<Subscription> expiredSubscriptions = SubscriptionRepository
                 .findExpiredSubscriptions(LocalDateTime.now(), SubscriptionStatus.ACTIVE);
 
         for (Subscription subscription : expiredSubscriptions) {
-            subscription.markExpired();
-            SubscriptionRepository.save(subscription);
-            log.info("Marked subscription as expired for organisation {}", subscription.getOrganisationId());
+            try {
+                subscription.markExpired();
+                SubscriptionRepository.save(subscription);
+
+                UUID orgId = subscription.getOrganisationId();
+                String orgName = organisationRepository.findById(orgId)
+                        .map(Organisation::getName)
+                        .orElse("Your Gym");
+
+                // Notify via SSE
+                notificationService.createAndBroadcast(
+                        "Subscription Expired",
+                        "Your subscription has expired. Please renew to continue using GymMate.",
+                        orgId,
+                        NotificationPriority.HIGH,
+                        "SUBSCRIPTION_EXPIRED",
+                        Map.of("subscriptionId", subscription.getId()));
+
+                // Notify via Email
+                // Assuming contact email is same as owner email or stored in Organisation
+                // For now, we'll need to fetch the owner's email or organisation contact email
+                Organisation org = organisationRepository.findById(orgId).orElse(null);
+                if (org != null && org.getContactEmail() != null) {
+                    emailService.sendSubscriptionExpiredEmail(
+                            org.getContactEmail(),
+                            orgName,
+                            java.time.LocalDate.now());
+                }
+
+                log.info("Marked subscription as expired for organisation {}", orgId);
+            } catch (Exception e) {
+                log.error("Error processing expired subscription for organisation {}",
+                        subscription.getOrganisationId(), e);
+            }
         }
     }
 
+    @Async
     public void notifyUpcomingRenewals() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime threeDaysFromNow = now.plusDays(3);
@@ -262,11 +307,41 @@ public class SubscriptionService {
                 .findSubscriptionsExpiringBetween(now, threeDaysFromNow);
 
         for (Subscription subscription : upcomingRenewals) {
-            log.info("Subscription renewal upcoming for organisation {} in 3 days", subscription.getOrganisationId());
-            // TODO: Send notification
+            try {
+                UUID orgId = subscription.getOrganisationId();
+                String orgName = organisationRepository.findById(orgId)
+                        .map(Organisation::getName)
+                        .orElse("Your Gym");
+
+                // Notify via SSE
+                notificationService.createAndBroadcast(
+                        "Subscription Renewal",
+                        "Your subscription will renew in 3 days.",
+                        orgId,
+                        NotificationPriority.MEDIUM,
+                        "SUBSCRIPTION_RENEWAL",
+                        Map.of("subscriptionId", subscription.getId(), "renewalDate",
+                                subscription.getCurrentPeriodEnd()));
+
+                // Notify via Email
+                Organisation org = organisationRepository.findById(orgId).orElse(null);
+                if (org != null && org.getContactEmail() != null) {
+                    emailService.sendSubscriptionRenewalEmail(
+                            org.getContactEmail(),
+                            orgName,
+                            subscription.getTier().getName(),
+                            subscription.getCurrentPeriodEnd().toLocalDate(),
+                            subscription.getTier().getPrice());
+                }
+
+                log.info("Notified organisation {} of upcoming renewal", orgId);
+            } catch (Exception e) {
+                log.error("Error notifying renewal for organisation {}", subscription.getOrganisationId(), e);
+            }
         }
     }
 
+    @Async
     public void notifyTrialEndings() {
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime twoDaysFromNow = now.plusDays(2);
@@ -275,8 +350,34 @@ public class SubscriptionService {
                 .findTrialsEndingBetween(now, twoDaysFromNow);
 
         for (Subscription subscription : endingTrials) {
-            log.info("Trial ending soon for organisation {} in 2 days", subscription.getOrganisationId());
-            // TODO: Send notification
+            try {
+                UUID orgId = subscription.getOrganisationId();
+                String orgName = organisationRepository.findById(orgId)
+                        .map(Organisation::getName)
+                        .orElse("Your Gym");
+
+                // Notify via SSE
+                notificationService.createAndBroadcast(
+                        "Trial Ending Soon",
+                        "Your free trial is ending in 2 days. Upgrade now to keep using GymMate.",
+                        orgId,
+                        NotificationPriority.HIGH,
+                        "TRIAL_ENDING",
+                        Map.of("subscriptionId", subscription.getId(), "trialEnd", subscription.getTrialEnd()));
+
+                // Notify via Email
+                Organisation org = organisationRepository.findById(orgId).orElse(null);
+                if (org != null && org.getContactEmail() != null) {
+                    emailService.sendTrialEndingEmail(
+                            org.getContactEmail(),
+                            orgName,
+                            subscription.getTrialEnd().toLocalDate());
+                }
+
+                log.info("Notified organisation {} of trial ending", orgId);
+            } catch (Exception e) {
+                log.error("Error notifying trial ending for organisation {}", subscription.getOrganisationId(), e);
+            }
         }
     }
 }
