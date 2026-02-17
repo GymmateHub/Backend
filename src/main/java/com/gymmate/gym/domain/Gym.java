@@ -4,6 +4,8 @@ import com.gymmate.shared.domain.TenantEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -25,6 +27,8 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "gyms")
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Gym extends TenantEntity {
 
@@ -76,9 +80,11 @@ public class Gym extends TenantEntity {
 
   // Business settings
   @Column(length = 50)
+  @Builder.Default
   private String timezone = "UTC";
 
   @Column(length = 3)
+  @Builder.Default
   private String currency = "USD";
 
   @JdbcTypeCode(SqlTypes.JSON)
@@ -88,16 +94,19 @@ public class Gym extends TenantEntity {
   // Note: Subscription is now at Organisation level, but gyms may have specific
   // features
   @Column(name = "subscription_plan", length = 50)
+  @Builder.Default
   private String subscriptionPlan = "starter";
 
   @Enumerated(EnumType.STRING)
   @Column(name = "subscription_status", length = 20)
+  @Builder.Default
   private GymStatus status = GymStatus.ACTIVE;
 
   @Column(name = "subscription_expires_at")
   private LocalDateTime subscriptionExpiresAt;
 
   @Column(name = "max_members")
+  @Builder.Default
   private Integer maxMembers = 200;
 
   // Stripe Connect fields for receiving member payments
@@ -105,12 +114,15 @@ public class Gym extends TenantEntity {
   private String stripeConnectAccountId;
 
   @Column(name = "stripe_charges_enabled")
+  @Builder.Default
   private Boolean stripeChargesEnabled = false;
 
   @Column(name = "stripe_payouts_enabled")
+  @Builder.Default
   private Boolean stripePayoutsEnabled = false;
 
   @Column(name = "stripe_details_submitted")
+  @Builder.Default
   private Boolean stripeDetailsSubmitted = false;
 
   @Column(name = "stripe_onboarding_completed_at")
@@ -119,10 +131,12 @@ public class Gym extends TenantEntity {
   // Features enabled
   @JdbcTypeCode(SqlTypes.JSON)
   @Column(name = "features_enabled", columnDefinition = "jsonb")
+  @Builder.Default
   private String featuresEnabled = "[]";
 
   // Status
   @Column(name = "onboarding_completed")
+  @Builder.Default
   private boolean onboardingCompleted = false;
 
   /**
@@ -140,9 +154,18 @@ public class Gym extends TenantEntity {
     this.contactPhone = contactPhone.trim();
     this.phone = contactPhone.trim();
     setOrganisationId(organisationId); // Use setter from TenantEntity
-    this.status = GymStatus.ACTIVE;
+
+    // Initialize defaults
+    this.timezone = "UTC";
+    this.currency = "USD";
     this.subscriptionPlan = "starter";
+    this.status = GymStatus.ACTIVE;
+    this.maxMembers = 200;
+    this.stripeChargesEnabled = false;
+    this.stripePayoutsEnabled = false;
+    this.stripeDetailsSubmitted = false;
     this.featuresEnabled = "[]";
+    this.onboardingCompleted = false;
   }
 
   /**
