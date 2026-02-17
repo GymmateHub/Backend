@@ -1,9 +1,5 @@
 package com.gymmate.shared.security.service;
 
-import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.organisation.application.OrganisationService;
-import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.InvalidTokenException;
@@ -18,6 +14,8 @@ import com.gymmate.shared.security.repository.PasswordResetTokenRepository;
 import com.gymmate.shared.security.repository.TokenBlacklistRepository;
 import com.gymmate.notification.application.EmailService;
 import com.gymmate.shared.service.PasswordService;
+import com.gymmate.user.api.dto.UnifiedRegistrationRequest;
+import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.domain.UserStatus;
@@ -45,6 +43,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthenticationService {
     private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordService passwordService;
     private final JwtService jwtService;
     private final PasswordResetTokenRepository resetTokenRepository;
@@ -52,8 +51,6 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final TotpService totpService;
-    private final OrganisationService organisationService;
-    private final GymRepository gymRepository;
 
     private static final int OTP_VALIDITY_MINUTES = 5;
 
@@ -90,7 +87,7 @@ public class AuthenticationService {
 
                 String userId = user.getId().toString();
                 String otp = totpService.generateOtp(userId);
-                emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, 5);
+                emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, 5, userId);
 
                 log.info("OTP sent to unverified user during login: {}", user.getEmail());
 
@@ -110,8 +107,7 @@ public class AuthenticationService {
             String accessToken = jwtService.generateToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
 
-            user.updateLastLogin();
-            userRepository.save(user);
+            userService.recordLogin(user.getId());
 
             log.info("User authenticated successfully: {}", user.getEmail());
 
@@ -218,31 +214,86 @@ public class AuthenticationService {
     // ==================== USER REGISTRATION ====================
 
     @Transactional
-    public User registerUser(String email, String firstName, String lastName,
-            String plainPassword, String phone, UserRole role) {
-        if (role == UserRole.OWNER) {
-            throw new DomainException("INVALID_REGISTRATION", "OWNER registration must use the OTP verification flow");
-        }
+    public User register(UnifiedRegistrationRequest request) {
+        log.info("Registering user: {} with role: {}", request.email(), request.role());
 
-        UUID currentOrganisationId = TenantContext.getCurrentTenantId();
-        if (currentOrganisationId != null
-                && userRepository.findByEmailAndOrganisationId(email, currentOrganisationId).isPresent()) {
+        validatePassword(request.password());
+
+        return switch (request.role()) {
+            case OWNER -> registerOwnerInv(request);
+            case MEMBER -> registerMemberInv(request);
+            case TRAINER -> registerTrainerInv(request);
+            case STAFF -> registerStaffInv(request);
+            case ADMIN -> registerAdminInv(request);
+            default ->
+                throw new DomainException("INVALID_ROLE", "Unsupported role for registration: " + request.role());
+        };
+    }
+
+    private User registerOwnerInv(UnifiedRegistrationRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new DomainException("USER_ALREADY_EXISTS",
-                    "A user with email '" + email + "' already exists in this organisation");
+                    "A user with email '" + request.email() + "' already exists");
         }
-
-        if (role == UserRole.ADMIN && userRepository.existsByEmail(email)) {
-            throw new DomainException("USER_ALREADY_EXISTS", "A user with email '" + email + "' already exists");
-        }
-
-        validatePassword(plainPassword);
 
         User user = User.builder()
-                .email(email)
-                .firstName(firstName)
-                .lastName(lastName)
-                .passwordHash(passwordService.encode(plainPassword))
-                .phone(phone)
+                .email(request.email())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .passwordHash(passwordService.encode(request.password()))
+                .phone(request.phone())
+                // No organisationId initially
+                .role(UserRole.OWNER)
+                .status(UserStatus.INACTIVE) // Requires OTP verification
+                .emailVerified(false)
+                .build();
+
+        return userRepository.save(user);
+    }
+
+    private User registerMemberInv(UnifiedRegistrationRequest request) {
+        if (TenantContext.getCurrentTenantId() == null) {
+            throw new DomainException("INVALID_REGISTRATION", "Members can only be registered within a gym context");
+        }
+        return registerUserInv(request, UserRole.MEMBER);
+    }
+
+    private User registerTrainerInv(UnifiedRegistrationRequest request) {
+        if (TenantContext.getCurrentTenantId() == null) {
+            throw new DomainException("INVALID_REGISTRATION", "Trainers can only be registered within a gym context");
+        }
+        return registerUserInv(request, UserRole.TRAINER);
+    }
+
+    private User registerStaffInv(UnifiedRegistrationRequest request) {
+        if (TenantContext.getCurrentTenantId() == null) {
+            throw new DomainException("INVALID_REGISTRATION", "Staff can only be registered within a gym context");
+        }
+        return registerUserInv(request, UserRole.STAFF);
+    }
+
+    private User registerAdminInv(UnifiedRegistrationRequest request) {
+        if (userRepository.existsByEmail(request.email())) {
+            throw new DomainException("USER_ALREADY_EXISTS",
+                    "A user with email '" + request.email() + "' already exists");
+        }
+        return registerUserInv(request, UserRole.ADMIN);
+    }
+
+    private User registerUserInv(UnifiedRegistrationRequest request, UserRole role) {
+        UUID currentOrganisationId = TenantContext.getCurrentTenantId();
+        if (currentOrganisationId != null
+                && userRepository.findByEmailAndOrganisationId(request.email(), currentOrganisationId).isPresent()) {
+            throw new DomainException("USER_ALREADY_EXISTS",
+                    "A user with email '" + request.email() + "' already exists in this organisation");
+        }
+
+        User user = User.builder()
+                .email(request.email())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .passwordHash(passwordService.encode(request.password()))
+                .phone(request.phone())
                 .role(role)
                 .status(UserStatus.ACTIVE)
                 .build();
@@ -250,73 +301,58 @@ public class AuthenticationService {
         return userRepository.save(user);
     }
 
+    /**
+     * @deprecated Use {@link #register(UnifiedRegistrationRequest)} instead.
+     */
+    @Deprecated
+    @Transactional
+    public User registerUser(String email, String firstName, String lastName,
+            String plainPassword, String phone, UserRole role) {
+        return register(new UnifiedRegistrationRequest(email, firstName, lastName, plainPassword, phone, role));
+    }
+
+    /**
+     * @deprecated Use {@link #register(UnifiedRegistrationRequest)} instead.
+     */
+    @Deprecated
     @Transactional
     public User registerMember(String email, String firstName, String lastName,
             String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION", "Members can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.MEMBER);
+        return register(
+                new UnifiedRegistrationRequest(email, firstName, lastName, plainPassword, phone, UserRole.MEMBER));
     }
 
+    /**
+     * @deprecated Use {@link #register(UnifiedRegistrationRequest)} instead.
+     */
+    @Deprecated
     @Transactional
     public User registerGymAdmin(String email, String firstName, String lastName,
             String plainPassword, String phone) {
-        log.info("Registering gym admin with email: {}", email);
-
-        if (userRepository.existsByEmail(email)) {
-            throw new DomainException("USER_ALREADY_EXISTS", "A user with email '" + email + "' already exists");
-        }
-
-        validatePassword(plainPassword);
-
-        String organisationName = firstName + "'s Gym Organization";
-        String slug = organisationService.generateSlug(organisationName);
-        Organisation organisation = organisationService.createOrganisation(organisationName, slug, email);
-
-        log.info("Organisation created: {} (ID: {})", organisation.getName(), organisation.getId());
-
-        User user = User.builder()
-                .email(email)
-                .firstName(firstName)
-                .lastName(lastName)
-                .passwordHash(passwordService.encode(plainPassword))
-                .phone(phone)
-                .organisationId(organisation.getId())
-                .role(UserRole.OWNER)
-                .status(UserStatus.INACTIVE)
-                .emailVerified(false)
-                .build();
-
-        User savedUser = userRepository.save(user);
-        log.info("User saved - ID: {}, email: {}", savedUser.getId(), savedUser.getEmail());
-
-        organisationService.assignOwner(organisation.getId(), savedUser.getId());
-        log.info("Organisation owner assigned");
-
-        Gym defaultGym = Gym.createDefault(organisationName, email, phone != null ? phone : "", organisation.getId());
-        Gym savedGym = gymRepository.save(defaultGym);
-        log.info("Default gym created: {} (ID: {})", savedGym.getName(), savedGym.getId());
-
-        return savedUser;
+        return register(
+                new UnifiedRegistrationRequest(email, firstName, lastName, plainPassword, phone, UserRole.OWNER));
     }
 
+    /**
+     * @deprecated Use {@link #register(UnifiedRegistrationRequest)} instead.
+     */
+    @Deprecated
     @Transactional
     public User registerTrainer(String email, String firstName, String lastName,
             String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION", "Trainers can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.TRAINER);
+        return register(
+                new UnifiedRegistrationRequest(email, firstName, lastName, plainPassword, phone, UserRole.TRAINER));
     }
 
+    /**
+     * @deprecated Use {@link #register(UnifiedRegistrationRequest)} instead.
+     */
+    @Deprecated
     @Transactional
     public User registerStaff(String email, String firstName, String lastName,
             String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION", "Staff can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.STAFF);
+        return register(
+                new UnifiedRegistrationRequest(email, firstName, lastName, plainPassword, phone, UserRole.STAFF));
     }
 
     // ==================== OTP VERIFICATION ====================
@@ -331,7 +367,7 @@ public class AuthenticationService {
         String userId = user.getId().toString();
         String otp = totpService.generateOtp(userId);
 
-        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES);
+        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, userId);
         log.info("OTP email sent to user: {}", user.getEmail());
 
         return RegistrationResponse.builder()
@@ -357,7 +393,7 @@ public class AuthenticationService {
         }
 
         String otp = totpService.generateOtp(request.getUserId());
-        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES);
+        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, request.getUserId());
 
         log.info("OTP resent to user: {}", user.getEmail());
 
