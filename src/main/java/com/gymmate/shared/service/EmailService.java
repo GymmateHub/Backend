@@ -129,4 +129,55 @@ public class EmailService {
             throw new RuntimeException("Failed to send HTML email", e);
         }
     }
+
+    /**
+     * Send an invite email to a new team member.
+     *
+     * @param to          recipient email address
+     * @param firstName   recipient's first name (or "there" if not provided)
+     * @param gymName     name of the gym they're being invited to
+     * @param role        the role they're being invited as (ADMIN, TRAINER, STAFF)
+     * @param inviterName name of the person who sent the invite
+     * @param inviteLink  full URL to accept the invite
+     * @param expiryHours number of hours until the invite expires
+     */
+    @Async
+    public void sendInviteEmail(String to, String firstName, String gymName, String role,
+                                 String inviterName, String inviteLink, int expiryHours) {
+        try {
+            Context context = new Context();
+            context.setVariable("firstName", firstName);
+            context.setVariable("gymName", gymName);
+            context.setVariable("role", formatRole(role));
+            context.setVariable("inviterName", inviterName);
+            context.setVariable("inviteLink", inviteLink);
+            context.setVariable("expiryHours", expiryHours);
+
+            String emailContent = templateEngine.process("team-invite", context);
+
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(to);
+            helper.setSubject("You're invited to join " + gymName + " on GymMate!");
+            helper.setText(emailContent, true);
+
+            emailSender.send(message);
+            log.info("Invite email sent to: {} for gym: {}", to, gymName);
+        } catch (MessagingException e) {
+            log.error("Failed to send invite email to: {}", to, e);
+            throw new RuntimeException("Failed to send invite email", e);
+        }
+    }
+
+    /**
+     * Format role name for display (ADMIN -> Admin, TRAINER -> Trainer, etc.)
+     */
+    private String formatRole(String role) {
+        if (role == null || role.isEmpty()) {
+            return "Team Member";
+        }
+        return role.charAt(0) + role.substring(1).toLowerCase();
+    }
 }

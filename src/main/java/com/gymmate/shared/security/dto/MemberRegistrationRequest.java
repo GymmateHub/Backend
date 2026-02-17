@@ -1,15 +1,12 @@
-package com.gymmate.user.api.dto;
+package com.gymmate.shared.security.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 
 /**
- * DTO for gym admin/owner registration requests.
- * Role is automatically set to OWNER.
+ * Request DTO for member self-registration.
+ * Uses gymSlug to identify the gym (for public registration URLs).
  */
-public record GymAdminRegistrationRequest(
+public record MemberRegistrationRequest(
     @NotBlank(message = "Email is required")
     @Email(message = "Email must be valid")
     @Size(max = 255, message = "Email must not exceed 255 characters")
@@ -24,11 +21,15 @@ public record GymAdminRegistrationRequest(
     String lastName,
 
     @NotBlank(message = "Password is required")
-    @Size(min = 8, max = 100, message = "Password must be at least 8 characters long")
+    @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     String password,
 
     @Pattern(regexp = "^[+]?[0-9]{10,20}$", message = "Phone number must be valid")
     @Size(max = 20, message = "Phone number must not exceed 20 characters")
-    String phone
+    String phone,
+
+    @NotBlank(message = "Gym slug is required")
+    @Size(max = 100, message = "Gym slug must not exceed 100 characters")
+    String gymSlug
 ) {}
 

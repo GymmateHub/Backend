@@ -6,6 +6,9 @@ import com.gymmate.gym.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.JwtService;
+import com.gymmate.shared.security.invite.InviteService;
+import com.gymmate.shared.security.invite.dto.InviteCreateRequest;
+import com.gymmate.shared.security.invite.dto.InviteResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -31,6 +34,7 @@ public class GymController {
 
     private final GymService gymService;
     private final JwtService jwtService;
+    private final InviteService inviteService;
 
     /**
      * Register a new gym.
@@ -326,5 +330,71 @@ public class GymController {
 
         GymAnalyticsResponse analytics = gymService.getGymAnalytics(gymId, userId);
         return ResponseEntity.ok(ApiResponse.success(analytics, "Gym analytics retrieved successfully"));
+    }
+
+    // ========== Invite Management ==========
+
+    /**
+     * Create and send an invite for a new team member.
+     * Only OWNER and ADMIN can invite ADMIN, TRAINER, STAFF.
+     * ADMIN can only invite TRAINER and STAFF (not other ADMINs).
+     */
+    @PostMapping("/{gymId}/invites")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @Operation(summary = "Create invite", description = "Invite a new team member (ADMIN, TRAINER, or STAFF) to join the gym")
+    public ResponseEntity<ApiResponse<InviteResponse>> createInvite(
+            @PathVariable UUID gymId,
+            @Valid @RequestBody InviteCreateRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7);
+        UUID invitedBy = jwtService.extractUserId(token);
+
+        InviteResponse response = inviteService.createInvite(gymId, invitedBy, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+            .body(ApiResponse.success(response, "Invite sent to " + request.email()));
+    }
+
+    /**
+     * List all invites for a gym.
+     */
+    @GetMapping("/{gymId}/invites")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @Operation(summary = "List invites", description = "Get all invites for a gym")
+    public ResponseEntity<ApiResponse<List<InviteResponse>>> listInvites(@PathVariable UUID gymId) {
+        List<InviteResponse> invites = inviteService.getInvitesForGym(gymId);
+        return ResponseEntity.ok(ApiResponse.success(invites));
+    }
+
+    /**
+     * Resend an expired or pending invite.
+     */
+    @PostMapping("/{gymId}/invites/{inviteId}/resend")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @Operation(summary = "Resend invite", description = "Resend an expired or pending invite with a new token")
+    public ResponseEntity<ApiResponse<InviteResponse>> resendInvite(
+            @PathVariable UUID gymId,
+            @PathVariable UUID inviteId,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7);
+        UUID requestedBy = jwtService.extractUserId(token);
+
+        InviteResponse response = inviteService.resendInvite(inviteId, requestedBy);
+        return ResponseEntity.ok(ApiResponse.success(response, "Invite resent successfully"));
+    }
+
+    /**
+     * Revoke a pending invite.
+     */
+    @DeleteMapping("/{gymId}/invites/{inviteId}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @Operation(summary = "Revoke invite", description = "Cancel a pending invite")
+    public ResponseEntity<ApiResponse<Void>> revokeInvite(
+            @PathVariable UUID gymId,
+            @PathVariable UUID inviteId) {
+
+        inviteService.revokeInvite(inviteId);
+        return ResponseEntity.ok(ApiResponse.success(null, "Invite revoked successfully"));
     }
 }

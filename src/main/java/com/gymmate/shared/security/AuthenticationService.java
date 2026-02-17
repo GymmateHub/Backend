@@ -1,20 +1,14 @@
 package com.gymmate.shared.security;
 
-import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.organisation.application.OrganisationService;
-import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.InvalidTokenException;
 import com.gymmate.shared.exception.NotFoundException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.dto.*;
 import com.gymmate.shared.service.EmailService;
 import com.gymmate.shared.service.PasswordService;
 import com.gymmate.user.domain.User;
-import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.domain.UserStatus;
 import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +25,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Date;
 import java.util.UUID;
 
+/**
+ * Core authentication service.
+ *
+ * Handles:
+ * - User authentication (login)
+ * - Token management (refresh, logout, blacklist)
+ * - Password reset flow
+ * - OTP verification for email
+ * - Password validation
+ *
+ * NOTE: Registration logic has been moved to dedicated services:
+ * - OwnerRegistrationService
+ * - MemberRegistrationService
+ * - InviteService
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,8 +52,6 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final TotpService totpService;
-    private final OrganisationService organisationService;
-    private final GymRepository gymRepository;
 
     private static final int OTP_VALIDITY_MINUTES = 5;
 
@@ -245,175 +252,13 @@ public class AuthenticationService {
         }
     }
 
-    // ========== Registration Methods ==========
-
-    /**
-     * Register a new user in the system.
-     */
-    @Transactional
-    public User registerUser(String email, String firstName, String lastName,
-                           String plainPassword, String phone, UserRole role) {
-
-        // Prevent OWNER registration through this method
-        if (role == UserRole.OWNER) {
-            throw new DomainException("INVALID_REGISTRATION",
-                "OWNER registration must use the OTP verification flow");
-        }
-
-        // Check if user already exists in current organisation context
-        UUID currentOrganisationId = TenantContext.getCurrentTenantId();
-        if (currentOrganisationId != null && userRepository.findByEmailAndOrganisationId(email, currentOrganisationId).isPresent()) {
-            throw new DomainException("USER_ALREADY_EXISTS",
-                "A user with email '" + email + "' already exists in this organisation");
-        }
-
-        // For ADMIN role (gym owners/admins), check system-wide unique email
-        if (role == UserRole.ADMIN && userRepository.existsByEmail(email)) {
-            throw new DomainException("USER_ALREADY_EXISTS",
-                "A user with email '" + email + "' already exists");
-        }
-
-        // Validate password requirements
-        validatePassword(plainPassword);
-
-        // Encode password
-        String passwordHash = passwordService.encode(plainPassword);
-
-        // Create new user using builder
-        User user = User.builder()
-                .email(email)
-                .firstName(firstName)
-                .lastName(lastName)
-                .passwordHash(passwordHash)
-                .phone(phone)
-                .role(role)
-                .status(UserStatus.ACTIVE)
-                .build();
-
-        // Save and return
-        return userRepository.save(user);
-    }
-
-    /**
-     * Register a new gym member.
-     */
-    @Transactional
-    public User registerMember(String email, String firstName, String lastName,
-                             String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION",
-                "Members can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.MEMBER);
-    }
-
-    /**
-     * Register a new gym admin/owner with organisation and default gym.
-     * Flow:
-     * 1. Create organisation
-     * 2. Create user with organisationId
-     * 3. Update organisation with owner_user_id
-     * 4. Create default gym for the organisation
-     *
-     * Creates user as INACTIVE with emailVerified=false for OTP verification flow.
-     */
-    @Transactional
-    public User registerGymAdmin(String email, String firstName, String lastName,
-                               String plainPassword, String phone) {
-        log.info("Registering gym admin with email: {}, phone: {}", email, phone);
-
-        // Check if user already exists (system-wide)
-        if (userRepository.existsByEmail(email)) {
-            throw new DomainException("USER_ALREADY_EXISTS",
-                "A user with email '" + email + "' already exists");
-        }
-
-        // Validate password requirements
-        validatePassword(plainPassword);
-
-        // Step 1: Create organisation (without owner yet)
-        String organisationName = firstName + "'s Gym Organization";
-        String slug = organisationService.generateSlug(organisationName);
-        Organisation organisation = organisationService.createOrganisation(
-            organisationName,
-            slug,
-            email
-        );
-
-        log.info("Organisation created: {} (ID: {})", organisation.getName(), organisation.getId());
-
-        // Step 2: Create user with organisationId
-        String passwordHash = passwordService.encode(plainPassword);
-
-        User user = User.builder()
-                .email(email)
-                .firstName(firstName)
-                .lastName(lastName)
-                .passwordHash(passwordHash)
-                .phone(phone)
-                .organisationId(organisation.getId())
-                .role(UserRole.OWNER)
-                .status(UserStatus.INACTIVE)
-                .emailVerified(false)
-                .build();
-
-        User savedUser = userRepository.save(user);
-
-        log.info("User saved - ID: {}, email: {}, organisationId: {}, role: {}, status: {}, emailVerified: {}",
-            savedUser.getId(), savedUser.getEmail(), savedUser.getOrganisationId(), savedUser.getRole(),
-            savedUser.getStatus(), savedUser.isEmailVerified());
-
-        // Step 3: Update organisation with owner_user_id
-        organisationService.assignOwner(organisation.getId(), savedUser.getId());
-
-        log.info("Organisation owner assigned: userId {} to organisationId {}",
-            savedUser.getId(), organisation.getId());
-
-        // Step 4: Create default gym for the organisation
-        Gym defaultGym = Gym.createDefault(
-            organisationName,
-            email,
-            phone != null ? phone : "",
-            organisation.getId()
-        );
-        Gym savedGym = gymRepository.save(defaultGym);
-
-        log.info("Default gym created: {} (ID: {}) for organisation {}",
-            savedGym.getName(), savedGym.getId(), organisation.getId());
-
-        return savedUser;
-    }
-
-    /**
-     * Register a new trainer.
-     */
-    @Transactional
-    public User registerTrainer(String email, String firstName, String lastName,
-                               String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION",
-                "Trainers can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.TRAINER);
-    }
-
-    /**
-     * Register a new staff member.
-     */
-    @Transactional
-    public User registerStaff(String email, String firstName, String lastName,
-                               String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION",
-                "Staff can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.STAFF);
-    }
+    // ========== Password Validation ==========
 
     /**
      * Validate password meets security requirements.
+     * This method is used by registration services.
      */
-    private void validatePassword(String password) {
+    public void validatePassword(String password) {
         if (password == null || password.trim().length() < 8) {
             throw new DomainException("WEAK_PASSWORD",
                 "Password must be at least 8 characters long");

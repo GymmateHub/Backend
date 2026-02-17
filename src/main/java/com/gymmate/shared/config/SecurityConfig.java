@@ -68,12 +68,12 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/",
                     "/error",
-                    "/api/auth/**",
+                    "/api/auth/**",  // All auth endpoints including registration and invite
                     "/api/gyms/register",
                     "/api/gyms",  // Public listing of all gyms
                     "/api/gyms/active",  // Public listing of active gyms
                     "/api/gyms/city/**",  // Public search by city
-                    "/api/users/register/gym-owner",
+                    "/api/gyms/slug/**",  // Public gym lookup by slug
                     "/api/webhooks/**",  // Stripe webhooks (signature verified internally)
                     "/v3/api-docs/**",
                     "/swagger-ui/**",

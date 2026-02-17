@@ -1,9 +1,7 @@
 package com.gymmate.user.api;
 
 import com.gymmate.shared.dto.ApiResponse;
-import com.gymmate.shared.security.AuthenticationService;
 import com.gymmate.user.api.dto.UserProfileUpdateRequest;
-import com.gymmate.user.api.dto.UserRegistrationRequest;
 import com.gymmate.user.api.dto.UserResponse;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
@@ -11,7 +9,6 @@ import com.gymmate.user.domain.UserRole;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
