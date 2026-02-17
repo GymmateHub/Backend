@@ -6,11 +6,10 @@
 spring:
   mail:
     # Namecheap SMTP server
-    host: mail.gymmatehub.com
+    host: mail.privateemail.com      # ← KEY FIX
     port: 587
     username: noreply@gymmatehub.com
     password: ${MAIL_PASSWORD}
-
     properties:
       mail:
         smtp:
@@ -19,11 +18,10 @@ spring:
             enable: true
             required: true
           ssl:
-            trust: mail.gymmatehub.com
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
-
+            trust: mail.privateemail.com   # ← Must match host
+        transport:
+          protocol: smtp
+        debug: false
     default-encoding: UTF-8
     test-connection: false
 
