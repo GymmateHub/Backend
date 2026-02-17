@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Trial Ending</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #fce043 0%, #fb7ba2 100%);
+            color: #ffffff;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0 0 10px 0;
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .header p {
+            margin: 0;
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px 30px;
+        }
+
+        .greeting {
+            font-size: 20px;
+            margin-bottom: 20px;
+            color: #333333;
+            font-weight: 600;
+        }
+
+        .message {
+            font-size: 16px;
+            color: #555555;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+
+        .alert-box {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .alert-box strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 18px;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #fce043 0%, #fb7ba2 100%);
+            color: #ffffff;
+            padding: 15px 40px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            font-size: 13px;
+            color: #666666;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .footer a {
+            color: #fb7ba2;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⏳ Trial Ending Soon</h1>
+            <p>Your GymMate free trial is coming to an end</p>
+        </div>
+
+        <div class="content">
+            <p class="greeting">Hello GymMate Owner,</p>
+
+            <p class="message">
+                We hope you're enjoying GymMate! Your free trial for <strong><span th:text="${organisationName}">My
+                        Gym</span></strong> is ending soon.
+            </p>
+
+            <div class="alert-box">
+                <strong>Trial Expires:</strong>
+                <span th:text="${trialEndDate}">March 5, 2026</span>
+            </div>
+
+            <p class="message">
+                To continue accessing all features and managing your gym effectively without interruption, please
+                upgrade to a paid plan before your trial expires.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="http://localhost:8080/dashboard/billing/upgrade" class="cta-button">
+                    Upgrade Now
+                </a>
+            </div>
+
+            <p class="message" style="margin-top: 30px;">
+                <strong>Best regards,</strong><br>
+                The GymMate Team
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>
+                Need help? Contact us at
+                <a href="mailto:support@gymmatehub.com">support@gymmatehub.com</a>
+            </p>
+            <p style="margin-top: 15px; color: #999999;">
+                © GymMate. All rights reserved.
+            </p>
+        </div>
+    </div>
+</body>
+
+</html>
