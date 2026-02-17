@@ -1,0 +1,92 @@
+# ============================================
+# GymMate SMTP Configuration - All Email Accounts
+# Based on your cPanel setup
+# ============================================
+
+spring:
+  mail:
+    # Namecheap SMTP server
+    host: mail.privateemail.com      # ← KEY FIX
+    port: 587
+    username: noreply@gymmatehub.com
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: mail.privateemail.com   # ← Must match host
+        transport:
+          protocol: smtp
+        debug: false
+    default-encoding: UTF-8
+    test-connection: false
+
+# ============================================
+# Application Email Configuration
+# ============================================
+app:
+  email:
+    # Main transactional email (noreply)
+    from:
+      address: noreply@gymmatehub.com
+      name: GymMateHub
+
+    # Support team email
+    support:
+      address: support@gymmatehub.com
+      name: GymMateHub Support
+      # Password for support email (if sending from support directly)
+      password: ${MAIL_SUPPORT_PASSWORD:}
+
+    # Admin team email
+    admin:
+      address: admin@gymmatehub.com
+      name: GymMateHub Admin
+      # Password for admin email (if sending from admin directly)
+      password: ${MAIL_ADMIN_PASSWORD:}
+
+    templates:
+      base-path: classpath:/templates/email/
+
+    retry:
+      max-attempts: 3
+      backoff-delay: 2000
+
+    rate-limit:
+      enabled: true
+      max-per-minute: 60
+      max-per-hour: 1000
+
+# ============================================
+# Environment-specific overrides
+# ============================================
+---
+# Development
+spring:
+  config:
+    activate:
+      on-profile: dev
+  mail:
+    port: 587
+    test-connection: true
+
+---
+# Production
+spring:
+  config:
+    activate:
+      on-profile: production
+  mail:
+    port: 587
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
+          socketFactory:
+            class: javax.net.ssl.SSLSocketFactory
+            port: 587
