@@ -1,7 +1,8 @@
 package com.gymmate.shared.security.service;
 
+import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.notification.application.EmailService;
 import com.gymmate.organisation.application.OrganisationService;
 import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.shared.exception.BadRequestException;
@@ -9,18 +10,21 @@ import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.InvalidTokenException;
 import com.gymmate.shared.exception.NotFoundException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import com.gymmate.shared.multitenancy.TenantContext;
-
 import com.gymmate.shared.security.domain.PasswordResetToken;
 import com.gymmate.shared.security.domain.TokenBlacklist;
 import com.gymmate.shared.security.dto.*;
 import com.gymmate.shared.security.repository.PasswordResetTokenRepository;
 import com.gymmate.shared.security.repository.TokenBlacklistRepository;
-import com.gymmate.notification.application.EmailService;
 import com.gymmate.shared.service.PasswordService;
+import com.gymmate.user.api.dto.InviteAcceptRequest;
+import com.gymmate.user.api.dto.MemberRegistrationRequest;
+import com.gymmate.user.api.dto.OwnerRegistrationRequest;
+import com.gymmate.user.application.InviteService;
+import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserRole;
 import com.gymmate.user.domain.UserStatus;
+import com.gymmate.user.api.dto.ValidateInviteResponse;
 import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,12 +32,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -45,6 +49,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class AuthenticationService {
     private final UserRepository userRepository;
+    private final UserService userService;
     private final PasswordService passwordService;
     private final JwtService jwtService;
     private final PasswordResetTokenRepository resetTokenRepository;
@@ -53,14 +58,15 @@ public class AuthenticationService {
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final TotpService totpService;
     private final OrganisationService organisationService;
-    private final GymRepository gymRepository;
+    private final GymService gymService;
+    private final InviteService inviteService;
 
     private static final int OTP_VALIDITY_MINUTES = 5;
 
     @Value("${app.password-reset.expiration-minutes:30}")
     private int passwordResetExpirationMinutes;
 
-    @Value("${app.frontend-url:http://localhost:3000}")
+    @Value("${app.frontend-url:}")
     private String frontendUrl;
 
     // ==================== AUTHENTICATION ====================
@@ -90,7 +96,7 @@ public class AuthenticationService {
 
                 String userId = user.getId().toString();
                 String otp = totpService.generateOtp(userId);
-                emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, 5);
+                emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, 5, userId);
 
                 log.info("OTP sent to unverified user during login: {}", user.getEmail());
 
@@ -110,8 +116,7 @@ public class AuthenticationService {
             String accessToken = jwtService.generateToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
 
-            user.updateLastLogin();
-            userRepository.save(user);
+            userService.recordLogin(user.getId());
 
             log.info("User authenticated successfully: {}", user.getEmail());
 
@@ -130,6 +135,32 @@ public class AuthenticationService {
         } catch (AuthenticationException ex) {
             log.error("Authentication failed for user: {}", request.getEmail(), ex);
             throw new BadCredentialsException("Invalid email or password");
+        }
+    }
+
+    @Transactional
+    public void logout(String token) {
+        if (token == null || token.isEmpty() || token.trim().isBlank()) {
+            log.debug("No token provided for logout");
+            return;
+        }
+
+        try {
+            UUID userId = jwtService.extractUserId(token);
+            Date expiresAt = jwtService.extractExpiration(token);
+
+            if (jwtService.isTokenBlacklisted(token)) {
+                log.debug("Token is already blacklisted");
+                return;
+            }
+
+            TokenBlacklist blacklistedToken = TokenBlacklist.create(token, userId, expiresAt, "User logout");
+            tokenBlacklistRepository.save(blacklistedToken);
+
+            log.info("Token blacklisted successfully for user: {}", userId);
+        } catch (Exception e) {
+            log.error("Failed to blacklist token: {}", e.getMessage(), e);
+            throw new InvalidTokenException("Failed to logout: " + e.getMessage());
         }
     }
 
@@ -189,134 +220,162 @@ public class AuthenticationService {
                 .build();
     }
 
-    @Transactional
-    public void logout(String token) {
-        if (token == null || token.isEmpty() || token.trim().isBlank()) {
-            log.debug("No token provided for logout");
-            return;
-        }
-
-        try {
-            UUID userId = jwtService.extractUserId(token);
-            Date expiresAt = jwtService.extractExpiration(token);
-
-            if (jwtService.isTokenBlacklisted(token)) {
-                log.debug("Token is already blacklisted");
-                return;
-            }
-
-            TokenBlacklist blacklistedToken = TokenBlacklist.create(token, userId, expiresAt, "User logout");
-            tokenBlacklistRepository.save(blacklistedToken);
-
-            log.info("Token blacklisted successfully for user: {}", userId);
-        } catch (Exception e) {
-            log.error("Failed to blacklist token: {}", e.getMessage(), e);
-            throw new InvalidTokenException("Failed to logout: " + e.getMessage());
-        }
-    }
-
     // ==================== USER REGISTRATION ====================
 
     @Transactional
-    public User registerUser(String email, String firstName, String lastName,
-            String plainPassword, String phone, UserRole role) {
-        if (role == UserRole.OWNER) {
-            throw new DomainException("INVALID_REGISTRATION", "OWNER registration must use the OTP verification flow");
-        }
+    public User registerOwner(OwnerRegistrationRequest request) {
+        log.info("Registering owner: {}", request.email());
 
-        UUID currentOrganisationId = TenantContext.getCurrentTenantId();
-        if (currentOrganisationId != null
-                && userRepository.findByEmailAndOrganisationId(email, currentOrganisationId).isPresent()) {
+        if (userRepository.existsByEmail(request.email())) {
             throw new DomainException("USER_ALREADY_EXISTS",
-                    "A user with email '" + email + "' already exists in this organisation");
+                    "A user with email '" + request.email() + "' already exists");
         }
 
-        if (role == UserRole.ADMIN && userRepository.existsByEmail(email)) {
-            throw new DomainException("USER_ALREADY_EXISTS", "A user with email '" + email + "' already exists");
+        validatePassword(request.password());
+
+        // 1. Create User (Inactive, waiting for OTP)
+        User user = User.builder()
+                .email(request.email())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .passwordHash(passwordService.encode(request.password()))
+                .phone(request.phone())
+                .role(UserRole.OWNER)
+                .status(UserStatus.INACTIVE) // Requires OTP verification
+                .emailVerified(false)
+                .build();
+
+        user = userRepository.save(user);
+
+        // 2. Create Organisation & Hub (Atomic transaction)
+        // createHub creates Organisation, Subscription, and links owner
+        Organisation organisation = organisationService.createHub(request.organisationName(), request.email(), user);
+
+        // 3. Create initial Gym
+        // We create it manually to bypass the active-owner check in
+        // GymService.registerGym
+        Gym gym = new Gym(request.gymName(), "Main Gym", request.email(), request.phone(), user.getId());
+        gym.setOrganisationId(organisation.getId());
+        gym.setTimezone(request.timezone());
+        gym.updateAddress(null, null, null, request.country(), null);
+
+        gymService.saveGym(gym);
+
+        return user;
+    }
+
+    @Transactional
+    public User registerMember(MemberRegistrationRequest request) {
+        log.info("Registering member: {}", request.email());
+
+        // Resolve gym if slug provided
+        UUID organisationId = null;
+
+        if (request.gymSlug() != null) {
+            Organisation org = organisationService.getBySlug(request.gymSlug());
+            organisationId = org.getId();
+            // Assign to first gym of the org for now, or find gym by slug if gyms had
+            // slugs?
+            // The request says "gymSlug". OrganisationService has `getBySlug`.
+            // But gyms might not have slugs yet?
+            // Assuming `gymSlug` maps to Organisation Slug as per `createHub`.
+            // Members register to a Gym.
+            // "URL pattern: app.gymmatehub.com/join/:gymSlug"
+            // "Resolves gymId server-side from public URL"
+            // If the slug is for Gym, we need GymService.getBySlug?
+            // GymService checks `organisationService.generateSlug`.
+            // Let's assume for now `gymSlug` in request refers to Organisation Slug (as
+            // gyms are often one per org initially).
+            // Or we need to implement Gym Slugs.
+            // For now, let's look up Organisation by slug, and pick the first active gym.
+            List<Gym> gyms = gymService.getActiveGymsByOrganisation(organisationId);
+            if (gyms.isEmpty()) {
+                throw new DomainException("NO_ACTIVE_GYM", "No active gym find for this link");
+            }
+            // gymId = gyms.get(0).getId(); // Unused
+        } else {
+            throw new DomainException("INVALID_REQUEST", "Gym slug is required for public registration");
         }
 
-        validatePassword(plainPassword);
+        if (userRepository.existsByEmail(request.email())) {
+            // For members, checking global uniqueness or per-org?
+            // "Multi-tenant". User table is global.
+            // If user exists, they should login?
+            throw new DomainException("USER_ALREADY_EXISTS", "User already exists. Please login.");
+        }
+
+        validatePassword(request.password());
 
         User user = User.builder()
-                .email(email)
-                .firstName(firstName)
-                .lastName(lastName)
-                .passwordHash(passwordService.encode(plainPassword))
-                .phone(phone)
-                .role(role)
-                .status(UserStatus.ACTIVE)
+                .email(request.email())
+                .firstName(request.firstName())
+                .lastName(request.lastName())
+                .passwordHash(passwordService.encode(request.password()))
+                .phone(request.phone())
+                .role(UserRole.MEMBER)
+                .status(UserStatus.INACTIVE)
+                .emailVerified(false)
+                .organisationId(organisationId) // Associate with org
                 .build();
+
+        // We also need to create Member entity?
+        // GymService/MemberService should handle that.
+        // But `AuthenticationService` registers the USER.
+        // Member creation (in `members` table) happens after?
+        // "Step 4 — Membership Selection... POST /api/member-memberships"
+        // So here we only create the User.
 
         return userRepository.save(user);
     }
 
     @Transactional
-    public User registerMember(String email, String firstName, String lastName,
-            String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION", "Members can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.MEMBER);
-    }
+    public LoginResponse acceptInvite(InviteAcceptRequest request) {
+        log.info("Accepting invite with token: {}", request.inviteToken());
 
-    @Transactional
-    public User registerGymAdmin(String email, String firstName, String lastName,
-            String plainPassword, String phone) {
-        log.info("Registering gym admin with email: {}", email);
+        ValidateInviteResponse validated = inviteService.validateInvite(request.inviteToken());
 
-        if (userRepository.existsByEmail(email)) {
-            throw new DomainException("USER_ALREADY_EXISTS", "A user with email '" + email + "' already exists");
+        if (validated.expired()) {
+            throw new InvalidTokenException("Invite has expired");
         }
 
-        validatePassword(plainPassword);
+        validatePassword(request.password());
 
-        String organisationName = firstName + "'s Gym Organization";
-        String slug = organisationService.generateSlug(organisationName);
-        Organisation organisation = organisationService.createOrganisation(organisationName, slug, email);
+        if (userRepository.existsByEmail(validated.email())) {
+            throw new DomainException("USER_ALREADY_EXISTS", "User with this email already exists");
+        }
 
-        log.info("Organisation created: {} (ID: {})", organisation.getName(), organisation.getId());
+        // Mark invite as accepted
+        inviteService.acceptInvite(request.inviteToken());
 
+        // Create User
         User user = User.builder()
-                .email(email)
-                .firstName(firstName)
-                .lastName(lastName)
-                .passwordHash(passwordService.encode(plainPassword))
-                .phone(phone)
-                .organisationId(organisation.getId())
-                .role(UserRole.OWNER)
-                .status(UserStatus.INACTIVE)
-                .emailVerified(false)
+                .email(validated.email())
+                .firstName(request.firstName() != null ? request.firstName() : validated.firstName())
+                .lastName(request.lastName() != null ? request.lastName() : validated.lastName())
+                .phone(request.phone())
+                .passwordHash(passwordService.encode(request.password()))
+                .role(validated.role())
+                .status(UserStatus.ACTIVE)
+                .emailVerified(true)
+                .organisationId(validated.organisationId())
                 .build();
 
-        User savedUser = userRepository.save(user);
-        log.info("User saved - ID: {}, email: {}", savedUser.getId(), savedUser.getEmail());
+        user = userRepository.save(user);
 
-        organisationService.assignOwner(organisation.getId(), savedUser.getId());
-        log.info("Organisation owner assigned");
+        String accessToken = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
 
-        Gym defaultGym = Gym.createDefault(organisationName, email, phone != null ? phone : "", organisation.getId());
-        Gym savedGym = gymRepository.save(defaultGym);
-        log.info("Default gym created: {} (ID: {})", savedGym.getName(), savedGym.getId());
-
-        return savedUser;
-    }
-
-    @Transactional
-    public User registerTrainer(String email, String firstName, String lastName,
-            String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION", "Trainers can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.TRAINER);
-    }
-
-    @Transactional
-    public User registerStaff(String email, String firstName, String lastName,
-            String plainPassword, String phone) {
-        if (TenantContext.getCurrentTenantId() == null) {
-            throw new DomainException("INVALID_REGISTRATION", "Staff can only be registered within a gym context");
-        }
-        return registerUser(email, firstName, lastName, plainPassword, phone, UserRole.STAFF);
+        return LoginResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .role(user.getRole())
+                .organisationId(user.getOrganisationId())
+                .emailVerified(true)
+                .build();
     }
 
     // ==================== OTP VERIFICATION ====================
@@ -331,7 +390,7 @@ public class AuthenticationService {
         String userId = user.getId().toString();
         String otp = totpService.generateOtp(userId);
 
-        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES);
+        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, userId);
         log.info("OTP email sent to user: {}", user.getEmail());
 
         return RegistrationResponse.builder()
@@ -357,7 +416,7 @@ public class AuthenticationService {
         }
 
         String otp = totpService.generateOtp(request.getUserId());
-        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES);
+        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, request.getUserId());
 
         log.info("OTP resent to user: {}", user.getEmail());
 

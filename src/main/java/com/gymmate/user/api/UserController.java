@@ -4,7 +4,7 @@ import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import com.gymmate.shared.security.service.AuthenticationService;
 import com.gymmate.user.api.dto.UserProfileUpdateRequest;
-import com.gymmate.user.api.dto.UserRegistrationRequest;
+
 import com.gymmate.user.api.dto.UserResponse;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
