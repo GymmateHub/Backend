@@ -233,4 +233,14 @@ public class NotificationController {
 
         return ResponseEntity.ok(ApiResponse.success("All gym notifications marked as read"));
     }
+
+  /**
+   * Test email notification endpoint- unauthenticated
+   */
+  @GetMapping("/test-email")
+  public ResponseEntity<ApiResponse<String>> testEmailNotification() {
+
+    notificationService.sendTestEmail("davidgodswill@gmail.com");
+    return ResponseEntity.ok(ApiResponse.success("Test email sent successfully"));
+  }
 }
