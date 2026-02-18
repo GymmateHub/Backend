@@ -6,10 +6,10 @@
 spring:
   mail:
     # Namecheap SMTP server
-    host: mail.privateemail.com      # ← KEY FIX
-    port: 587
+    host: ${MAIL_HOST:premium700.web-hosting.com}      # ← KEY FIX
+    port: ${MAIL_PORT:587}
     username: noreply@gymmatehub.com
-    password: ${MAIL_PASSWORD}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
@@ -18,7 +18,7 @@ spring:
             enable: true
             required: true
           ssl:
-            trust: mail.privateemail.com   # ← Must match host
+            trust: ${MAIL_HOST:premium700.web-hosting.com}   # ← Must match host
         transport:
           protocol: smtp
         debug: false
@@ -81,7 +81,7 @@ spring:
     activate:
       on-profile: production
   mail:
-    port: 587
+    port: ${MAIL_PORT:587}
     properties:
       mail:
         smtp:
@@ -89,4 +89,15 @@ spring:
             enable: true
           socketFactory:
             class: javax.net.ssl.SSLSocketFactory
-            port: 587
+            port: ${MAIL_PORT:587}
+# Prevent mail health check from causing 503 errors
+management:
+  health:
+    mail:
+      enabled: false
+
+# Enable debug logging for troubleshooting
+logging:
+  level:
+    org.springframework.mail: DEBUG
+    com.sun.mail: DEBUG
