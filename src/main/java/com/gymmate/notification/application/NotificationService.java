@@ -34,6 +34,8 @@ public class NotificationService {
     private final com.gymmate.notification.infrastructure.SseEmitterRegistry sseEmitterRegistry;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
+    private final EmailService emailService;
+
     /**
      * Create and broadcast a notification to an entire organisation.
      */
@@ -232,4 +234,12 @@ public class NotificationService {
         oldNotifications.forEach(notificationRepository::delete);
         log.info("Deleted {} old notifications for gym {}", oldNotifications.size(), gymId);
     }
+
+  /**
+   * Send test email
+   */
+  @Transactional
+  public void sendTestEmail(String to) {
+    emailService.sendHtmlEmail(to, "Test Email", "This is a test email");
+  }
 }

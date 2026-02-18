@@ -27,7 +27,7 @@ public class EmailService {
     private final TemplateEngine templateEngine;
     private final SseEmitterRegistry sseEmitterRegistry;
 
-    @Value("${spring.mail.from:no-reply@gymmatehub.com}")
+    @Value("${spring.mail.from:noreply@gymmatehub.com}")
     private String fromEmail;
 
     @Async
