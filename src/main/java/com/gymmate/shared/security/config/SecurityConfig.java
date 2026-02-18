@@ -51,6 +51,7 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/gyms/register", "/api/gyms", "/api/gyms/active", "/api/gyms/city/**",
                                 "/api/users/register/gym-owner",
+                                "/api/notifications/test-email",
                                 "/api/webhooks/**",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**",
                                 "/actuator/**", "/actuator/info")
