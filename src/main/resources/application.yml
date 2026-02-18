@@ -127,8 +127,8 @@ stripe:
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
   admin:
-    email: ${APP_ADMIN_EMAIL:admin@gymmatehub.com}
-    password: ${APP_ADMIN_PASSWORD:Admin#@1357}
+    email: ${APP_ADMIN_EMAIL:}
+    password: ${APP_ADMIN_PASSWORD:}
     firstName: ${APP_ADMIN_FIRST_NAME:System}
     lastName: ${APP_ADMIN_LAST_NAME:Admin}
   max-login-attempts: ${APP_MAX_LOGIN_ATTEMPTS:3}
