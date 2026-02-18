@@ -1,5 +1,6 @@
 package com.gymmate.unit.notification.application;
 
+import com.gymmate.notification.application.EmailService;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.notification.domain.Notification;
 import com.gymmate.notification.events.NotificationPriority;
@@ -37,6 +38,8 @@ class NotificationServiceTest {
         private com.gymmate.notification.infrastructure.SseEmitterRegistry sseEmitterRegistry;
         @Mock
         private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+        @Mock
+        private EmailService emailService;
 
         private NotificationService service;
 
@@ -46,7 +49,7 @@ class NotificationServiceTest {
 
         @BeforeEach
         void setUp() {
-                service = new NotificationService(notificationRepository, sseEmitterRegistry, objectMapper);
+                service = new NotificationService(notificationRepository, sseEmitterRegistry, objectMapper, emailService);
                 organisationId = UUID.randomUUID();
                 gymId = UUID.randomUUID();
                 notificationId = UUID.randomUUID();
