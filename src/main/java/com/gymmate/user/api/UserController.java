@@ -2,17 +2,15 @@ package com.gymmate.user.api;
 
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.security.TenantAwareUserDetails;
-import com.gymmate.shared.security.service.AuthenticationService;
 import com.gymmate.user.api.dto.UserProfileUpdateRequest;
 
 import com.gymmate.user.api.dto.UserResponse;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
-import com.gymmate.user.domain.UserRole;
+import com.gymmate.shared.constants.UserRole;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -43,7 +41,7 @@ public class UserController {
 
     /**
      * Get User profile by getting the user's id from the login token.
-     * 
+     *
      * @return User profile information
      */
     @GetMapping("/me")

@@ -1,5 +1,6 @@
 package com.gymmate.payment.domain;
 
+import com.gymmate.shared.constants.InvoiceStatus;
 import com.gymmate.shared.domain.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;

@@ -1,5 +1,8 @@
 package com.gymmate.payment.domain;
 
+import com.gymmate.shared.constants.InvoiceStatus;
+import com.gymmate.shared.constants.PaymentMethodOwnerType;
+import com.gymmate.shared.constants.PaymentMethodType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

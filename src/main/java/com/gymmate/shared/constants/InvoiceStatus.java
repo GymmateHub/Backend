@@ -1,4 +1,4 @@
-package com.gymmate.payment.domain;
+package com.gymmate.shared.constants;
 
 /**
  * Status of an invoice.
