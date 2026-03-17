@@ -2,6 +2,8 @@ package com.gymmate.notification.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.notification.domain.Notification;
 import com.gymmate.notification.events.NotificationPriority;
@@ -29,6 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -64,6 +67,9 @@ class NotificationControllerTest {
     @MockBean
     private RateLimitService rateLimitService;
 
+    @MockBean
+    private GymRepository gymRepository;
+
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -97,6 +103,11 @@ class NotificationControllerTest {
                         .burstLimit(100).burstUsed(0).burstRemaining(100)
                         .isBlocked(false).tierName("Test")
                         .build());
+
+        // Mock gym belonging to the test organisation for gym-level access checks
+        Gym gym = new Gym("Test Gym", "Test", "test@gym.com", "1234567890", organisationId);
+        gym.setId(gymId);
+        when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
     }
 
     @Nested
