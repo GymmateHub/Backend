@@ -1,7 +1,7 @@
 package com.gymmate.classes.infrastructure;
 
 import com.gymmate.classes.domain.ClassBooking;
-import com.gymmate.classes.domain.BookingStatus;
+import com.gymmate.shared.constants.BookingStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
