@@ -2,14 +2,22 @@ package com.gymmate.payment.application;
 
 import com.gymmate.notification.events.PaymentFailedEvent;
 import com.gymmate.notification.events.PaymentSuccessEvent;
+import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.notification.application.NotificationService;
+import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
+import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
+import com.gymmate.membership.domain.MemberInvoice;
+import com.gymmate.membership.domain.MemberInvoiceStatus;
+import com.gymmate.membership.domain.MembershipStatus;
 import com.gymmate.payment.domain.*;
 import com.gymmate.payment.infrastructure.GymInvoiceRepository;
 import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
 import com.gymmate.shared.config.StripeConfig;
+import com.gymmate.shared.constants.InvoiceStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.service.UtilityService;
 import com.gymmate.subscription.domain.SubscriptionRepository;
-import com.gymmate.subscription.domain.SubscriptionStatus;
+import com.gymmate.shared.constants.SubscriptionStatus;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.*;
 import com.stripe.net.Webhook;
@@ -42,6 +50,9 @@ public class StripeWebhookService {
     private final StripeConnectService connectService;
     private final ApplicationEventPublisher eventPublisher;
     private final UtilityService utilityService;
+    private final NotificationService notificationService;
+    private final MemberMembershipJpaRepository memberMembershipRepository;
+    private final MemberInvoiceRepository memberInvoiceRepository;
 
     /**
      * Process a platform webhook event (for gym subscriptions to GymMate).
@@ -424,8 +435,25 @@ public class StripeWebhookService {
 
         String gymIdStr = account.getMetadata().get("gym_id");
         if (gymIdStr != null) {
+            UUID gymId = UUID.fromString(gymIdStr);
             log.warn("Gym {} deauthorized their Stripe Connect account", gymIdStr);
-            // TODO: Handle account deauthorization - notify gym owner
+
+            // Clear Connect fields on the gym via the connect service
+            connectService.handleAccountDeauthorized(gymId);
+
+            // Notify gym owner via the notification system
+            String orgIdStr = account.getMetadata().get("organisation_id");
+            UUID organisationId = orgIdStr != null ? UUID.fromString(orgIdStr) : null;
+
+            if (organisationId != null) {
+                notificationService.createAndBroadcast(
+                        "⚠️ Stripe Account Disconnected",
+                        "Your Stripe Connect account has been disconnected. Member payments will not be processed until you reconnect.",
+                        organisationId,
+                        NotificationPriority.CRITICAL,
+                        "STRIPE_CONNECT_DEAUTHORIZED",
+                        java.util.Map.of("gymId", gymId.toString()));
+            }
         }
     }
 
@@ -434,9 +462,65 @@ public class StripeWebhookService {
         if (paymentIntent == null)
             return;
 
-        log.info("Connect payment succeeded: {} for amount {}",
-                paymentIntent.getId(), paymentIntent.getAmount());
-        // TODO: Update member membership payment status
+        BigDecimal amount = BigDecimal.valueOf(paymentIntent.getAmount())
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        String currency = paymentIntent.getCurrency() != null ? paymentIntent.getCurrency().toUpperCase() : "USD";
+
+        log.info("Connect payment succeeded: {} for amount {} {}",
+                paymentIntent.getId(), amount, currency);
+
+        // Look up the membership via metadata on the PaymentIntent
+        var metadata = paymentIntent.getMetadata();
+        String membershipId = metadata != null ? metadata.get("membership_id") : null;
+        String memberId = metadata != null ? metadata.get("member_id") : null;
+        String gymIdStr = metadata != null ? metadata.get("gym_id") : null;
+
+        if (membershipId != null) {
+            memberMembershipRepository.findById(UUID.fromString(membershipId))
+                    .ifPresent(membership -> {
+                        // Mark membership active if it was pending/past_due
+                        if (membership.getStatus() == MembershipStatus.EXPIRED
+                                || membership.getStatus() == MembershipStatus.CANCELLED) {
+                            membership.setStatus(MembershipStatus.ACTIVE);
+                            memberMembershipRepository.save(membership);
+                            log.info("Membership {} reactivated after payment", membershipId);
+                        }
+
+                        // Create a paid invoice record
+                        MemberInvoice invoice = MemberInvoice.builder()
+                                .memberId(membership.getMemberId())
+                                .membershipId(membership.getId())
+                                .amount(amount)
+                                .currency(currency)
+                                .status(MemberInvoiceStatus.PAID)
+                                .description("Membership payment via Stripe Connect")
+                                .paidAt(LocalDateTime.now())
+                                .build();
+                        invoice.setGymId(membership.getGymId());
+                        invoice.setOrganisationId(membership.getOrganisationId());
+                        memberInvoiceRepository.save(invoice);
+                    });
+        }
+
+        // Publish payment success event for notifications
+        if (gymIdStr != null) {
+            UUID gymId = UUID.fromString(gymIdStr);
+            UUID organisationId = null;
+            if (membershipId != null) {
+                organisationId = memberMembershipRepository.findById(UUID.fromString(membershipId))
+                        .map(m -> m.getOrganisationId()).orElse(null);
+            }
+
+            if (organisationId != null) {
+                PaymentSuccessEvent successEvent = PaymentSuccessEvent.builder()
+                        .organisationId(organisationId)
+                        .gymId(gymId)
+                        .amount(amount)
+                        .invoiceNumber(paymentIntent.getId())
+                        .build();
+                eventPublisher.publishEvent(successEvent);
+            }
+        }
     }
 
     private void handleConnectPaymentFailed(Event event) {
@@ -444,9 +528,56 @@ public class StripeWebhookService {
         if (paymentIntent == null)
             return;
 
-        log.warn("Connect payment failed: {} - {}",
-                paymentIntent.getId(), paymentIntent.getLastPaymentError());
-        // TODO: Handle member payment failure - notify gym and member
+        BigDecimal amount = BigDecimal.valueOf(paymentIntent.getAmount())
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        String failureMessage = paymentIntent.getLastPaymentError() != null
+                ? paymentIntent.getLastPaymentError().getMessage()
+                : "Payment could not be processed";
+
+        log.warn("Connect payment failed: {} - {}", paymentIntent.getId(), failureMessage);
+
+        // Look up the membership via metadata
+        var metadata = paymentIntent.getMetadata();
+        String membershipId = metadata != null ? metadata.get("membership_id") : null;
+        String gymIdStr = metadata != null ? metadata.get("gym_id") : null;
+
+        UUID organisationId = null;
+
+        if (membershipId != null) {
+            var membershipOpt = memberMembershipRepository.findById(UUID.fromString(membershipId));
+            if (membershipOpt.isPresent()) {
+                var membership = membershipOpt.get();
+                organisationId = membership.getOrganisationId();
+
+                // Create a failed invoice record
+                MemberInvoice invoice = MemberInvoice.builder()
+                        .memberId(membership.getMemberId())
+                        .membershipId(membership.getId())
+                        .amount(amount)
+                        .currency(paymentIntent.getCurrency() != null ? paymentIntent.getCurrency().toUpperCase() : "USD")
+                        .status(MemberInvoiceStatus.PAYMENT_FAILED)
+                        .description("Payment failed: " + failureMessage)
+                        .build();
+                invoice.setGymId(membership.getGymId());
+                invoice.setOrganisationId(membership.getOrganisationId());
+                memberInvoiceRepository.save(invoice);
+            }
+        }
+
+        // Publish payment failed event to notify gym owner and member
+        if (gymIdStr != null && organisationId != null) {
+            UUID gymId = UUID.fromString(gymIdStr);
+            PaymentFailedEvent failedEvent = PaymentFailedEvent.builder()
+                    .organisationId(organisationId)
+                    .gymId(gymId)
+                    .amount(amount)
+                    .failureReason(failureMessage)
+                    .nextRetryDate(LocalDateTime.now().plusDays(3))
+                    .invoiceId(paymentIntent.getId())
+                    .build();
+            eventPublisher.publishEvent(failedEvent);
+            log.info("Published PaymentFailedEvent for Connect payment failure on gym {}", gymIdStr);
+        }
     }
 
     // Helper methods

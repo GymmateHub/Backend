@@ -1,7 +1,7 @@
 package com.gymmate.classes.infrastructure;
 
 import com.gymmate.classes.domain.ClassSchedule;
-import com.gymmate.classes.domain.ClassScheduleStatus;
+import com.gymmate.shared.constants.ClassScheduleStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

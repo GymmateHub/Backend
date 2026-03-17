@@ -89,15 +89,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         return path.equals("/") ||
                 path.equals("/error") ||
-                path.startsWith("/api/auth/") ||
+                path.equals("/api/auth/login") ||
+                path.startsWith("/api/auth/register/") ||
+                path.startsWith("/api/auth/invite/") ||
+                path.startsWith("/api/auth/password-reset/") ||
+                path.equals("/api/auth/refresh") ||
+                path.startsWith("/api/auth/email-status/") ||
                 path.equals("/api/gyms/register") ||
                 path.equals("/api/users/register/gym-owner") ||
                 path.startsWith("/v3/api-docs") ||
                 path.startsWith("/swagger-ui") ||
                 path.startsWith("/webjars/") ||
                 path.startsWith("/actuator/health") ||
-                path.startsWith("/actuator/info")
-
-          || path.startsWith("/api/notifications/test-email");
+                path.startsWith("/actuator/info") ||
+                path.startsWith("/api/webhooks/") ||
+                path.startsWith("/api/notifications/test-email");
     }
 }

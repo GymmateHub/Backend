@@ -1,5 +1,6 @@
 package com.gymmate.unit.subscription.domain;
 
+import com.gymmate.shared.constants.SubscriptionStatus;
 import com.gymmate.subscription.domain.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
