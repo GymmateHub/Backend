@@ -1,5 +1,9 @@
 package com.gymmate.payment.domain;
 
+import com.gymmate.shared.constants.RefundReasonCategory;
+import com.gymmate.shared.constants.RefundRequestStatus;
+import com.gymmate.shared.constants.RefundStatus;
+import com.gymmate.shared.constants.RefundType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
