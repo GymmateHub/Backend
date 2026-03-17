@@ -2,6 +2,7 @@ package com.gymmate.fixtures;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.payment.domain.*;
+import com.gymmate.shared.constants.*;
 import com.gymmate.user.domain.*;
 
 import java.math.BigDecimal;
@@ -34,7 +35,7 @@ public class TestFixtures {
     }
 
     public static User createGymOwner() {
-        return createUser("owner@gym.com", UserRole.OWNER);
+        return createUser("owner@gym.com", UserRole.GYM_OWNER);
     }
 
     public static User createSuperAdmin() {

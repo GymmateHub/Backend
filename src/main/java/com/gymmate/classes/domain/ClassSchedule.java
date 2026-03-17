@@ -1,5 +1,6 @@
 package com.gymmate.classes.domain;
 
+import com.gymmate.shared.constants.ClassScheduleStatus;
 import com.gymmate.shared.domain.GymScopedEntity;
 import jakarta.persistence.*;
 import lombok.*;

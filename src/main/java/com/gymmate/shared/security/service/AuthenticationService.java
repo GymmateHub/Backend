@@ -5,25 +5,26 @@ import com.gymmate.gym.domain.Gym;
 import com.gymmate.notification.application.EmailService;
 import com.gymmate.organisation.application.OrganisationService;
 import com.gymmate.organisation.domain.Organisation;
+import com.gymmate.shared.constants.AuditEventType;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.InvalidTokenException;
 import com.gymmate.shared.exception.NotFoundException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
+import com.gymmate.shared.security.aspect.AuditLog;
 import com.gymmate.shared.security.domain.PasswordResetToken;
 import com.gymmate.shared.security.domain.TokenBlacklist;
 import com.gymmate.shared.security.dto.*;
 import com.gymmate.shared.security.repository.PasswordResetTokenRepository;
 import com.gymmate.shared.security.repository.TokenBlacklistRepository;
-import com.gymmate.shared.service.PasswordService;
 import com.gymmate.user.api.dto.InviteAcceptRequest;
 import com.gymmate.user.api.dto.MemberRegistrationRequest;
 import com.gymmate.user.api.dto.OwnerRegistrationRequest;
 import com.gymmate.user.application.InviteService;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
-import com.gymmate.user.domain.UserRole;
-import com.gymmate.user.domain.UserStatus;
+import com.gymmate.shared.constants.UserRole;
+import com.gymmate.shared.constants.UserStatus;
 import com.gymmate.user.api.dto.ValidateInviteResponse;
 import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -61,6 +62,9 @@ public class AuthenticationService {
     private final GymService gymService;
     private final InviteService inviteService;
 
+    private final LoginAttemptService loginAttemptService;
+    private final PasswordPolicyService passwordPolicyService;
+
     private static final int OTP_VALIDITY_MINUTES = 5;
 
     @Value("${app.password-reset.expiration-minutes:30}")
@@ -72,18 +76,32 @@ public class AuthenticationService {
     // ==================== AUTHENTICATION ====================
 
     @Transactional
+    @AuditLog(eventType = AuditEventType.LOGIN_SUCCESS, message = "User login successful")
     public LoginResponse authenticate(LoginRequest request) {
         try {
-            log.debug("Attempting authentication for user: {}", request.getEmail());
+            // Check if account is locked
+            if (loginAttemptService.isAccountLocked(request.email())) {
+                long remainingTime = loginAttemptService.getRemainingLockoutTime(request.email());
+                throw new BadCredentialsException(
+                    String.format("Account is locked. Try again in %d minutes", remainingTime));
+            }
 
-            User user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new BadCredentialsException("User not found"));
+            log.debug("Attempting authentication for user: {}", request.email());
+
+            User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> {
+                    loginAttemptService.loginFailed(request.email());
+                    return new BadCredentialsException("User not found");
+                });
 
             log.debug("User found - ID: {}, email: {}", user.getId(), user.getEmail());
 
-            // Spring Security's AuthenticationManager validates credentials
+            // SECURITY: Spring Security's AuthenticationManager validates credentials - ONLY ONCE
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+
+            // Successful login - clear attempts
+            loginAttemptService.loginSucceeded(request.email());
 
             if (user.getStatus() != UserStatus.ACTIVE && user.getStatus() != UserStatus.INACTIVE) {
                 log.warn("User with invalid status attempted to login: {}", user.getEmail());
@@ -133,12 +151,14 @@ public class AuthenticationService {
                     .build();
 
         } catch (AuthenticationException ex) {
-            log.error("Authentication failed for user: {}", request.getEmail(), ex);
-            throw new BadCredentialsException("Invalid email or password");
+          loginAttemptService.loginFailed(request.email());
+          log.error("Authentication failed for user: {}", request.email(), ex);
+          throw new BadCredentialsException("Invalid email or password");
         }
     }
 
     @Transactional
+    @AuditLog(eventType = AuditEventType.LOGOUT)
     public void logout(String token) {
         if (token == null || token.isEmpty() || token.trim().isBlank()) {
             log.debug("No token provided for logout");
@@ -167,6 +187,7 @@ public class AuthenticationService {
     // ==================== PASSWORD RESET ====================
 
     @Transactional
+    @AuditLog(eventType = AuditEventType.PASSWORD_RESET_REQUEST, message = "Password reset requested")
     public void initiatePasswordReset(PasswordResetRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
@@ -240,7 +261,7 @@ public class AuthenticationService {
                 .lastName(request.lastName())
                 .passwordHash(passwordService.encode(request.password()))
                 .phone(request.phone())
-                .role(UserRole.OWNER)
+                .role(UserRole.GYM_OWNER)
                 .status(UserStatus.INACTIVE) // Requires OTP verification
                 .emailVerified(false)
                 .build();
@@ -460,20 +481,43 @@ public class AuthenticationService {
                 .build();
     }
 
+    // Update password change methods to check history
+    @AuditLog(eventType = AuditEventType.PASSWORD_CHANGE, message = "Password changed successfully")
+    public void changePassword(UUID userId, String oldPassword, String newPassword) {
+      User user = userRepository.findById(userId)
+        .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
+
+      // Verify old password
+      if (!passwordService.matches(oldPassword, user.getPasswordHash())) {
+        throw new BadCredentialsException("Current password is incorrect");
+      }
+
+      // Validate new password
+      PasswordPolicyService.PasswordValidationResult result =
+        passwordPolicyService.validatePassword(newPassword, userId);
+
+      if (!result.valid()) {
+        throw new DomainException("WEAK_PASSWORD",
+          "Password does not meet security requirements: " + String.join(", ", result.errors()));
+      }
+
+      // Update password
+      String newHashedPassword = passwordService.encode(newPassword);
+      user.setPasswordHash(newHashedPassword);
+      userRepository.save(user);
+
+      // Add to password history
+      passwordPolicyService.addToPasswordHistory(userId, newHashedPassword);
+    }
+
     // ==================== PRIVATE HELPERS ====================
 
-    private void validatePassword(String password) {
-        if (password == null || password.trim().length() < 8) {
-            throw new DomainException("WEAK_PASSWORD", "Password must be at least 8 characters long");
-        }
-        if (!password.matches(".*[A-Z].*")) {
-            throw new DomainException("WEAK_PASSWORD", "Password must contain at least one uppercase letter");
-        }
-        if (!password.matches(".*[a-z].*")) {
-            throw new DomainException("WEAK_PASSWORD", "Password must contain at least one lowercase letter");
-        }
-        if (!password.matches(".*\\d.*")) {
-            throw new DomainException("WEAK_PASSWORD", "Password must contain at least one digit");
-        }
+  private void validatePassword(String password) {
+    PasswordPolicyService.PasswordValidationResult result = passwordPolicyService.validatePassword(password, null);
+
+    if (!result.valid()) {
+      throw new DomainException("WEAK_PASSWORD",
+        "Password does not meet security requirements: " + String.join(", ", result.errors()));
     }
+  }
 }

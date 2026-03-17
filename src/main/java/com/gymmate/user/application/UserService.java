@@ -3,8 +3,8 @@ package com.gymmate.user.application;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.UserRepository;
-import com.gymmate.user.domain.UserRole;
-import com.gymmate.user.domain.UserStatus;
+import com.gymmate.shared.constants.UserRole;
+import com.gymmate.shared.constants.UserStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -109,5 +109,12 @@ public class UserService {
      */
     public List<User> findAll() {
         return userRepository.findAll();
+    }
+
+    /**
+     * Find all users belonging to an organisation.
+     */
+    public List<User> findByOrganisationId(UUID organisationId) {
+        return userRepository.findByOrganisationId(organisationId);
     }
 }

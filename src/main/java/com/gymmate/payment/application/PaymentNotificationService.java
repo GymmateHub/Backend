@@ -2,8 +2,12 @@ package com.gymmate.payment.application;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.organisation.domain.Organisation;
+import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import com.gymmate.payment.domain.GymInvoice;
 import com.gymmate.subscription.domain.Subscription;
+import com.gymmate.user.domain.User;
+import com.gymmate.user.infrastructure.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +35,8 @@ public class PaymentNotificationService {
 
     private final JavaMailSender emailSender;
     private final GymRepository gymRepository;
+    private final OrganisationRepository organisationRepository;
+    private final UserRepository userRepository;
 
     @Value("${spring.mail.from:no-reply@gymmatehub.com}")
     private String fromEmail;
@@ -45,20 +51,24 @@ public class PaymentNotificationService {
      */
     @Async
     public void sendTrialEndingReminder(UUID organisationId, Subscription subscription) {
-        // For now, send to first gym's contact email or use organisation contact
-        // TODO: Update to send to organisation owner's email instead
-        Gym gym = getGym(organisationId);
-        if (gym == null) return;
+        // Resolve the organisation owner's email for billing notifications
+        String recipientEmail = resolveOrganisationOwnerEmail(organisationId);
+        if (recipientEmail == null) return;
+
+        // Fall back to gym name for display if available
+        String orgName = organisationRepository.findById(organisationId)
+                .map(Organisation::getName)
+                .orElse("Your Gym");
 
         String subject = "Your GymMate Trial Ends in 3 Days";
         String tierName = subscription.getTier().getDisplayName();
         BigDecimal price = subscription.getTier().getPrice();
         LocalDateTime trialEnd = subscription.getTrialEnd();
 
-        String htmlContent = buildTrialEndingEmail(gym.getName(), tierName, price, trialEnd);
+        String htmlContent = buildTrialEndingEmail(orgName, tierName, price, trialEnd);
 
-        sendEmail(gym.getContactEmail(), subject, htmlContent);
-        log.info("Sent trial ending reminder to organisation {}", organisationId);
+        sendEmail(recipientEmail, subject, htmlContent);
+        log.info("Sent trial ending reminder to organisation {} ({})", organisationId, recipientEmail);
     }
 
     /**
@@ -148,6 +158,41 @@ public class PaymentNotificationService {
 
     private Gym getGym(UUID gymId) {
         return gymRepository.findById(gymId).orElse(null);
+    }
+
+    /**
+     * Resolve the organisation owner's email for billing/payment notifications.
+     * Priority: owner user email → org billing email → org contact email.
+     */
+    private String resolveOrganisationOwnerEmail(UUID organisationId) {
+        Organisation org = organisationRepository.findById(organisationId).orElse(null);
+        if (org == null) {
+            log.warn("Organisation {} not found, cannot send notification", organisationId);
+            return null;
+        }
+
+        // 1. Try the owner user's email
+        if (org.getOwnerUserId() != null) {
+            String ownerEmail = userRepository.findById(org.getOwnerUserId())
+                    .map(User::getEmail)
+                    .orElse(null);
+            if (ownerEmail != null && !ownerEmail.isBlank()) {
+                return ownerEmail;
+            }
+        }
+
+        // 2. Fall back to org billing email
+        if (org.getBillingEmail() != null && !org.getBillingEmail().isBlank()) {
+            return org.getBillingEmail();
+        }
+
+        // 3. Fall back to org contact email
+        if (org.getContactEmail() != null && !org.getContactEmail().isBlank()) {
+            return org.getContactEmail();
+        }
+
+        log.warn("No email found for organisation {}", organisationId);
+        return null;
     }
 
     private void sendEmail(String to, String subject, String htmlContent) {
