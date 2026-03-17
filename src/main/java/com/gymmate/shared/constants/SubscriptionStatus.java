@@ -1,4 +1,4 @@
-package com.gymmate.subscription.domain;
+package com.gymmate.shared.constants;
 
 public enum SubscriptionStatus {
     TRIAL("Trial period"),

@@ -2,8 +2,8 @@ package com.gymmate.shared.config;
 
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.user.domain.User;
-import com.gymmate.user.domain.UserRole;
-import com.gymmate.user.domain.UserStatus;
+import com.gymmate.shared.constants.UserRole;
+import com.gymmate.shared.constants.UserStatus;
 import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

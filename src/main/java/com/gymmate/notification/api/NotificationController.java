@@ -1,9 +1,13 @@
 package com.gymmate.notification.api;
 
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.notification.api.dto.NotificationResponse;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.notification.domain.Notification;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,12 +37,13 @@ import java.util.UUID;
 public class NotificationController {
 
     private final NotificationService notificationService;
+    private final GymRepository gymRepository;
 
     /**
      * Get all notifications for the current organisation with pagination.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
     @Operation(summary = "Get notifications", description = "Get paginated list of notifications")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -58,7 +63,7 @@ public class NotificationController {
      * Get unread notifications.
      */
     @GetMapping("/unread")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
     @Operation(summary = "Get unread notifications", description = "Get paginated list of unread notifications")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getUnreadNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -78,7 +83,7 @@ public class NotificationController {
      * Get unread notification count.
      */
     @GetMapping("/unread-count")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
     @Operation(summary = "Get unread count", description = "Get count of unread notifications for badge display")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getUnreadCount(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
@@ -95,7 +100,7 @@ public class NotificationController {
      * Get a single notification by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
     @Operation(summary = "Get notification by ID")
     public ResponseEntity<ApiResponse<NotificationResponse>> getNotification(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -115,7 +120,7 @@ public class NotificationController {
      * Mark a notification as read.
      */
     @PatchMapping("/{id}/read")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
     @Operation(summary = "Mark as read", description = "Mark a notification as read")
     public ResponseEntity<ApiResponse<NotificationResponse>> markAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -136,7 +141,7 @@ public class NotificationController {
      * Mark all notifications as read.
      */
     @PostMapping("/mark-all-read")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
     @Operation(summary = "Mark all as read", description = "Mark all notifications as read for the organisation")
     public ResponseEntity<ApiResponse<String>> markAllAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
@@ -152,7 +157,7 @@ public class NotificationController {
      * Get all notifications for a specific gym with pagination.
      */
     @GetMapping("/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('GYM_MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
     @Operation(summary = "Get gym notifications", description = "Get paginated list of notifications for a specific gym")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getGymNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -160,8 +165,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        UUID organisationId = userDetails.getOrganisationId();
-        // TODO: Verify user has access to this gym (check gym membership or role)
+        verifyGymAccess(gymId, userDetails.getOrganisationId());
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Notification> notifications = notificationService.getGymNotifications(gymId, pageable);
@@ -175,7 +179,7 @@ public class NotificationController {
      * Get unread notifications for a specific gym.
      */
     @GetMapping("/gym/{gymId}/unread")
-    @PreAuthorize("hasAnyRole('GYM_MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
     @Operation(summary = "Get unread gym notifications", description = "Get paginated list of unread notifications for a specific gym")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getUnreadGymNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -183,8 +187,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        UUID organisationId = userDetails.getOrganisationId();
-        // TODO: Verify user has access to this gym
+        verifyGymAccess(gymId, userDetails.getOrganisationId());
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Notification> notifications = notificationService.getUnreadGymNotifications(gymId, pageable);
@@ -197,14 +200,13 @@ public class NotificationController {
      * Get unread notification count for a gym.
      */
     @GetMapping("/gym/{gymId}/unread-count")
-    @PreAuthorize("hasAnyRole('GYM_MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
     @Operation(summary = "Get gym unread count", description = "Get count of unread notifications for a gym (for badge display)")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getGymUnreadCount(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
             @PathVariable UUID gymId) {
 
-        UUID organisationId = userDetails.getOrganisationId();
-        // TODO: Verify user has access to this gym
+        verifyGymAccess(gymId, userDetails.getOrganisationId());
 
         long count = notificationService.getUnreadGymCount(gymId);
 
@@ -219,14 +221,13 @@ public class NotificationController {
      * Mark all gym notifications as read.
      */
     @PostMapping("/gym/{gymId}/mark-all-read")
-    @PreAuthorize("hasAnyRole('GYM_MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
     @Operation(summary = "Mark all gym notifications as read", description = "Mark all notifications as read for a specific gym")
     public ResponseEntity<ApiResponse<String>> markAllGymNotificationsAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
             @PathVariable UUID gymId) {
 
-        UUID organisationId = userDetails.getOrganisationId();
-        // TODO: Verify user has access to this gym
+        verifyGymAccess(gymId, userDetails.getOrganisationId());
 
         notificationService.markAllGymNotificationsAsRead(gymId);
         log.info("Marked all notifications as read for gym: {}", gymId);
@@ -242,5 +243,13 @@ public class NotificationController {
 
     notificationService.sendTestEmail("davidgodswill@gmail.com");
     return ResponseEntity.ok(ApiResponse.success("Test email sent successfully"));
+  }
+
+  private void verifyGymAccess(UUID gymId, UUID organisationId) {
+      Gym gym = gymRepository.findById(gymId)
+              .orElseThrow(() -> new ResourceNotFoundException("Gym", gymId.toString()));
+      if (!gym.getOrganisationId().equals(organisationId)) {
+          throw new DomainException("ACCESS_DENIED", "You do not have access to this gym");
+      }
   }
 }

@@ -1,5 +1,6 @@
 package com.gymmate.gym.domain;
 
+import com.gymmate.shared.constants.GymStatus;
 import com.gymmate.shared.domain.TenantEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
