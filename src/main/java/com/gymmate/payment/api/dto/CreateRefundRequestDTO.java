@@ -1,7 +1,7 @@
 package com.gymmate.payment.api.dto;
 
-import com.gymmate.payment.domain.RefundReasonCategory;
-import com.gymmate.payment.domain.RefundType;
+import com.gymmate.shared.constants.RefundReasonCategory;
+import com.gymmate.shared.constants.RefundType;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

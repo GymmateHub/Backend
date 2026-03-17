@@ -1,7 +1,7 @@
 package com.gymmate.classes.application;
 
 import com.gymmate.classes.domain.ClassSchedule;
-import com.gymmate.classes.domain.ClassScheduleStatus;
+import com.gymmate.shared.constants.ClassScheduleStatus;
 import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
 import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
 import com.gymmate.shared.exception.DomainException;

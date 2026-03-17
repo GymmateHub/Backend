@@ -1,4 +1,4 @@
-package com.gymmate.shared.service;
+package com.gymmate.shared.security.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

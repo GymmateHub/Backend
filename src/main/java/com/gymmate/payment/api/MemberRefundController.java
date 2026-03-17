@@ -3,7 +3,7 @@ package com.gymmate.payment.api;
 import com.gymmate.payment.api.dto.CreateRefundRequestDTO;
 import com.gymmate.payment.api.dto.RefundRequestResponse;
 import com.gymmate.payment.application.RefundRequestService;
-import com.gymmate.payment.domain.RefundType;
+import com.gymmate.shared.constants.RefundType;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
