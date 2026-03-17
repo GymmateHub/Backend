@@ -1,6 +1,6 @@
 package com.gymmate.user.infrastructure;
 
-import com.gymmate.user.domain.InviteStatus;
+import com.gymmate.shared.constants.InviteStatus;
 import com.gymmate.user.domain.UserInvite;
 import org.springframework.data.jpa.repository.JpaRepository;
 

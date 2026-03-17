@@ -2,6 +2,7 @@ package com.gymmate.fixtures;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.payment.domain.*;
+import com.gymmate.shared.constants.*;
 import com.gymmate.user.domain.*;
 
 import java.math.BigDecimal;
