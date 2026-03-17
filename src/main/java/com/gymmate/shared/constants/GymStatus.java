@@ -1,4 +1,4 @@
-package com.gymmate.gym.domain;
+package com.gymmate.shared.constants;
 
 /**
  * Enumeration of gym subscription statuses in the system.

@@ -1,7 +1,7 @@
 package com.gymmate.user.api.dto;
 
     import com.gymmate.user.domain.Member;
-import com.gymmate.user.domain.MemberStatus;
+import com.gymmate.shared.constants.MemberStatus;
 
 import java.time.LocalDate;
 import java.util.UUID;

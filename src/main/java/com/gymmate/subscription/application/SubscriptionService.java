@@ -1,6 +1,7 @@
 package com.gymmate.subscription.application;
 
 import com.gymmate.payment.application.StripePaymentService;
+import com.gymmate.shared.constants.SubscriptionStatus;
 import com.gymmate.subscription.domain.*;
 import com.gymmate.subscription.infrastructure.*;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,6 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.Map;
 
 import java.time.LocalDateTime;
@@ -199,7 +199,36 @@ public class SubscriptionService {
         if (usage.needsUpgradeNotification()) {
             log.warn("Organisation {} should consider upgrading - overage cost exceeds 50% of base cost",
                     organisationId);
-            // TODO: Send notification
+
+            // Send in-app notification
+            notificationService.createAndBroadcast(
+                    "📈 Consider Upgrading Your Plan",
+                    "Your current usage has exceeded your plan limits. Overage charges now exceed 50% of your base plan cost. "
+                            + "Upgrading to a higher tier could save you money.",
+                    organisationId,
+                    NotificationPriority.MEDIUM,
+                    "SUBSCRIPTION_UPGRADE_SUGGESTED",
+                    Map.of(
+                            "currentTier", subscription.getTier().getName(),
+                            "memberCount", memberCount,
+                            "memberLimit", subscription.getTier().getMaxMembers()
+                    ));
+
+            // Send email to organisation contact
+            organisationRepository.findById(organisationId).ifPresent(org -> {
+                String email = org.getBillingEmail() != null && !org.getBillingEmail().isBlank()
+                        ? org.getBillingEmail()
+                        : org.getContactEmail();
+                if (email != null && !email.isBlank()) {
+                    emailService.sendHtmlEmail(email,
+                            "Consider Upgrading Your GymMate Plan",
+                            "<p>Hi " + org.getName() + ",</p>"
+                                    + "<p>Your current member count (" + memberCount + ") has exceeded your plan limits. "
+                                    + "Overage charges now exceed 50% of your base cost.</p>"
+                                    + "<p>We recommend upgrading to reduce costs and unlock more features.</p>"
+                                    + "<p><a href='http://localhost:3000/gym/settings/subscription'>View Plans</a></p>");
+                }
+            });
         }
     }
 

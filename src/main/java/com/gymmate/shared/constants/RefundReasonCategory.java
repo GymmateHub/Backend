@@ -1,4 +1,4 @@
-package com.gymmate.payment.domain;
+package com.gymmate.shared.constants;
 
 /**
  * Reason categories for refund requests.

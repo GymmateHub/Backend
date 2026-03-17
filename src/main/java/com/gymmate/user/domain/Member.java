@@ -1,5 +1,6 @@
 package com.gymmate.user.domain;
 
+import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.shared.domain.GymScopedEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
