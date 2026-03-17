@@ -86,7 +86,7 @@ class AuthenticationServiceTest {
         User result = authenticationService.registerOwner(request);
 
         assertNotNull(result);
-        assertEquals(UserRole.OWNER, result.getRole());
+        assertEquals(UserRole.GYM_OWNER, result.getRole());
         verify(userRepository).save(any(User.class));
         verify(organisationService).createHub(eq("My Org"), eq("owner@example.com"), any(User.class));
         verify(gymService).saveGym(any(Gym.class));
