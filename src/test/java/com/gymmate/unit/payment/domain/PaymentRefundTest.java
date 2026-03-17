@@ -1,6 +1,8 @@
 package com.gymmate.unit.payment.domain;
 
 import com.gymmate.payment.domain.*;
+import com.gymmate.shared.constants.RefundStatus;
+import com.gymmate.shared.constants.RefundType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -8,7 +10,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;

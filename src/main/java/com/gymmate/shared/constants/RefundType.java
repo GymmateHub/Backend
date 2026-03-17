@@ -1,4 +1,4 @@
-package com.gymmate.payment.domain;
+package com.gymmate.shared.constants;
 
 /**
  * Type of refund based on payment source.

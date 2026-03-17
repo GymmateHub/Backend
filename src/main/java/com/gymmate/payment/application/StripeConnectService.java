@@ -246,6 +246,22 @@ public class StripeConnectService {
     }
 
     /**
+     * Handle account.application.deauthorized webhook event.
+     * Clears the Connect account fields on the gym so it can re-onboard later.
+     */
+    @Transactional
+    public void handleAccountDeauthorized(UUID gymId) {
+        Gym gym = getGym(gymId);
+        gym.setStripeConnectAccountId(null);
+        gym.setStripeChargesEnabled(false);
+        gym.setStripePayoutsEnabled(false);
+        gym.setStripeDetailsSubmitted(false);
+        gym.setStripeOnboardingCompletedAt(null);
+        gymRepository.save(gym);
+        log.warn("Cleared Stripe Connect fields for deauthorized gym {}", gymId);
+    }
+
+    /**
      * Handle account.updated webhook event.
      */
     @Transactional

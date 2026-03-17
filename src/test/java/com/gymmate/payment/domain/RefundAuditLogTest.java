@@ -1,5 +1,9 @@
 package com.gymmate.payment.domain;
 
+import com.gymmate.shared.constants.RefundReasonCategory;
+import com.gymmate.shared.constants.RefundRequestStatus;
+import com.gymmate.shared.constants.RefundStatus;
+import com.gymmate.shared.constants.RefundType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -206,7 +210,6 @@ class RefundAuditLogTest {
     // Helper method
     private RefundRequestEntity createRequest(RefundRequestStatus status) {
         RefundRequestEntity request = RefundRequestEntity.builder()
-                .gymId(UUID.randomUUID())
                 .refundType(RefundType.MEMBER_PAYMENT)
                 .originalPaymentAmount(new BigDecimal("100.00"))
                 .requestedRefundAmount(new BigDecimal("50.00"))
@@ -218,6 +221,7 @@ class RefundAuditLogTest {
                 .status(status)
                 .build();
         request.setId(UUID.randomUUID());
+        request.setGymId(UUID.randomUUID());
         return request;
     }
 }

@@ -8,8 +8,12 @@ import com.gymmate.payment.domain.*;
 import com.gymmate.payment.infrastructure.PaymentRefundRepository;
 import com.gymmate.payment.infrastructure.RefundAuditLogRepository;
 import com.gymmate.payment.infrastructure.RefundRequestRepository;
+import com.gymmate.shared.constants.RefundReasonCategory;
+import com.gymmate.shared.constants.RefundRequestStatus;
+import com.gymmate.shared.constants.RefundType;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.user.application.UserService;
+import com.gymmate.shared.security.service.TenantValidationService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -28,6 +32,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -49,10 +54,14 @@ class RefundRequestServiceTest {
         @Mock
         private UserService userService;
 
+        @Mock
+        private TenantValidationService tenantValidationService;
+
         private RefundRequestService refundRequestService;
 
         // Test data
         private UUID gymId;
+        private UUID organisationId;
         private UUID requesterId;
         private UUID recipientId;
         private String paymentIntentId;
@@ -64,9 +73,11 @@ class RefundRequestServiceTest {
                                 auditLogRepository,
                                 paymentRefundRepository,
                                 stripePaymentService,
-                                userService);
+                                userService,
+                                tenantValidationService);
 
                 gymId = UUID.randomUUID();
+                organisationId = UUID.randomUUID();
                 requesterId = UUID.randomUUID();
                 recipientId = UUID.randomUUID();
                 paymentIntentId = "pi_test123";
@@ -221,7 +232,9 @@ class RefundRequestServiceTest {
                         UUID approverId = UUID.randomUUID();
 
                         RefundRequestEntity request = createPendingRequest(requestId);
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
                         when(refundRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
                         // Act
@@ -243,8 +256,11 @@ class RefundRequestServiceTest {
                                         .status(RefundRequestStatus.PROCESSED)
                                         .build();
                         request.setId(requestId);
+                        request.setOrganisationId(organisationId);
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
 
                         // Act & Assert
                         assertThatThrownBy(() -> refundRequestService.approveRequest(
@@ -258,7 +274,9 @@ class RefundRequestServiceTest {
                 void approveRequest_NotFound_ThrowsException() {
                         // Arrange
                         UUID requestId = UUID.randomUUID();
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.empty());
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.empty());
 
                         // Act & Assert
                         assertThatThrownBy(() -> refundRequestService.approveRequest(
@@ -280,7 +298,9 @@ class RefundRequestServiceTest {
                         UUID rejecterId = UUID.randomUUID();
 
                         RefundRequestEntity request = createPendingRequest(requestId);
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
                         when(refundRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
                         // Act
@@ -303,8 +323,11 @@ class RefundRequestServiceTest {
                                         .status(RefundRequestStatus.REJECTED)
                                         .build();
                         request.setId(requestId);
+                        request.setOrganisationId(organisationId);
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
 
                         // Act & Assert
                         assertThatThrownBy(() -> refundRequestService.rejectRequest(
@@ -328,9 +351,12 @@ class RefundRequestServiceTest {
                                         .requestedByUserId(requesterId)
                                         .build();
                         request.setId(requestId);
+                        request.setOrganisationId(organisationId);
                         request.setCreatedAt(LocalDateTime.now());
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
                         when(refundRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
                         // Act
@@ -353,9 +379,12 @@ class RefundRequestServiceTest {
                                         .requestedByUserId(requesterId) // Different user
                                         .build();
                         request.setId(requestId);
+                        request.setOrganisationId(organisationId);
                         request.setCreatedAt(LocalDateTime.now());
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
                         when(refundRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
                         // Act
@@ -377,8 +406,11 @@ class RefundRequestServiceTest {
                                         .requestedByUserId(requesterId)
                                         .build();
                         request.setId(requestId);
+                        request.setOrganisationId(organisationId);
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
 
                         // Act & Assert
                         assertThatThrownBy(() -> refundRequestService.cancelRequest(
@@ -397,8 +429,11 @@ class RefundRequestServiceTest {
                                         .requestedByUserId(requesterId)
                                         .build();
                         request.setId(requestId);
+                        request.setOrganisationId(organisationId);
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
 
                         // Act & Assert
                         assertThatThrownBy(() -> refundRequestService.cancelRequest(
@@ -420,7 +455,6 @@ class RefundRequestServiceTest {
                         UUID processorId = UUID.randomUUID();
 
                         RefundRequestEntity request = RefundRequestEntity.builder()
-                                        .gymId(gymId)
                                         .status(RefundRequestStatus.APPROVED)
                                         .stripePaymentIntentId(paymentIntentId)
                                         .requestedRefundAmount(new BigDecimal("50.00"))
@@ -429,6 +463,8 @@ class RefundRequestServiceTest {
                                         .refundToType("MEMBER")
                                         .build();
                         request.setId(requestId);
+                        request.setOrganisationId(organisationId);
+                        request.setGymId(gymId);
                         request.setCreatedAt(LocalDateTime.now());
 
                         RefundResponse stripeResponse = RefundResponse.builder()
@@ -444,7 +480,9 @@ class RefundRequestServiceTest {
                                         .build();
                         paymentRefund.setId(UUID.randomUUID());
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
                         when(stripePaymentService.processRefund(eq(gymId), any(RefundRequest.class)))
                                         .thenReturn(stripeResponse);
                         when(paymentRefundRepository.findByStripeRefundId("re_test123"))
@@ -480,8 +518,11 @@ class RefundRequestServiceTest {
                                         .status(RefundRequestStatus.PENDING) // Not approved
                                         .build();
                         request.setId(requestId);
+                        request.setOrganisationId(organisationId);
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
 
                         // Act & Assert
                         assertThatThrownBy(() -> refundRequestService.processApprovedRequest(
@@ -504,7 +545,8 @@ class RefundRequestServiceTest {
                         RefundRequestEntity request1 = createPendingRequest(UUID.randomUUID());
                         RefundRequestEntity request2 = createPendingRequest(UUID.randomUUID());
 
-                        when(refundRequestRepository.findPendingByGymId(gymId))
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findPendingByGymIdAndOrganisationId(gymId, organisationId))
                                         .thenReturn(List.of(request1, request2));
 
                         // Act
@@ -521,12 +563,14 @@ class RefundRequestServiceTest {
                         RefundRequestEntity pending = createPendingRequest(UUID.randomUUID());
                         RefundRequestEntity processed = RefundRequestEntity.builder()
                                         .status(RefundRequestStatus.PROCESSED)
-                                        .gymId(gymId)
                                         .build();
                         processed.setId(UUID.randomUUID());
+                        processed.setOrganisationId(organisationId);
+                        processed.setGymId(gymId);
                         processed.setCreatedAt(LocalDateTime.now());
 
-                        when(refundRequestRepository.findByGymIdOrderByCreatedAtDesc(gymId))
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByGymIdAndOrganisationIdOrderByCreatedAtDesc(gymId, organisationId))
                                         .thenReturn(List.of(pending, processed));
 
                         // Act
@@ -543,7 +587,9 @@ class RefundRequestServiceTest {
                         UUID requestId = UUID.randomUUID();
                         RefundRequestEntity request = createPendingRequest(requestId);
 
-                        when(refundRequestRepository.findById(requestId)).thenReturn(Optional.of(request));
+                        when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
+                        when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
+                                        .thenReturn(Optional.of(request));
 
                         // Act
                         RefundRequestResponse response = refundRequestService.getRequest(requestId);
@@ -585,7 +631,6 @@ class RefundRequestServiceTest {
         // Helper methods
         private RefundRequestEntity createPendingRequest(UUID requestId) {
                 RefundRequestEntity request = RefundRequestEntity.builder()
-                                .gymId(gymId)
                                 .status(RefundRequestStatus.PENDING)
                                 .refundType(RefundType.MEMBER_PAYMENT)
                                 .stripePaymentIntentId(paymentIntentId)
@@ -599,6 +644,8 @@ class RefundRequestServiceTest {
                                 .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
                                 .build();
                 request.setId(requestId);
+                request.setOrganisationId(organisationId);
+                request.setGymId(gymId);
                 request.setCreatedAt(LocalDateTime.now());
                 request.setUpdatedAt(LocalDateTime.now());
                 return request;

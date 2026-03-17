@@ -27,38 +27,24 @@ import java.util.function.Function;
 @Service
 @RequiredArgsConstructor
 public class JwtService {
-
     private final TokenBlacklistRepository tokenBlacklistRepository;
-
     @Value("${jwt.secret}")
     private String jwtSecret;
-
-    @Value("${jwt.expiration:900000}") // 15 minutes default
+    @Value("${jwt.expiration}") // 15 minutes default
     private long jwtExpiration;
-
-    @Value("${jwt.refresh-expiration:604800000}") // 7 days default
+    @Value("${jwt.refresh-expiration}") // 7 days default
     private long refreshExpiration;
-
     private static final String TOKEN_TYPE_ACCESS = "access";
     private static final String TOKEN_TYPE_REFRESH = "refresh";
     private static final String CLAIM_TOKEN_TYPE = "tokenType";
-
     // ==================== TOKEN GENERATION ====================
 
     /**
      * Generate JWT access token from User entity with optional gym context.
      */
     public String generateToken(User user, UUID currentGymId) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_TOKEN_TYPE, TOKEN_TYPE_ACCESS);
-        claims.put("userId", user.getId().toString());
-        claims.put("email", user.getEmail());
-        claims.put("organisationId", uuidToString(user.getOrganisationId()));
-        claims.put("tenantId", uuidToString(user.getOrganisationId()));
-        claims.put("gymId", uuidToString(currentGymId));
-        claims.put("role", user.getRole().name());
-        claims.put("emailVerified", user.isEmailVerified());
-
+        Map<String, Object> claims = buildBaseClaims(user, TOKEN_TYPE_ACCESS);
+        addAccessTokenClaims(claims, user, currentGymId);
         return buildToken(claims, user.getEmail(), jwtExpiration);
     }
 
@@ -73,12 +59,7 @@ public class JwtService {
      * Generate refresh token from User entity.
      */
     public String generateRefreshToken(User user) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put(CLAIM_TOKEN_TYPE, TOKEN_TYPE_REFRESH);
-        claims.put("userId", user.getId().toString());
-        claims.put("organisationId", uuidToString(user.getOrganisationId()));
-        claims.put("tenantId", uuidToString(user.getOrganisationId()));
-
+        Map<String, Object> claims = buildBaseClaims(user, TOKEN_TYPE_REFRESH);
         return buildToken(claims, user.getEmail(), refreshExpiration);
     }
 
@@ -89,10 +70,8 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("registrationId", registrationId);
         claims.put("type", "verification");
-
         return buildToken(claims, email, expiryMinutes * 60_000L);
     }
-
     // ==================== TOKEN VALIDATION ====================
 
     /**
@@ -117,16 +96,13 @@ public class JwtService {
      */
     public Claims validateVerificationToken(String token) {
         Claims claims = extractAllClaims(token);
-
         String type = claims.get("type", String.class);
         if (!"verification".equals(type)) {
             throw new IllegalArgumentException("Invalid token type");
         }
-
         if (isTokenExpired(token)) {
             throw new IllegalArgumentException("Verification token has expired");
         }
-
         return claims;
     }
 
@@ -138,7 +114,6 @@ public class JwtService {
     }
 
     // ==================== CLAIM EXTRACTION ====================
-
     public String extractUserName(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -175,7 +150,37 @@ public class JwtService {
         return claimsResolver.apply(extractAllClaims(token));
     }
 
+    public String generateTokenWithFamily(User user, UUID currentGymId, String familyId) {
+        Map<String, Object> claims = buildBaseClaims(user, TOKEN_TYPE_ACCESS);
+        addAccessTokenClaims(claims, user, currentGymId);
+        claims.put("familyId", familyId);
+        return buildToken(claims, user.getEmail(), jwtExpiration);
+    }
+
+    public String generateRefreshTokenWithFamily(User user, String familyId) {
+        Map<String, Object> claims = buildBaseClaims(user, TOKEN_TYPE_REFRESH);
+        claims.put("familyId", familyId);
+        return buildToken(claims, user.getEmail(), refreshExpiration);
+    }
+
     // ==================== PRIVATE HELPERS ====================
+    private Map<String, Object> buildBaseClaims(User user, String tokenType) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put(CLAIM_TOKEN_TYPE, tokenType);
+        claims.put("userId", user.getId().toString());
+        claims.put("email", user.getEmail());
+
+        claims.put("organisationId", uuidToString(user.getOrganisationId()));
+        claims.put("tenantId", uuidToString(user.getOrganisationId()));
+        return claims;
+    }
+
+    private void addAccessTokenClaims(Map<String, Object> claims, User user, UUID gymId) {
+        claims.put("email", user.getEmail());
+        claims.put("gymId", uuidToString(gymId));
+        claims.put("role", user.getRole().name());
+        claims.put("emailVerified", user.isEmailVerified());
+    }
 
     private String buildToken(Map<String, Object> claims, String subject, long expirationMs) {
         Date now = new Date();
@@ -201,28 +206,15 @@ public class JwtService {
     }
 
     private SecretKey getSigningKey() {
-        try {
-            byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-            if (keyBytes.length < 32) {
-                log.warn("JWT secret is too short. Minimum 256 bits (32 bytes) required. Current: {} bytes",
-                        keyBytes.length);
-            }
-            return Keys.hmacShaKeyFor(keyBytes);
-        } catch (Exception e) {
-            log.warn("JWT secret is not Base64 encoded. Using UTF-8 bytes as fallback.");
-            byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
-            if (keyBytes.length < 32) {
-                throw new IllegalArgumentException("JWT secret is too short. Must be at least 256 bits (32 bytes).");
-            }
-            return Keys.hmacShaKeyFor(keyBytes);
-        }
+        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     private String uuidToString(UUID uuid) {
         return uuid != null ? uuid.toString() : null;
     }
 
-    private UUID parseUuid(String value) {
-        return value != null && !"null".equals(value) ? UUID.fromString(value) : null;
+    private UUID parseUuid(String uuidString) {
+        return uuidString != null ? UUID.fromString(uuidString) : null;
     }
 }

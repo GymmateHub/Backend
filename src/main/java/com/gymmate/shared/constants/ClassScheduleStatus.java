@@ -1,4 +1,4 @@
-package com.gymmate.classes.domain;
+package com.gymmate.shared.constants;
 
 public enum ClassScheduleStatus {
     SCHEDULED,
