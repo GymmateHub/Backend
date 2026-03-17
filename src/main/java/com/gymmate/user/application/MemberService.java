@@ -3,7 +3,7 @@ package com.gymmate.user.application;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.user.domain.Member;
-import com.gymmate.user.domain.MemberStatus;
+import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.MemberRepository;
 import com.gymmate.user.infrastructure.UserRepository;

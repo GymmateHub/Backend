@@ -136,7 +136,15 @@ public class AuthController {
         }
 
         @PostMapping("/logout")
-        public ResponseEntity<ApiResponse<Void>> logout(@RequestHeader("Authorization") String bearerToken) {
+        public ResponseEntity<ApiResponse<Void>> logout(
+                        @RequestHeader(value = "Authorization", required = false) String bearerToken) {
+                if (bearerToken == null || bearerToken.isBlank()) {
+                        throw new DomainException("MISSING_TOKEN", "Authorization header is required for logout");
+                }
+                if (!bearerToken.startsWith("Bearer ")) {
+                        throw new DomainException("INVALID_TOKEN_FORMAT",
+                                        "Authorization header must start with 'Bearer '");
+                }
                 authenticationService.logout(bearerToken.substring(7));
                 return ResponseEntity.ok(ApiResponse.success(null, "Logged out successfully"));
         }

@@ -1,5 +1,7 @@
 package com.gymmate.user.domain;
 
+import com.gymmate.shared.constants.UserRole;
+import com.gymmate.shared.constants.UserStatus;
 import com.gymmate.shared.domain.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;

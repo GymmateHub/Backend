@@ -1,5 +1,6 @@
 package com.gymmate.subscription.domain;
 
+import com.gymmate.shared.constants.SubscriptionStatus;
 import com.gymmate.shared.domain.BaseAuditEntity;
 import jakarta.persistence.*;
 import lombok.*;

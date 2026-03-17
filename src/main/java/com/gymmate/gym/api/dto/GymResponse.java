@@ -1,7 +1,7 @@
 package com.gymmate.gym.api.dto;
 
 import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.domain.GymStatus;
+import com.gymmate.shared.constants.GymStatus;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

@@ -5,7 +5,7 @@ import java.util.Optional;
 import java.util.List;
 import java.time.LocalDateTime;
 
-import com.gymmate.classes.domain.BookingStatus;
+import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.classes.domain.ClassBooking;
 
 public interface ClassBookingRepository {

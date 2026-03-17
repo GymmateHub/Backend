@@ -1,7 +1,7 @@
 package com.gymmate.gym.infrastructure;
 
 import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.domain.GymStatus;
+import com.gymmate.shared.constants.GymStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
