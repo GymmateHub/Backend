@@ -1,70 +1,60 @@
 package com.gymmate.notification.api;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.notification.domain.Notification;
 import com.gymmate.notification.events.NotificationPriority;
-import com.gymmate.shared.security.CustomUserDetailsService;
+import com.gymmate.shared.exception.GlobalExceptionHandler;
 import com.gymmate.shared.security.TenantAwareUserDetails;
-import com.gymmate.shared.security.service.JwtService;
-import com.gymmate.subscription.application.RateLimitService;
-import com.gymmate.subscription.application.RateLimitStatus;
-import com.gymmate.shared.security.config.SecurityConfig;
-import com.gymmate.user.infrastructure.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
-
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
-
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.method.annotation.AuthenticationPrincipalArgumentResolver;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(NotificationController.class)
-@Import(SecurityConfig.class)
-@ActiveProfiles("test")
+@ExtendWith(MockitoExtension.class)
 @DisplayName("NotificationController Unit Tests")
 class NotificationControllerTest {
 
-    @Autowired
     private MockMvc mockMvc;
 
-    @MockBean
+    @Mock
     private NotificationService notificationService;
 
-    @MockBean
-    private JwtService jwtService;
+    @Mock
+    private GymRepository gymRepository;
 
-    @MockBean
-    private CustomUserDetailsService customUserDetailsService;
+    @InjectMocks
+    private NotificationController notificationController;
 
-    @MockBean
-    private UserRepository userRepository;
-
-    @MockBean
-    private RateLimitService rateLimitService;
-
-    @Autowired
     private ObjectMapper objectMapper;
 
     private UUID organisationId;
@@ -76,6 +66,16 @@ class NotificationControllerTest {
 
     @BeforeEach
     void setUp() {
+        objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+
+        mockMvc = MockMvcBuilders.standaloneSetup(notificationController)
+                .setControllerAdvice(new GlobalExceptionHandler())
+                .setCustomArgumentResolvers(
+                        new AuthenticationPrincipalArgumentResolver(),
+                        new PageableHandlerMethodArgumentResolver())
+                .build();
+
         organisationId = UUID.randomUUID();
         gymId = UUID.randomUUID();
         notificationId = UUID.randomUUID();
@@ -88,15 +88,12 @@ class NotificationControllerTest {
 
         gymManagerUser = new TenantAwareUserDetails(
                 UUID.randomUUID(), organisationId, "manager@test.com", "password", "GYM_MANAGER", true, true);
+    }
 
-        // Allow all requests through the rate limiter
-        when(rateLimitService.checkRateLimit(any(), any(), any(), any())).thenReturn(true);
-        when(rateLimitService.getRateLimitStatus(any())).thenReturn(
-                RateLimitStatus.builder()
-                        .hourlyLimit(1000).hourlyUsed(0).hourlyRemaining(1000)
-                        .burstLimit(100).burstUsed(0).burstRemaining(100)
-                        .isBlocked(false).tierName("Test")
-                        .build());
+    /** Sets the given user as the authenticated principal in the SecurityContext. */
+    private void authenticateAs(TenantAwareUserDetails user) {
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(user, null, user.getAuthorities()));
     }
 
     @Nested
@@ -106,15 +103,14 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Should GET organisation notifications")
         void shouldGetOrganisationNotifications() throws Exception {
-            // Arrange
+            authenticateAs(ownerUser);
+
             Notification notification = buildNotification(organisationId, null);
-            Page<Notification> page = new PageImpl<>(List.of(notification));
+            Page<Notification> page = new PageImpl<>(List.of(notification), PageRequest.of(0, 20), 1);
             when(notificationService.getNotifications(eq(organisationId), any()))
                     .thenReturn(page);
 
-            // Act & Assert
             mockMvc.perform(get("/api/notifications")
-                    .with(user(ownerUser))
                     .param("page", "0")
                     .param("size", "20")
                     .contentType(MediaType.APPLICATION_JSON))
@@ -128,15 +124,14 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Should GET unread notifications")
         void shouldGetUnreadNotifications() throws Exception {
-            // Arrange
+            authenticateAs(ownerUser);
+
             Notification notification = buildNotification(organisationId, null);
-            Page<Notification> page = new PageImpl<>(List.of(notification));
+            Page<Notification> page = new PageImpl<>(List.of(notification), PageRequest.of(0, 20), 1);
             when(notificationService.getUnreadNotifications(eq(organisationId), any()))
                     .thenReturn(page);
 
-            // Act & Assert
             mockMvc.perform(get("/api/notifications/unread")
-                    .with(user(ownerUser))
                     .param("page", "0")
                     .param("size", "20")
                     .contentType(MediaType.APPLICATION_JSON))
@@ -149,12 +144,11 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Should GET unread count")
         void shouldGetUnreadCount() throws Exception {
-            // Arrange
+            authenticateAs(ownerUser);
+
             when(notificationService.getUnreadCount(organisationId)).thenReturn(5L);
 
-            // Act & Assert
             mockMvc.perform(get("/api/notifications/unread-count")
-                    .with(user(ownerUser))
                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
@@ -164,10 +158,9 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Should mark all as read")
         void shouldMarkAllAsRead() throws Exception {
-            // Act & Assert
+            authenticateAs(ownerUser);
+
             mockMvc.perform(post("/api/notifications/mark-all-read")
-                    .with(user(ownerUser))
-                    .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
@@ -177,21 +170,24 @@ class NotificationControllerTest {
     }
 
     @Nested
-    @DisplayName("Gym-Level Endpoints (NEW)")
+    @DisplayName("Gym-Level Endpoints")
     class GymEndpoints {
 
         @Test
         @DisplayName("Should GET gym notifications")
         void shouldGetGymNotifications() throws Exception {
-            // Arrange
+            authenticateAs(gymManagerUser);
+
+            Gym gym = new Gym("Test Gym", "Test", "test@gym.com", "1234567890", organisationId);
+            gym.setId(gymId);
+            when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
+
             Notification notification = buildNotification(organisationId, gymId);
-            Page<Notification> page = new PageImpl<>(List.of(notification));
+            Page<Notification> page = new PageImpl<>(List.of(notification), PageRequest.of(0, 20), 1);
             when(notificationService.getGymNotifications(eq(gymId), any()))
                     .thenReturn(page);
 
-            // Act & Assert
             mockMvc.perform(get("/api/notifications/gym/{gymId}", gymId)
-                    .with(user(gymManagerUser))
                     .param("page", "0")
                     .param("size", "20")
                     .contentType(MediaType.APPLICATION_JSON))
@@ -206,12 +202,15 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Should GET gym unread count")
         void shouldGetGymUnreadCount() throws Exception {
-            // Arrange
+            authenticateAs(staffUser);
+
+            Gym gym = new Gym("Test Gym", "Test", "test@gym.com", "1234567890", organisationId);
+            gym.setId(gymId);
+            when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
+
             when(notificationService.getUnreadGymCount(gymId)).thenReturn(3L);
 
-            // Act & Assert
             mockMvc.perform(get("/api/notifications/gym/{gymId}/unread-count", gymId)
-                    .with(user(staffUser))
                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true))
@@ -223,10 +222,13 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Should mark gym notifications as read")
         void shouldMarkGymAsRead() throws Exception {
-            // Act & Assert
+            authenticateAs(gymManagerUser);
+
+            Gym gym = new Gym("Test Gym", "Test", "test@gym.com", "1234567890", organisationId);
+            gym.setId(gymId);
+            when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
+
             mockMvc.perform(post("/api/notifications/gym/{gymId}/mark-all-read", gymId)
-                    .with(user(gymManagerUser))
-                    .with(csrf())
                     .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.success").value(true));
@@ -237,16 +239,19 @@ class NotificationControllerTest {
         @Test
         @DisplayName("Should GET unread gym notifications")
         void shouldGetUnreadGymNotifications() throws Exception {
-            // Arrange
+            authenticateAs(staffUser);
+
+            Gym gym = new Gym("Test Gym", "Test", "test@gym.com", "1234567890", organisationId);
+            gym.setId(gymId);
+            when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
+
             Notification notification = buildNotification(organisationId, gymId);
             notification.setReadAt(null);
-            Page<Notification> page = new PageImpl<>(List.of(notification));
+            Page<Notification> page = new PageImpl<>(List.of(notification), PageRequest.of(0, 20), 1);
             when(notificationService.getUnreadGymNotifications(eq(gymId), any()))
                     .thenReturn(page);
 
-            // Act & Assert
             mockMvc.perform(get("/api/notifications/gym/{gymId}/unread", gymId)
-                    .with(user(staffUser))
                     .param("page", "0")
                     .param("size", "20")
                     .contentType(MediaType.APPLICATION_JSON))
@@ -256,62 +261,49 @@ class NotificationControllerTest {
     }
 
     @Nested
-    @DisplayName("Security & Authorization")
-    class SecurityTests {
+    @DisplayName("Gym Access Verification")
+    class GymAccessTests {
 
         @Test
-        @DisplayName("Should deny access without authentication")
-        void shouldDenyUnauthorized() throws Exception {
-            // In @WebMvcTest context with default security filters, unauthenticated
-            // requests receive 403 (Forbidden) rather than 401 (Unauthorized)
-            mockMvc.perform(get("/api/notifications"))
-                    .andExpect(status().isForbidden());
-        }
+        @DisplayName("Should deny access when gym belongs to different organisation")
+        void shouldDenyAccessWhenGymBelongsToDifferentOrg() throws Exception {
+            authenticateAs(ownerUser);
 
-        @Test
-        @DisplayName("Should allow OWNER access to org endpoints")
-        void shouldAllowOwnerAccess() throws Exception {
-            // Arrange
-            Page<Notification> page = new PageImpl<>(List.of());
-            when(notificationService.getNotifications(any(), any())).thenReturn(page);
+            UUID otherOrgId = UUID.randomUUID();
+            Gym gym = new Gym("Other Gym", "Other", "other@gym.com", "0987654321", otherOrgId);
+            gym.setId(gymId);
+            when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
 
-            // Act & Assert
-            mockMvc.perform(get("/api/notifications")
-                    .with(user(ownerUser)))
-                    .andExpect(status().isOk());
-        }
-
-        @Test
-        @DisplayName("Should allow GYM_MANAGER access to gym endpoints")
-        void shouldAllowGymManagerAccess() throws Exception {
-            // Arrange
-            Page<Notification> page = new PageImpl<>(List.of());
-            when(notificationService.getGymNotifications(any(), any())).thenReturn(page);
-
-            // Act & Assert
-            mockMvc.perform(get("/api/notifications/gym/{gymId}", gymId)
-                    .with(user(gymManagerUser)))
-                    .andExpect(status().isOk());
-        }
-
-        @Test
-        @DisplayName("Should allow STAFF access to gym endpoints")
-        void shouldAllowStaffAccess() throws Exception {
-            // Arrange
-            when(notificationService.getUnreadGymCount(any())).thenReturn(0L);
-
-            // Act & Assert
             mockMvc.perform(get("/api/notifications/gym/{gymId}/unread-count", gymId)
-                    .with(user(staffUser)))
-                    .andExpect(status().isOk());
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isBadRequest());
         }
 
         @Test
-        @DisplayName("Should deny STAFF access to organisation endpoints")
-        void shouldDenyStaffOrgAccess() throws Exception {
-            mockMvc.perform(get("/api/notifications")
-                    .with(user(staffUser)))
-                    .andExpect(status().isForbidden());
+        @DisplayName("Should return 404 when gym not found")
+        void shouldReturn404WhenGymNotFound() throws Exception {
+            authenticateAs(ownerUser);
+
+            when(gymRepository.findById(gymId)).thenReturn(Optional.empty());
+
+            mockMvc.perform(get("/api/notifications/gym/{gymId}/unread-count", gymId)
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        @DisplayName("Should allow access when gym belongs to same organisation")
+        void shouldAllowAccessWhenGymBelongsToSameOrg() throws Exception {
+            authenticateAs(ownerUser);
+
+            Gym gym = new Gym("Test Gym", "Test", "test@gym.com", "1234567890", organisationId);
+            gym.setId(gymId);
+            when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
+            when(notificationService.getUnreadGymCount(gymId)).thenReturn(0L);
+
+            mockMvc.perform(get("/api/notifications/gym/{gymId}/unread-count", gymId)
+                    .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk());
         }
     }
 

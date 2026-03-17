@@ -6,6 +6,7 @@ import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
 import com.gymmate.classes.infrastructure.GymClassJpaRepository;
 import com.gymmate.membership.domain.MemberMembership;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
+import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.shared.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

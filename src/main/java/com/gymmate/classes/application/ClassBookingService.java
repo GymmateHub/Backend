@@ -5,6 +5,7 @@ import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
 import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
 import com.gymmate.classes.infrastructure.GymClassJpaRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
+import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;

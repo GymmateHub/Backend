@@ -1,3 +1,6 @@
+# ============================================
+# Server Configuration
+# ============================================
 server:
   port: ${APP_PORT:8080}
   servlet:
@@ -6,16 +9,22 @@ server:
     enabled: true
     min-response-size: 1024
 
+# ============================================
+# Spring Application Configuration
+# ============================================
 spring:
   profiles:
     include: email-config
   application:
     name: ${APP_NAME:gymmatehub-backend}
+
+  # Servlet & Multipart
   servlet:
     multipart:
       max-file-size: 10MB
       max-request-size: 10MB
 
+  # Database Configuration
   datasource:
     url: ${PG_URI:jdbc:postgresql://localhost:5432/gymmate}
     driver-class-name: ${DB_DRIVER:org.postgresql.Driver}
@@ -27,6 +36,7 @@ spring:
       max-lifetime: 1800000
       connection-timeout: 20000
 
+  # JPA/Hibernate Configuration
   jpa:
     hibernate:
       ddl-auto: ${JPA_DDL_AUTO:update}
@@ -36,11 +46,13 @@ spring:
         format_sql: true
         show_sql: ${SHOW_SQL:false}
 
+  # Database Migration
   flyway:
     enabled: ${FLYWAY_ENABLED:false}
     baseline-on-migrate: true
     baseline-version: 0
     locations: classpath:db/migration
+
   # Redis Configuration
   data:
     redis:
@@ -48,18 +60,14 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:}
 
-# Actuator Configuration
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,metrics
-  endpoint:
-    health:
-      show-details: always
-      show-components: always
+  # Auto-configuration Exclusions
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
 
-# SpringDoc OpenAPI Configuration
+# ============================================
+# API Documentation (OpenAPI/Swagger)
+# ============================================
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -73,34 +81,47 @@ springdoc:
     try-it-out-enabled: true
     persist-authorization: true
   show-actuator: true
+  show-login-endpoint: true
   cache:
     disabled: false
-  show-login-endpoint: true
 
+# ============================================
+# Actuator/Monitoring
+# ============================================
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      show-components: always
+
+# ============================================
 # Logging Configuration
+# ============================================
 logging:
   level:
     root: ${LOG_LEVEL_ROOT:INFO}
+    com.gymmate: ${LOG_LEVEL_GYMMATE:DEBUG}
     org.springframework: INFO
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
     org.hibernate: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.web: DEBUG
-    org.springframework.security: DEBUG
-    com.gymmate: ${LOG_LEVEL_GYMMATE:DEBUG}
   pattern:
     console: "%clr(%d{yyyy-MM-dd HH:mm:ss.SSS}){faint} %clr(%5p) %clr(${PID:- }){magenta} %clr(---){faint} %clr([%15.15t]){faint} %clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx"
 
+# ============================================
+# Security Configuration
+# ============================================
 jwt:
   secret: ${JWT_SECRET:default-dev-secret-key-change-in-production-minimum-32-chars}
-  expiration: ${JWT_EXPIRATION:3600000}
-  token:
-    validity: ${JWT_TOKEN_VALIDITY:3600000}
-    header: Authorization
-    prefix: Bearer
-  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}
+  expiration: ${JWT_EXPIRATION}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 
-# CORS Configuration (additional to programmatic config)
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000}
   allowed-methods: "GET,POST,PUT,DELETE,OPTIONS"
@@ -109,26 +130,55 @@ cors:
   allow-credentials: ${CORS_ALLOW_CREDENTIALS:true}
   max-age: 3600
 
-# File Upload Configuration
-file:
-  upload-dir: ${FILE_UPLOAD_DIR:./uploads}
-  max-size: ${FILE_MAX_SIZE:10MB}
-  max-request-size: ${FILE_MAX_REQUEST_SIZE:10MB}
-
-# External API Keys
-# Stripe Configuration
-stripe:
-  api-key: ${STRIPE_API_KEY:}
-  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
-  connect-webhook-secret: ${STRIPE_CONNECT_WEBHOOK_SECRET:}
-  application-fee-percent: ${STRIPE_APPLICATION_FEE_PERCENT:1.0}
-
-# App defaults
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
+
+  # Admin Credentials
   admin:
     email: ${APP_ADMIN_EMAIL:}
     password: ${APP_ADMIN_PASSWORD:}
     firstName: ${APP_ADMIN_FIRST_NAME:System}
     lastName: ${APP_ADMIN_LAST_NAME:Admin}
-  max-login-attempts: ${APP_MAX_LOGIN_ATTEMPTS:3}
+
+  # Security Policies
+  security:
+    account-lockout:
+      max-attempts: ${APP_MAX_LOGIN_ATTEMPTS:5}
+      lockout-duration-minutes: 30
+    password-policy:
+      min-length: 12
+      require-special-chars: true
+      history-size: 12
+    rate-limiting:
+      enabled: true
+      default-limit: 100
+      window-minutes: 1
+    csp:
+      enabled: true
+      report-only: false
+    hsts:
+      enabled: true
+      max-age: 31536000
+    file-upload:
+      max-size: 10MB
+      allowed-types: jpg,jpeg,png,gif,webp,pdf,doc,docx,xls,xlsx
+    audit:
+      enabled: true
+      retention-days: 365
+
+# ============================================
+# File Upload Configuration
+# ============================================
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:./uploads}
+  max-size: ${FILE_MAX_SIZE:10MB}
+  max-request-size: ${FILE_MAX_REQUEST_SIZE:10MB}
+
+# ============================================
+# External Integrations
+# ============================================
+stripe:
+  api-key: ${STRIPE_API_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  connect-webhook-secret: ${STRIPE_CONNECT_WEBHOOK_SECRET:}
+  application-fee-percent: ${STRIPE_APPLICATION_FEE_PERCENT:1.0}
