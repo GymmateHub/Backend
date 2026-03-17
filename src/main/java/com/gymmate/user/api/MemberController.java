@@ -8,7 +8,7 @@ import com.gymmate.user.api.dto.MemberResponse;
 import com.gymmate.user.api.dto.MemberUpdateRequest;
 import com.gymmate.user.application.MemberService;
 import com.gymmate.user.domain.Member;
-import com.gymmate.user.domain.MemberStatus;
+import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.user.infrastructure.MemberRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

@@ -1,8 +1,8 @@
 package com.gymmate.payment.api.dto;
 
-import com.gymmate.payment.domain.RefundReasonCategory;
-import com.gymmate.payment.domain.RefundRequestStatus;
-import com.gymmate.payment.domain.RefundType;
+import com.gymmate.shared.constants.RefundReasonCategory;
+import com.gymmate.shared.constants.RefundRequestStatus;
+import com.gymmate.shared.constants.RefundType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

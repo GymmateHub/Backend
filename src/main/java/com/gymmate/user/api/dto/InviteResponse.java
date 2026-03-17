@@ -1,7 +1,7 @@
 package com.gymmate.user.api.dto;
 
 import com.gymmate.user.domain.UserInvite;
-import com.gymmate.user.domain.UserRole;
+import com.gymmate.shared.constants.UserRole;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
