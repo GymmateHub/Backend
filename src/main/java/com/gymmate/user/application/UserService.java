@@ -110,4 +110,11 @@ public class UserService {
     public List<User> findAll() {
         return userRepository.findAll();
     }
+
+    /**
+     * Find all users belonging to an organisation.
+     */
+    public List<User> findByOrganisationId(UUID organisationId) {
+        return userRepository.findByOrganisationId(organisationId);
+    }
 }

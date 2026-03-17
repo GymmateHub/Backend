@@ -49,18 +49,17 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/", "/error",
                                 "/api/auth/**",
-                                "/api/gyms/register", "/api/gyms", "/api/gyms/active", "/api/gyms/city/**",
+                                "/api/gyms/register", "/api/gyms/city/**",
                                 "/api/users/register/gym-owner",
-                                "/api/notifications/test-email",
                                 "/api/webhooks/**",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**",
                                 "/actuator/**", "/actuator/info")
                         .permitAll()
                         // Role-based endpoints
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "OWNER")
-                        .requestMatchers("/api/classes/**").hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN")
-                        .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN", "SUPER_ADMIN")
+                        .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
+                        .requestMatchers("/api/classes/**").hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
+                        .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
                         // All other endpoints require authentication
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
