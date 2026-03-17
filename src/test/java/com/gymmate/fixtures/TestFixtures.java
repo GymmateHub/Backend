@@ -34,7 +34,7 @@ public class TestFixtures {
     }
 
     public static User createGymOwner() {
-        return createUser("owner@gym.com", UserRole.OWNER);
+        return createUser("owner@gym.com", UserRole.GYM_OWNER);
     }
 
     public static User createSuperAdmin() {

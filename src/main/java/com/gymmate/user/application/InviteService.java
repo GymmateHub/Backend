@@ -62,7 +62,8 @@ public class InviteService {
         }
 
         // Validate Role (Owner cannot be invited)
-        if (request.role() == UserRole.OWNER || request.role() == UserRole.SUPER_ADMIN) {
+        if (request.role() == UserRole.GYM_OWNER || request.role() == UserRole.OWNER
+                || request.role() == UserRole.SUPER_ADMIN) {
             throw new BadRequestException("Owners and Super Admins cannot be invited via this flow");
         }
 
