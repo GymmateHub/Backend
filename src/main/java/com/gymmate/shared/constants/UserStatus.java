@@ -1,4 +1,4 @@
-package com.gymmate.user.domain;
+package com.gymmate.shared.constants;
 
 public enum UserStatus {
     ACTIVE,

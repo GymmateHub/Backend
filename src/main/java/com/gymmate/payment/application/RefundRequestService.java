@@ -6,6 +6,7 @@ import com.gymmate.payment.api.dto.RefundRequestResponse;
 import com.gymmate.payment.api.dto.RefundResponse;
 import com.gymmate.payment.domain.*;
 import com.gymmate.payment.infrastructure.*;
+import com.gymmate.shared.constants.RefundRequestStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
@@ -33,76 +34,87 @@ public class RefundRequestService {
     private final PaymentRefundRepository paymentRefundRepository;
     private final StripePaymentService stripePaymentService;
     private final UserService userService;
+    private final com.gymmate.shared.security.service.TenantValidationService tenantValidationService;
 
     // Default SLA: 3 business days
     private static final int DEFAULT_SLA_DAYS = 3;
 
-    /**
-     * Create a new refund request (by member or gym owner).
-     */
-    @Transactional
-    public RefundRequestResponse createRefundRequest(
-            UUID gymId,
-            UUID requestedByUserId,
-            String requestedByType,
-            UUID refundToUserId,
-            String refundToType,
-            CreateRefundRequestDTO dto) {
+  /**
+   * Create a new refund request (by member or gym owner).
+   * SECURITY: Validates tenant isolation.
+   */
+  @Transactional
+  public RefundRequestResponse createRefundRequest(
+    UUID gymId,
+    UUID requestedByUserId,
+    String requestedByType,
+    UUID refundToUserId,
+    String refundToType,
+    CreateRefundRequestDTO dto) {
 
-        // Validate requested amount doesn't exceed original
-        if (dto.getRequestedRefundAmount().compareTo(dto.getOriginalPaymentAmount()) > 0) {
-            throw new DomainException("INVALID_REFUND_AMOUNT",
-                    "Requested refund amount cannot exceed original payment amount");
-        }
+    // SECURITY: Get current tenant ID for validation
+    UUID organisationId = tenantValidationService.requireCurrentTenantId();
 
-        // Check for existing pending request for same payment
-        refundRequestRepository.findByStripePaymentIntentIdAndStatus(
-                dto.getStripePaymentIntentId(), RefundRequestStatus.PENDING)
-                .ifPresent(existing -> {
-                    throw new DomainException("DUPLICATE_REFUND_REQUEST",
-                            "A pending refund request already exists for this payment");
-                });
-
-        // Create refund request
-        RefundRequestEntity request = RefundRequestEntity.builder()
-                .gymId(gymId)
-                .refundType(dto.getRefundType())
-                .stripePaymentIntentId(dto.getStripePaymentIntentId())
-                .stripeChargeId(dto.getStripeChargeId())
-                .originalPaymentAmount(dto.getOriginalPaymentAmount())
-                .requestedRefundAmount(dto.getRequestedRefundAmount())
-                .currency(dto.getCurrency() != null ? dto.getCurrency() : "USD")
-                .membershipId(dto.getMembershipId())
-                .classBookingId(dto.getClassBookingId())
-                .requestedByUserId(requestedByUserId)
-                .requestedByType(requestedByType)
-                .refundToUserId(refundToUserId)
-                .refundToType(refundToType)
-                .reasonCategory(dto.getReasonCategory())
-                .reasonDescription(dto.getReasonDescription())
-                .supportingEvidence(dto.getSupportingEvidence())
-                .status(RefundRequestStatus.PENDING)
-                .dueBy(LocalDateTime.now().plusDays(DEFAULT_SLA_DAYS))
-                .build();
-
-        RefundRequestEntity saved = refundRequestRepository.save(request);
-
-        // Create audit log
-        RefundAuditLog auditLog = RefundAuditLog.created(saved, requestedByUserId, requestedByType);
-        auditLogRepository.save(auditLog);
-
-        log.info("Created refund request {} for payment {} by user {} ({})",
-                saved.getId(), dto.getStripePaymentIntentId(), requestedByUserId, requestedByType);
-
-        return toResponse(saved);
+    // Validate requested amount doesn't exceed original
+    if (dto.getRequestedRefundAmount().compareTo(dto.getOriginalPaymentAmount()) > 0) {
+      throw new DomainException("INVALID_REFUND_AMOUNT",
+        "Requested refund amount cannot exceed original payment amount");
     }
+
+    // Check for existing pending request for same payment
+    refundRequestRepository.findByStripePaymentIntentIdAndStatus(
+        dto.getStripePaymentIntentId(), RefundRequestStatus.PENDING)
+      .ifPresent(existing -> {
+        // SECURITY: Validate the existing request belongs to current tenant
+        tenantValidationService.validateTenantAccess(
+          existing.getOrganisationId(), "RefundRequest", existing.getId());
+        throw new DomainException("DUPLICATE_REFUND_REQUEST",
+          "A pending refund request already exists for this payment");
+      });
+
+    // Create refund request
+    RefundRequestEntity request = RefundRequestEntity.builder()
+      .refundType(dto.getRefundType())
+      .stripePaymentIntentId(dto.getStripePaymentIntentId())
+      .stripeChargeId(dto.getStripeChargeId())
+      .originalPaymentAmount(dto.getOriginalPaymentAmount())
+      .requestedRefundAmount(dto.getRequestedRefundAmount())
+      .currency(dto.getCurrency() != null ? dto.getCurrency() : "USD")
+      .membershipId(dto.getMembershipId())
+      .classBookingId(dto.getClassBookingId())
+      .requestedByUserId(requestedByUserId)
+      .requestedByType(requestedByType)
+      .refundToUserId(refundToUserId)
+      .refundToType(refundToType)
+      .reasonCategory(dto.getReasonCategory())
+      .reasonDescription(dto.getReasonDescription())
+      .supportingEvidence(dto.getSupportingEvidence())
+      .status(RefundRequestStatus.PENDING)
+      .dueBy(LocalDateTime.now().plusDays(DEFAULT_SLA_DAYS))
+      .build();
+    request.setOrganisationId(organisationId); // SECURITY: Set organisation ID
+    request.setGymId(gymId); // SECURITY: Set gym ID
+
+    RefundRequestEntity saved = refundRequestRepository.save(request);
+
+    // Create audit log
+    RefundAuditLog auditLog = RefundAuditLog.created(saved, requestedByUserId, requestedByType);
+    auditLogRepository.save(auditLog);
+
+    log.info("Created refund request {} for payment {} by user {} ({})",
+      saved.getId(), dto.getStripePaymentIntentId(), requestedByUserId, requestedByType);
+
+    return toResponse(saved);
+  }
 
     /**
      * Get all pending refund requests for a gym (for owner dashboard).
+     * SECURITY: Filtered by organisation to prevent cross-tenant access.
      */
     @Transactional(readOnly = true)
     public List<RefundRequestResponse> getPendingRequests(UUID gymId) {
-        return refundRequestRepository.findPendingByGymId(gymId)
+        UUID organisationId = tenantValidationService.requireCurrentTenantId();
+        return refundRequestRepository.findPendingByGymIdAndOrganisationId(gymId, organisationId)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -110,10 +122,12 @@ public class RefundRequestService {
 
     /**
      * Get all refund requests for a gym.
+     * SECURITY: Filtered by organisation to prevent cross-tenant access.
      */
     @Transactional(readOnly = true)
     public List<RefundRequestResponse> getAllRequests(UUID gymId) {
-        return refundRequestRepository.findByGymIdOrderByCreatedAtDesc(gymId)
+        UUID organisationId = tenantValidationService.requireCurrentTenantId();
+        return refundRequestRepository.findByGymIdAndOrganisationIdOrderByCreatedAtDesc(gymId, organisationId)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -121,10 +135,13 @@ public class RefundRequestService {
 
     /**
      * Get refund requests made by a specific user (member view).
+     * SECURITY: Filtered by organisation to prevent cross-tenant access.
      */
     @Transactional(readOnly = true)
     public List<RefundRequestResponse> getMyRequests(UUID userId) {
-        return refundRequestRepository.findByRequestedByUserIdOrderByCreatedAtDesc(userId)
+        UUID organisationId = tenantValidationService.requireCurrentTenantId();
+        return refundRequestRepository.findByRequestedByUserIdAndOrganisationIdOrderByCreatedAtDesc(
+                userId, organisationId)
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -132,6 +149,7 @@ public class RefundRequestService {
 
     /**
      * Get a specific refund request.
+     * SECURITY: Validates organisation ownership to prevent unauthorized access.
      */
     @Transactional(readOnly = true)
     public RefundRequestResponse getRequest(UUID requestId) {
@@ -329,10 +347,25 @@ public class RefundRequestService {
 
     // ===== Helper Methods =====
 
+    /**
+     * Find refund request by ID with tenant validation.
+     * SECURITY: This method prevents cross-tenant access by validating organisationId.
+     * All methods that access a refund request by ID MUST use this method.
+     */
     private RefundRequestEntity findRequestById(UUID requestId) {
-        return refundRequestRepository.findById(requestId)
+        UUID organisationId = tenantValidationService.requireCurrentTenantId();
+
+        RefundRequestEntity request = refundRequestRepository
+                .findByIdAndOrganisationId(requestId, organisationId)
                 .orElseThrow(() -> new DomainException("REFUND_REQUEST_NOT_FOUND",
-                        "Refund request not found: " + requestId));
+                        "Refund request not found or you don't have permission to access it"));
+
+        // SECURITY: Double-check tenant isolation (defense in depth)
+        tenantValidationService.validateTenantAccess(
+                request.getOrganisationId(), "RefundRequest", request.getId());
+
+        log.debug("Retrieved refund request {} for organisation {}", requestId, organisationId);
+        return request;
     }
 
     private RefundRequestResponse toResponse(RefundRequestEntity request) {

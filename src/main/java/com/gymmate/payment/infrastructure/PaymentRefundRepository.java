@@ -1,7 +1,7 @@
 package com.gymmate.payment.infrastructure;
 
 import com.gymmate.payment.domain.PaymentRefund;
-import com.gymmate.payment.domain.RefundStatus;
+import com.gymmate.shared.constants.RefundStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

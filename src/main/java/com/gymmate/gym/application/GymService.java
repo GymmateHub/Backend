@@ -3,16 +3,18 @@ package com.gymmate.gym.application;
 import com.gymmate.gym.api.dto.GymAnalyticsResponse;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.gym.domain.GymStatus;
+import com.gymmate.shared.constants.GymStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 
-import com.gymmate.user.domain.MemberStatus;
+import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.user.domain.User;
 
+import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
+import com.gymmate.payment.infrastructure.GymInvoiceRepository;
 import com.gymmate.user.infrastructure.MemberRepository;
 import com.gymmate.user.infrastructure.UserRepository;
-import com.gymmate.user.domain.UserRole;
+import com.gymmate.shared.constants.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +35,8 @@ public class GymService {
     private final GymRepository gymRepository;
     private final UserRepository userRepository;
     private final MemberRepository memberRepository;
+    private final MemberInvoiceRepository memberInvoiceRepository;
+    private final GymInvoiceRepository gymInvoiceRepository;
 
     /**
      * Register a new gym with the system.
@@ -44,9 +48,9 @@ public class GymService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.ownerId().toString()));
 
         if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN
-                && owner.getRole() != UserRole.OWNER) {
+                && owner.getRole() != UserRole.GYM_OWNER) {
             throw new DomainException("INVALID_OWNER",
-                    "Only users with OWNER, ADMIN or SUPER_ADMIN role can register gyms");
+                    "Only users with GYM_OWNER, ADMIN or SUPER_ADMIN role can register gyms");
         }
 
         if (!owner.isActive()) {
@@ -385,9 +389,17 @@ public class GymService {
             avgUtilization = (totalMembers * 100.0) / totalCapacity;
         }
 
-        // TODO: Calculate total revenue this month (requires payment/subscription
-        // integration)
+        // Calculate total revenue this month from member payments across all gyms
+        LocalDateTime monthStart = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime monthEnd = monthStart.plusMonths(1);
         BigDecimal totalRevenue = BigDecimal.ZERO;
+        for (Gym gym : ownedGyms) {
+            totalRevenue = totalRevenue.add(memberInvoiceRepository.sumPaidAmountByGymIdAndPeriod(
+                    gym.getId(), monthStart, monthEnd));
+        }
+        // Add platform subscription invoice revenue for the organisation
+        totalRevenue = totalRevenue.add(gymInvoiceRepository.sumPaidAmountByOrganisationIdAndPeriod(
+                owner.getOrganisationId(), monthStart, monthEnd));
 
         return GymAnalyticsResponse.builder()
                 .totalGyms(totalGyms)
@@ -437,8 +449,10 @@ public class GymService {
             utilization = (currentMembers * 100.0) / maxMembers;
         }
 
-        // TODO: Calculate revenue for this gym this month
-        BigDecimal gymRevenue = BigDecimal.ZERO;
+        // Calculate revenue for this gym this month from member payments
+        LocalDateTime monthStart = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        LocalDateTime monthEnd = monthStart.plusMonths(1);
+        BigDecimal gymRevenue = memberInvoiceRepository.sumPaidAmountByGymIdAndPeriod(gymId, monthStart, monthEnd);
 
         return GymAnalyticsResponse.builder()
                 .gymId(gymId)

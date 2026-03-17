@@ -3,12 +3,13 @@ package com.gymmate.unit.analytics.application;
 import com.gymmate.analytics.api.dto.*;
 import com.gymmate.analytics.application.AnalyticsService;
 import com.gymmate.analytics.domain.AnalyticsPeriod;
-import com.gymmate.classes.domain.BookingStatus;
+import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
 import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
 import com.gymmate.classes.infrastructure.GymClassJpaRepository;
 import com.gymmate.inventory.infrastructure.InventoryItemJpaRepository;
 import com.gymmate.membership.domain.MembershipStatus;
+import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
 import com.gymmate.membership.infrastructure.MembershipPlanJpaRepository;
 import com.gymmate.pos.infrastructure.SaleJpaRepository;
@@ -58,6 +59,9 @@ class AnalyticsServiceTest {
         @Mock
         private SaleJpaRepository saleRepository;
 
+        @Mock
+        private MemberInvoiceRepository memberInvoiceRepository;
+
         private AnalyticsService analyticsService;
 
         private UUID gymId;
@@ -72,7 +76,8 @@ class AnalyticsServiceTest {
                                 classScheduleRepository,
                                 gymClassRepository,
                                 inventoryItemRepository,
-                                saleRepository);
+                                saleRepository,
+                                memberInvoiceRepository);
 
                 gymId = UUID.randomUUID();
         }
