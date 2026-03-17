@@ -6,13 +6,12 @@ import com.gymmate.notification.application.EmailService;
 import com.gymmate.organisation.application.OrganisationService;
 import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.shared.service.PasswordService;
 import com.gymmate.user.api.dto.MemberRegistrationRequest;
 import com.gymmate.user.api.dto.OwnerRegistrationRequest;
 import com.gymmate.user.application.InviteService;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
-import com.gymmate.user.domain.UserRole;
+import com.gymmate.shared.constants.UserRole;
 import com.gymmate.user.infrastructure.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -62,6 +61,10 @@ class AuthenticationServiceTest {
     private org.springframework.security.authentication.AuthenticationManager authenticationManager;
     @Mock
     private com.gymmate.shared.security.repository.TokenBlacklistRepository tokenBlacklistRepository;
+    @Mock
+    private LoginAttemptService loginAttemptService;
+    @Mock
+    private PasswordPolicyService passwordPolicyService;
 
     @InjectMocks
     private AuthenticationService authenticationService;
@@ -73,6 +76,8 @@ class AuthenticationServiceTest {
 
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
         when(passwordService.encode(anyString())).thenReturn("encodedPassword");
+        when(passwordPolicyService.validatePassword(anyString(), any()))
+                .thenReturn(new PasswordPolicyService.PasswordValidationResult(true, List.of()));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             user.setId(UUID.randomUUID());
@@ -86,7 +91,7 @@ class AuthenticationServiceTest {
         User result = authenticationService.registerOwner(request);
 
         assertNotNull(result);
-        assertEquals(UserRole.OWNER, result.getRole());
+        assertEquals(UserRole.GYM_OWNER, result.getRole());
         verify(userRepository).save(any(User.class));
         verify(organisationService).createHub(eq("My Org"), eq("owner@example.com"), any(User.class));
         verify(gymService).saveGym(any(Gym.class));
@@ -121,6 +126,8 @@ class AuthenticationServiceTest {
 
         when(userRepository.existsByEmail(request.email())).thenReturn(false);
         when(passwordService.encode(anyString())).thenReturn("encodedPassword");
+        when(passwordPolicyService.validatePassword(anyString(), any()))
+                .thenReturn(new PasswordPolicyService.PasswordValidationResult(true, List.of()));
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User user = invocation.getArgument(0);
             return user;

@@ -4,12 +4,13 @@ import com.gymmate.analytics.api.dto.*;
 import com.gymmate.analytics.domain.AnalyticsPeriod;
 import com.gymmate.analytics.domain.CategoryBreakdown;
 import com.gymmate.analytics.domain.TimeSeriesDataPoint;
-import com.gymmate.classes.domain.BookingStatus;
+import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
 import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
 import com.gymmate.classes.infrastructure.GymClassJpaRepository;
 import com.gymmate.inventory.infrastructure.InventoryItemJpaRepository;
 import com.gymmate.membership.domain.MembershipStatus;
+import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
 import com.gymmate.membership.infrastructure.MembershipPlanJpaRepository;
 import com.gymmate.pos.infrastructure.SaleJpaRepository;
@@ -41,6 +42,7 @@ public class AnalyticsService {
     private final GymClassJpaRepository gymClassRepository;
     private final InventoryItemJpaRepository inventoryItemRepository;
     private final SaleJpaRepository saleRepository;
+    private final MemberInvoiceRepository memberInvoiceRepository;
 
     // ===== MAIN DASHBOARD =====
 
@@ -85,7 +87,7 @@ public class AnalyticsService {
         // Additional metrics
         BigDecimal churnRate = calculateChurnRate(gymId, dateRange);
         long expiringMemberships = countExpiringMemberships(gymId);
-        long overduePayments = 0L; // TODO: Implement when payment tracking is ready
+        long overduePayments = memberInvoiceRepository.countOverdueByGymId(gymId, LocalDateTime.now());
         long lowStockItems = countLowStockItems(gymId);
 
         return new DashboardResponse(

@@ -1,7 +1,7 @@
 package com.gymmate.payment.infrastructure;
 
 import com.gymmate.payment.domain.PaymentMethod;
-import com.gymmate.payment.domain.PaymentMethodOwnerType;
+import com.gymmate.shared.constants.PaymentMethodOwnerType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

@@ -4,15 +4,14 @@ import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.notification.application.EmailService;
 import com.gymmate.shared.exception.BadRequestException;
-import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.user.api.dto.InviteRequest;
 import com.gymmate.user.api.dto.InviteResponse;
 import com.gymmate.user.api.dto.ValidateInviteResponse;
-import com.gymmate.user.domain.InviteStatus;
+import com.gymmate.shared.constants.InviteStatus;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserInvite;
-import com.gymmate.user.domain.UserRole;
+import com.gymmate.shared.constants.UserRole;
 import com.gymmate.user.infrastructure.UserInviteRepository;
 import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -62,7 +61,7 @@ public class InviteService {
         }
 
         // Validate Role (Owner cannot be invited)
-        if (request.role() == UserRole.OWNER || request.role() == UserRole.SUPER_ADMIN) {
+        if (request.role() == UserRole.GYM_OWNER || request.role() == UserRole.SUPER_ADMIN) {
             throw new BadRequestException("Owners and Super Admins cannot be invited via this flow");
         }
 
