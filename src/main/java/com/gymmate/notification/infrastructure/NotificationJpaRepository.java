@@ -1,7 +1,7 @@
 package com.gymmate.notification.infrastructure;
 
 import com.gymmate.notification.domain.Notification;
-import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.shared.constants.NotificationPriority;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -53,6 +53,11 @@ public class StaffService {
                 .permissions("[]")
                 .build();
 
+        // Set organisationId from linked user
+        if (user.getOrganisationId() != null) {
+            staff.setOrganisationId(user.getOrganisationId());
+        }
+
         return staffRepository.save(staff);
     }
 
@@ -113,38 +118,78 @@ public class StaffService {
     }
 
     /**
-     * Find staff by department.
+     * Find staff by department within organisation.
      */
-    public List<Staff> findByDepartment(String department) {
-        return staffRepository.findByDepartment(department);
+    public List<Staff> findByDepartment(UUID organisationId, String department) {
+        return staffRepository.findByOrganisationIdAndDepartment(organisationId, department);
     }
 
     /**
-     * Find staff by position.
+     * Find staff by position within organisation.
      */
-    public List<Staff> findByPosition(String position) {
-        return staffRepository.findByPosition(position);
+    public List<Staff> findByPosition(UUID organisationId, String position) {
+        return staffRepository.findByOrganisationIdAndPosition(organisationId, position);
     }
 
     /**
-     * Find staff by employment type.
+     * Find staff by employment type within organisation.
      */
-    public List<Staff> findByEmploymentType(String employmentType) {
-        return staffRepository.findByEmploymentType(employmentType);
+    public List<Staff> findByEmploymentType(UUID organisationId, String employmentType) {
+        return staffRepository.findByOrganisationIdAndEmploymentType(organisationId, employmentType);
     }
 
     /**
-     * Find all active staff.
+     * Find all active staff within organisation.
      */
+    public List<Staff> findAllActive(UUID organisationId) {
+        return staffRepository.findAllActiveByOrganisationId(organisationId);
+    }
+
+    /**
+     * Find all staff within organisation.
+     */
+    public List<Staff> findAllByOrganisation(UUID organisationId) {
+        return staffRepository.findByOrganisationId(organisationId);
+    }
+
+    /**
+     * @deprecated Use {@link #findAllByOrganisation(UUID)} instead.
+     */
+    @Deprecated
+    public List<Staff> findAll() {
+        return staffRepository.findAll();
+    }
+
+    /**
+     * @deprecated Use {@link #findAllActive(UUID)} instead.
+     */
+    @Deprecated
     public List<Staff> findAllActive() {
         return staffRepository.findAllActive();
     }
 
     /**
-     * Find all staff.
+     * @deprecated Use {@link #findByDepartment(UUID, String)} instead.
      */
-    public List<Staff> findAll() {
-        return staffRepository.findAll();
+    @Deprecated
+    public List<Staff> findByDepartment(String department) {
+        return staffRepository.findByDepartment(department);
+    }
+
+    /**
+     * @deprecated Use {@link #findByPosition(UUID, String)} instead.
+     */
+    @Deprecated
+    public List<Staff> findByPosition(String position) {
+        return staffRepository.findByPosition(position);
+    }
+
+    /**
+     * @deprecated Use {@link #findByEmploymentType(UUID, String)} instead.
+     */
+    @Deprecated
+    public List<Staff> findByEmploymentType(String employmentType) {
+        return staffRepository.findByEmploymentType(employmentType);
     }
 
     /**

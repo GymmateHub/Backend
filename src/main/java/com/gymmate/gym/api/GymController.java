@@ -47,6 +47,7 @@ public class GymController {
      * Update gym address.
      */
     @PutMapping("/{id}/address")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> updateGymAddress(
             @PathVariable UUID id,
             @Valid @RequestBody AddressUpdateRequest request) {
@@ -68,6 +69,7 @@ public class GymController {
      * Update gym details.
      */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> updateGym(
             @PathVariable UUID id,
             @Valid @RequestBody GymUpdateRequest request) {
@@ -95,22 +97,9 @@ public class GymController {
     @GetMapping("/my-gyms")
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'SUPER_ADMIN')")
     @Operation(summary = "Get my gyms", description = "Get all gyms in the authenticated user's organisation")
-    public ResponseEntity<ApiResponse<List<GymResponse>>> getMyGyms(
-            @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<ApiResponse<List<GymResponse>>> getMyGyms() {
 
-        // Get organisation ID from tenant context (preferred) or JWT
-        UUID organisationId = TenantContext.getCurrentTenantId();
-
-        if (organisationId == null) {
-            // Fallback to extracting from JWT
-            String token = authHeader.substring(7);
-            organisationId = jwtService.extractOrganisationId(token);
-        }
-
-        if (organisationId == null) {
-            throw new com.gymmate.shared.exception.DomainException("NO_ORGANISATION_CONTEXT",
-                    "Unable to determine organisation context. Please ensure you are properly authenticated.");
-        }
+        UUID organisationId = TenantContext.requireCurrentTenantId();
 
         List<GymResponse> gyms = gymService.getGymsByOrganisation(organisationId).stream()
                 .map(GymResponse::fromEntity)
@@ -160,6 +149,7 @@ public class GymController {
      * Activate a gym.
      */
     @PatchMapping("/{id}/activate")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> activateGym(@PathVariable UUID id) {
         Gym gym = gymService.activateGym(id);
         return ResponseEntity.ok(ApiResponse.success(GymResponse.fromEntity(gym), "Gym activated successfully"));
@@ -169,6 +159,7 @@ public class GymController {
      * Deactivate a gym.
      */
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> deactivateGym(@PathVariable UUID id) {
         Gym gym = gymService.deactivateGym(id);
         return ResponseEntity.ok(ApiResponse.success(GymResponse.fromEntity(gym), "Gym deactivated successfully"));
@@ -178,6 +169,7 @@ public class GymController {
      * Suspend a gym.
      */
     @PatchMapping("/{id}/suspend")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> suspendGym(@PathVariable UUID id) {
         Gym gym = gymService.suspendGym(id);
         return ResponseEntity.ok(ApiResponse.success(GymResponse.fromEntity(gym), "Gym suspended successfully"));
@@ -187,6 +179,7 @@ public class GymController {
      * Delete a gym.
      */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<Void>> deleteGym(@PathVariable UUID id) {
         gymService.deleteGym(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Gym deleted successfully"));
@@ -196,6 +189,7 @@ public class GymController {
      * Complete gym onboarding.
      */
     @PatchMapping("/{id}/complete-onboarding")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> completeOnboarding(@PathVariable UUID id) {
         Gym gym = gymService.completeOnboarding(id);
         return ResponseEntity.ok(ApiResponse.success(GymResponse.fromEntity(gym), "Onboarding completed successfully"));
@@ -205,6 +199,7 @@ public class GymController {
      * Update gym logo.
      */
     @PatchMapping("/{id}/logo")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> updateLogo(
             @PathVariable UUID id,
             @RequestParam String logoUrl) {
@@ -216,6 +211,7 @@ public class GymController {
      * Update gym website.
      */
     @PatchMapping("/{id}/website")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> updateWebsite(
             @PathVariable UUID id,
             @RequestParam String website) {
@@ -227,6 +223,7 @@ public class GymController {
      * Check if gym subscription is expired.
      */
     @GetMapping("/{id}/subscription/expired")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<Boolean>> isSubscriptionExpired(@PathVariable UUID id) {
         boolean expired = gymService.isSubscriptionExpired(id);
         return ResponseEntity.ok(ApiResponse.success(expired));
@@ -236,6 +233,7 @@ public class GymController {
      * Update gym subscription.
      */
     @PutMapping("/{id}/subscription")
+    @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> updateSubscription(
             @PathVariable UUID id,
             @Valid @RequestBody SubscriptionUpdateRequest request) {
@@ -247,6 +245,7 @@ public class GymController {
      * Update gym business settings.
      */
     @PutMapping("/{id}/business-settings")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<GymResponse>> updateBusinessSettings(
             @PathVariable UUID id,
             @Valid @RequestBody BusinessSettingsUpdateRequest request) {
