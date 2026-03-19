@@ -1,5 +1,6 @@
 package com.gymmate.notification.events;
 
+import com.gymmate.shared.constants.NotificationPriority;
 import lombok.Builder;
 import lombok.Getter;
 

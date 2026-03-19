@@ -118,7 +118,7 @@ logging:
 # Security Configuration
 # ============================================
 jwt:
-  secret: ${JWT_SECRET:default-dev-secret-key-change-in-production-minimum-32-chars}
+  secret: ${JWT_SECRET}
   expiration: ${JWT_EXPIRATION}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION}
 

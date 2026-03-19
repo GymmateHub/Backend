@@ -154,7 +154,8 @@ class InvoiceStatusTest {
                 InvoiceStatus.PAID,
                 InvoiceStatus.PAYMENT_FAILED,
                 InvoiceStatus.VOID,
-                InvoiceStatus.UNCOLLECTIBLE);
+                InvoiceStatus.UNCOLLECTIBLE,
+                InvoiceStatus.REFUNDED);
     }
 }
 
