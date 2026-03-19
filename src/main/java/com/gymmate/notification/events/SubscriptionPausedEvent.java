@@ -4,16 +4,16 @@ import com.gymmate.shared.constants.NotificationPriority;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Event published when a subscription is expiring soon (e.g., trial ending).
+ * Event published when a Stripe subscription is paused.
+ * Informs the organisation owner that their subscription has been paused.
  */
 @Getter
 @Builder
-public class SubscriptionExpiringEvent implements DomainEvent {
+public class SubscriptionPausedEvent implements DomainEvent {
 
     @Builder.Default
     private final UUID eventId = UUID.randomUUID();
@@ -24,31 +24,29 @@ public class SubscriptionExpiringEvent implements DomainEvent {
     private final UUID organisationId;
     private final UUID subscriptionId;
     private final String tierName;
-    private final BigDecimal price;
-    private final LocalDateTime expiresAt;
-    private final int daysUntilExpiry;
+    private final LocalDateTime pausedAt;
 
     @Override
     public String getEventType() {
-        return "SUBSCRIPTION_EXPIRING";
+        return "SUBSCRIPTION_PAUSED";
     }
 
     @Override
     public String getNotificationTitle() {
-        return "⏰ Subscription Expiring Soon";
+        return "⏸️ Subscription Paused";
     }
 
     @Override
     public String getNotificationMessage() {
-        return String.format("Your %s subscription expires in %d days (%s)",
-                tierName,
-                daysUntilExpiry,
-                expiresAt.toLocalDate().toString());
+        return String.format(
+                "Your %s subscription has been paused. Some features may be limited. " +
+                "To resume, update your billing in the dashboard.",
+                tierName != null ? tierName : "subscription");
     }
 
     @Override
     public NotificationPriority getPriority() {
-        return daysUntilExpiry <= 3 ? NotificationPriority.HIGH : NotificationPriority.MEDIUM;
+        return NotificationPriority.HIGH;
     }
 }
 
