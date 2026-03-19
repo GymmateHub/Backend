@@ -4,10 +4,12 @@ import com.gymmate.membership.domain.*;
 import com.gymmate.membership.infrastructure.FreezePolicyRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
 import com.gymmate.membership.infrastructure.MembershipPlanRepository;
+import com.gymmate.notification.events.MembershipExpiredEvent;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class MembershipService {
   private final MembershipPlanRepository planRepository;
   private final FreezePolicyRepository freezePolicyRepository;
   private final MemberPaymentService memberPaymentService;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
    * Subscribe a member to a membership plan.
@@ -359,6 +362,75 @@ public class MembershipService {
     }
 
     return unfrozenCount;
+  }
+
+  /**
+   * Process expired memberships — mark active memberships past their end date as EXPIRED.
+   * Called by scheduled task daily.
+   */
+  public int processExpiredMemberships() {
+    LocalDateTime now = LocalDateTime.now();
+    List<MemberMembership> expired = membershipRepository.findExpiredActiveMemberships(now);
+
+    int expiredCount = 0;
+    for (MemberMembership membership : expired) {
+      try {
+        membership.expire();
+        membershipRepository.save(membership);
+
+        // Publish event for notification
+        eventPublisher.publishEvent(MembershipExpiredEvent.builder()
+                .organisationId(membership.getOrganisationId())
+                .gymId(membership.getGymId())
+                .memberId(membership.getMemberId())
+                .membershipId(membership.getId())
+                .expiredOn(membership.getEndDate())
+                .build());
+
+        log.info("Expired membership {} (end date: {})", membership.getId(), membership.getEndDate());
+        expiredCount++;
+      } catch (Exception e) {
+        log.error("Error expiring membership {}: {}", membership.getId(), e.getMessage());
+      }
+    }
+
+    if (expiredCount > 0) {
+      log.info("Expired {} memberships", expiredCount);
+    }
+    return expiredCount;
+  }
+
+  /**
+   * Process auto-renewals — attempt to renew active memberships past their end date
+   * that have auto-renew enabled. Called by scheduled task daily.
+   */
+  public int processAutoRenewals() {
+    LocalDateTime now = LocalDateTime.now();
+    List<MemberMembership> toRenew = membershipRepository.findAutoRenewExpiredMemberships(now);
+
+    int renewedCount = 0;
+    for (MemberMembership membership : toRenew) {
+      try {
+        renewMembership(membership.getId());
+        log.info("Auto-renewed membership {}", membership.getId());
+        renewedCount++;
+      } catch (Exception e) {
+        log.error("Failed to auto-renew membership {}: {}", membership.getId(), e.getMessage());
+        // If renewal fails, expire the membership
+        try {
+          membership.expire();
+          membershipRepository.save(membership);
+          log.warn("Marked membership {} as expired after failed auto-renewal", membership.getId());
+        } catch (Exception ex) {
+          log.error("Error expiring membership {} after failed renewal: {}", membership.getId(), ex.getMessage());
+        }
+      }
+    }
+
+    if (renewedCount > 0) {
+      log.info("Auto-renewed {} memberships", renewedCount);
+    }
+    return renewedCount;
   }
 
   /**

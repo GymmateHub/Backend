@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.gymmate.notification.application.EmailService;
 import com.gymmate.notification.application.NotificationService;
-import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import org.springframework.scheduling.annotation.Async;

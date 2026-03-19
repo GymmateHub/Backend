@@ -1,7 +1,7 @@
 package com.gymmate.notification.api.dto;
 
 import com.gymmate.notification.domain.Notification;
-import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.shared.constants.NotificationPriority;
 import lombok.Builder;
 import lombok.Data;
 

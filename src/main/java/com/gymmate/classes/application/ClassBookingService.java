@@ -5,11 +5,13 @@ import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
 import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
 import com.gymmate.classes.infrastructure.GymClassJpaRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
+import com.gymmate.notification.events.WaitlistPromotedEvent;
 import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,9 +29,10 @@ public class ClassBookingService {
   private final ClassScheduleJpaRepository scheduleRepository;
   private final GymClassJpaRepository classRepository;
   private final MemberMembershipRepository membershipRepository;
+  private final ApplicationEventPublisher eventPublisher;
 
   /**
-   * Create a booking. If capacity reached, place on waitlist.
+   * Create a booking. If capacity reached, place on waitlist with position tracking.
    */
   public ClassBooking createBooking(UUID gymId, UUID memberId, UUID scheduleId, String memberNotes) {
     // validate schedule
@@ -40,9 +43,6 @@ public class ClassBookingService {
       throw new DomainException("SCHEDULE_NOT_AVAILABLE", "Class schedule is not open for booking");
     }
 
-    // Note: gymId validation removed as schedule no longer has direct gymId reference
-    // Gym ownership is validated through ClassSchedule -> GymClass -> ClassCategory chain
-
     // prevent duplicate booking
     if (bookingRepository.existsByClassScheduleIdAndMemberId(scheduleId, memberId)) {
       throw new DomainException("ALREADY_BOOKED", "Member already has a booking for this schedule");
@@ -51,7 +51,6 @@ public class ClassBookingService {
     // determine capacity
     Integer capacity = schedule.getCapacityOverride();
     if (capacity == null) {
-      // fetch class and use its capacity
       UUID classId = schedule.getClassId();
       GymClass gymClass = classRepository.findById(classId)
         .orElseThrow(() -> new ResourceNotFoundException("GymClass", classId.toString()));
@@ -66,7 +65,6 @@ public class ClassBookingService {
       .classScheduleId(scheduleId)
       .memberNotes(memberNotes)
       .build();
-
 
     if (hasSpace) {
       booking.setStatus(BookingStatus.CONFIRMED);
@@ -83,11 +81,15 @@ public class ClassBookingService {
 
     } else {
       booking.setStatus(BookingStatus.WAITLISTED);
+      // Calculate waitlist position: count existing waitlisted bookings + 1
+      List<ClassBooking> existingWaitlist = bookingRepository.findWaitlistByScheduleId(scheduleId);
+      booking.setWaitlistPosition(existingWaitlist.size() + 1);
     }
 
     booking.setBookingDate(LocalDateTime.now());
     ClassBooking saved = bookingRepository.save(booking);
-    log.info("Created booking {} for schedule {} member {} status={}", saved.getId(), scheduleId, memberId, saved.getStatus());
+    log.info("Created booking {} for schedule {} member {} status={} waitlistPos={}",
+      saved.getId(), scheduleId, memberId, saved.getStatus(), saved.getWaitlistPosition());
     return saved;
   }
 
@@ -109,7 +111,8 @@ public class ClassBookingService {
   }
 
   /**
-   * Cancel a booking. If a confirmed booking is cancelled, promote first waitlisted booking to confirmed.
+   * Cancel a booking. If a confirmed booking is cancelled, promote first waitlisted
+   * booking to confirmed and re-number remaining waitlist positions.
    */
   public ClassBooking cancelBooking(UUID bookingId, String reason) {
     ClassBooking booking = getBooking(bookingId);
@@ -119,7 +122,9 @@ public class ClassBookingService {
     }
 
     boolean wasConfirmed = booking.getStatus() == BookingStatus.CONFIRMED;
+    boolean wasWaitlisted = booking.getStatus() == BookingStatus.WAITLISTED;
     booking.cancel(reason);
+    booking.setWaitlistPosition(null); // Clear waitlist position on cancel
     bookingRepository.save(booking);
 
     if (wasConfirmed) {
@@ -128,6 +133,7 @@ public class ClassBookingService {
       if (!waitlist.isEmpty()) {
         ClassBooking first = waitlist.get(0);
         first.setStatus(BookingStatus.CONFIRMED);
+        first.setWaitlistPosition(null); // No longer on waitlist
         // consume membership credit if any
         membershipRepository.findActiveMembershipByMemberId(first.getMemberId()).ifPresent(membership -> {
           Integer credits = membership.getClassCreditsRemaining();
@@ -139,10 +145,42 @@ public class ClassBookingService {
         });
         bookingRepository.save(first);
         log.info("Promoted waitlist booking {} to confirmed", first.getId());
+
+        // Notify member they've been promoted from waitlist
+        try {
+          eventPublisher.publishEvent(WaitlistPromotedEvent.builder()
+              .organisationId(first.getOrganisationId())
+              .gymId(first.getGymId())
+              .memberId(first.getMemberId())
+              .bookingId(first.getId())
+              .scheduleId(first.getClassScheduleId())
+              .build());
+        } catch (Exception e) {
+          log.warn("Failed to publish WaitlistPromotedEvent for booking {}: {}", first.getId(), e.getMessage());
+        }
+
+        // Re-number remaining waitlist positions
+        renumberWaitlist(booking.getClassScheduleId());
       }
+    } else if (wasWaitlisted) {
+      // Re-number waitlist after a waitlisted booking is removed
+      renumberWaitlist(booking.getClassScheduleId());
     }
 
     return booking;
+  }
+
+  /**
+   * Re-number waitlist positions sequentially starting from 1.
+   */
+  private void renumberWaitlist(UUID scheduleId) {
+    List<ClassBooking> waitlist = bookingRepository.findWaitlistByScheduleId(scheduleId);
+    for (int i = 0; i < waitlist.size(); i++) {
+      ClassBooking wb = waitlist.get(i);
+      wb.setWaitlistPosition(i + 1);
+      bookingRepository.save(wb);
+    }
+    log.debug("Re-numbered {} waitlist entries for schedule {}", waitlist.size(), scheduleId);
   }
 
   public ClassBooking checkIn(UUID bookingId) {
