@@ -2,7 +2,7 @@ package com.gymmate.user.domain;
 
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.domain.TenantEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -12,6 +12,16 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * User entity with tenant isolation via Hibernate @Filter.
+ * Extends TenantEntity which provides:
+ * - organisationId field with automatic TenantContext population on persist
+ * - @FilterDef/@Filter for automatic tenant-scoped queries
+ *
+ * NOTE: JwtAuthenticationFilter calls findById() BEFORE tenant context is set,
+ * which is safe because TenantFilterAspect only enables the filter when
+ * TenantContext.getCurrentTenantId() is non-null.
+ */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
@@ -19,10 +29,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "users")
-public class User extends BaseAuditEntity {
-
-  @Column(name = "organisation_id", nullable = true)
-  private UUID organisationId;
+public class User extends TenantEntity {
 
   @Column(nullable = false)
   private String email;

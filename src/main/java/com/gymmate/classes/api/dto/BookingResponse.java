@@ -11,10 +11,19 @@ public record BookingResponse(
   LocalDateTime bookingDate,
   String status,
   Integer creditsUsed,
-  String memberNotes
+  String memberNotes,
+  Integer waitlistPosition
 ) {
   public static BookingResponse from(ClassBooking b) {
-    return new BookingResponse(b.getId(), b.getMemberId(), b.getClassScheduleId(), b.getBookingDate(), b.getStatus().name(), b.getCreditsUsed(), b.getMemberNotes());
+    return new BookingResponse(
+      b.getId(),
+      b.getMemberId(),
+      b.getClassScheduleId(),
+      b.getBookingDate(),
+      b.getStatus().name(),
+      b.getCreditsUsed(),
+      b.getMemberNotes(),
+      b.getWaitlistPosition()
+    );
   }
 }
-

@@ -4,6 +4,7 @@ public enum SubscriptionStatus {
     TRIAL("Trial period"),
     ACTIVE("Active subscription"),
     PAST_DUE("Payment past due"),
+    PAUSED("Subscription paused"),
     CANCELLED("Cancelled subscription"),
     EXPIRED("Expired subscription"),
     SUSPENDED("Suspended by admin");
@@ -24,6 +25,10 @@ public enum SubscriptionStatus {
 
     public boolean canAccess() {
         return this == ACTIVE || this == TRIAL || this == PAST_DUE;
+    }
+
+    public boolean isPaused() {
+        return this == PAUSED;
     }
 }
 
