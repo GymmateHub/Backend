@@ -68,31 +68,6 @@ public class MemberService {
 
         return memberRepository.save(member);
     }
-
-    /**
-     * Find member by ID.
-     */
-    public Member findById(UUID id) {
-        return memberRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Member", id.toString()));
-    }
-
-    /**
-     * Find member by user ID.
-     */
-    public Member findByUserId(UUID userId) {
-        return memberRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("Member", "userId=" + userId));
-    }
-
-    /**
-     * Find member by membership number.
-     */
-    public Member findByMembershipNumber(String membershipNumber) {
-        return memberRepository.findByMembershipNumber(membershipNumber)
-                .orElseThrow(() -> new ResourceNotFoundException("Member", "membershipNumber=" + membershipNumber));
-    }
-
     /**
      * Update emergency contact information.
      */
@@ -167,7 +142,37 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-    /**
+  /**
+   * Find member by ID.
+   */
+  public Member findById(UUID id) {
+    return memberRepository.findById(id)
+      .orElseThrow(() -> new ResourceNotFoundException("Member", id.toString()));
+  }
+
+  /**
+   * Find member by user ID.
+   */
+  public Member findByUserId(UUID userId) {
+    return memberRepository.findByUserId(userId)
+      .orElseThrow(() -> new ResourceNotFoundException("Member", "userId=" + userId));
+  }
+
+  /**
+   * Find Memeber by GymId
+   */
+
+
+
+  /**
+   * Find member by membership number.
+   */
+  public Member findByMembershipNumber(String membershipNumber) {
+    return memberRepository.findByMembershipNumber(membershipNumber)
+      .orElseThrow(() -> new ResourceNotFoundException("Member", "membershipNumber=" + membershipNumber));
+  }
+
+  /**
      * Find members by status.
      */
     public List<Member> findByStatus(MemberStatus status) {
@@ -189,15 +194,31 @@ public class MemberService {
     }
 
     /**
-     * Count members by status.
+     * Count members by status within an organisation.
      */
+    public long countByStatus(UUID organisationId, MemberStatus status) {
+        return memberRepository.countByOrganisationIdAndStatus(organisationId, status);
+    }
+
+    /**
+     * @deprecated Use {@link #countByStatus(UUID, MemberStatus)} instead.
+     */
+    @Deprecated
     public long countByStatus(MemberStatus status) {
         return memberRepository.countByStatus(status);
     }
 
     /**
-     * Find new members joined after a date.
+     * Find new members joined after a date within an organisation.
      */
+    public List<Member> findNewMembers(UUID organisationId, LocalDate afterDate) {
+        return memberRepository.findByOrganisationIdAndJoinDateAfter(organisationId, afterDate);
+    }
+
+    /**
+     * @deprecated Use {@link #findNewMembers(UUID, LocalDate)} instead.
+     */
+    @Deprecated
     public List<Member> findNewMembers(LocalDate afterDate) {
         return memberRepository.findByJoinDateAfter(afterDate);
     }
