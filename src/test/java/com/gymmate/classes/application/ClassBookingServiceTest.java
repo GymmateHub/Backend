@@ -10,6 +10,7 @@ import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.shared.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -25,6 +26,7 @@ class ClassBookingServiceTest {
   private ClassScheduleJpaRepository scheduleRepository;
   private GymClassJpaRepository classRepository;
   private MemberMembershipRepository membershipRepository;
+  private ApplicationEventPublisher eventPublisher;
   private ClassBookingService bookingService;
 
   @BeforeEach
@@ -33,7 +35,8 @@ class ClassBookingServiceTest {
     scheduleRepository = mock(ClassScheduleJpaRepository.class);
     classRepository = mock(GymClassJpaRepository.class);
     membershipRepository = mock(MemberMembershipRepository.class);
-    bookingService = new ClassBookingService(bookingRepository, scheduleRepository, classRepository, membershipRepository);
+    eventPublisher = mock(ApplicationEventPublisher.class);
+    bookingService = new ClassBookingService(bookingRepository, scheduleRepository, classRepository, membershipRepository, eventPublisher);
   }
 
   @Test
@@ -112,7 +115,7 @@ class ClassBookingServiceTest {
     ClassBooking cancelled = bookingService.cancelBooking(bookingId, "reason");
 
     assertEquals(BookingStatus.CANCELLED, cancelled.getStatus());
-    verify(bookingRepository, times(2)).save(any(ClassBooking.class)); // cancelled + promoted
+    verify(bookingRepository, times(3)).save(any(ClassBooking.class)); // cancelled + promoted
   }
 
   @Test

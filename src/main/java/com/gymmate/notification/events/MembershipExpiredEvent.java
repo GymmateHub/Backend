@@ -4,16 +4,16 @@ import com.gymmate.shared.constants.NotificationPriority;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
- * Event published when a payment fails for an organisation's subscription.
+ * Event published when a member's membership expires.
  */
 @Getter
 @Builder
-public class PaymentFailedEvent implements DomainEvent {
+public class MembershipExpiredEvent implements DomainEvent {
 
     @Builder.Default
     private final UUID eventId = UUID.randomUUID();
@@ -23,32 +23,28 @@ public class PaymentFailedEvent implements DomainEvent {
 
     private final UUID organisationId;
     private final UUID gymId;
-    private final BigDecimal amount;
-    private final String failureReason;
-    private final LocalDateTime nextRetryDate;
-    private final String invoiceId;
+    private final UUID memberId;
+    private final UUID membershipId;
+    private final LocalDate expiredOn;
 
     @Override
     public String getEventType() {
-        return "PAYMENT_FAILED";
+        return "MEMBERSHIP_EXPIRED";
     }
 
     @Override
     public String getNotificationTitle() {
-        return "⚠️ Payment Failed";
+        return "⏰ Membership Expired";
     }
 
     @Override
     public String getNotificationMessage() {
-        return String.format("Payment of $%s failed: %s. Next retry: %s",
-                amount.toString(),
-                failureReason != null ? failureReason : "Unknown reason",
-                nextRetryDate != null ? nextRetryDate.toString() : "Not scheduled");
+        return String.format("A membership expired on %s. Please renew to continue accessing gym services.", expiredOn);
     }
 
     @Override
     public NotificationPriority getPriority() {
-        return NotificationPriority.CRITICAL;
+        return NotificationPriority.HIGH;
     }
 }
 
