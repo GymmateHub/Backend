@@ -55,6 +55,22 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
   @Query("SELECT mm FROM MemberMembership mm WHERE mm.frozen = true AND mm.frozenUntil < :date")
   List<MemberMembership> findFrozenMembershipsToUnfreeze(@Param("date") java.time.LocalDate date);
 
+  // ===== Expiry Enforcement Queries =====
+
+  /**
+   * Find active memberships that have passed their end date and are NOT set to auto-renew.
+   * These should be marked as EXPIRED by the scheduled task.
+   */
+  @Query("SELECT mm FROM MemberMembership mm WHERE mm.status = 'ACTIVE' AND mm.endDate < :today AND mm.autoRenew = false")
+  List<MemberMembership> findExpiredActiveMemberships(@Param("today") LocalDateTime today);
+
+  /**
+   * Find active memberships that have passed their end date and ARE set to auto-renew.
+   * These should be renewed by the scheduled task.
+   */
+  @Query("SELECT mm FROM MemberMembership mm WHERE mm.status = 'ACTIVE' AND mm.endDate < :today AND mm.autoRenew = true")
+  List<MemberMembership> findAutoRenewExpiredMemberships(@Param("today") LocalDateTime today);
+
   // ===== Analytics Queries =====
 
   @Query("SELECT COUNT(mm) FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = :status")

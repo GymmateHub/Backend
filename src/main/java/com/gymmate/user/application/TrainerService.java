@@ -2,6 +2,7 @@ package com.gymmate.user.application;
 
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
+import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.user.domain.Trainer;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.TrainerRepository;
@@ -55,6 +56,11 @@ public class TrainerService {
                 .acceptingClients(true)
                 .certifications("[]")
                 .build();
+
+        // Set organisationId from linked user (TenantEntity.prePersist will also attempt via TenantContext)
+        if (user.getOrganisationId() != null) {
+            trainer.setOrganisationId(user.getOrganisationId());
+        }
 
         return trainerRepository.save(trainer);
     }
@@ -136,24 +142,40 @@ public class TrainerService {
     }
 
     /**
-     * Find all trainers accepting clients.
+     * Find all trainers accepting clients within the current organisation.
      */
-    public List<Trainer> findActiveAndAcceptingClients() {
-        return trainerRepository.findActiveAndAcceptingClients();
+    public List<Trainer> findActiveAndAcceptingClients(UUID organisationId) {
+        return trainerRepository.findActiveAndAcceptingClientsByOrganisationId(organisationId);
     }
 
     /**
-     * Find trainers by employment type.
+     * Find trainers by employment type within the current organisation.
      */
-    public List<Trainer> findByEmploymentType(String employmentType) {
-        return trainerRepository.findByEmploymentType(employmentType);
+    public List<Trainer> findByEmploymentType(UUID organisationId, String employmentType) {
+        return trainerRepository.findByOrganisationIdAndEmploymentType(organisationId, employmentType);
     }
 
     /**
-     * Find all trainers.
+     * Find all trainers within the current organisation.
      */
+    public List<Trainer> findAllByOrganisation(UUID organisationId) {
+        return trainerRepository.findByOrganisationId(organisationId);
+    }
+
+    /**
+     * @deprecated Use {@link #findAllByOrganisation(UUID)} instead.
+     */
+    @Deprecated
     public List<Trainer> findAll() {
         return trainerRepository.findAll();
+    }
+
+    /**
+     * @deprecated Use {@link #findActiveAndAcceptingClients(UUID)} instead.
+     */
+    @Deprecated
+    public List<Trainer> findActiveAndAcceptingClients() {
+        return trainerRepository.findActiveAndAcceptingClients();
     }
 
     /**
@@ -177,4 +199,3 @@ public class TrainerService {
         return trainerRepository.save(trainer);
     }
 }
-
