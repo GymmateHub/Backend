@@ -3,6 +3,7 @@ package com.gymmate.user.infrastructure;
 import com.gymmate.user.domain.Trainer;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,6 +20,17 @@ public interface TrainerRepository extends JpaRepository<Trainer, UUID> {
     Optional<Trainer> findByUserId(UUID userId);
     boolean existsByUserId(UUID userId);
 
+    // ========== Organisation-scoped queries (preferred) ==========
+
+    List<Trainer> findByOrganisationId(UUID organisationId);
+
+    @Query("SELECT t FROM Trainer t WHERE t.organisationId = :organisationId AND t.active = true AND t.acceptingClients = true")
+    List<Trainer> findActiveAndAcceptingClientsByOrganisationId(@Param("organisationId") UUID organisationId);
+
+    List<Trainer> findByOrganisationIdAndEmploymentType(UUID organisationId, String employmentType);
+
+    // ========== Legacy unscoped queries (use org-scoped variants instead) ==========
+
     // Active trainers
     @Query("SELECT t FROM Trainer t WHERE t.active = true AND t.acceptingClients = true")
     List<Trainer> findActiveAndAcceptingClients();
@@ -29,4 +41,3 @@ public interface TrainerRepository extends JpaRepository<Trainer, UUID> {
     // Employment type
     List<Trainer> findByEmploymentType(String employmentType);
 }
-

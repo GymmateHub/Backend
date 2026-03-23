@@ -72,7 +72,17 @@ public interface MemberRepository extends JpaRepository<Member, UUID> {
 
     boolean existsByMembershipNumber(String membershipNumber);
 
-    // ========== Status queries ==========
+    // ========== Organisation + Status queries (preferred) ==========
+
+    List<Member> findByOrganisationIdAndStatus(UUID organisationId, MemberStatus status);
+
+    List<Member> findByOrganisationIdAndWaiverSignedFalse(UUID organisationId);
+
+    // ========== Organisation + Date queries (preferred) ==========
+
+    List<Member> findByOrganisationIdAndJoinDateAfter(UUID organisationId, LocalDate date);
+
+    // ========== Status queries (legacy unscoped — prefer org-scoped variants) ==========
 
     List<Member> findByStatus(MemberStatus status);
 

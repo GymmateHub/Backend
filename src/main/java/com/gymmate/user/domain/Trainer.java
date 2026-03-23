@@ -1,6 +1,6 @@
 package com.gymmate.user.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.domain.TenantEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "trainers")
-public class Trainer extends BaseAuditEntity {
+public class Trainer extends TenantEntity {
 
   @Column(name = "user_id", nullable = false)
   private UUID userId;
@@ -73,4 +73,3 @@ public class Trainer extends BaseAuditEntity {
     this.acceptingClients = !this.acceptingClients;
   }
 }
-

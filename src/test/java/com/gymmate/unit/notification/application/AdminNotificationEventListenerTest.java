@@ -7,6 +7,7 @@ import com.gymmate.notification.application.NotificationDispatcher;
 import com.gymmate.notification.domain.Notification;
 import com.gymmate.notification.events.*;
 import com.gymmate.notification.infrastructure.NotificationRepository;
+import com.gymmate.shared.constants.NotificationPriority;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

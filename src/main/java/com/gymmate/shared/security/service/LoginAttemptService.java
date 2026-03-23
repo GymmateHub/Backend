@@ -16,8 +16,8 @@ public class LoginAttemptService {
   private final RedisTemplate<String, Object> redisTemplate;
   private static final String ATTEMPT_KEY_PREFIX = "login_attempt:";
   private static final String LOCKOUT_KEY_PREFIX = "account_locked:";
-  private final long MAX_LOGIN_ATTEMPTS = 5;
-  private final long LOCKOUT_DURATION_MINUTES = 30 * 60 * 1000; // 30 minutes
+  private static final long MAX_LOGIN_ATTEMPTS = 5;
+  private static final long LOCKOUT_DURATION_MINUTES = 30; // 30 minutes
 
   public void loginFailed(String email) {
     String attemptKey = ATTEMPT_KEY_PREFIX + email.toLowerCase();

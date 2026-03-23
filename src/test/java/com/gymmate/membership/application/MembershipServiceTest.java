@@ -11,6 +11,7 @@ import com.gymmate.shared.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -27,6 +28,7 @@ class MembershipServiceTest {
   private MembershipService membershipService;
   private FreezePolicyRepository freezePolicyRepository;
   private MemberPaymentService memberPaymentService;
+  private ApplicationEventPublisher eventPublisher;
 
   @BeforeEach
   void setUp() {
@@ -34,7 +36,8 @@ class MembershipServiceTest {
     planRepository = mock(MembershipPlanRepository.class);
     freezePolicyRepository = mock(FreezePolicyRepository.class);
     memberPaymentService = mock(MemberPaymentService.class);
-    membershipService = new MembershipService(membershipRepository, planRepository, freezePolicyRepository, memberPaymentService);
+    eventPublisher = mock(ApplicationEventPublisher.class);
+    membershipService = new MembershipService(membershipRepository, planRepository, freezePolicyRepository, memberPaymentService, eventPublisher);
   }
 
   @Test
