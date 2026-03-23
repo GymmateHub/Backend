@@ -1,7 +1,7 @@
 package com.gymmate.unit.notification.infrastructure;
 
 import com.gymmate.notification.domain.Notification;
-import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.notification.infrastructure.NotificationJpaRepository;
 import com.gymmate.notification.infrastructure.NotificationRepository;
 import com.gymmate.notification.infrastructure.NotificationRepositoryAdapter;

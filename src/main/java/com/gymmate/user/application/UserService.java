@@ -81,22 +81,49 @@ public class UserService {
     }
 
     /**
-     * Find all users by role.
+     * Find all users by role within an organisation.
      */
+    public List<User> findByRoleAndOrganisation(UserRole role, UUID organisationId) {
+        return userRepository.findByRoleAndOrganisationId(role, organisationId);
+    }
+
+    /**
+     * Find all users by status within an organisation.
+     */
+    public List<User> findByStatusAndOrganisation(UserStatus status, UUID organisationId) {
+        return userRepository.findByStatusAndOrganisationId(status, organisationId);
+    }
+
+    /**
+     * Find all active gym admins within an organisation.
+     */
+    public List<User> findActiveGymAdmins(UUID organisationId) {
+        return userRepository.findByRoleAndOrganisationId(UserRole.ADMIN, organisationId)
+                .stream()
+                .filter(User::isActive)
+                .toList();
+    }
+
+    /**
+     * @deprecated Use {@link #findByRoleAndOrganisation(UserRole, UUID)} instead.
+     */
+    @Deprecated
     public List<User> findByRole(UserRole role) {
         return userRepository.findByRole(role);
     }
 
     /**
-     * Find all users by status.
+     * @deprecated Use {@link #findByStatusAndOrganisation(UserStatus, UUID)} instead.
      */
+    @Deprecated
     public List<User> findByStatus(UserStatus status) {
         return userRepository.findByStatus(status);
     }
 
     /**
-     * Find all active gym admins.
+     * @deprecated Use {@link #findActiveGymAdmins(UUID)} instead.
      */
+    @Deprecated
     public List<User> findActiveGymAdmins() {
         return userRepository.findByRole(UserRole.ADMIN)
                 .stream()

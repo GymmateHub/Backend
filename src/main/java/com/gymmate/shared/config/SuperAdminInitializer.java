@@ -45,8 +45,8 @@ public class SuperAdminInitializer {
                         .role(UserRole.SUPER_ADMIN)
                         .status(UserStatus.ACTIVE)
                         .emailVerified(true)
-                        .organisationId(null) // Super admin is not associated with any organisation
                         .build();
+                // Super admin is not associated with any organisation (organisationId stays null)
 
 
                 userRepository.save(superAdmin);

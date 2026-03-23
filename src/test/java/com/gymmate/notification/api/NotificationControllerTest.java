@@ -7,7 +7,7 @@ import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.notification.domain.Notification;
-import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.exception.GlobalExceptionHandler;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import org.junit.jupiter.api.BeforeEach;

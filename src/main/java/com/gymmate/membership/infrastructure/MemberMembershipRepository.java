@@ -40,6 +40,10 @@ public interface MemberMembershipRepository {
 
   List<MemberMembership> findFrozenMembershipsToUnfreeze(java.time.LocalDate date);
 
+  List<MemberMembership> findExpiredActiveMemberships(java.time.LocalDateTime today);
+
+  List<MemberMembership> findAutoRenewExpiredMemberships(java.time.LocalDateTime today);
+
   void delete(MemberMembership membership);
 }
 
