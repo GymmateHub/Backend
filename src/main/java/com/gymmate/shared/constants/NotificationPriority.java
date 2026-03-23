@@ -1,4 +1,4 @@
-package com.gymmate.notification.events;
+package com.gymmate.shared.constants;
 
 /**
  * Priority levels for notifications.
@@ -21,8 +21,7 @@ public enum NotificationPriority {
     MEDIUM,
 
     /**
-     * Low priority informational notifications (e.g., reports, analytics).
+     * Low-priority informational notifications (e.g., reports, analytics).
      */
     LOW
 }
-
