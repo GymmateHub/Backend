@@ -86,6 +86,16 @@ public class MemberMembershipRepositoryAdapter implements MemberMembershipReposi
   }
 
   @Override
+  public List<MemberMembership> findExpiredActiveMemberships(LocalDateTime today) {
+    return jpaRepository.findExpiredActiveMemberships(today);
+  }
+
+  @Override
+  public List<MemberMembership> findAutoRenewExpiredMemberships(LocalDateTime today) {
+    return jpaRepository.findAutoRenewExpiredMemberships(today);
+  }
+
+  @Override
   public void delete(MemberMembership membership) {
     jpaRepository.delete(membership);
   }

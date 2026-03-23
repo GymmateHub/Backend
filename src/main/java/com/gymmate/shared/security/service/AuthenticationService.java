@@ -336,8 +336,8 @@ public class AuthenticationService {
                 .role(UserRole.MEMBER)
                 .status(UserStatus.INACTIVE)
                 .emailVerified(false)
-                .organisationId(organisationId) // Associate with org
                 .build();
+        user.setOrganisationId(organisationId); // Associate with org (inherited from TenantEntity)
 
         // We also need to create Member entity?
         // GymService/MemberService should handle that.
@@ -378,8 +378,8 @@ public class AuthenticationService {
                 .role(validated.role())
                 .status(UserStatus.ACTIVE)
                 .emailVerified(true)
-                .organisationId(validated.organisationId())
                 .build();
+        user.setOrganisationId(validated.organisationId());
 
         user = userRepository.save(user);
 
