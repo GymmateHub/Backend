@@ -33,3 +33,5 @@ node_modules/
 
 # docs
 /docs/*.md
+
+.bruin.yml

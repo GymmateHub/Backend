@@ -9,7 +9,8 @@ public enum InvoiceStatus {
     PAID,
     PAYMENT_FAILED,
     VOID,
-    UNCOLLECTIBLE;
+    UNCOLLECTIBLE,
+    REFUNDED;
 
     public static InvoiceStatus fromStripeStatus(String stripeStatus) {
         return switch (stripeStatus) {

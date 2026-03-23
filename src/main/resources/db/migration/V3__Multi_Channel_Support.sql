@@ -19,16 +19,19 @@ DROP TABLE IF EXISTS newsletter_templates CASCADE;
 -- Inherits from GymScopedEntity -> TenantEntity -> BaseAuditEntity
 -- ============================================================================
 
+-- Create uuid-ossp extension if not exists (for uuidv7)
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE newsletter_templates (
     -- BaseEntity
     id UUID PRIMARY KEY DEFAULT uuidv7(),
-    
+
     -- TenantEntity columns
     organisation_id UUID NOT NULL,
-    
+
     -- GymScopedEntity columns
     gym_id UUID,
-    
+
     -- NewsletterTemplate specific columns
     name VARCHAR(100) NOT NULL,
     subject VARCHAR(255) NOT NULL,
@@ -42,7 +45,7 @@ CREATE TABLE newsletter_templates (
     updated_at TIMESTAMP,
     updated_by VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE
-    
+
 );
 
 CREATE INDEX idx_newsletter_templates_org ON newsletter_templates(organisation_id);
@@ -57,13 +60,13 @@ CREATE INDEX idx_newsletter_templates_active ON newsletter_templates(gym_id, is_
 CREATE TABLE newsletter_campaigns (
     -- BaseEntity
     id UUID PRIMARY KEY DEFAULT uuidv7(),
-    
+
     -- TenantEntity columns
     organisation_id UUID NOT NULL,
-    
+
     -- GymScopedEntity columns
     gym_id UUID NOT NULL,
-    
+
     -- NewsletterCampaign specific columns
     template_id UUID,
     name VARCHAR(100),
@@ -100,7 +103,7 @@ CREATE INDEX idx_newsletter_campaigns_template ON newsletter_campaigns(template_
 CREATE TABLE campaign_recipients (
     -- BaseEntity
     id UUID PRIMARY KEY DEFAULT uuidv7(),
-    
+
     -- CampaignRecipient specific columns
     campaign_id UUID NOT NULL,
     member_id UUID NOT NULL,
@@ -109,7 +112,7 @@ CREATE TABLE campaign_recipients (
     sent_at TIMESTAMP,
     delivered_at TIMESTAMP,
     error_message TEXT,
-    
+
     -- Multi-channel support columns
     channel_used VARCHAR(20) DEFAULT 'EMAIL',
     fallback_used BOOLEAN DEFAULT FALSE,
@@ -131,25 +134,25 @@ CREATE INDEX idx_campaign_recipients_channel ON campaign_recipients(channel_used
 -- SECTION 5: FOREIGN KEY CONSTRAINTS
 -- ============================================================================
 
-ALTER TABLE newsletter_templates ADD CONSTRAINT fk_newsletter_templates_org 
+ALTER TABLE newsletter_templates ADD CONSTRAINT fk_newsletter_templates_org
     FOREIGN KEY (organisation_id) REFERENCES organisations(id) ON DELETE CASCADE;
 
-ALTER TABLE newsletter_templates ADD CONSTRAINT fk_newsletter_templates_gym 
+ALTER TABLE newsletter_templates ADD CONSTRAINT fk_newsletter_templates_gym
     FOREIGN KEY (gym_id) REFERENCES gyms(id) ON DELETE CASCADE;
 
-ALTER TABLE newsletter_campaigns ADD CONSTRAINT fk_newsletter_campaigns_org 
+ALTER TABLE newsletter_campaigns ADD CONSTRAINT fk_newsletter_campaigns_org
     FOREIGN KEY (organisation_id) REFERENCES organisations(id) ON DELETE CASCADE;
 
-ALTER TABLE newsletter_campaigns ADD CONSTRAINT fk_newsletter_campaigns_gym 
+ALTER TABLE newsletter_campaigns ADD CONSTRAINT fk_newsletter_campaigns_gym
     FOREIGN KEY (gym_id) REFERENCES gyms(id) ON DELETE CASCADE;
 
-ALTER TABLE newsletter_campaigns ADD CONSTRAINT fk_newsletter_campaigns_template 
+ALTER TABLE newsletter_campaigns ADD CONSTRAINT fk_newsletter_campaigns_template
     FOREIGN KEY (template_id) REFERENCES newsletter_templates(id) ON DELETE SET NULL;
 
-ALTER TABLE campaign_recipients ADD CONSTRAINT fk_campaign_recipients_campaign 
+ALTER TABLE campaign_recipients ADD CONSTRAINT fk_campaign_recipients_campaign
     FOREIGN KEY (campaign_id) REFERENCES newsletter_campaigns(id) ON DELETE CASCADE;
 
-ALTER TABLE campaign_recipients ADD CONSTRAINT fk_campaign_recipients_member 
+ALTER TABLE campaign_recipients ADD CONSTRAINT fk_campaign_recipients_member
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE;
 
 -- ============================================================================

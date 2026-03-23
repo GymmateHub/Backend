@@ -1,5 +1,7 @@
 package com.gymmate.notification.events;
 
+import com.gymmate.shared.constants.NotificationPriority;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 

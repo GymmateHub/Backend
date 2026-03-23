@@ -16,7 +16,7 @@ import java.util.UUID;
 
 import com.gymmate.notification.domain.Notification.NotificationScope;
 import com.gymmate.notification.domain.Notification.RecipientRole;
-import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.shared.constants.NotificationPriority;
 import lombok.SneakyThrows;
 import java.util.Map;
 

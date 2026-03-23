@@ -1,8 +1,11 @@
 package com.gymmate.payment.application;
 
+import com.gymmate.notification.events.ChargeDisputedEvent;
+import com.gymmate.notification.events.ChargeRefundedEvent;
 import com.gymmate.notification.events.PaymentFailedEvent;
 import com.gymmate.notification.events.PaymentSuccessEvent;
-import com.gymmate.notification.events.NotificationPriority;
+import com.gymmate.notification.events.SubscriptionPausedEvent;
+import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
 import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
@@ -152,6 +155,18 @@ public class StripeWebhookService {
                 handleInvoiceUpdated(event);
                 break;
 
+            case "customer.subscription.paused":
+                handleSubscriptionPaused(event);
+                break;
+
+            case "charge.disputed":
+                handleChargeDisputed(event);
+                break;
+
+            case "charge.refunded":
+                handleChargeRefunded(event);
+                break;
+
             default:
                 log.debug("Unhandled platform event type: {}", eventType);
         }
@@ -179,6 +194,14 @@ public class StripeWebhookService {
 
             case "payment_intent.payment_failed":
                 handleConnectPaymentFailed(event);
+                break;
+
+            case "charge.disputed":
+                handleChargeDisputed(event);
+                break;
+
+            case "charge.refunded":
+                handleChargeRefunded(event);
                 break;
 
             default:
@@ -549,6 +572,11 @@ public class StripeWebhookService {
                 var membership = membershipOpt.get();
                 organisationId = membership.getOrganisationId();
 
+                // Mark membership as past due so access can be restricted
+                membership.setStatus(MembershipStatus.PAST_DUE);
+                memberMembershipRepository.save(membership);
+                log.warn("Membership {} marked as PAST_DUE due to payment failure", membershipId);
+
                 // Create a failed invoice record
                 MemberInvoice invoice = MemberInvoice.builder()
                         .memberId(membership.getMemberId())
@@ -581,6 +609,205 @@ public class StripeWebhookService {
     }
 
     // Helper methods
+
+    /**
+     * Handle subscription paused event.
+     * Updates subscription status to PAUSED and notifies the organisation owner.
+     */
+    private void handleSubscriptionPaused(Event event) {
+        com.stripe.model.Subscription stripeSubscription = extractEventObject(event,
+                com.stripe.model.Subscription.class);
+        if (stripeSubscription == null)
+            return;
+
+        subscriptionRepository.findByStripeSubscriptionId(stripeSubscription.getId())
+                .ifPresent(subscription -> {
+                    subscription.setStatus(SubscriptionStatus.PAUSED);
+                    subscriptionRepository.save(subscription);
+                    log.info("Subscription {} paused", subscription.getId());
+
+                    SubscriptionPausedEvent pausedEvent = SubscriptionPausedEvent.builder()
+                            .organisationId(subscription.getOrganisationId())
+                            .subscriptionId(subscription.getId())
+                            .tierName(subscription.getTier() != null
+                                    ? subscription.getTier().getDisplayName() : "Unknown")
+                            .pausedAt(LocalDateTime.now())
+                            .build();
+
+                    eventPublisher.publishEvent(pausedEvent);
+                    log.info("Published SubscriptionPausedEvent for organisation {}",
+                            subscription.getOrganisationId());
+                });
+    }
+
+    /**
+     * Handle charge disputed event (chargeback).
+     * Logs the dispute, notifies the organisation owner via a CRITICAL notification.
+     */
+    private void handleChargeDisputed(Event event) {
+        Dispute dispute = extractEventObject(event, Dispute.class);
+        if (dispute == null)
+            return;
+
+        BigDecimal amount = BigDecimal.valueOf(dispute.getAmount())
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        String currency = dispute.getCurrency() != null ? dispute.getCurrency().toUpperCase() : "USD";
+        String reason = dispute.getReason() != null ? dispute.getReason() : "not_provided";
+
+        log.warn("Charge disputed: {} for amount {} {} — reason: {}",
+                dispute.getId(), amount, currency, reason);
+
+        // Resolve organisation from the charge's metadata or customer
+        UUID organisationId = resolveOrganisationFromDispute(dispute);
+
+        if (organisationId != null) {
+            ChargeDisputedEvent disputedEvent = ChargeDisputedEvent.builder()
+                    .organisationId(organisationId)
+                    .amount(amount)
+                    .currency(currency)
+                    .disputeId(dispute.getId())
+                    .disputeReason(reason)
+                    .paymentIntentId(dispute.getPaymentIntent())
+                    .build();
+
+            eventPublisher.publishEvent(disputedEvent);
+            log.info("Published ChargeDisputedEvent for organisation {}", organisationId);
+        } else {
+            // Fallback: create a system-level notification via direct service call
+            log.warn("Could not resolve organisation for dispute {}. Logging only.", dispute.getId());
+        }
+    }
+
+    /**
+     * Handle charge refunded event (full or partial refund processed).
+     * Updates invoice status and notifies the organisation owner.
+     */
+    private void handleChargeRefunded(Event event) {
+        Charge charge = extractEventObject(event, Charge.class);
+        if (charge == null)
+            return;
+
+        BigDecimal amountRefunded = BigDecimal.valueOf(charge.getAmountRefunded())
+                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+        String currency = charge.getCurrency() != null ? charge.getCurrency().toUpperCase() : "USD";
+
+        log.info("Charge refunded: {} — refunded amount {} {}",
+                charge.getId(), amountRefunded, currency);
+
+        // Resolve organisation from charge metadata or associated invoice
+        UUID organisationId = resolveOrganisationFromCharge(charge);
+
+        // Update any associated invoice status to REFUNDED if fully refunded
+        if (charge.getRefunded() != null && charge.getRefunded()) {
+            try {
+                com.google.gson.JsonObject raw = charge.getRawJsonObject();
+                if (raw != null && raw.has("invoice") && !raw.get("invoice").isJsonNull()) {
+                    String invoiceId = raw.get("invoice").getAsString();
+                    invoiceRepository.findByStripeInvoiceId(invoiceId)
+                            .ifPresent(invoice -> {
+                                invoice.setStatus(InvoiceStatus.REFUNDED);
+                                invoiceRepository.save(invoice);
+                                log.info("Invoice {} marked as REFUNDED", invoiceId);
+                            });
+                }
+            } catch (Exception e) {
+                log.debug("Could not resolve invoice from charge for refund: {}", e.getMessage());
+            }
+        }
+
+        if (organisationId != null) {
+            // Determine refund reason from the latest refund object
+            String refundReason = "Refund processed";
+            String latestRefundId = null;
+            if (charge.getRefunds() != null && charge.getRefunds().getData() != null
+                    && !charge.getRefunds().getData().isEmpty()) {
+                var latestRefund = charge.getRefunds().getData().get(0);
+                latestRefundId = latestRefund.getId();
+                if (latestRefund.getReason() != null) {
+                    refundReason = latestRefund.getReason();
+                }
+            }
+
+            ChargeRefundedEvent refundedEvent = ChargeRefundedEvent.builder()
+                    .organisationId(organisationId)
+                    .amount(amountRefunded)
+                    .currency(currency)
+                    .refundId(latestRefundId)
+                    .paymentIntentId(charge.getPaymentIntent())
+                    .reason(refundReason)
+                    .build();
+
+            eventPublisher.publishEvent(refundedEvent);
+            log.info("Published ChargeRefundedEvent for organisation {}", organisationId);
+        }
+    }
+
+    /**
+     * Resolve organisation ID from a Dispute object.
+     * Tries metadata on the payment intent, then falls back to customer lookup.
+     */
+    private UUID resolveOrganisationFromDispute(Dispute dispute) {
+        // Try metadata
+        if (dispute.getMetadata() != null) {
+            String orgIdStr = dispute.getMetadata().get("organisation_id");
+            if (orgIdStr != null) {
+                return UUID.fromString(orgIdStr);
+            }
+        }
+
+        // Fallback: resolve from customer via subscription
+        try {
+            com.google.gson.JsonObject raw = dispute.getRawJsonObject();
+            if (raw != null && raw.has("charge") && !raw.get("charge").isJsonNull()) {
+                // The charge field may contain the customer; resolve via subscription
+                String customer = raw.has("customer") && !raw.get("customer").isJsonNull()
+                        ? raw.get("customer").getAsString() : null;
+                if (customer != null) {
+                    return subscriptionRepository.findByStripeCustomerId(customer)
+                            .map(s -> s.getOrganisationId()).orElse(null);
+                }
+            }
+        } catch (Exception e) {
+            log.debug("Failed to resolve organisation from dispute: {}", e.getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Resolve organisation ID from a Charge object.
+     * Tries metadata, then customer lookup via subscription.
+     */
+    private UUID resolveOrganisationFromCharge(Charge charge) {
+        // Try metadata
+        if (charge.getMetadata() != null) {
+            String orgIdStr = charge.getMetadata().get("organisation_id");
+            if (orgIdStr != null) {
+                return UUID.fromString(orgIdStr);
+            }
+        }
+
+        // Fallback: resolve from customer via subscription
+        if (charge.getCustomer() != null) {
+            var result = subscriptionRepository.findByStripeCustomerId(charge.getCustomer())
+                    .map(s -> s.getOrganisationId()).orElse(null);
+            if (result != null) return result;
+        }
+
+        // Fallback: resolve from invoice via raw JSON (Stripe SDK v31+)
+        try {
+            com.google.gson.JsonObject raw = charge.getRawJsonObject();
+            if (raw != null && raw.has("invoice") && !raw.get("invoice").isJsonNull()) {
+                String invoiceId = raw.get("invoice").getAsString();
+                return invoiceRepository.findByStripeInvoiceId(invoiceId)
+                        .map(GymInvoice::getOrganisationId).orElse(null);
+            }
+        } catch (Exception e) {
+            log.debug("Could not resolve invoice from charge: {}", e.getMessage());
+        }
+
+        return null;
+    }
 
     private Event verifyAndParseEvent(String payload, String signature, String webhookSecret) {
         if (webhookSecret == null || webhookSecret.isBlank()) {
@@ -648,6 +875,7 @@ public class StripeWebhookService {
             case "active" -> SubscriptionStatus.ACTIVE;
             case "trialing" -> SubscriptionStatus.TRIAL;
             case "past_due" -> SubscriptionStatus.PAST_DUE;
+            case "paused" -> SubscriptionStatus.PAUSED;
             case "canceled", "cancelled" -> SubscriptionStatus.CANCELLED;
             case "unpaid" -> SubscriptionStatus.SUSPENDED;
             case "incomplete", "incomplete_expired" -> SubscriptionStatus.EXPIRED;
