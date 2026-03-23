@@ -66,6 +66,10 @@ public class ClassBooking extends GymScopedEntity {
   @Column(name = "member_notes", columnDefinition = "TEXT")
   private String memberNotes;
 
+  // Waitlist tracking
+  @Column(name = "waitlist_position")
+  private Integer waitlistPosition;
+
   public void checkIn() {
     this.checkedInAt = LocalDateTime.now();
     this.status = BookingStatus.CONFIRMED;
