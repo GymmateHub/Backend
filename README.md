@@ -1,137 +1,136 @@
-# GymMateHub Backend (Spring Boot Modular Monolith)
+# GymMate Backend
 
-GymMateHub is a modular monolith built with Spring Boot, designed to provide a comprehensive gym management system. It organizes features into cohesive modules while maintaining a single deployable unit for simplicity and speed during MVP development.
-
-## 📢 Recent Updates
-
-### ✅ November 20, 2025 - Tenant Context Fix
-- **Fixed**: GET `/api/gyms` endpoint now works correctly (was returning 403 Forbidden)
-- **Updated**: SecurityConfig to properly handle public gym listing endpoints
-- **Enhanced**: TenantFilter for better public endpoint handling
-
-👉 **For technical details, testing, and implementation gaps**: See `TECHNICAL_NOTES.md`
+Multi-tenant SaaS gym management platform built as a Spring Boot modular monolith.
 
 ## Tech Stack
 
-- **Java**: 21
-- **Spring Boot**: 3.3.x
-- **Build Tool**: Maven
-- **Database**: PostgreSQL (with Flyway for migrations)
-- **API Documentation**: SpringDoc OpenAPI (Swagger)
-- **Architecture**: Modular Monolith with Clean/Hexagonal Architecture principles
+- **Java 21** / **Spring Boot 3.5.6**
+- **PostgreSQL** (H2 for local dev) with **Flyway** migrations
+- **Spring Security** + JWT authentication
+- **Stripe** for payment processing
+- **SpringDoc OpenAPI** (Swagger)
+- **Lombok** + **MapStruct**
+- **Maven Wrapper** (`./mvnw`)
+
+## Quick Start
+
+### 1. Prerequisites
+
+- JDK 21
+- PostgreSQL 15+ (optional — H2 works for local dev)
+
+### 2. Environment Setup
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env` with your values. The minimum required variables are already set for H2 local development.
+
+### 3. Build & Run
+
+```bash
+# Verify Java version
+java -version   # Must be 21
+
+# Build (skip tests)
+./mvnw clean package -DskipTests
+
+# Run
+./mvnw spring-boot:run
+```
+
+The app starts on **http://localhost:8080**.
+
+### 4. Verify
+
+- **Health:** http://localhost:8080/actuator/health
+- **Swagger UI:** http://localhost:8080/swagger-ui.html
+- **API Docs:** http://localhost:8080/v3/api-docs
 
 ## Project Structure
 
-The project follows a modular monolithic architecture with clear separation of concerns:
-
 ```
 src/main/java/com/gymmate/
-├── shared/                 # Cross-cutting concerns
-│   ├── config/            # Application configuration
-│   ├── dto/               # Common DTOs
-│   ├── exception/         # Global exception handling
-│   ├── security/         # Security configuration
-│   ├── service/          # Shared services
-│   └── util/             # Utility classes
-│
-├── user/                  # User Management Module
-├── membership/           # Gym & Membership Module
-├── booking/             # Class & Session Booking
-├── payment/             # Payment Processing
-├── inventory/           # Equipment & Resource Management
-├── analytics/           # Business Analytics
-└── notification/        # Notification System
+├── shared/              # Cross-cutting: config, security, exceptions, DTOs
+├── user/                # User management (owners, staff, trainers, members)
+├── organisation/        # Organisation (multi-tenant parent entity)
+├── gym/                 # Gym management
+├── membership/          # Membership plans & subscriptions
+├── classes/             # Class scheduling & bookings
+├── booking/             # Session booking
+├── payment/             # Stripe payments, invoices, refunds
+├── inventory/           # Equipment & resource tracking
+├── analytics/           # Business insights & reporting
+├── notification/        # Email, SSE, push notifications
+├── newsletter/          # Newsletter & campaign management
+└── subscription/        # Platform subscription tiers & rate limiting
 ```
 
-Each feature module follows a clean architecture pattern with four layers:
-- **api**: Controllers, DTOs, and API endpoints
-- **application**: Services and use cases
-- **domain**: Core business logic and entities
-- **infrastructure**: External implementations (repositories, adapters)
+Each module follows clean/hexagonal architecture:
 
-## Getting Started
+```
+module/
+├── api/              # Controllers & request/response DTOs
+├── application/      # Service layer & use cases
+├── domain/           # Entities, value objects, repository interfaces
+└── infrastructure/   # JPA repositories, adapters, external integrations
+```
 
-### Prerequisites
+## Key Endpoints
 
-- JDK 21
-- Maven 3.8+
-- PostgreSQL 15+
+| Area | Endpoint | Description |
+|------|----------|-------------|
+| Auth | `POST /api/auth/login` | Login |
+| Auth | `POST /api/auth/refresh-token` | Refresh JWT |
+| Users | `POST /api/users/register/gym-owner` | Register gym owner |
+| Gyms | `POST /api/gyms/register` | Register a gym |
+| Gyms | `GET /api/gyms` | List gyms |
+| Members | `GET /api/members` | List members |
+| Classes | `GET /api/classes` | List classes |
+| Payments | `POST /api/payments` | Process payment |
 
-### Local Development Setup
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/GymMateHub/backend.git
-   cd gymmate-backend
-   ```
-
-2. Configure your database in `src/main/resources/application.yml`
-
-3. Build the project:
-   ```bash
-   ./mvnw clean package
-   ```
-
-4. Run the application:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-The application will start on `http://localhost:8080`
-
-### Available Scripts
-
-- `build.sh`: Builds the application
-- `run.sh`: Starts the application
-- `stop.sh`: Stops the running application
-- `test_api.sh`: Runs API tests
-
-## Documentation
-
-### Technical Documentation
-📘 **[TECHNICAL_NOTES.md](docs/TECHNICAL_NOTES.md)** - **Start here for technical details**
-- Recent bug fixes and changes
-- Known issues and solutions
-- Implementation gaps and roadmap
-- Testing guidelines
-- Technical decisions
-- API documentation
-- Development troubleshooting
-
-### Business Documentation
-- 📋 **[BRD](docs/gymmate_brd.md)** - Business Requirements Document
-- 🗂️ **[Schema](docs/gymmate_schema.md)** - Database schema
-- 📖 **[Comprehensive Spec](docs/gymmate_comprehensive_spec.md)** - Detailed specifications
-
-## Key Features
-
-- **User Management**: Registration, authentication, and profile management
-- **Gym Management**: Gym registration and management
-- **Membership Systems**: Membership plans and subscriptions
-- **Booking System**: Class and session scheduling
-- **Payment Processing**: Handle payments and subscriptions
-- **Inventory Management**: Track gym equipment and resources
-- **Analytics**: Business insights and reporting
-- **Notification System**: Email and push notifications
+Full API reference available at `/swagger-ui.html` when the app is running.
 
 ## Database Migrations
 
-The project uses Flyway for database migrations. Migration files are located in:
+Migration files live in `src/main/resources/db/migration/`. Flyway is disabled by default in dev (`FLYWAY_ENABLED=false`, `JPA_DDL_AUTO=update`). For production, enable Flyway and set `JPA_DDL_AUTO=validate`.
+
+## Testing
+
+```bash
+./mvnw test
 ```
-src/main/resources/db/migration/
+
+## Docker
+
+```bash
+docker-compose up -d
 ```
+
+Or build the image directly:
+
+```bash
+docker build -t gymmate-backend .
+```
+
+## Documentation
+
+Detailed documentation lives in the [`docs/`](docs/) folder:
+
+| Document | Description |
+|----------|-------------|
+| [PRODUCT_STATE_REPORT.md](docs/PRODUCT_STATE_REPORT.md) | Full codebase audit — module status, tech debt, production readiness |
+| [GymMateHub_PRD_v1.0.md](docs/GymMateHub_PRD_v1.0.md) | Product requirements — feature specs, data models, API specs |
+| [GymMateHub_brd_v2.md](docs/GymMateHub_brd_v2.md) | Business requirements — strategy, module architecture, roadmap |
 
 ## Contributing
 
-1. Create a feature branch (`git checkout -b feature/amazing-feature`)
-2. Commit your changes (`git commit -m 'Add amazing feature'`)
-3. Push to the branch (`git push origin feature/amazing-feature`)
+1. Create a feature branch (`git checkout -b feature/your-feature`)
+2. Commit your changes (`git commit -m 'Add your feature'`)
+3. Push to the branch (`git push origin feature/your-feature`)
 4. Open a Pull Request
-
-## Project Status
-
-Currently in active development. Version 1.0.0 development in progress.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT
