@@ -9,7 +9,7 @@ spring:
     host: ${MAIL_HOST:premium700.web-hosting.com}      # ← KEY FIX
     port: ${MAIL_PORT:465}
     username: noreply@gymmatehub.com
-    password: ${MAIL_PASSWORD:8oBF0rcoEU02#$}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
