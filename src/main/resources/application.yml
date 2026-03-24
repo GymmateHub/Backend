@@ -89,12 +89,14 @@ springdoc:
 # Actuator/Monitoring
 # ============================================
 management:
+  health:
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:
         include: health,info,metrics
   endpoint:
-    health:
       show-details: always
       show-components: always
 

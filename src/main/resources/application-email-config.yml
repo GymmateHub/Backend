@@ -7,9 +7,9 @@ spring:
   mail:
     # Namecheap SMTP server
     host: ${MAIL_HOST:premium700.web-hosting.com}      # ← KEY FIX
-    port: ${MAIL_PORT:587}
+    port: ${MAIL_PORT:465}
     username: noreply@gymmatehub.com
-    password: ${MAIL_PASSWORD:}
+    password: ${MAIL_PASSWORD:8oBF0rcoEU02#$}
     properties:
       mail:
         smtp:
