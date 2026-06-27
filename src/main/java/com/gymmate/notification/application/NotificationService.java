@@ -10,6 +10,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.beans.BeanProperty;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -235,11 +236,20 @@ public class NotificationService {
         log.info("Deleted {} old notifications for gym {}", oldNotifications.size(), gymId);
     }
 
-  /**
-   * Send test email
-   */
-  @Transactional
-  public void sendTestEmail(String to) {
-    emailService.sendHtmlEmail(to, "Test Email", "This is a test email");
-  }
+    /**
+     * Send test email
+     */
+    @Transactional
+    public void sendTestEmail(String to) {
+        emailService.sendHtmlEmail(to, "Test Email", "This is a test email");
+    }
+
+    /**
+     * send notification to a user
+     */
+    @Transactional
+    public void sendToUser(UUID userId, String title, String message, NotificationPriority priority, String eventType,
+            Map<String, Object> metadata) {
+        // TODO: Implement sending notification to a user.
+    }
 }

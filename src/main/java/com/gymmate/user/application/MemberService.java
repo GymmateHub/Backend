@@ -25,6 +25,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final UserRepository userRepository;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     /**
      * Create a new member profile for an existing user.
@@ -109,7 +110,14 @@ public class MemberService {
         Member member = findById(memberId);
         member.setFitnessGoals(fitnessGoals);
         member.setExperienceLevel(experienceLevel);
-        return memberRepository.save(member);
+        Member savedMember = memberRepository.save(member);
+        
+        // Trigger AI plan generation if fitness goals are provided
+        if (fitnessGoals != null && fitnessGoals.length > 0) {
+            eventPublisher.publishEvent(new com.gymmate.user.domain.events.MemberOnboardedEvent(this, savedMember.getId(), savedMember.getGymId(), fitnessGoals));
+        }
+        
+        return savedMember;
     }
 
     /**
