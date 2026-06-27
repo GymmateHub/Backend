@@ -1,25 +1,21 @@
 # GymMateHub – Comprehensive Gym Management SaaS Platform
-## Business Requirements Document (BRD) v2.1
+## Business Requirements Document (BRD) | Version 0.1 (Pre-launch Draft)
 
 | Field | Value |
 |-------|-------|
-| **Version** | 2.1 |
-| **Last Updated** | January 31, 2026 |
-| **Status** | MVP Complete – Active Development |
-| **Previous Version** | 2.0 (January 13, 2026) |
+| **Version** | 0.1 |
+| **Last Updated** | June 27, 2026 |
+| **Status** | Pre-launch Draft |
+
+> **Versioning:** all GymMateHub documents share a single **v0.1** pre-launch baseline, tracked centrally in [`VERSIONS.md`](VERSIONS.md). Versions advance together; first public release will be **v1.0**.
 
 ---
 
-## Changelog (v2.1)
+## Document History
 
-| Change | Description |
-|--------|-------------|
-| **Added** | Newsletter & Campaign Management feature (Section 7.9) |
-| **Added** | Multi-Channel Notification infrastructure (Section 10.3) |
-| **Updated** | Module Architecture to include new modules |
-| **Updated** | Database Schema with new migrations (V2, V3) |
-| **Added** | Implementation Gaps & Technical Debt section (Section 17) |
-| **Updated** | Test Coverage Analysis (Section 18) |
+| Version | Date | Summary |
+|---------|------|---------|
+| 0.1 | June 27, 2026 | Consolidated pre-launch baseline. Covers MVP (membership, payments, classes, health, inventory, newsletter, multi-channel notifications) plus planned Access Control & Anti-Tailgating (§7.10), AI Personal Trainer (§7.11), Upgradeability principle (§6.4), Competitive Positioning (§20), and website reconciliation (§21). |
 
 ---
 
@@ -85,16 +81,18 @@ Most gyms rely on fragmented tools for payments, attendance, scheduling, and mem
 | Mobile & web API access | ✅ Complete | RESTful API with OpenAPI documentation |
 | Authentication & security | ✅ Complete | JWT, 2FA (TOTP), password reset, token blacklist |
 | **Newsletter & Campaign Management** | ✅ Complete | **NEW** - Email templates, bulk campaigns, recipient tracking |
-| **Multi-Channel Notification** | 🔄 Partial | **NEW** - Email complete, SMS/WhatsApp infrastructure ready |
+| **Multi-Channel Notification** | 🔄 Partial | Email complete, SMS/WhatsApp infrastructure ready (senders are stubs — see §10) |
+| **Access Control & Anti-Tailgating** | 📋 Planned | **NEW** - Software check-in (QR/passcode), anti-tailgating rules, pluggable turnstile/CV device port (Section 7.10) |
+| **AI Personal Trainer** | 📋 Planned | **NEW** - Goal-based workout + locally-tailored (African-cuisine) meal plans at onboarding (Section 7.11) |
 
 ### 5.2 Out of Scope (Future Phases)
 
-- Hardware biometric device provisioning
+- Hardware biometric device provisioning (note: software access core is **in scope**; physical hardware integrates via the device-adapter port)
 - Blockchain/on-chain payments
 - Insurance integrations
-- White-label mobile apps
-- Advanced AI/ML recommendations
+- White-label mobile apps (a Flutter/Dart member app is **roadmapped**, see §14 — white-label is later)
 - Virtual training platform
+- AI predictive analytics, smart scheduling, engagement scoring (later AI-module phases; the AI Personal Trainer in §7.11 **is** in scope)
 
 ---
 
@@ -143,11 +141,11 @@ src/main/java/com/gymmate/
 ├── inventory/                       # Equipment, stock, maintenance
 ├── health/                          # Exercise, workouts, metrics, goals
 ├── notification/                    # NEW: Newsletter & multi-channel messaging
-├── access/                          # Reserved: Access control (scaffolded)
-├── ai/                              # Reserved: AI/ML features (scaffolded)
-├── analytics/                       # Reserved: Advanced analytics (scaffolded)
-├── booking/                         # Reserved: General booking (scaffolded)
-└── dashboard/                       # Reserved: Dashboard features (scaffolded)
+├── access/                          # PLANNED: Access control & anti-tailgating (Section 7.10)
+├── ai/                              # PLANNED: AI Personal Trainer — workout + meal plans (Section 7.11)
+├── analytics/                       # Reserved: Advanced/predictive analytics (scaffolded)
+├── booking/                         # Reserved: Facility/PT/space booking (scaffolded — decision: build or remove claim)
+└── dashboard/                       # Reserved: Dashboard features (analytics module serves this today)
 ```
 
 ### 6.3 Implemented API Endpoints
@@ -167,6 +165,19 @@ src/main/java/com/gymmate/
 | **Newsletter** | NewsletterTemplateController, NewsletterCampaignController | `/api/newsletters/**`, `/api/campaigns/**` |
 
 **Total Controllers: 33**
+
+### 6.4 Upgradeability & Extensibility Principle (NEW)
+
+GymMateHub is built so capabilities can be **upgraded without rework**. Every external/variable capability sits behind a **port/adapter** so providers swap freely:
+
+| Concern | Port | Default adapter | Future adapters |
+|---------|------|-----------------|-----------------|
+| Physical access | `AccessDevicePort` | `SoftwareAccessAdapter` (no hardware) | Turnstile/maglock, camera/CV |
+| AI generation | `LlmClient` | Anthropic Claude | OpenAI, others |
+| Payments | payment-provider abstraction | Stripe | Paystack, Flutterwave, PayPal, Square |
+| Messaging | `ChannelSender` | Email | SMS (Twilio), WhatsApp, Push |
+
+Supporting rules: **`/api/v1` versioning** on all new endpoints; domain logic stays provider-agnostic; configuration via environment variables (Stripe-config pattern); graceful degradation when an integration key is absent. This is the architectural through-line for all new modules.
 
 ---
 
@@ -274,6 +285,48 @@ src/main/java/com/gymmate/
 - `MEMBERSHIP_PLAN` - Members on specific plans (pending integration)
 - `SPECIFIC_MEMBERS` - Manually selected members (pending integration)
 
+### 7.10 Access Control & Anti-Tailgating 📋 Planned (NEW)
+
+**Business need:** the pilot gym requires prevention of **tailgating** — a second person entering on one valid scan. Strategy: enforce access in **software now** (zero-hardware, works on phone/kiosk) with a clean **device-adapter port** so turnstiles/maglocks and camera/CV plug in later. This also delivers the website's "QR/manual check-in, no hardware" promise and matches GymMaster's access-control surface.
+
+| Requirement | Status | Implementation (planned) |
+|-------------|--------|--------------------------|
+| Member check-in via QR / passcode | 📋 | `AccessCredential` (hashed, rotating token); `POST /api/v1/access/scan` |
+| Check-in via NFC / key-fob / Bluetooth | 📋 | via device-adapter port (later tiers) |
+| Entry-decision pipeline | 📋 | active-membership, signup-complete, overdue-limit, visits-remaining, door-benefit, access-window, stop-at-gate checks |
+| Standard denial reasons (GymMaster parity) | 📋 | `denyReason` enum: NO_ACTIVE_MEMBERSHIP, INCOMPLETE_SIGNUP, OVERDUE_OVER_LIMIT, VISITS_EXHAUSTED, NO_DOOR_BENEFIT, OUTSIDE_ACCESS_TIMES, STOP_AT_GATE_TASK, SUSPENDED_OR_FROZEN, TAILGATING_BLOCKED |
+| Door benefits (plan → which doors) | 📋 | `DoorBenefit` mapping `MembershipPlan` ↔ `AccessPoint` |
+| Per-member/plan access-time windows | 📋 | `AccessSchedule` |
+| **Anti-tailgating: one-open-session / pass-back** | 📋 | member already INSIDE cannot re-enter without an OUT |
+| **Anti-tailgating: re-entry lockout** | 📋 | configurable cooldown blocks instant credential reuse |
+| **Anti-tailgating: device-pass reconciliation** | 📋 | turnstile/CV reports pass-count; `passCount > validScanCount` ⇒ flagged |
+| **Anti-tailgating: CV image capture** | 📋 | camera adapter attaches entry image to the event (GymMaster parity) |
+| Real-time staff alerts | 📋 | reuse SSE (`SseEmitterRegistry`) + domain events (`AccessDeniedEvent`, `TailgatingSuspectedEvent`) |
+| Audit trail / Visitors log + tailgating report | 📋 | append-only `AccessEvent`; `GET /api/v1/access/events` |
+| Pluggable hardware (turnstile/maglock/camera) | 📋 | `AccessDevicePort` + adapters per `AccessPoint.mode` (SOFTWARE/TURNSTILE/CV) |
+
+**Entities:** `AccessPoint`, `AccessCredential`, `DoorBenefit`, `AccessSchedule`, `AccessEvent` (all gym-scoped). **Migration:** `V10__Access_Control_System.sql`.
+
+### 7.11 AI Personal Trainer 📋 Planned (NEW)
+
+**Business need:** at onboarding, capture the member's fitness goal and basics, then generate a **personalized workout plan** (grounded in the gym's exercise library) and a **meal plan tailored to local cuisine** (derived from the gym's country/city — "Built for Africa") to help reach that goal. This is a primary **USP**: GymMaster has no nutrition/meal AI.
+
+| Requirement | Status | Implementation (planned) |
+|-------------|--------|--------------------------|
+| Onboarding goal + profile capture | 📋 | writes `FitnessGoal` + new `MemberPlanProfile` (age, height, weight, activity level, dietary preference, cuisine region, equipment access) |
+| Location-derived cuisine region | 📋 | default from gym `Address` country/city; member can override |
+| Provider-agnostic LLM | 📋 | `LlmClient` port; default `AnthropicLlmClient` (Claude); swappable via `${ai.provider}` |
+| Personalized workout plan | 📋 | `WorkoutPlan` grounded in `Exercise` library + member level/equipment |
+| Locally-tailored meal plan | 📋 | `MealPlan` with local dishes, macros/calories; respects dietary prefs + allergies |
+| Safety guardrails | 📋 | strict-JSON validation; allergy/medical-condition awareness; "consult a professional" disclaimer; no medical advice |
+| Async generation + scheduled refresh | 📋 | `@Async` + `@Scheduled` (re-plan from `HealthMetric` progress + `WorkoutLog` adherence) |
+| Traceability | 📋 | `AiRecommendation` audit (provider, model, tokens, status) |
+| Graceful degradation | 📋 | feature disabled when no `AI_API_KEY` (Redis-style optional) |
+
+**Entities:** `MemberPlanProfile`, `WorkoutPlan`/`WorkoutPlanDay`/`PlanExercise`, `MealPlan`/`MealPlanDay`/`PlanMeal`, `AiRecommendation`. **Migration:** `V11__AI_Trainer.sql`. **Endpoints:** `/api/v1/ai/**`.
+
+> Predictive analytics, smart scheduling, and engagement intelligence (also advertised) are **later AI-module phases**, not part of this first cut.
+
 ---
 
 ## 8. Non-Functional Requirements
@@ -342,12 +395,18 @@ The schema is defined across multiple Flyway migrations in `src/main/resources/d
 
 ### 10.2 Planned
 
-| Integration | Provider | Purpose | Status |
-|-------------|----------|---------|--------|
-| SMS Notifications | Twilio | Booking reminders, alerts | 🔄 Infrastructure ready |
-| WhatsApp Messaging | WhatsApp Business API | Member communication | 🔄 Infrastructure ready |
-| Fitness Wearables | Apple Health, Google Fit, Fitbit | Activity data sync | ⏳ Schema only |
-| Accounting | QuickBooks, Xero | Financial reconciliation | ⏳ Not started |
+| Integration | Provider | Purpose | Status | Priority |
+|-------------|----------|---------|--------|----------|
+| **SMS Notifications** | Twilio | Renewal reminders, alerts (site lead value-prop) | 🔄 Stub — implement sender | 🔴 High |
+| **WhatsApp Messaging** | WhatsApp Business API / Twilio | Renewal reminders, member comms (site lead value-prop) | 🔄 Stub — implement sender | 🔴 High |
+| **Local payment rails** | Paystack, Flutterwave | African card/bank/USSD/mobile-money (Stripe coverage thin in Africa) | 📋 Strategic decision | 🔴 High |
+| AI / LLM | Anthropic Claude (default), provider-agnostic via `LlmClient` | AI Personal Trainer (§7.11) | 📋 Planned | 🟡 Med |
+| Access hardware | Turnstile/maglock controllers, camera/CV | Physical access via `AccessDevicePort` (§7.10) | 📋 Planned (port first) | 🟡 Med |
+| Additional gateways | PayPal, Square | Advertised on site | 📋 Not started | 🟢 Low |
+| Fitness Wearables | Apple Health, Google Fit, Fitbit, Garmin | Activity data sync | ⏳ Schema only | 🟢 Low |
+| Fitness apps | MyFitnessPal, Strava, Peloton | Advertised on site | ⏳ Not started | 🟢 Low |
+| Workflow/automation | Zapier (webhooks) | Integration breadth | ⏳ Not started | 🟢 Low |
+| Accounting | QuickBooks, Xero | Financial reconciliation | ⏳ Not started | 🟢 Low |
 
 ### 10.3 Multi-Channel Notification Infrastructure (NEW)
 
@@ -429,9 +488,15 @@ notification/
 | **Phase 1** | Q1-Q2 2025 | MVP Development | ✅ Complete |
 | **Phase 2** | Q3-Q4 2025 | Feature Expansion (Health, Inventory) | ✅ Complete |
 | **Phase 2.5** | Q1 2026 | Newsletter & Multi-Channel Notifications | ✅ Complete |
-| **Phase 3** | Q1-Q2 2026 | Enterprise & White-label | 🔄 In Progress |
-| **Phase 4** | Q3-Q4 2026 | Advanced Analytics & AI | 📋 Planned |
-| **Phase 5** | 2027 | Marketplace & Ecosystem | 📋 Planned |
+| **Phase 3** | Q2-Q3 2026 | **Access Control & Anti-Tailgating** (§7.10) | 🔄 In Progress |
+| **Phase 3.5** | Q3 2026 | **AI Personal Trainer** — workout + locally-tailored meal plans (§7.11) | 📋 Planned |
+| **Phase 3.6** | Q3 2026 | **WhatsApp + SMS reminders** (make site headline real) + local payment rails decision | 📋 Planned |
+| **Phase 3.7** | Q4 2026 | GDPR compliance, service-test backfill, foundations (`/api/v1`, Testcontainers) | 📋 Planned |
+| **Phase 4** | Q4 2026 – Q1 2027 | **Flutter/Dart member mobile app** (QR check-in, AI plans, push, wearables) | 📋 Planned |
+| **Phase 4.5** | Q1-Q2 2027 | Predictive analytics & AI (churn/revenue forecast, smart scheduling, engagement) | 📋 Planned |
+| **Phase 5** | 2027 | Enterprise/white-label, Marketplace & Ecosystem | 📋 Planned |
+
+> **Sequencing note:** Access Control is prioritised first (pilot-gym request). Foundations (`/api/v1` versioning, shared HTTP client, Testcontainers Postgres harness) are built alongside Phase 3 so new modules ship tested against the real DB.
 
 ---
 
@@ -520,12 +585,30 @@ Required implementations:
 
 ### 17.3 Empty Module Scaffolds
 
-The following modules have directory structures but no implementation:
-- `ai/` - Reserved for Phase 4 AI/ML features
-- `analytics/` - Reserved for Phase 4 Advanced Analytics
-- `dashboard/` - Reserved for dashboard aggregation
-- `booking/` - Reserved for general booking beyond classes
-- `access/` - Reserved for biometric/access control
+| Module | Status |
+|--------|--------|
+| `access/` | **Now in active development** — Access Control & Anti-Tailgating (§7.10), migration V10 |
+| `ai/` | **Now in active development** — AI Personal Trainer (§7.11), migration V11 |
+| `analytics/` | Reserved — predictive analytics (Phase 4.5); current analytics served by implemented `analytics` service |
+| `dashboard/` | Reserved — analytics module serves this today |
+| `booking/` | Reserved — facility/PT/space booking (advertised on site & by GymMaster); decision: build or drop claim |
+
+### 17.4 Current Gap Analysis (NEW)
+
+**Critical / production-blocking:**
+
+| # | Gap | Notes |
+|---|-----|-------|
+| C1 | No real-DB integration tests | Testcontainers declared but unused; H2 hides Postgres array/jsonb/`uuidv7()` issues |
+| C2 | H2 ↔ PostgreSQL drift | `text[]`/jsonb columns; new access/AI tables must use PG-safe types in test paths |
+| C3 | No API versioning | add `/api/v1` before mobile/public clients; new modules ship versioned |
+| C4 | GDPR not implemented | export/erasure/consent/retention/PII-audit — needed since AI stores health & diet PII |
+| C5 | Thin service test coverage | User/Gym/Health/Inventory/Subscription/Security ≈ 0% |
+| C6 | Open TODOs | `GymService` revenue calc; `StripeWebhookService` member-payment-failure + Connect deauthorization |
+
+**Website (gymmatehub.com) advertised but not yet delivered:** access control / QR check-in, AI workout + nutrition, **functional WhatsApp/SMS reminders** (currently stubs — site headline), predictive analytics, member mobile app, wearable & fitness-app integrations, PayPal/Square, payroll, equipment auto-reorder. Full matrix in **Section 21**.
+
+**Competitive (vs GymMaster) table-stakes to match:** 24/7 access control, multiple check-in methods, **tailgating detection**, space/PT booking, functional SMS/WhatsApp, more billing providers, integration breadth (Zapier/EGym/ClassPass). See **Section 20**.
 
 ---
 
@@ -533,9 +616,11 @@ The following modules have directory structures but no implementation:
 
 ### 18.1 Current State
 
-| Metric | Value |
+> **Reconciliation note:** the `PRODUCT_STATE_REPORT.md` audit (March 2026) counts **43 test classes** passing in CI — more than the figures below, which predate it. Numbers here should be re-verified against the codebase before publication. Regardless of the exact count, **service-level coverage remains thin** (security, payment, user services are the priority gaps — see §18.3).
+
+| Metric | Value (to re-verify) |
 |--------|-------|
-| Total Test Files | 24 |
+| Total Test Files | 24 (audit reports 43 test classes) |
 | Total Services | 42 |
 | Service Tests | 5 (12%) |
 
@@ -575,6 +660,64 @@ This document serves as the authoritative business reference for GymMateHub deve
 
 ---
 
-**Document Version**: 2.1  
-**Last Updated**: January 31, 2026  
+## 20. Competitive Positioning (NEW)
+
+Primary competitor: **GymMaster** (gymmaster.com — 110+ countries, ~180k weekly active users). Strategy: **match table-stakes, win on AI + Africa localization.**
+
+### 20.1 Parity matrix
+
+| GymMaster capability | GymMateHub status | Action |
+|---|---|---|
+| Member mgmt / paperless signup | ✅ | parity |
+| Integrated/automated billing, failed-billing, refunds, credit, maintenance fees | 🟡 | Stripe core ✅; add dunning + member-credit/account ledger (C6) |
+| Billing providers (Ezidebit/Paysafe/Square) | 🟡 | Stripe only → provider abstraction + local rails |
+| POS + inventory | ✅ | parity |
+| Booking: classes / PT / spaces, repeat/reschedule | 🟡 | classes ✅; space/PT/service booking = empty `booking/` |
+| 24/7 access control + hardware | ❌ | §7.10 (software core + device port) |
+| Check-in: QR / Bluetooth / passcode / key-fob / contactless | ❌ | §7.10 (QR+passcode first; rest via port) |
+| **Tailgating detection** | ❌ | §7.10 (software rules now; CV camera adapter for count + image) |
+| Standard denial reasons, door benefits, access-time windows, entry alerts | ❌ | §7.10 |
+| Branded member app (iOS/Android) + portal | ❌ | Flutter app roadmapped (Phase 4); portal = web v1 |
+| Marketing automation, Twilio SMS, Mailchimp | 🟡 | email/newsletter ✅; SMS/WhatsApp stubs → implement |
+| Lead management / sales funnel | 🟡 | frontend has it; backend thin → verify/build |
+| Reporting: custom, scheduled auto-send, debt-collection, visits | 🟡 | analytics strong; add scheduled send + debt/visit reports |
+| Integrations: Zapier/EGym/MyWellness/Fitmetrix/ClassPass/Zoom/GA | ❌ | roadmap; Zapier/webhooks first |
+
+### 20.2 GymMateHub USPs (GymMaster does NOT have these)
+
+1. **AI Personal Trainer** — goal-based workout + **locally-tailored (African-cuisine) meal plans** at onboarding (§7.11).
+2. **AI predictive analytics** — churn/revenue forecasting, smart scheduling, engagement intelligence (later phase).
+3. **Africa-first engagement** — WhatsApp renewal reminders + cash/bank-transfer-first ledger (vs Western card/direct-debit rails).
+4. **No-hardware access + optional hardware** — software tailgating defense at zero capex (vs GymMaster's mandatory Gatekeeper), clean port to add turnstile/camera later.
+5. **Local payment rails** — Paystack/Flutterwave for African markets where Stripe/Ezidebit are weak.
+
+---
+
+## 21. Website (gymmatehub.com) — Advertised vs Delivered (NEW)
+
+The live marketing site sells features ahead of the product. Every advertised item must be backed by a real service. (✅ built · 🟡 partial · ❌ missing/stub)
+
+| Advertised | Status | Note |
+|---|---|---|
+| Multi-location mgmt, progress tracking, class scheduling, recurring billing, POS, email campaigns | ✅ | delivered |
+| Cash/bank-transfer tracking (landing headline) | 🟡 | POS covers cash; explicit "who owes me" ledger thin |
+| Equipment auto-reorder | 🟡 | inventory ✅; auto-reorder ❌ |
+| Staff payroll integration | ❌ | advertised, not built |
+| Financial reporting | 🟡 | analytics ✅; revenue-calc TODO (C6) |
+| Facility/PT booking | ❌ | empty `booking/` |
+| **Access control + QR/manual check-in "no hardware"** (headline) | ❌ | §7.10 delivers this |
+| **WhatsApp + SMS renewal reminders** (headline) | ❌ stub | high priority — implement senders |
+| **AI workout plans + nutrition guidance** | ❌ | §7.11 |
+| AI predictive analytics / smart scheduling / engagement | ❌ | later AI phase |
+| Member mobile app ("branded mobile & web") | ❌ | `Mobile/` empty → Flutter (Phase 4) |
+| Wearables (Fitbit/Apple Health/Google Fit/Garmin) | ❌ | entity only |
+| Fitness-app links (MyFitnessPal/Strava/Peloton) | ❌ | none |
+| Payment gateways: Stripe / PayPal / Square | 🟡 | Stripe only |
+| **Africa payment reality** | ⚠️ | Stripe coverage thin in Africa → Paystack/Flutterwave decision |
+| SendGrid / Twilio / Mailchimp | 🟡 | generic SMTP ✅; Twilio/Mailchimp ❌ |
+
+---
+
+**Document Version**: 0.1  
+**Last Updated**: June 27, 2026  
 **Classification**: Internal Use Only
