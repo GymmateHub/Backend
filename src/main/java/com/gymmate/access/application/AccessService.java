@@ -221,6 +221,47 @@ public class AccessService {
   }
 
   // ------------------------------------------------------------------
+  // Device reconciliation (turnstile / CV)
+  // ------------------------------------------------------------------
+
+  /**
+   * Reconcile a hardware device report against valid scans. If more people
+   * passed than there were valid scans, flag tailgating, attach any captured
+   * image, and raise a real-time alert.
+   */
+  @Transactional
+  public AccessEvent handleDeviceEvent(UUID accessPointId, Integer validScanCount,
+                                       Integer passCount, String capturedImageUrl, String note) {
+    AccessPoint point = getAccessPoint(accessPointId);
+
+    boolean tailgating = passCount != null && validScanCount != null && passCount > validScanCount;
+
+    AccessEvent ev = AccessEvent.builder()
+        .accessPointId(point.getId())
+        .direction(AccessDirection.IN)
+        .decision(AccessDecision.GRANTED)
+        .tailgatingSuspected(tailgating)
+        .validScanCount(validScanCount)
+        .devicePassCount(passCount)
+        .capturedImageUrl(capturedImageUrl)
+        .occurredAt(LocalDateTime.now())
+        .note(note)
+        .build();
+    ev.setGymId(point.getGymId());
+    ev.setOrganisationId(point.getOrganisationId());
+    ev = accessEventRepository.save(ev);
+
+    if (tailgating) {
+      eventPublisher.publishEvent(TailgatingSuspectedEvent.builder()
+          .organisationId(point.getOrganisationId()).gymId(point.getGymId())
+          .accessPointId(point.getId()).accessPointName(point.getName())
+          .reason("device pass-count (" + passCount + ") exceeded valid scans (" + validScanCount + ")")
+          .build());
+    }
+    return ev;
+  }
+
+  // ------------------------------------------------------------------
   // Credentials
   // ------------------------------------------------------------------
 
