@@ -43,6 +43,20 @@ public class AccessController {
     return ResponseEntity.ok(ApiResponse.success(body, message));
   }
 
+  @PostMapping("/devices/{accessPointId}/events")
+  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER', 'STAFF')")
+  @Operation(summary = "Device event webhook",
+      description = "Turnstile/CV pass-count reconciliation; flags tailgating when passes exceed valid scans")
+  public ResponseEntity<ApiResponse<AccessEventResponse>> deviceEvent(
+      @PathVariable UUID accessPointId,
+      @Valid @RequestBody DeviceEventRequest request) {
+    AccessEvent ev = accessService.handleDeviceEvent(
+        accessPointId, request.validScanCount(), request.passCount(),
+        request.capturedImageUrl(), request.note());
+    return ResponseEntity.ok(ApiResponse.success(AccessEventResponse.fromEntity(ev),
+        ev.isTailgatingSuspected() ? "Tailgating flagged" : "Event recorded"));
+  }
+
   @PostMapping("/access-points")
   @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER')")
   @Operation(summary = "Create access point", description = "Register a controlled entry point")

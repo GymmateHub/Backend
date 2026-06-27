@@ -200,4 +200,23 @@ class AccessServiceTest {
     assertEquals(AccessDecision.GRANTED, ev.getDecision());
     assertEquals(AccessDirection.OUT, ev.getDirection());
   }
+
+  @Test
+  void handleDeviceEvent_flagsTailgatingWhenPassesExceedScans() {
+    AccessEvent ev = service.handleDeviceEvent(pointId, 1, 2, "http://img/capture.jpg", null);
+
+    assertTrue(ev.isTailgatingSuspected());
+    assertEquals(2, ev.getDevicePassCount());
+    assertEquals(1, ev.getValidScanCount());
+    assertEquals("http://img/capture.jpg", ev.getCapturedImageUrl());
+    verify(eventPublisher).publishEvent(any(TailgatingSuspectedEvent.class));
+  }
+
+  @Test
+  void handleDeviceEvent_noFlagWhenScansMatchPasses() {
+    AccessEvent ev = service.handleDeviceEvent(pointId, 2, 2, null, null);
+
+    assertFalse(ev.isTailgatingSuspected());
+    verify(eventPublisher, never()).publishEvent(any(TailgatingSuspectedEvent.class));
+  }
 }
