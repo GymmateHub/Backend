@@ -96,11 +96,4 @@ public interface PaymentMethodRepository extends JpaRepository<PaymentMethod, UU
     @Query("SELECT p.cardBrand, COUNT(p) FROM PaymentMethod p WHERE p.methodType = 'CARD' AND p.active = true GROUP BY p.cardBrand")
     List<Object[]> countByCardBrand();
 
-    // ============================================
-    // Backward compatibility aliases
-    // ============================================
-
-    default Optional<PaymentMethod> findByStripePaymentMethodId(String stripePaymentMethodId) {
-        return findByProviderPaymentMethodId(stripePaymentMethodId);
-    }
 }

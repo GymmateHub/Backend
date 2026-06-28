@@ -99,12 +99,12 @@ public class TestFixtures {
         return gym;
     }
 
-    public static Gym createGymWithStripe(UUID ownerId) {
-        Gym gym = createGym("Stripe Connected Gym", ownerId);
-        gym.setStripeConnectAccountId("acct_test" + System.currentTimeMillis());
-        gym.setStripeChargesEnabled(true);
-        gym.setStripePayoutsEnabled(true);
-        gym.setStripeDetailsSubmitted(true);
+    public static Gym createGymWithProviderAccount(UUID ownerId) {
+        Gym gym = createGym("Connected Gym", ownerId);
+        gym.setProviderConnectAccountId("acct_test" + System.currentTimeMillis());
+        gym.setProviderChargesEnabled(true);
+        gym.setProviderPayoutsEnabled(true);
+        gym.setProviderDetailsSubmitted(true);
         return gym;
     }
 
@@ -140,8 +140,8 @@ public class TestFixtures {
         // But previously I saw PaymentRefund has both.
         PaymentRefund refund = PaymentRefund.builder()
                 .gymId(gymId)
-                .stripeRefundId("re_test" + System.currentTimeMillis())
-                .stripePaymentIntentId("pi_test" + System.currentTimeMillis())
+                .providerRefundId("re_test" + System.currentTimeMillis())
+                .providerTransactionId("txn_test" + System.currentTimeMillis())
                 .amount(amount)
                 .currency("usd")
                 .status(RefundStatus.PENDING)
@@ -156,7 +156,7 @@ public class TestFixtures {
     public static GymInvoice createInvoice(UUID organisationId, UUID subscriptionId) {
         return GymInvoice.builder()
                 .organisationId(organisationId)
-                .stripeInvoiceId("inv_test" + System.currentTimeMillis())
+                .providerInvoiceId("inv_test" + System.currentTimeMillis())
                 .invoiceNumber("INV-" + System.currentTimeMillis())
                 .amount(new BigDecimal("29.99"))
                 .currency("usd")

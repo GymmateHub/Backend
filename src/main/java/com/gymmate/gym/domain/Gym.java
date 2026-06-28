@@ -110,24 +110,24 @@ public class Gym extends TenantEntity {
   @Builder.Default
   private Integer maxMembers = 200;
 
-  // Stripe Connect fields for receiving member payments
-  @Column(name = "stripe_connect_account_id")
-  private String stripeConnectAccountId;
+  // Payment provider fields for receiving member payments
+  @Column(name = "provider_connect_account_id")
+  private String providerConnectAccountId;
 
-  @Column(name = "stripe_charges_enabled")
+  @Column(name = "provider_charges_enabled")
   @Builder.Default
-  private Boolean stripeChargesEnabled = false;
+  private Boolean providerChargesEnabled = false;
 
-  @Column(name = "stripe_payouts_enabled")
+  @Column(name = "provider_payouts_enabled")
   @Builder.Default
-  private Boolean stripePayoutsEnabled = false;
+  private Boolean providerPayoutsEnabled = false;
 
-  @Column(name = "stripe_details_submitted")
+  @Column(name = "provider_details_submitted")
   @Builder.Default
-  private Boolean stripeDetailsSubmitted = false;
+  private Boolean providerDetailsSubmitted = false;
 
-  @Column(name = "stripe_onboarding_completed_at")
-  private LocalDateTime stripeOnboardingCompletedAt;
+  @Column(name = "provider_onboarding_completed_at")
+  private LocalDateTime providerOnboardingCompletedAt;
 
   // Features enabled
   @JdbcTypeCode(SqlTypes.JSON)
@@ -162,9 +162,9 @@ public class Gym extends TenantEntity {
     this.subscriptionPlan = "starter";
     this.status = GymStatus.ACTIVE;
     this.maxMembers = 200;
-    this.stripeChargesEnabled = false;
-    this.stripePayoutsEnabled = false;
-    this.stripeDetailsSubmitted = false;
+    this.providerChargesEnabled = false;
+    this.providerPayoutsEnabled = false;
+    this.providerDetailsSubmitted = false;
     this.featuresEnabled = "[]";
     this.onboardingCompleted = false;
   }

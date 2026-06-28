@@ -1,6 +1,6 @@
 package com.gymmate.subscription.application;
 
-import com.gymmate.payment.application.StripePaymentService;
+import com.gymmate.payment.application.PaymentService;
 import com.gymmate.shared.constants.SubscriptionStatus;
 import com.gymmate.subscription.domain.*;
 import com.gymmate.subscription.infrastructure.*;
@@ -30,7 +30,7 @@ public class SubscriptionService {
     private final SubscriptionRepository SubscriptionRepository;
     private final SubscriptionTierRepository tierRepository;
     private final SubscriptionUsageRepository usageRepository;
-    private final StripePaymentService stripePaymentService;
+    private final PaymentService paymentService;
     private final EmailService emailService;
     private final NotificationService notificationService;
     private final OrganisationRepository organisationRepository;
@@ -40,17 +40,17 @@ public class SubscriptionService {
     }
 
     /**
-     * Create a subscription with optional Stripe billing integration.
+     * Create a subscription with optional provider billing integration.
      *
      * @param organisationId      The organisation ID
      * @param tierName            The subscription tier name
      * @param startTrial          Whether to start a trial period
-     * @param paymentMethodId     Stripe PaymentMethod ID (pm_xxx) for billing
-     * @param enableStripeBilling Whether to create subscription in Stripe
+     * @param paymentMethodId       Provider payment method ID/code for billing
+     * @param enableProviderBilling Whether to create subscription in external provider
      * @return The created subscription
      */
     public Subscription createSubscription(UUID organisationId, String tierName, boolean startTrial,
-            String paymentMethodId, boolean enableStripeBilling) {
+            String paymentMethodId, boolean enableProviderBilling) {
         // Check if organisation already has a subscription
         SubscriptionRepository.findByOrganisationId(organisationId)
                 .ifPresent(existing -> {
@@ -85,19 +85,19 @@ public class SubscriptionService {
         // Create initial usage record
         createUsageRecord(subscription);
 
-        // Integrate with Stripe if enabled and tier has Stripe pricing configured
-        if (enableStripeBilling && tier.getStripePriceId() != null && !tier.getStripePriceId().isBlank()) {
+        // Integrate with configured provider if enabled and tier has provider plan configured
+        if (enableProviderBilling && tier.getProviderPlanId() != null && !tier.getProviderPlanId().isBlank()) {
             try {
                 // Attach payment method if provided
                 if (paymentMethodId != null && !paymentMethodId.isBlank()) {
-                    stripePaymentService.attachPaymentMethod(organisationId, paymentMethodId, true);
+                    paymentService.attachPaymentMethod(organisationId, paymentMethodId, true);
                 }
 
                 // Create Stripe subscription
-                stripePaymentService.createStripeSubscriptionForOrganisation(organisationId, tier, startTrial);
-                log.info("Created Stripe subscription for organisation {} with tier {}", organisationId, tierName);
+                paymentService.createSubscriptionForOrganisation(organisationId, tier, startTrial);
+                log.info("Created provider subscription for organisation {} with tier {}", organisationId, tierName);
             } catch (Exception e) {
-                log.warn("Failed to create Stripe subscription for organisation {}: {}. " +
+                log.warn("Failed to create provider subscription for organisation {}: {}. " +
                         "Subscription created locally only.", organisationId, e.getMessage());
                 // Continue with local subscription - Stripe can be configured later
             }

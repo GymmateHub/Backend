@@ -13,11 +13,11 @@ public enum RefundStatus {
     /**
      * Convert Stripe refund status to RefundStatus enum.
      */
-    public static RefundStatus fromStripeStatus(String stripeStatus) {
-        if (stripeStatus == null) {
+    public static RefundStatus fromProviderStatus(String providerStatus) {
+        if (providerStatus == null) {
             return PENDING;
         }
-        return switch (stripeStatus.toLowerCase()) {
+        return switch (providerStatus.toLowerCase()) {
             case "succeeded" -> SUCCEEDED;
             case "failed" -> FAILED;
             case "canceled" -> CANCELED;

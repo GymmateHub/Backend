@@ -20,7 +20,7 @@ public interface MemberPaymentMethodRepository extends JpaRepository<MemberPayme
     @Query("SELECT p FROM MemberPaymentMethod p JOIN Member m ON p.memberId = m.userId WHERE p.memberId = :memberId AND m.gymId = :gymId AND p.isDefault = true")
     Optional<MemberPaymentMethod> findByMemberIdAndGymIdAndIsDefaultTrue(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId);
 
-    Optional<MemberPaymentMethod> findByStripePaymentMethodId(String stripePaymentMethodId);
+    Optional<MemberPaymentMethod> findByProviderPaymentMethodId(String providerPaymentMethodId);
 
     @Modifying
     @Query("UPDATE MemberPaymentMethod p SET p.isDefault = false WHERE p.memberId = :memberId AND p.id IN (SELECT pm.id FROM MemberPaymentMethod pm JOIN Member m ON pm.memberId = m.userId WHERE m.gymId = :gymId)")

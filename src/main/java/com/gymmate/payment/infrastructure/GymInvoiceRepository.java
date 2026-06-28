@@ -28,9 +28,9 @@ public interface GymInvoiceRepository extends JpaRepository<GymInvoice, UUID> {
     BigDecimal sumPaidAmountByOrganisationIdAndPeriod(@Param("orgId") UUID orgId, @Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 
     // ============================================
-    // Stripe-based queries
+    // Provider-based queries
     // ============================================
 
-    Optional<GymInvoice> findByStripeInvoiceId(String stripeInvoiceId);
+    Optional<GymInvoice> findByProviderInvoiceId(String providerInvoiceId);
 
 }

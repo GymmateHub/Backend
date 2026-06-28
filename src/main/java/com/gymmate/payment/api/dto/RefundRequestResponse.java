@@ -26,7 +26,7 @@ public class RefundRequestResponse {
     private RefundType refundType;
 
     // Payment info
-    private String stripePaymentIntentId;
+    private String providerTransactionId;
     private BigDecimal originalPaymentAmount;
     private BigDecimal requestedRefundAmount;
     private String currency;
@@ -67,7 +67,7 @@ public class RefundRequestResponse {
 
     // Link to actual refund
     private UUID paymentRefundId;
-    private String stripeRefundId;
+    private String providerRefundId;
 
     // Timestamps
     private LocalDateTime createdAt;

@@ -49,7 +49,7 @@ class RefundRequestServiceTest {
         private PaymentRefundRepository paymentRefundRepository;
 
         @Mock
-        private StripePaymentService stripePaymentService;
+        private PaymentService paymentService;
 
         @Mock
         private UserService userService;
@@ -72,7 +72,7 @@ class RefundRequestServiceTest {
                                 refundRequestRepository,
                                 auditLogRepository,
                                 paymentRefundRepository,
-                                stripePaymentService,
+                                paymentService,
                                 userService,
                                 tenantValidationService);
 
@@ -93,7 +93,7 @@ class RefundRequestServiceTest {
                         // Arrange
                         CreateRefundRequestDTO dto = CreateRefundRequestDTO.builder()
                                         .refundType(RefundType.MEMBER_PAYMENT)
-                                        .stripePaymentIntentId(paymentIntentId)
+                                        .providerTransactionId(paymentIntentId)
                                         .originalPaymentAmount(new BigDecimal("100.00"))
                                         .requestedRefundAmount(new BigDecimal("50.00"))
                                         .currency("USD")
@@ -101,7 +101,7 @@ class RefundRequestServiceTest {
                                         .reasonDescription("Class was cancelled")
                                         .build();
 
-                        when(refundRequestRepository.findByStripePaymentIntentIdAndStatus(
+                        when(refundRequestRepository.findByProviderTransactionIdAndStatus(
                                         paymentIntentId, RefundRequestStatus.PENDING))
                                         .thenReturn(Optional.empty());
 
@@ -140,7 +140,7 @@ class RefundRequestServiceTest {
                         // Arrange
                         CreateRefundRequestDTO dto = CreateRefundRequestDTO.builder()
                                         .refundType(RefundType.MEMBER_PAYMENT)
-                                        .stripePaymentIntentId(paymentIntentId)
+                                        .providerTransactionId(paymentIntentId)
                                         .originalPaymentAmount(new BigDecimal("50.00"))
                                         .requestedRefundAmount(new BigDecimal("100.00")) // More than original
                                         .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
@@ -161,7 +161,7 @@ class RefundRequestServiceTest {
                         // Arrange
                         CreateRefundRequestDTO dto = CreateRefundRequestDTO.builder()
                                         .refundType(RefundType.MEMBER_PAYMENT)
-                                        .stripePaymentIntentId(paymentIntentId)
+                                        .providerTransactionId(paymentIntentId)
                                         .originalPaymentAmount(new BigDecimal("100.00"))
                                         .requestedRefundAmount(new BigDecimal("50.00"))
                                         .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
@@ -171,7 +171,7 @@ class RefundRequestServiceTest {
                                         .status(RefundRequestStatus.PENDING)
                                         .build();
 
-                        when(refundRequestRepository.findByStripePaymentIntentIdAndStatus(
+                        when(refundRequestRepository.findByProviderTransactionIdAndStatus(
                                         paymentIntentId, RefundRequestStatus.PENDING))
                                         .thenReturn(Optional.of(existingRequest));
 
@@ -190,13 +190,13 @@ class RefundRequestServiceTest {
                         // Arrange
                         CreateRefundRequestDTO dto = CreateRefundRequestDTO.builder()
                                         .refundType(RefundType.MEMBER_PAYMENT)
-                                        .stripePaymentIntentId(paymentIntentId)
+                                        .providerTransactionId(paymentIntentId)
                                         .originalPaymentAmount(new BigDecimal("100.00"))
                                         .requestedRefundAmount(new BigDecimal("100.00"))
                                         .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
                                         .build();
 
-                        when(refundRequestRepository.findByStripePaymentIntentIdAndStatus(any(), any()))
+                        when(refundRequestRepository.findByProviderTransactionIdAndStatus(any(), any()))
                                         .thenReturn(Optional.empty());
 
                         ArgumentCaptor<RefundRequestEntity> captor = ArgumentCaptor.forClass(RefundRequestEntity.class);
@@ -456,7 +456,7 @@ class RefundRequestServiceTest {
 
                         RefundRequestEntity request = RefundRequestEntity.builder()
                                         .status(RefundRequestStatus.APPROVED)
-                                        .stripePaymentIntentId(paymentIntentId)
+                                        .providerTransactionId(paymentIntentId)
                                         .requestedRefundAmount(new BigDecimal("50.00"))
                                         .reasonDescription("Refund for cancelled class")
                                         .refundToUserId(recipientId)
@@ -467,25 +467,25 @@ class RefundRequestServiceTest {
                         request.setGymId(gymId);
                         request.setCreatedAt(LocalDateTime.now());
 
-                        RefundResponse stripeResponse = RefundResponse.builder()
+                        RefundResponse providerResponse = RefundResponse.builder()
                                         .refundId("re_test123")
-                                        .paymentIntentId(paymentIntentId)
+                                        .providerTransactionId(paymentIntentId)
                                         .amount(new BigDecimal("50.00"))
                                         .currency("USD")
                                         .status("succeeded")
                                         .build();
 
                         PaymentRefund paymentRefund = PaymentRefund.builder()
-                                        .stripeRefundId("re_test123")
+                                        .providerRefundId("re_test123")
                                         .build();
                         paymentRefund.setId(UUID.randomUUID());
 
                         when(tenantValidationService.requireCurrentTenantId()).thenReturn(organisationId);
                         when(refundRequestRepository.findByIdAndOrganisationId(requestId, organisationId))
                                         .thenReturn(Optional.of(request));
-                        when(stripePaymentService.processRefund(eq(gymId), any(RefundRequest.class)))
-                                        .thenReturn(stripeResponse);
-                        when(paymentRefundRepository.findByStripeRefundId("re_test123"))
+                        when(paymentService.processRefund(eq(gymId), any(RefundRequest.class)))
+                                        .thenReturn(providerResponse);
+                        when(paymentRefundRepository.findByProviderRefundId("re_test123"))
                                         .thenReturn(Optional.of(paymentRefund));
                         when(paymentRefundRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
                         when(refundRequestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -530,7 +530,7 @@ class RefundRequestServiceTest {
                                         .isInstanceOf(DomainException.class)
                                         .hasFieldOrPropertyWithValue("errorCode", "REQUEST_NOT_APPROVED");
 
-                        verify(stripePaymentService, never()).processRefund(any(), any());
+                        verify(paymentService, never()).processRefund(any(), any());
                 }
         }
 
@@ -633,7 +633,7 @@ class RefundRequestServiceTest {
                 RefundRequestEntity request = RefundRequestEntity.builder()
                                 .status(RefundRequestStatus.PENDING)
                                 .refundType(RefundType.MEMBER_PAYMENT)
-                                .stripePaymentIntentId(paymentIntentId)
+                                .providerTransactionId(paymentIntentId)
                                 .originalPaymentAmount(new BigDecimal("100.00"))
                                 .requestedRefundAmount(new BigDecimal("50.00"))
                                 .currency("USD")

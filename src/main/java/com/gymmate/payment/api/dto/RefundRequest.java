@@ -13,8 +13,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RefundRequest {
-    @NotBlank(message = "Payment intent ID is required")
-    private String paymentIntentId; // Stripe payment intent ID
+    @NotBlank(message = "Provider transaction ID is required")
+    private String providerTransactionId;
 
     private BigDecimal amount; // null for full refund, in dollars
 

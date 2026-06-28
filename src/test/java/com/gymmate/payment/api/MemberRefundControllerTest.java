@@ -68,7 +68,7 @@ class MemberRefundControllerTest {
 
                 CreateRefundRequestDTO request = CreateRefundRequestDTO.builder()
                         .refundType(RefundType.MEMBER_PAYMENT)
-                        .stripePaymentIntentId("pi_test123")
+                        .providerTransactionId("txn_test123")
                         .originalPaymentAmount(new BigDecimal("100.00"))
                         .requestedRefundAmount(new BigDecimal("100.00"))
                         .reasonCategory(RefundReasonCategory.CLASS_CANCELLED)
@@ -100,7 +100,7 @@ class MemberRefundControllerTest {
 
                 CreateRefundRequestDTO request = CreateRefundRequestDTO.builder()
                         .refundType(RefundType.PLATFORM_SUBSCRIPTION) // Try to use wrong type
-                        .stripePaymentIntentId("pi_test123")
+                        .providerTransactionId("txn_test123")
                         .originalPaymentAmount(new BigDecimal("100.00"))
                         .requestedRefundAmount(new BigDecimal("100.00"))
                         .reasonCategory(RefundReasonCategory.CLASS_CANCELLED)
@@ -219,7 +219,7 @@ class MemberRefundControllerTest {
                 .id(requestId)
                 .gymId(gymId)
                 .refundType(RefundType.MEMBER_PAYMENT)
-                .stripePaymentIntentId("pi_test123")
+                .providerTransactionId("txn_test123")
                 .originalPaymentAmount(new BigDecimal("100.00"))
                 .requestedRefundAmount(new BigDecimal("100.00"))
                 .currency("USD")

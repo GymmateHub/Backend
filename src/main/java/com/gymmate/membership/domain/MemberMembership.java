@@ -66,12 +66,12 @@ public class MemberMembership extends GymScopedEntity {
   @Builder.Default
   private boolean autoRenew = true;
 
-  // Stripe integration
-  @Column(name = "stripe_customer_id")
-  private String stripeCustomerId;
+  // Payment provider integration
+  @Column(name = "provider_customer_id")
+  private String providerCustomerId;
 
-  @Column(name = "stripe_subscription_id")
-  private String stripeSubscriptionId;
+  @Column(name = "provider_subscription_id")
+  private String providerSubscriptionId;
 
   // Freezing/holding
   @Column(name = "is_frozen")

@@ -12,8 +12,8 @@ public enum InvoiceStatus {
     UNCOLLECTIBLE,
     REFUNDED;
 
-    public static InvoiceStatus fromStripeStatus(String stripeStatus) {
-        return switch (stripeStatus) {
+    public static InvoiceStatus fromProviderStatus(String providerStatus) {
+        return switch (providerStatus) {
             case "draft" -> DRAFT;
             case "open" -> OPEN;
             case "paid" -> PAID;

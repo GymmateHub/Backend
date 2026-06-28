@@ -1,6 +1,8 @@
 package com.gymmate.payment.api;
 
 import com.gymmate.payment.api.dto.*;
+import com.gymmate.payment.application.PaymentService;
+import com.gymmate.payment.application.PaystackWebhookService;
 import com.gymmate.payment.application.RefundRequestService;
 import com.gymmate.payment.application.StripePaymentService;
 import com.gymmate.payment.domain.RefundAuditLog;
@@ -25,89 +27,91 @@ import java.util.UUID;
  * Handles payment methods, invoices, and refund workflows for subscriptions.
  */
 @RestController
-@RequestMapping("/api/subscriptions/payments")
+@RequestMapping("/api")
 @RequiredArgsConstructor
-@Tag(name = "Subscription Payments", description = "Payment management for gym subscriptions")
+@Tag(name = "Payments", description = "Unified payment management endpoints")
 public class PaymentController {
 
-    private final StripePaymentService stripePaymentService;
+    private final PaymentService paymentService;
     private final RefundRequestService refundRequestService;
+    private final StripePaymentService stripePaymentService;
+    private final PaystackWebhookService paystackWebhookService;
 
-    @PostMapping("/methods")
+    @PostMapping("/subscriptions/payments/methods")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     @Operation(summary = "Attach payment method", description = "Attach a new payment method to the gym's subscription")
     public ResponseEntity<ApiResponse<PaymentMethodResponse>> attachPaymentMethod(
             @Valid @RequestBody AttachPaymentMethodRequest request) {
 
         UUID gymId = TenantContext.getCurrentTenantId();
-        PaymentMethodResponse response = stripePaymentService.attachPaymentMethod(
+        PaymentMethodResponse response = paymentService.attachPaymentMethod(
                 gymId,
-                request.getStripePaymentMethodId(),
+                request.getProviderPaymentMethodId(),
                 request.getSetAsDefault() != null ? request.getSetAsDefault() : true);
 
         return ResponseEntity.ok(ApiResponse.success(response, "Payment method attached successfully"));
     }
 
-    @GetMapping("/methods")
+    @GetMapping("/subscriptions/payments/methods")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get payment methods", description = "Get all payment methods for the gym")
     public ResponseEntity<ApiResponse<List<PaymentMethodResponse>>> getPaymentMethods() {
         UUID gymId = TenantContext.getCurrentTenantId();
-        List<PaymentMethodResponse> methods = stripePaymentService.getPaymentMethods(gymId);
+        List<PaymentMethodResponse> methods = paymentService.getPaymentMethods(gymId);
         return ResponseEntity.ok(ApiResponse.success(methods));
     }
 
-    @DeleteMapping("/methods/{id}")
+    @DeleteMapping("/subscriptions/payments/methods/{id}")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Remove payment method", description = "Remove a payment method from the gym")
     public ResponseEntity<ApiResponse<Void>> removePaymentMethod(@PathVariable UUID id) {
         UUID gymId = TenantContext.getCurrentTenantId();
-        stripePaymentService.removePaymentMethod(gymId, id);
+        paymentService.removePaymentMethod(gymId, id);
         return ResponseEntity.ok(ApiResponse.success(null, "Payment method removed successfully"));
     }
 
-    @GetMapping("/invoices")
+    @GetMapping("/subscriptions/payments/invoices")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get invoices", description = "Get all invoices for the organisation's subscription")
     public ResponseEntity<ApiResponse<List<InvoiceResponse>>> getInvoices() {
         // Organisation ID is used for invoices - the tenant context provides this
         UUID organisationId = TenantContext.getCurrentTenantId();
-        List<InvoiceResponse> invoices = stripePaymentService.getInvoicesForOrganisation(organisationId);
+        List<InvoiceResponse> invoices = paymentService.getInvoicesForOrganisation(organisationId);
         return ResponseEntity.ok(ApiResponse.success(invoices));
     }
 
-    @PostMapping("/refunds")
+    @PostMapping("/subscriptions/payments/refunds")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN') or hasRole('ADMIN')")
     @Operation(summary = "Process refund", description = "Process a full or partial refund for a payment")
     public ResponseEntity<ApiResponse<RefundResponse>> processRefund(
             @Valid @RequestBody RefundRequest request) {
 
         UUID gymId = TenantContext.getCurrentTenantId();
-        RefundResponse response = stripePaymentService.processRefund(gymId, request);
+        RefundResponse response = paymentService.processRefund(gymId, request);
         return ResponseEntity.ok(ApiResponse.success(response, "Refund processed successfully"));
     }
 
-    @GetMapping("/refunds")
+    @GetMapping("/subscriptions/payments/refunds")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get refund history", description = "Get all refunds for the gym")
     public ResponseEntity<ApiResponse<List<RefundResponse>>> getRefundHistory() {
         UUID gymId = TenantContext.getCurrentTenantId();
-        List<RefundResponse> refunds = stripePaymentService.getRefundHistory(gymId);
+        List<RefundResponse> refunds = paymentService.getRefundHistory(gymId);
         return ResponseEntity.ok(ApiResponse.success(refunds));
     }
 
-    @GetMapping("/refunds/{refundId}")
+    @GetMapping("/subscriptions/payments/refunds/{refundId}")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get refund details", description = "Get details of a specific refund")
     public ResponseEntity<ApiResponse<RefundResponse>> getRefund(@PathVariable UUID refundId) {
         UUID gymId = TenantContext.getCurrentTenantId();
-        RefundResponse response = stripePaymentService.getRefund(gymId, refundId);
+        RefundResponse response = paymentService.getRefund(gymId, refundId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // ===== Refund Request Workflow Endpoints =====
 
-    @PostMapping("/refund-requests")
+    @PostMapping("/subscriptions/payments/refund-requests")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Create refund request", description = "Create a new refund request for platform subscription (Gym owners request refunds from GymMate)")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> createPlatformRefundRequest(
@@ -129,7 +133,7 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(response, "Refund request submitted successfully"));
     }
 
-    @GetMapping("/refund-requests")
+    @GetMapping("/subscriptions/payments/refund-requests")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get refund requests", description = "Get all refund requests for the gym")
     public ResponseEntity<ApiResponse<List<RefundRequestResponse>>> getRefundRequests() {
@@ -138,7 +142,7 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(requests));
     }
 
-    @GetMapping("/refund-requests/pending")
+    @GetMapping("/subscriptions/payments/refund-requests/pending")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get pending refund requests", description = "Get all pending refund requests awaiting action")
     public ResponseEntity<ApiResponse<List<RefundRequestResponse>>> getPendingRefundRequests() {
@@ -147,7 +151,7 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(requests));
     }
 
-    @GetMapping("/refund-requests/{requestId}")
+    @GetMapping("/subscriptions/payments/refund-requests/{requestId}")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get refund request", description = "Get details of a specific refund request")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> getRefundRequest(@PathVariable UUID requestId) {
@@ -155,7 +159,7 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PutMapping("/refund-requests/{requestId}/approve")
+    @PutMapping("/subscriptions/payments/refund-requests/{requestId}/approve")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @Operation(summary = "Approve refund request", description = "Approve a platform subscription refund request (SUPER_ADMIN only)")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> approveRefundRequest(
@@ -172,7 +176,7 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(response, "Refund request approved"));
     }
 
-    @PutMapping("/refund-requests/{requestId}/reject")
+    @PutMapping("/subscriptions/payments/refund-requests/{requestId}/reject")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
     @Operation(summary = "Reject refund request", description = "Reject a platform subscription refund request (SUPER_ADMIN only)")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> rejectRefundRequest(
@@ -191,9 +195,9 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(response, "Refund request rejected"));
     }
 
-    @PostMapping("/refund-requests/{requestId}/process")
+    @PostMapping("/subscriptions/payments/refund-requests/{requestId}/process")
     @PreAuthorize("hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Process approved refund", description = "Execute the Stripe refund for an approved request (SUPER_ADMIN only)")
+    @Operation(summary = "Process approved refund", description = "Execute the provider refund for an approved request (SUPER_ADMIN only)")
     public ResponseEntity<ApiResponse<RefundResponse>> processRefundRequest(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal TenantAwareUserDetails currentUser) {
@@ -206,7 +210,7 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(response, "Refund processed successfully"));
     }
 
-    @PutMapping("/refund-requests/{requestId}/cancel")
+    @PutMapping("/subscriptions/payments/refund-requests/{requestId}/cancel")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Cancel refund request", description = "Cancel a pending refund request")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> cancelRefundRequest(
@@ -221,11 +225,87 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success(response, "Refund request cancelled"));
     }
 
-    @GetMapping("/refund-requests/{requestId}/audit")
+    @GetMapping("/subscriptions/payments/refund-requests/{requestId}/audit")
     @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get refund request audit trail", description = "Get the complete audit history for a refund request")
     public ResponseEntity<ApiResponse<List<RefundAuditLog>>> getRefundRequestAudit(@PathVariable UUID requestId) {
         List<RefundAuditLog> auditTrail = refundRequestService.getAuditTrail(requestId);
         return ResponseEntity.ok(ApiResponse.success(auditTrail));
+    }
+
+    // ===== Stripe Connect endpoints =====
+
+    @PostMapping("/connect/onboard")
+    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Start onboarding", description = "Start Stripe Connect onboarding to accept member payments")
+    public ResponseEntity<ApiResponse<ConnectOnboardingResponse>> startOnboarding() {
+        UUID gymId = TenantContext.getCurrentTenantId();
+        ConnectOnboardingResponse response = stripePaymentService.startOnboarding(gymId);
+        return ResponseEntity.ok(ApiResponse.success(response, "Onboarding started. Redirect to the provided URL."));
+    }
+
+    @GetMapping("/connect/status")
+    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Get account status", description = "Get the current Stripe Connect account status")
+    public ResponseEntity<ApiResponse<ConnectAccountStatusResponse>> getAccountStatus() {
+        UUID gymId = TenantContext.getCurrentTenantId();
+        ConnectAccountStatusResponse response = stripePaymentService.getAccountStatus(gymId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PostMapping("/connect/refresh")
+    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Refresh onboarding link", description = "Get a new onboarding link if the previous one expired")
+    public ResponseEntity<ApiResponse<ConnectOnboardingResponse>> refreshOnboardingLink() {
+        UUID gymId = TenantContext.getCurrentTenantId();
+        ConnectOnboardingResponse response = stripePaymentService.refreshOnboardingLink(gymId);
+        return ResponseEntity.ok(ApiResponse.success(response, "New onboarding link generated."));
+    }
+
+    @GetMapping("/connect/dashboard")
+    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Get dashboard link", description = "Get a link to the Stripe Express dashboard")
+    public ResponseEntity<ApiResponse<String>> getDashboardLink() {
+        UUID gymId = TenantContext.getCurrentTenantId();
+        String dashboardUrl = stripePaymentService.getDashboardLink(gymId);
+        return ResponseEntity.ok(ApiResponse.success(dashboardUrl, "Dashboard link generated."));
+    }
+
+    @GetMapping("/connect/can-accept-payments")
+    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('STAFF') or hasRole('SUPER_ADMIN')")
+    @Operation(summary = "Check payment capability", description = "Check if the gym can accept member payments")
+    public ResponseEntity<ApiResponse<Boolean>> canAcceptPayments() {
+        UUID gymId = TenantContext.getCurrentTenantId();
+        boolean canAccept = stripePaymentService.canAcceptPayments(gymId);
+        return ResponseEntity.ok(ApiResponse.success(canAccept));
+    }
+
+    // ===== Webhook endpoints =====
+
+    @PostMapping("/webhooks/stripe/platform")
+    @Operation(summary = "Stripe platform webhook", description = "Handle Stripe platform webhook events")
+    public ResponseEntity<String> handlePlatformWebhook(
+            @RequestBody String payload,
+            @RequestHeader("Stripe-Signature") String signature) {
+        stripePaymentService.processPlatformWebhook(payload, signature);
+        return ResponseEntity.ok("Processed");
+    }
+
+    @PostMapping("/webhooks/stripe/connect")
+    @Operation(summary = "Stripe connect webhook", description = "Handle Stripe Connect webhook events")
+    public ResponseEntity<String> handleConnectWebhook(
+            @RequestBody String payload,
+            @RequestHeader("Stripe-Signature") String signature) {
+        stripePaymentService.processConnectWebhook(payload, signature);
+        return ResponseEntity.ok("Processed");
+    }
+
+    @PostMapping("/webhooks/paystack")
+    @Operation(summary = "Paystack webhook", description = "Handle Paystack webhook events")
+    public ResponseEntity<String> handlePaystackWebhook(
+            @RequestBody String payload,
+            @RequestHeader(name = "x-paystack-signature", required = false) String signature) {
+        paystackWebhookService.processWebhook(payload, signature);
+        return ResponseEntity.ok("Processed");
     }
 }

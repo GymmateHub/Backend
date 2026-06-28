@@ -77,7 +77,7 @@ public interface RefundRequestRepository extends JpaRepository<RefundRequestEnti
     /**
      * Find refund requests by payment intent.
      */
-    Optional<RefundRequestEntity> findByStripePaymentIntentIdAndStatus(String paymentIntentId, RefundRequestStatus status);
+    Optional<RefundRequestEntity> findByProviderTransactionIdAndStatus(String providerTransactionId, RefundRequestStatus status);
 
     /**
      * Find escalated requests needing attention.

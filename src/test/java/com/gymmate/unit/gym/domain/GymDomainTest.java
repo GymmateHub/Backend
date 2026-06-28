@@ -321,12 +321,12 @@ class GymDomainTest {
     }
 
     @Nested
-    @DisplayName("Stripe Connect Tests")
-    class StripeConnectTests {
+    @DisplayName("Provider Connect Tests")
+    class ProviderConnectTests {
 
         @Test
-        @DisplayName("Should set Stripe Connect account ID")
-        void setStripeConnectId_ValidId_Success() {
+        @DisplayName("Should set provider connect account ID")
+        void setProviderConnectId_ValidId_Success() {
             // Arrange
             Gym gym = new Gym(
                     "Test Gym",
@@ -337,10 +337,10 @@ class GymDomainTest {
             );
 
             // Act
-            gym.setStripeConnectAccountId("acct_test123");
+            gym.setProviderConnectAccountId("acct_test123");
 
             // Assert
-            assertThat(gym.getStripeConnectAccountId()).isEqualTo("acct_test123");
+            assertThat(gym.getProviderConnectAccountId()).isEqualTo("acct_test123");
         }
     }
 }

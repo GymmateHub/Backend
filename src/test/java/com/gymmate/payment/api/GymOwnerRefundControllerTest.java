@@ -226,7 +226,7 @@ class GymOwnerRefundControllerTest {
                 .id(requestId)
                 .gymId(gymId)
                 .refundType(RefundType.MEMBER_PAYMENT)
-                .stripePaymentIntentId("pi_test123")
+                .providerTransactionId("txn_test123")
                 .originalPaymentAmount(new BigDecimal("100.00"))
                 .requestedRefundAmount(new BigDecimal("50.00"))
                 .currency("USD")

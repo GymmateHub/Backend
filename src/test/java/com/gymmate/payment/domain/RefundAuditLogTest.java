@@ -100,9 +100,9 @@ class RefundAuditLogTest {
             // Arrange
             RefundRequestEntity request = createRequest(RefundRequestStatus.PROCESSED);
             PaymentRefund refund = PaymentRefund.builder()
-                    .stripeRefundId("re_test123")
+                    .providerRefundId("re_test123")
                     .gymId(UUID.randomUUID())
-                    .stripePaymentIntentId("pi_test")
+                    .providerTransactionId("txn_test")
                     .amount(new BigDecimal("50.00"))
                     .status(RefundStatus.SUCCEEDED)
                     .build();

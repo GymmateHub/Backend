@@ -57,11 +57,11 @@ public class Subscription extends BaseAuditEntity {
     private LocalDateTime trialEnd;
 
     // Payment Integration
-    @Column(name = "stripe_subscription_id", unique = true)
-    private String stripeSubscriptionId;
+    @Column(name = "provider_subscription_id", unique = true)
+    private String providerSubscriptionId;
 
-    @Column(name = "stripe_customer_id")
-    private String stripeCustomerId;
+    @Column(name = "provider_customer_id")
+    private String providerCustomerId;
 
     @Column(name = "payment_method", length = 50)
     private String paymentMethod;

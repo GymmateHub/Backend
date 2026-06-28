@@ -59,18 +59,18 @@ public interface PaymentRefundRepository extends JpaRepository<PaymentRefund, UU
                      @Param("endDate") LocalDateTime endDate);
 
        // ============================================
-       // Stripe-based queries
+       // Provider-based queries
        // ============================================
 
        /**
         * Find a refund by its Stripe refund ID.
         */
-       Optional<PaymentRefund> findByStripeRefundId(String stripeRefundId);
+       Optional<PaymentRefund> findByProviderRefundId(String providerRefundId);
 
        /**
         * Find all refunds for a specific payment intent.
         */
-       List<PaymentRefund> findByStripePaymentIntentIdOrderByCreatedAtDesc(String stripePaymentIntentId);
+       List<PaymentRefund> findByProviderTransactionIdOrderByCreatedAtDesc(String providerTransactionId);
 
        // ============================================
        // Gym-based queries (backward compatible) -> REMOVED

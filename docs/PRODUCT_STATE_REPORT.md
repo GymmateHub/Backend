@@ -1,6 +1,6 @@
 # GymMate Backend — Product State Report
 
-**Date:** June 27, 2026
+**Date:** June 28, 2026
 **Version:** 0.1
 **Status:** Living Document (Pre-launch Draft)
 **Scope:** Full backend codebase audit and module-by-module status assessment
@@ -30,7 +30,7 @@
 
 GymMate is a **multi-tenant SaaS gym management platform** built as a Spring Boot 3.5.6 modular monolith in Java 21. The codebase contains approximately **300 Java files** across **17 modules**, with a clean/hexagonal architecture pattern (`api/`, `application/`, `domain/`, `infrastructure/`) applied consistently.
 
-The product is in a **mid-to-late stage development phase** (~75–80% MVP complete). Core infrastructure and most business modules are well-built with full vertical slices (domain → service → API). Access control and AI modules are now partially implemented; booking and dashboard remain placeholders.
+The product is in a **mid-to-late stage development phase** (~75–80% MVP complete). Core infrastructure and most business modules are well-built with full vertical slices (domain → service → API). Access control and AI modules are now partially implemented with usable APIs; booking and dashboard remain placeholders.
 
 **The core business flow is operational end-to-end:**
 Register Organisation → Create Gym → Add Members → Sell Memberships → Book Classes → Process Payments → View Analytics
@@ -82,7 +82,7 @@ src/main/java/com/gymmate/
 ├── analytics/                       # KPI dashboard and reporting
 ├── booking/                         # ⚠️ Empty placeholder
 ├── access/                          # 🔄 Partially implemented (scan/credentials/events + anti-tailgating core)
-├── ai/                              # 🔄 Partially implemented (event-driven plan generation prototype)
+├── ai/                              # 🔄 Partially implemented (onboarding + on-demand plan generation APIs with Redis cache)
 └── dashboard/                       # ⚠️ Empty placeholder (analytics serves this role)
 ```
 
@@ -260,7 +260,7 @@ Status legend: `✅ Complete` (fully delivered), `🔄 Partial` (usable but not 
 |--------|--------|---------|-------|
 | `booking/` | ⚠️ Not started | Standalone booking system | Class-level booking is already handled in `classes`; module directories remain empty |
 | `access/` | 🔄 Partial | Gym access control / anti-tailgating | `AccessController`, `AccessService`, domain entities, migration `V10__Access_Control_System.sql`; TURNSTILE/CV adapters and access SSE stream still pending |
-| `ai/` | 🔄 Partial (prototype) | AI-powered coaching | `AiTrainerService` + `AiRecommendation` implemented; full PRD model (`MemberPlanProfile`, `WorkoutPlan`, `MealPlan`) and `/api/v1/ai/**` endpoints pending |
+| `ai/` | 🔄 Partial (expanded MVP) | AI-powered coaching | `AiTrainerService` (event-based onboarding), `AiPlanService`, `AiTrainerController` (`/api/ai/trainer/**`), Redis-backed recent-plan caching (`ai:plan:{memberId}`), migration `V11__AI_Recommendations_Table.sql`; advanced PRD model (`MemberPlanProfile`, structured Workout/Meal entities, strict JSON guardrails) still pending |
 | `dashboard/` | ⚠️ Not started | Dashboard aggregation | Analytics is currently served by `analytics` module |
 
 ---
@@ -316,7 +316,8 @@ Tests **exist and pass in CI**. The surefire reports show **43 test classes** ac
 |-------------|--------|-----------|-------|
 | **Stripe Payments** | ✅ Implemented | `StripePaymentService`, `StripeConnectService`, `StripeWebhookService`, `StripeConfig` | Platform subscriptions (org-level) + member payments via Stripe Connect (gym-level). Webhook processing for charge, refund, dispute events. |
 | **Email (SMTP)** | ✅ Implemented | `EmailService`, `EmailChannelSender`, templates in `resources/templates/` | 5 Thymeleaf templates: `welcome.html`, `registration-otp.html`, `subscription-expired.html`, `subscription-renewal.html`, `subscription-trial-ending.html`. Configured for Mailtrap in dev. |
-| **Redis** | ✅ Configured | `RedisConfig`, `RateLimitingService`, `RateLimitService` | Used for API rate limiting and token management. Optional in dev (graceful degradation). |
+| **Redis** | ✅ Configured | `RedisConfig`, `RateLimitingService`, `RateLimitService`, `AiPlanService` | Used for API rate limiting, token management, and AI plan response caching (member recent-plan cache with TTL). Optional in dev (graceful degradation). |
+| **AI / LLM (Spring AI)** | 🔄 Partial (MVP) | `AiTrainerService`, `AiPlanService`, `AiTrainerController`, `AiRecommendation` | Event-driven and on-demand workout/meal plan generation are implemented; provider abstraction, schema-validated structured outputs, and stronger medical/dietary guardrails are pending. |
 | **SMS** | ⚠️ Scaffolded | `SmsChannelSender` | Channel sender exists but likely a stub — no SMS provider SDK in `pom.xml` |
 | **WhatsApp** | ⚠️ Scaffolded | `WhatsAppChannelSender` | Channel sender exists but likely a stub — no WhatsApp Business API SDK in `pom.xml` |
 | **Wearable Devices** | ⚠️ Entity Only | `WearableSync` entity, `WearableSyncRepository` | Data model and repository exist but no external API integration |
@@ -325,7 +326,7 @@ Tests **exist and pass in CI**. The surefire reports show **43 test classes** ac
 
 ## 7. Database Migrations
 
-Flyway is configured with **10 migration files** tracking schema evolution. In development, `hibernate.ddl-auto=update` is used and Flyway is disabled by default.
+Flyway is configured with **11 migration files** tracking schema evolution. In development, `hibernate.ddl-auto=update` is used and Flyway is disabled by default.
 
 | Migration | Description | Key Changes |
 |-----------|-------------|-------------|
@@ -340,6 +341,7 @@ Flyway is configured with **10 migration files** tracking schema evolution. In d
 | `V8__Add_GymOwner_Manager_Roles.sql` | Extended RBAC | GYM_OWNER and MANAGER roles |
 | `V9__Tenant_Isolation_And_Waitlist.sql` | Multi-tenancy hardening | Tenant isolation improvements and class waitlist support |
 | `V10__Access_Control_System.sql` | Access control module | Access points, credentials, schedules, door benefits, event audit trail |
+| `V11__AI_Recommendations_Table.sql` | AI personal trainer persistence | `ai_recommendations` table with member/gym/org scoping, goals used, experience level, and query indexes |
 
 ---
 
@@ -401,7 +403,7 @@ Basic single-service setup. PostgreSQL service is **commented out** and Redis is
 | 1 | **Inconsistent repository pattern** | Some modules (`payment`, `user`) use JPA repositories directly in services. Others (`inventory`, `health`) use proper port/adapter pattern with domain repository interfaces. | Medium |
 | 2 | **H2 compatibility gaps** | `GymClass.equipmentNeeded` uses `text[]` (PostgreSQL array type) which won't work with H2. Some `jsonb` columns may also cause issues. | Medium |
 | 3 | **Stale copilot instructions** | `.github/copilot-instructions.md` references `~98 files`, `com.GymMateHub` package, and "no tests" — all outdated. Misleads AI assistants and new developers. | Low |
-| 4 | **Partially delivered feature modules** | `access/` and `ai/` now contain real code but are still below PRD scope; docs and rollout plans must reflect MVP vs planned scope clearly. | Medium |
+| 4 | **Partially delivered feature modules** | `access/` and `ai/` contain real code and usable APIs, but are still below full PRD scope; docs and rollout plans should continue to separate MVP-delivered scope from planned scope. | Medium |
 | 5 | **No API versioning** | All endpoints are `/api/...` with no version prefix (e.g., `/api/v1/...`). Breaking changes will affect all clients. | Medium |
 | 6 | **Large monolithic services** | `AnalyticsService` (851 lines), `AuthenticationService` (524 lines) could benefit from decomposition into smaller, focused services. | Medium |
 | 7 | **JSON columns as raw Strings** | `preferences`, `features_enabled`, `billing_address`, `amenities`, `metadata` etc. are stored as `String` with `@JdbcTypeCode(SqlTypes.JSON)` — no type-safe Java objects, no compile-time validation. | Medium |
@@ -437,10 +439,7 @@ Basic single-service setup. PostgreSQL service is **commented out** and Redis is
 
 | # | Gap | Description |
 |---|-----|-------------|
-| 11 | **AI module** | Workout recommendations, churn prediction, revenue forecasting. |
-| 12 | **Booking module** | Facility/equipment booking (separate from class booking). |
-| 13 | **API documentation** | Generate versioned API docs from OpenAPI spec, publish changelog. |
-| 14 | **Performance testing** | Load test critical paths (login, booking, analytics dashboard). |
+| 11 | **AI module (phase 2+)** | Extend from current onboarding/on-demand plans into predictive analytics, churn prediction, and revenue forecasting. |
 
 ---
 
@@ -454,11 +453,10 @@ The primary remaining work is:
 
 1. **Testing depth** — Expand from 43 test classes to cover all services and add integration tests
 2. **Production infrastructure** — Docker Compose, observability, secrets management
-3. **Placeholder modules** — Decide whether to implement or remove `booking`, `access`, `ai`, `dashboard`
+3. **Placeholder modules** — Decide whether to implement or remove `booking`, `access`, `dashboard` (AI now has usable MVP endpoints and caching)
 4. **Integration completion** — SMS/WhatsApp channels, wearable sync
 5. **Housekeeping** — API versioning, update stale docs, type-safe JSON columns
 
 ---
 
-*This report was generated from a full codebase audit on March 24, 2026. It should be updated when major modules are completed or architectural changes are made.*
-
+*This report was generated from a full codebase audit and updated on June 28, 2026 after AI personal trainer MVP endpoint/caching implementation changes.*

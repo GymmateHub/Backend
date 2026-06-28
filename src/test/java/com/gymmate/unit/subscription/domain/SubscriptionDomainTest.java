@@ -85,15 +85,15 @@ class SubscriptionDomainTest {
         }
 
         @Test
-        @DisplayName("Should track Stripe subscription ID")
-        void setStripeSubscriptionId_ValidId_Stored() {
+        @DisplayName("Should track provider subscription ID")
+        void setProviderSubscriptionId_ValidId_Stored() {
             // Arrange
             Subscription subscription = Subscription.builder()
-                    .stripeSubscriptionId("sub_test123")
+                    .providerSubscriptionId("sub_test123")
                     .build();
 
             // Assert
-            assertThat(subscription.getStripeSubscriptionId()).isEqualTo("sub_test123");
+            assertThat(subscription.getProviderSubscriptionId()).isEqualTo("sub_test123");
         }
 
         @Test

@@ -80,7 +80,7 @@ class GymInvoiceTest {
             // Act
             GymInvoice invoice = GymInvoice.builder()
                     .organisationId(organisationId)
-                    .stripeInvoiceId("in_test123")
+                    .providerInvoiceId("in_test123")
                     .invoiceNumber("INV-001")
                     .amount(new BigDecimal("99.99"))
                     .currency("USD")
@@ -95,7 +95,7 @@ class GymInvoiceTest {
 
             // Assert
             assertThat(invoice.getOrganisationId()).isEqualTo(organisationId);
-            assertThat(invoice.getStripeInvoiceId()).isEqualTo("in_test123");
+            assertThat(invoice.getProviderInvoiceId()).isEqualTo("in_test123");
             assertThat(invoice.getAmount()).isEqualByComparingTo(new BigDecimal("99.99"));
             assertThat(invoice.getCurrency()).isEqualTo("USD");
             assertThat(invoice.getStatus()).isEqualTo(InvoiceStatus.OPEN);
@@ -120,7 +120,7 @@ class GymInvoiceTest {
     private GymInvoice createInvoice(InvoiceStatus status) {
         return GymInvoice.builder()
                 .organisationId(UUID.randomUUID())
-                .stripeInvoiceId("in_test123")
+                .providerInvoiceId("in_test123")
                 .amount(new BigDecimal("99.99"))
                 .status(status)
                 .build();
@@ -139,9 +139,9 @@ class InvoiceStatusTest {
             "uncollectible, UNCOLLECTIBLE",
             "unknown, OPEN"
     })
-    @DisplayName("Should map Stripe status correctly")
-    void fromStripeStatus_MapsCorrectly(String stripeStatus, InvoiceStatus expected) {
-        assertThat(InvoiceStatus.fromStripeStatus(stripeStatus)).isEqualTo(expected);
+    @DisplayName("Should map provider status correctly")
+    void fromProviderStatus_MapsCorrectly(String providerStatus, InvoiceStatus expected) {
+        assertThat(InvoiceStatus.fromProviderStatus(providerStatus)).isEqualTo(expected);
     }
 
     @Test
@@ -217,6 +217,6 @@ class PaymentMethodEntityTest {
         assertThat(method.getIsDefault()).isFalse();
         assertThat(method.getIsActive()).isTrue();
         assertThat(method.getIsVerified()).isFalse();
-        assertThat(method.getProvider()).isEqualTo("stripe");
+        assertThat(method.getProvider()).isEqualTo("generic");
     }
 }

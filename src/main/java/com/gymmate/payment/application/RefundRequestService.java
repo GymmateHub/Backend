@@ -32,7 +32,7 @@ public class RefundRequestService {
     private final RefundRequestRepository refundRequestRepository;
     private final RefundAuditLogRepository auditLogRepository;
     private final PaymentRefundRepository paymentRefundRepository;
-    private final StripePaymentService stripePaymentService;
+    private final PaymentService paymentService;
     private final UserService userService;
     private final com.gymmate.shared.security.service.TenantValidationService tenantValidationService;
 
@@ -62,8 +62,8 @@ public class RefundRequestService {
     }
 
     // Check for existing pending request for same payment
-    refundRequestRepository.findByStripePaymentIntentIdAndStatus(
-        dto.getStripePaymentIntentId(), RefundRequestStatus.PENDING)
+    refundRequestRepository.findByProviderTransactionIdAndStatus(
+        dto.getProviderTransactionId(), RefundRequestStatus.PENDING)
       .ifPresent(existing -> {
         // SECURITY: Validate the existing request belongs to current tenant
         tenantValidationService.validateTenantAccess(
@@ -75,8 +75,8 @@ public class RefundRequestService {
     // Create refund request
     RefundRequestEntity request = RefundRequestEntity.builder()
       .refundType(dto.getRefundType())
-      .stripePaymentIntentId(dto.getStripePaymentIntentId())
-      .stripeChargeId(dto.getStripeChargeId())
+      .providerTransactionId(dto.getProviderTransactionId())
+      .providerChargeId(dto.getProviderChargeId())
       .originalPaymentAmount(dto.getOriginalPaymentAmount())
       .requestedRefundAmount(dto.getRequestedRefundAmount())
       .currency(dto.getCurrency() != null ? dto.getCurrency() : "USD")
@@ -102,7 +102,7 @@ public class RefundRequestService {
     auditLogRepository.save(auditLog);
 
     log.info("Created refund request {} for payment {} by user {} ({})",
-      saved.getId(), dto.getStripePaymentIntentId(), requestedByUserId, requestedByType);
+      saved.getId(), dto.getProviderTransactionId(), requestedByUserId, requestedByType);
 
     return toResponse(saved);
   }
@@ -218,7 +218,7 @@ public class RefundRequestService {
     }
 
     /**
-     * Process an approved refund request (execute the Stripe refund).
+     * Process an approved refund request (execute the provider refund).
      */
     @Transactional
     public RefundResponse processApprovedRequest(
@@ -233,20 +233,20 @@ public class RefundRequestService {
                     "Refund request must be approved before processing");
         }
 
-        // Create the refund request DTO for Stripe
-        RefundRequest stripeRequest = RefundRequest.builder()
-                .paymentIntentId(request.getStripePaymentIntentId())
+        // Create the refund request DTO for the active provider
+        RefundRequest providerRequest = RefundRequest.builder()
+                .providerTransactionId(request.getProviderTransactionId())
                 .amount(request.getRequestedRefundAmount())
                 .reason(request.getReasonDescription())
                 .build();
 
-        // Process the actual refund via Stripe
-        RefundResponse refundResponse = stripePaymentService.processRefund(
-                request.getGymId(), stripeRequest);
+        // Process the actual refund via active provider
+        RefundResponse refundResponse = paymentService.processRefund(
+                request.getGymId(), providerRequest);
 
         // Update the PaymentRefund with additional tracking info
         PaymentRefund paymentRefund = paymentRefundRepository
-                .findByStripeRefundId(refundResponse.getRefundId())
+                .findByProviderRefundId(refundResponse.getRefundId())
                 .orElseThrow(() -> new DomainException("REFUND_NOT_FOUND", "Processed refund not found"));
 
         paymentRefund.setRefundToUserId(request.getRefundToUserId());
@@ -265,7 +265,7 @@ public class RefundRequestService {
         RefundAuditLog auditLog = RefundAuditLog.processed(request, paymentRefund, processorId, processorType);
         auditLogRepository.save(auditLog);
 
-        log.info("Refund request {} processed successfully. Stripe refund: {}",
+        log.info("Refund request {} processed successfully. Provider refund: {}",
                 requestId, refundResponse.getRefundId());
 
         return refundResponse;
@@ -373,7 +373,7 @@ public class RefundRequestService {
                 .id(request.getId())
                 .gymId(request.getGymId())
                 .refundType(request.getRefundType())
-                .stripePaymentIntentId(request.getStripePaymentIntentId())
+                .providerTransactionId(request.getProviderTransactionId())
                 .originalPaymentAmount(request.getOriginalPaymentAmount())
                 .requestedRefundAmount(request.getRequestedRefundAmount())
                 .currency(request.getCurrency())

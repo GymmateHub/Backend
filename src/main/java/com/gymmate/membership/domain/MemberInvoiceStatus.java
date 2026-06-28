@@ -11,8 +11,8 @@ public enum MemberInvoiceStatus {
     VOID,
     UNCOLLECTIBLE;
 
-    public static MemberInvoiceStatus fromStripeStatus(String stripeStatus) {
-        return switch (stripeStatus) {
+    public static MemberInvoiceStatus fromProviderStatus(String providerStatus) {
+        return switch (providerStatus) {
             case "draft" -> DRAFT;
             case "open" -> OPEN;
             case "paid" -> PAID;

@@ -8,7 +8,7 @@ import java.util.UUID;
 
 /**
  * Entity representing a payment method for a member.
- * These payment methods are stored on the gym's Stripe Connect account.
+ * These payment methods are stored on the gym's payment provider account.
  * Extends GymScopedEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,8 +25,8 @@ public class MemberPaymentMethod extends GymScopedEntity {
     @Column(name = "member_id", nullable = false)
     private UUID memberId;
 
-    @Column(name = "stripe_payment_method_id", nullable = false)
-    private String stripePaymentMethodId;
+    @Column(name = "provider_payment_method_id", nullable = false)
+    private String providerPaymentMethodId;
 
     @Column(nullable = false, length = 20)
     private String type;

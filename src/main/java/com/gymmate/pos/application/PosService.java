@@ -91,7 +91,7 @@ public class PosService {
      */
     @Transactional
     public Sale completeSale(UUID saleId, PaymentType paymentType, BigDecimal amountPaid,
-            String stripePaymentIntentId) {
+            String providerTransactionId) {
         Sale sale = getSaleById(saleId);
 
         if (sale.getStatus() != SaleStatus.PENDING) {
@@ -99,8 +99,8 @@ public class PosService {
         }
 
         sale.setPaymentType(paymentType);
-        if (stripePaymentIntentId != null) {
-            sale.setStripePaymentIntentId(stripePaymentIntentId);
+        if (providerTransactionId != null) {
+            sale.setProviderTransactionId(providerTransactionId);
         }
 
         sale.complete(paymentType, amountPaid);

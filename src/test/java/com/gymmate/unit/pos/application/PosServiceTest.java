@@ -175,23 +175,23 @@ class PosServiceTest {
         }
 
         @Test
-        @DisplayName("Should handle card payment with Stripe")
-        void completeSale_CardPayment_WithStripeId() {
+        @DisplayName("Should handle card payment with provider transaction ID")
+        void completeSale_CardPayment_WithProviderTransactionId() {
             // Arrange
             UUID saleId = UUID.randomUUID();
             Sale sale = createPendingSale(saleId, UUID.randomUUID());
-            String stripePaymentId = "pi_test_123";
+            String providerTransactionId = "pi_test_123";
 
             when(saleRepository.findById(saleId)).thenReturn(Optional.of(sale));
             when(saleRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
             // Act
             Sale result = posService.completeSale(saleId, PaymentType.CARD,
-                    sale.getTotalAmount(), stripePaymentId);
+                    sale.getTotalAmount(), providerTransactionId);
 
             // Assert
             assertThat(result.getPaymentType()).isEqualTo(PaymentType.CARD);
-            assertThat(result.getStripePaymentIntentId()).isEqualTo(stripePaymentId);
+            assertThat(result.getProviderTransactionId()).isEqualTo(providerTransactionId);
         }
 
         @Test
@@ -259,7 +259,7 @@ class PosServiceTest {
             // Arrange
             UUID saleId = UUID.randomUUID();
             Sale sale = createCompletedSale(saleId, UUID.randomUUID());
-            BigDecimal partialRefund = sale.getTotalAmount().divide(BigDecimal.valueOf(2));
+            BigDecimal partialRefund = sale.getTotalAmount().divide(BigDecimal.valueOf(2), java.math.RoundingMode.HALF_UP);
 
             when(saleRepository.findById(saleId)).thenReturn(Optional.of(sale));
             when(saleRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

@@ -6,7 +6,7 @@ Single source of truth for documentation versioning. **All documents share one b
 |----------|------|---------|--------------|
 | Product Requirements Document (PRD) | [`GymMateHub_PRD_v0.1.md`](GymMateHub_PRD_v0.1.md) · [`.docx`](GymMateHub_PRD_v0.1.docx) | 0.1 | June 27, 2026 |
 | Business Requirements Document (BRD) | [`GymMateHub_BRD_v0.1.md`](GymMateHub_BRD_v0.1.md) · [`.docx`](GymMateHub_BRD_v0.1.docx) | 0.1 | June 27, 2026 |
-| Product State Report | [`PRODUCT_STATE_REPORT.md`](PRODUCT_STATE_REPORT.md) | 0.1 | June 27, 2026 |
+| Product State Report | [`PRODUCT_STATE_REPORT.md`](PRODUCT_STATE_REPORT.md) | 0.1 | June 28, 2026 |
 
 ## Rules
 

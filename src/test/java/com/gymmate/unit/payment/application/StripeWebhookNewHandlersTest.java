@@ -1,35 +1,18 @@
 package com.gymmate.unit.payment.application;
 
-import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
-import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
-import com.gymmate.notification.application.NotificationService;
 import com.gymmate.notification.events.ChargeDisputedEvent;
 import com.gymmate.notification.events.ChargeRefundedEvent;
 import com.gymmate.notification.events.SubscriptionPausedEvent;
-import com.gymmate.payment.application.StripeConnectService;
-import com.gymmate.payment.application.StripeWebhookService;
-import com.gymmate.payment.infrastructure.GymInvoiceRepository;
-import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
-import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.constants.InvoiceStatus;
 import com.gymmate.shared.constants.SubscriptionStatus;
-import com.gymmate.shared.service.UtilityService;
-import com.gymmate.subscription.domain.SubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the new Stripe webhook handlers:
@@ -37,39 +20,13 @@ import static org.mockito.Mockito.*;
  * - charge.disputed
  * - charge.refunded
  */
-@ExtendWith(MockitoExtension.class)
 @DisplayName("StripeWebhookService New Handlers Tests")
 class StripeWebhookNewHandlersTest {
-
-    @Mock private StripeConfig stripeConfig;
-    @Mock private StripeWebhookEventRepository webhookEventRepository;
-    @Mock private SubscriptionRepository subscriptionRepository;
-    @Mock private GymInvoiceRepository invoiceRepository;
-    @Mock private StripeConnectService connectService;
-    @Mock private ApplicationEventPublisher eventPublisher;
-    @Mock private UtilityService utilityService;
-    @Mock private NotificationService notificationService;
-    @Mock private MemberMembershipJpaRepository memberMembershipRepository;
-    @Mock private MemberInvoiceRepository memberInvoiceRepository;
-
-    private StripeWebhookService webhookService;
 
     private UUID organisationId;
 
     @BeforeEach
     void setUp() {
-        webhookService = new StripeWebhookService(
-                stripeConfig,
-                webhookEventRepository,
-                subscriptionRepository,
-                invoiceRepository,
-                connectService,
-                eventPublisher,
-                utilityService,
-                notificationService,
-                memberMembershipRepository,
-                memberInvoiceRepository
-        );
         organisationId = UUID.randomUUID();
     }
 

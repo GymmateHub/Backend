@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class RefundResponse {
     private String refundId;
-    private String paymentIntentId;
+    private String providerTransactionId;
     private BigDecimal amount;
     private String currency;
     private String status;

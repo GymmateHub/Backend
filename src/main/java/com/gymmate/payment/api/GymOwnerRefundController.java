@@ -100,7 +100,7 @@ public class GymOwnerRefundController {
     @PostMapping("/{requestId}/process")
     @PreAuthorize("hasRole('GYM_OWNER')")
     @Operation(summary = "Process approved refund",
-               description = "Execute the Stripe refund for an approved member request")
+               description = "Execute the payment refund for an approved member request")
     public ResponseEntity<ApiResponse<RefundResponse>> processRefundRequest(
             @PathVariable UUID requestId,
             @AuthenticationPrincipal TenantAwareUserDetails currentUser) {

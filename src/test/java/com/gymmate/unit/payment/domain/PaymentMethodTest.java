@@ -262,14 +262,14 @@ class PaymentMethodTest {
     class DefaultValuesTests {
 
         @Test
-        @DisplayName("Should have default provider as stripe")
-        void defaultProvider_ShouldBeStripe() {
+        @DisplayName("Should have default provider as generic")
+        void defaultProvider_ShouldBeGeneric() {
             // Arrange & Act
             PaymentMethod method = PaymentMethod.forOrganisation(UUID.randomUUID(), UUID.randomUUID(), "pm_test",
                     PaymentMethodType.CARD);
 
             // Assert
-            assertThat(method.getProvider()).isEqualTo("stripe");
+            assertThat(method.getProvider()).isEqualTo("generic");
         }
 
         @Test

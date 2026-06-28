@@ -66,9 +66,9 @@ class PaymentRefundTest {
             // Act
             PaymentRefund refund = PaymentRefund.builder()
                     .gymId(gymId)
-                    .stripeRefundId("re_test123")
-                    .stripePaymentIntentId("pi_test456")
-                    .stripeChargeId("ch_test789")
+                    .providerRefundId("re_test123")
+                    .providerTransactionId("txn_test456")
+                    .providerChargeId("ch_test789")
                     .amount(new BigDecimal("50.00"))
                     .currency("USD")
                     .status(RefundStatus.SUCCEEDED)
@@ -84,7 +84,7 @@ class PaymentRefundTest {
 
             // Assert
             assertThat(refund.getGymId()).isEqualTo(gymId);
-            assertThat(refund.getStripeRefundId()).isEqualTo("re_test123");
+            assertThat(refund.getProviderRefundId()).isEqualTo("re_test123");
             assertThat(refund.getAmount()).isEqualByComparingTo(new BigDecimal("50.00"));
             assertThat(refund.getStatus()).isEqualTo(RefundStatus.SUCCEEDED);
             assertThat(refund.getRefundType()).isEqualTo(RefundType.MEMBER_PAYMENT);
@@ -98,8 +98,8 @@ class PaymentRefundTest {
             // Act
             PaymentRefund refund = PaymentRefund.builder()
                     .gymId(UUID.randomUUID())
-                    .stripeRefundId("re_test")
-                    .stripePaymentIntentId("pi_test")
+                    .providerRefundId("re_test")
+                    .providerTransactionId("txn_test")
                     .amount(new BigDecimal("25.00"))
                     .status(RefundStatus.PENDING)
                     .build();
@@ -114,15 +114,15 @@ class PaymentRefundTest {
     private PaymentRefund createRefund() {
         return PaymentRefund.builder()
                 .gymId(UUID.randomUUID())
-                .stripeRefundId("re_test123")
-                .stripePaymentIntentId("pi_test456")
+                .providerRefundId("re_test123")
+                .providerTransactionId("txn_test456")
                 .amount(new BigDecimal("100.00"))
                 .status(RefundStatus.PENDING)
                 .build();
     }
 }
 
-@DisplayName("RefundStatus Enum Tests")
+    @DisplayName("RefundStatus Enum Tests")
 class RefundStatusTest {
 
     @ParameterizedTest
@@ -134,21 +134,21 @@ class RefundStatusTest {
             "pending, PENDING",
             "unknown_status, PENDING"
     })
-    @DisplayName("Should map Stripe status correctly")
-    void fromStripeStatus_MapsCorrectly(String stripeStatus, RefundStatus expected) {
-        assertThat(RefundStatus.fromStripeStatus(stripeStatus)).isEqualTo(expected);
+    @DisplayName("Should map provider status correctly")
+    void fromProviderStatus_MapsCorrectly(String providerStatus, RefundStatus expected) {
+        assertThat(RefundStatus.fromProviderStatus(providerStatus)).isEqualTo(expected);
     }
 
     @Test
-    @DisplayName("Should handle null Stripe status")
-    void fromStripeStatus_Null_ReturnsPending() {
-        assertThat(RefundStatus.fromStripeStatus(null)).isEqualTo(RefundStatus.PENDING);
+    @DisplayName("Should handle null provider status")
+    void fromProviderStatus_Null_ReturnsPending() {
+        assertThat(RefundStatus.fromProviderStatus(null)).isEqualTo(RefundStatus.PENDING);
     }
 
     @Test
-    @DisplayName("Should handle uppercase Stripe status")
-    void fromStripeStatus_Uppercase_MapsCorrectly() {
-        assertThat(RefundStatus.fromStripeStatus("SUCCEEDED")).isEqualTo(RefundStatus.SUCCEEDED);
+    @DisplayName("Should handle uppercase provider status")
+    void fromProviderStatus_Uppercase_MapsCorrectly() {
+        assertThat(RefundStatus.fromProviderStatus("SUCCEEDED")).isEqualTo(RefundStatus.SUCCEEDED);
     }
 }
 

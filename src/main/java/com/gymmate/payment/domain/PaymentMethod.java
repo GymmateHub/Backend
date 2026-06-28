@@ -72,7 +72,7 @@ public class PaymentMethod extends BaseAuditEntity {
     // Payment provider details
     @Column(length = 50)
     @Builder.Default
-    private String provider = "stripe";
+    private String provider = "generic";
 
     @Column(name = "provider_payment_method_id", nullable = false)
     private String providerPaymentMethodId;
@@ -220,14 +220,6 @@ public class PaymentMethod extends BaseAuditEntity {
         return PaymentMethodType.BANK_ACCOUNT.equals(this.methodType);
     }
 
-    // Aliases for backward compatibility
-    public String getStripePaymentMethodId() {
-        return this.providerPaymentMethodId;
-    }
-
-    public void setStripePaymentMethodId(String stripePaymentMethodId) {
-        this.providerPaymentMethodId = stripePaymentMethodId;
-    }
 
     public String getLastFour() {
         if (isCard()) {

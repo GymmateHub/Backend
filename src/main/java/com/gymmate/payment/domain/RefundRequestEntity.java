@@ -31,11 +31,11 @@ public class RefundRequestEntity extends GymScopedEntity {
     private RefundType refundType;
 
     // Payment Reference
-    @Column(name = "stripe_payment_intent_id")
-    private String stripePaymentIntentId;
+    @Column(name = "provider_transaction_id")
+    private String providerTransactionId;
 
-    @Column(name = "stripe_charge_id")
-    private String stripeChargeId;
+    @Column(name = "provider_charge_id")
+    private String providerChargeId;
 
     @Column(name = "original_payment_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal originalPaymentAmount;
@@ -159,7 +159,7 @@ public class RefundRequestEntity extends GymScopedEntity {
     }
 
     /**
-     * Mark the request as processed after successful Stripe refund.
+     * Mark the request as processed after successful provider refund.
      */
     public void markProcessed(UUID paymentRefundId) {
         this.status = RefundRequestStatus.PROCESSED;

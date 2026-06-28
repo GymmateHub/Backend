@@ -25,10 +25,10 @@ public class CreateRefundRequestDTO {
     @NotNull(message = "Refund type is required")
     private RefundType refundType;
 
-    @NotBlank(message = "Payment intent ID is required")
-    private String stripePaymentIntentId;
+    @NotBlank(message = "Provider transaction ID is required")
+    private String providerTransactionId;
 
-    private String stripeChargeId;
+    private String providerChargeId;
 
     @NotNull(message = "Original payment amount is required")
     @DecimalMin(value = "0.01", message = "Original amount must be greater than 0")

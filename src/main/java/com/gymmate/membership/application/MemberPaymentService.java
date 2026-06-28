@@ -7,7 +7,6 @@ import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
 import com.gymmate.membership.infrastructure.MemberPaymentMethodRepository;
 import com.gymmate.membership.infrastructure.MembershipPlanRepository;
-import com.gymmate.payment.application.StripeConnectService;
 import com.gymmate.shared.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.user.domain.Member;
@@ -32,8 +31,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Service for handling member payment operations via Stripe Connect.
- * Manages member payment methods and subscriptions on gym's Stripe accounts.
+ * Service for handling member payment operations via the configured payment provider.
+ * Manages member payment methods and subscriptions on the gym's provider account.
  */
 @Service
 @RequiredArgsConstructor
@@ -41,7 +40,6 @@ import java.util.stream.Collectors;
 public class MemberPaymentService {
 
     private final StripeConfig stripeConfig;
-    private final StripeConnectService connectService;
     private final GymRepository gymRepository;
     private final MemberRepository memberRepository;
     private final MemberPaymentMethodRepository paymentMethodRepository;
@@ -50,7 +48,7 @@ public class MemberPaymentService {
     private final MembershipPlanRepository planRepository;
 
     /**
-     * Create or get a Stripe customer for a member on the gym's Connect account.
+     * Create or get a provider customer for a member on the gym's connected account.
      */
     @Transactional
     public String createOrGetMemberCustomer(UUID gymId, UUID memberId, String email, String name) {
@@ -62,12 +60,12 @@ public class MemberPaymentService {
                 memberId, gymId, List.of(MembershipStatus.ACTIVE, MembershipStatus.PAUSED))
                 .stream().findFirst().orElse(null);
 
-        if (membership != null && membership.getStripeCustomerId() != null) {
-            return membership.getStripeCustomerId();
+        if (membership != null && membership.getProviderCustomerId() != null) {
+            return membership.getProviderCustomerId();
         }
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.getProviderConnectAccountId());
 
             CustomerCreateParams params = CustomerCreateParams.builder()
                     .setEmail(email)
@@ -78,13 +76,13 @@ public class MemberPaymentService {
 
             Customer customer = Customer.create(params, connectOptions);
 
-            log.info("Created Stripe customer {} for member {} on gym {} Connect account",
+            log.info("Created provider customer {} for member {} on gym {} connected account",
                     customer.getId(), memberId, gymId);
 
             return customer.getId();
 
         } catch (StripeException e) {
-            log.error("Failed to create Stripe customer for member {} on gym {}: {}",
+            log.error("Failed to create provider customer for member {} on gym {}: {}",
                     memberId, gymId, e.getMessage());
             throw new DomainException("STRIPE_CUSTOMER_CREATE_FAILED",
                     "Failed to create payment profile: " + e.getMessage());
@@ -92,21 +90,21 @@ public class MemberPaymentService {
     }
 
     /**
-     * Attach a payment method to a member on the gym's Connect account.
+     * Attach a payment method to a member on the gym's connected account.
      */
     @Transactional
     public MemberPaymentMethodResponse attachPaymentMethod(UUID gymId, UUID memberId, String email, String name,
-                                                           String stripePaymentMethodId, boolean setAsDefault) {
+                                                           String providerPaymentMethodId, boolean setAsDefault) {
         Gym gym = getGym(gymId);
         validateGymCanAcceptPayments(gym);
 
         String customerId = createOrGetMemberCustomer(gymId, memberId, email, name);
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.getProviderConnectAccountId());
 
             // Attach payment method to customer
-            PaymentMethod paymentMethod = PaymentMethod.retrieve(stripePaymentMethodId, connectOptions);
+            PaymentMethod paymentMethod = PaymentMethod.retrieve(providerPaymentMethodId, connectOptions);
             paymentMethod.attach(PaymentMethodAttachParams.builder()
                     .setCustomer(customerId)
                     .build(), connectOptions);
@@ -116,7 +114,7 @@ public class MemberPaymentService {
                 Customer.retrieve(customerId, connectOptions)
                         .update(CustomerUpdateParams.builder()
                                 .setInvoiceSettings(CustomerUpdateParams.InvoiceSettings.builder()
-                                        .setDefaultPaymentMethod(stripePaymentMethodId)
+                                        .setDefaultPaymentMethod(providerPaymentMethodId)
                                         .build())
                                 .build(), connectOptions);
 
@@ -127,7 +125,7 @@ public class MemberPaymentService {
             // Save to our database
             MemberPaymentMethod savedMethod = saveMemberPaymentMethod(gymId, memberId, paymentMethod, setAsDefault);
 
-            log.info("Attached payment method {} for member {} on gym {}", stripePaymentMethodId, memberId, gymId);
+            log.info("Attached payment method {} for member {} on gym {}", providerPaymentMethodId, memberId, gymId);
             return toPaymentMethodResponse(savedMethod);
 
         } catch (StripeException e) {
@@ -152,28 +150,28 @@ public class MemberPaymentService {
      */
     @Transactional
     public MemberMembership createMemberSubscription(UUID gymId, UUID memberId, UUID planId,
-                                                     String customerId, String paymentMethodId) {
+                                                     String providerCustomerId, String providerPaymentMethodId) {
         Gym gym = getGym(gymId);
         validateGymCanAcceptPayments(gym);
 
         MembershipPlan plan = planRepository.findById(planId)
                 .orElseThrow(() -> new DomainException("PLAN_NOT_FOUND", "Membership plan not found"));
 
-        // Validate plan has Stripe price ID
-        if (plan.getStripePriceId() == null || plan.getStripePriceId().isBlank()) {
-            log.warn("Plan {} does not have Stripe price ID, creating membership without Stripe subscription", planId);
-            return createLocalMembership(gymId, memberId, plan, customerId);
+        // Validate plan has a provider price ID
+        if (plan.getProviderPlanId() == null || plan.getProviderPlanId().isBlank()) {
+            log.warn("Plan {} does not have a provider plan ID, creating membership without a provider subscription", planId);
+            return createLocalMembership(gymId, memberId, plan, providerCustomerId);
         }
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.getProviderConnectAccountId());
 
             SubscriptionCreateParams.Builder paramsBuilder = SubscriptionCreateParams.builder()
-                    .setCustomer(customerId)
+                    .setCustomer(providerCustomerId)
                     .addItem(SubscriptionCreateParams.Item.builder()
-                            .setPrice(plan.getStripePriceId())
+                            .setPrice(plan.getProviderPlanId())
                             .build())
-                    .setDefaultPaymentMethod(paymentMethodId)
+                    .setDefaultPaymentMethod(providerPaymentMethodId)
                     .putMetadata("gym_id", gymId.toString())
                     .putMetadata("member_id", memberId.toString())
                     .putMetadata("plan_id", planId.toString());
@@ -205,8 +203,8 @@ public class MemberPaymentService {
                     .monthlyAmount(plan.getPrice())
                     .billingCycle(plan.getBillingCycle())
                     .nextBillingDate(finalPeriodEnd != null ? toLocalDate(finalPeriodEnd) : null)
-                    .stripeCustomerId(customerId)
-                    .stripeSubscriptionId(subscription.getId())
+                    .providerCustomerId(providerCustomerId)
+                    .providerSubscriptionId(subscription.getId())
                     .status(MembershipStatus.ACTIVE)
                     .classCreditsRemaining(plan.getClassCredits())
                     .guestPassesRemaining(plan.getGuestPasses())
@@ -215,13 +213,13 @@ public class MemberPaymentService {
 
             membershipRepository.save(membership);
 
-            log.info("Created membership {} with Stripe subscription {} for member {} at gym {}",
+            log.info("Created membership {} with provider subscription {} for member {} at gym {}",
                     membership.getId(), subscription.getId(), memberId, gymId);
 
             return membership;
 
         } catch (StripeException e) {
-            log.error("Failed to create Stripe subscription for member {} at gym {}: {}",
+            log.error("Failed to create provider subscription for member {} at gym {}: {}",
                     memberId, gymId, e.getMessage());
             throw new DomainException("STRIPE_SUBSCRIPTION_CREATE_FAILED",
                     "Failed to create subscription: " + e.getMessage());
@@ -236,8 +234,8 @@ public class MemberPaymentService {
         MemberMembership membership = membershipRepository.findById(membershipId)
                 .orElseThrow(() -> new DomainException("MEMBERSHIP_NOT_FOUND", "Membership not found"));
 
-        if (membership.getStripeSubscriptionId() == null) {
-            // No Stripe subscription, just update local record
+        if (membership.getProviderSubscriptionId() == null) {
+            // No provider subscription, just update local record
             membership.cancel();
             membershipRepository.save(membership);
             return;
@@ -248,11 +246,11 @@ public class MemberPaymentService {
                 .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
 
         Gym gym = getGym(member.getGymId());
-        validateStripeConfigured();
+        validatePaymentProviderConfigured();
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
-            Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
+            RequestOptions connectOptions = getConnectRequestOptions(gym.getProviderConnectAccountId());
+            Subscription subscription = Subscription.retrieve(membership.getProviderSubscriptionId(), connectOptions);
 
             if (immediate) {
                 subscription.cancel(SubscriptionCancelParams.builder().build(), connectOptions);
@@ -275,16 +273,16 @@ public class MemberPaymentService {
     }
 
     /**
-     * Pause a member's Stripe subscription when freezing membership.
+     * Pause a member's provider subscription when freezing membership.
      */
     @Transactional
     public void pauseMemberSubscription(UUID membershipId) {
         MemberMembership membership = membershipRepository.findById(membershipId)
                 .orElseThrow(() -> new DomainException("MEMBERSHIP_NOT_FOUND", "Membership not found"));
 
-        if (membership.getStripeSubscriptionId() == null) {
-            // No Stripe subscription, nothing to pause
-            log.info("Membership {} has no Stripe subscription, skipping pause", membershipId);
+        if (membership.getProviderSubscriptionId() == null) {
+            // No provider subscription, nothing to pause
+            log.info("Membership {} has no provider subscription, skipping pause", membershipId);
             return;
         }
 
@@ -292,11 +290,11 @@ public class MemberPaymentService {
                 .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
 
         Gym gym = getGym(member.getGymId());
-        validateStripeConfigured();
+        validatePaymentProviderConfigured();
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
-            Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
+            RequestOptions connectOptions = getConnectRequestOptions(gym.getProviderConnectAccountId());
+            Subscription subscription = Subscription.retrieve(membership.getProviderSubscriptionId(), connectOptions);
 
             // Pause the subscription by setting pause_collection
             SubscriptionUpdateParams updateParams = SubscriptionUpdateParams.builder()
@@ -306,26 +304,26 @@ public class MemberPaymentService {
                     .build();
 
             subscription.update(updateParams, connectOptions);
-            log.info("Paused Stripe subscription {} for membership {}", membership.getStripeSubscriptionId(), membershipId);
+            log.info("Paused provider subscription {} for membership {}", membership.getProviderSubscriptionId(), membershipId);
 
         } catch (StripeException e) {
-            log.error("Failed to pause Stripe subscription for membership {}: {}", membershipId, e.getMessage());
+            log.error("Failed to pause provider subscription for membership {}: {}", membershipId, e.getMessage());
             throw new DomainException("STRIPE_SUBSCRIPTION_PAUSE_FAILED",
                     "Failed to pause subscription: " + e.getMessage());
         }
     }
 
     /**
-     * Resume a member's Stripe subscription when unfreezing membership.
+     * Resume a member's provider subscription when unfreezing membership.
      */
     @Transactional
     public void resumeMemberSubscription(UUID membershipId) {
         MemberMembership membership = membershipRepository.findById(membershipId)
                 .orElseThrow(() -> new DomainException("MEMBERSHIP_NOT_FOUND", "Membership not found"));
 
-        if (membership.getStripeSubscriptionId() == null) {
-            // No Stripe subscription, nothing to resume
-            log.info("Membership {} has no Stripe subscription, skipping resume", membershipId);
+        if (membership.getProviderSubscriptionId() == null) {
+            // No provider subscription, nothing to resume
+            log.info("Membership {} has no provider subscription, skipping resume", membershipId);
             return;
         }
 
@@ -333,11 +331,11 @@ public class MemberPaymentService {
                 .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
 
         Gym gym = getGym(member.getGymId());
-        validateStripeConfigured();
+        validatePaymentProviderConfigured();
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
-            Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
+            RequestOptions connectOptions = getConnectRequestOptions(gym.getProviderConnectAccountId());
+            Subscription subscription = Subscription.retrieve(membership.getProviderSubscriptionId(), connectOptions);
 
             // Resume the subscription by clearing pause_collection using EmptyParam
             SubscriptionUpdateParams updateParams = SubscriptionUpdateParams.builder()
@@ -345,10 +343,10 @@ public class MemberPaymentService {
                     .build();
 
             subscription.update(updateParams, connectOptions);
-            log.info("Resumed Stripe subscription {} for membership {}", membership.getStripeSubscriptionId(), membershipId);
+            log.info("Resumed provider subscription {} for membership {}", membership.getProviderSubscriptionId(), membershipId);
 
         } catch (StripeException e) {
-            log.error("Failed to resume Stripe subscription for membership {}: {}", membershipId, e.getMessage());
+            log.error("Failed to resume provider subscription for membership {}: {}", membershipId, e.getMessage());
             throw new DomainException("STRIPE_SUBSCRIPTION_RESUME_FAILED",
                     "Failed to resume subscription: " + e.getMessage());
         }
@@ -372,33 +370,33 @@ public class MemberPaymentService {
     }
 
     private void validateGymCanAcceptPayments(Gym gym) {
-        if (gym.getStripeConnectAccountId() == null || !Boolean.TRUE.equals(gym.getStripeChargesEnabled())) {
+        if (gym.getProviderConnectAccountId() == null || !Boolean.TRUE.equals(gym.getProviderChargesEnabled())) {
             throw new DomainException("GYM_CANNOT_ACCEPT_PAYMENTS",
                     "This gym cannot accept payments yet. Please contact the gym to complete their payment setup.");
         }
     }
 
-    private void validateStripeConfigured() {
+    private void validatePaymentProviderConfigured() {
         if (!stripeConfig.isConfigured()) {
             throw new DomainException("STRIPE_NOT_CONFIGURED",
                     "Payment processing is not configured.");
         }
     }
 
-    private RequestOptions getConnectRequestOptions(String stripeAccountId) {
+    private RequestOptions getConnectRequestOptions(String providerAccountId) {
         return RequestOptions.builder()
-                .setStripeAccount(stripeAccountId)
+                .setStripeAccount(providerAccountId)
                 .build();
     }
 
-    private MemberMembership createLocalMembership(UUID gymId, UUID memberId, MembershipPlan plan, String customerId) {
+    private MemberMembership createLocalMembership(UUID gymId, UUID memberId, MembershipPlan plan, String providerCustomerId) {
         MemberMembership membership = MemberMembership.builder()
                 .memberId(memberId)
                 .membershipPlanId(plan.getId())
                 .startDate(LocalDate.now())
                 .monthlyAmount(plan.getPrice())
                 .billingCycle(plan.getBillingCycle())
-                .stripeCustomerId(customerId)
+                .providerCustomerId(providerCustomerId)
                 .status(MembershipStatus.ACTIVE)
                 .classCreditsRemaining(plan.getClassCredits())
                 .guestPassesRemaining(plan.getGuestPasses())
@@ -414,7 +412,7 @@ public class MemberPaymentService {
 
         MemberPaymentMethod method = MemberPaymentMethod.builder()
                 .memberId(memberId)
-                .stripePaymentMethodId(paymentMethod.getId())
+                .providerPaymentMethodId(paymentMethod.getId())
                 .type(paymentMethod.getType())
                 .cardBrand(card != null ? card.getBrand() : null)
                 .lastFour(card != null ? card.getLast4() : null)

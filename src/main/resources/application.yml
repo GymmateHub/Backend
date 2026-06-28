@@ -177,11 +177,20 @@ file:
 # ============================================
 # External Integrations
 # ============================================
+payments:
+  provider: ${PAYMENTS_PROVIDER:STRIPE}
+
 stripe:
   api-key: ${STRIPE_API_KEY:}
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   connect-webhook-secret: ${STRIPE_CONNECT_WEBHOOK_SECRET:}
   application-fee-percent: ${STRIPE_APPLICATION_FEE_PERCENT:1.0}
+
+paystack:
+  public-key: ${PAYSTACK_PUBLIC_KEY:}
+  secret-key: ${PAYSTACK_SECRET_KEY:}
+  webhook-secret: ${PAYSTACK_WEBHOOK_SECRET:}
+  base-url: ${PAYSTACK_BASE_URL:https://api.paystack.co}
 
 # ============================================
 # AI Personal Trainer Configuration

@@ -117,7 +117,7 @@ public class RefundAuditLog {
                 .newStatus(RefundRequestStatus.PROCESSED.name())
                 .performedByUserId(processedBy)
                 .performedByType(processedByType)
-                .notes("Stripe refund ID: " + refund.getStripeRefundId())
+                .notes("Provider refund ID: " + refund.getProviderRefundId())
                 .build();
     }
 

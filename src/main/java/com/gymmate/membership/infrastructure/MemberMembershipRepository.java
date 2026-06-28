@@ -28,7 +28,7 @@ public interface MemberMembershipRepository {
 
   List<MemberMembership> findByMemberIdAndGymIdAndStatusIn(UUID memberId, UUID gymId, List<MembershipStatus> statuses);
 
-  Optional<MemberMembership> findByStripeSubscriptionId(String stripeSubscriptionId);
+  Optional<MemberMembership> findByProviderSubscriptionId(String providerSubscriptionId);
 
   List<MemberMembership> findExpiringMemberships(UUID gymId, LocalDateTime startDate, LocalDateTime endDate);
 

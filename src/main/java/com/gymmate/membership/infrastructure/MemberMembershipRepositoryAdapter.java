@@ -56,8 +56,8 @@ public class MemberMembershipRepositoryAdapter implements MemberMembershipReposi
   }
 
   @Override
-  public Optional<MemberMembership> findByStripeSubscriptionId(String stripeSubscriptionId) {
-    return jpaRepository.findByStripeSubscriptionId(stripeSubscriptionId);
+  public Optional<MemberMembership> findByProviderSubscriptionId(String providerSubscriptionId) {
+    return jpaRepository.findByProviderSubscriptionId(providerSubscriptionId);
   }
 
   @Override

@@ -44,8 +44,8 @@ public class SubscriptionResponse {
     private Boolean hasExceededMemberLimit;
     private Integer memberOverage;
 
-    // Stripe integration status
-    private Boolean hasStripeSubscription;
+    // Billing provider integration status
+    private Boolean hasProviderSubscription;
     private Boolean hasPaymentMethod;
 
     // Computed helper fields for frontend

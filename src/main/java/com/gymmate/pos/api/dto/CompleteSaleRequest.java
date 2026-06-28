@@ -13,7 +13,7 @@ public record CompleteSaleRequest(
 
         @NotNull(message = "Amount paid is required") @DecimalMin(value = "0.00", message = "Amount paid cannot be negative") BigDecimal amountPaid,
 
-        String stripePaymentIntentId,
+        String providerTransactionId,
 
         String externalReference) {
 }

@@ -206,49 +206,49 @@ class GymTest {
     }
 
     @Nested
-    @DisplayName("Stripe Connect Tests")
-    class StripeConnectTests {
+    @DisplayName("Provider Connect Tests")
+    class ProviderConnectTests {
 
         @Test
-        @DisplayName("Should set Stripe Connect account ID")
-        void setStripeConnectAccountId_ValidId_Success() {
+        @DisplayName("Should set provider connect account ID")
+        void setProviderConnectAccountId_ValidId_Success() {
             // Arrange
             Gym gym = createTestGym();
 
             // Act
-            gym.setStripeConnectAccountId("acct_1234567890");
+            gym.setProviderConnectAccountId("acct_1234567890");
 
             // Assert
-            assertThat(gym.getStripeConnectAccountId()).isEqualTo("acct_1234567890");
+            assertThat(gym.getProviderConnectAccountId()).isEqualTo("acct_1234567890");
         }
 
         @Test
-        @DisplayName("Should track Stripe onboarding status")
-        void stripeOnboarding_TrackStatus() {
+        @DisplayName("Should track provider onboarding status")
+        void providerOnboarding_TrackStatus() {
             // Arrange
             Gym gym = createTestGym();
 
             // Act
-            gym.setStripeChargesEnabled(true);
-            gym.setStripePayoutsEnabled(true);
-            gym.setStripeDetailsSubmitted(true);
+            gym.setProviderChargesEnabled(true);
+            gym.setProviderPayoutsEnabled(true);
+            gym.setProviderDetailsSubmitted(true);
 
             // Assert
-            assertThat(gym.getStripeChargesEnabled()).isTrue();
-            assertThat(gym.getStripePayoutsEnabled()).isTrue();
-            assertThat(gym.getStripeDetailsSubmitted()).isTrue();
+            assertThat(gym.getProviderChargesEnabled()).isTrue();
+            assertThat(gym.getProviderPayoutsEnabled()).isTrue();
+            assertThat(gym.getProviderDetailsSubmitted()).isTrue();
         }
 
         @Test
-        @DisplayName("Should have Stripe flags false by default")
-        void stripeFlags_DefaultValues_AreFalse() {
+        @DisplayName("Should have provider flags false by default")
+        void providerFlags_DefaultValues_AreFalse() {
             // Arrange & Act
             Gym gym = createTestGym();
 
             // Assert
-            assertThat(gym.getStripeChargesEnabled()).isFalse();
-            assertThat(gym.getStripePayoutsEnabled()).isFalse();
-            assertThat(gym.getStripeDetailsSubmitted()).isFalse();
+            assertThat(gym.getProviderChargesEnabled()).isFalse();
+            assertThat(gym.getProviderPayoutsEnabled()).isFalse();
+            assertThat(gym.getProviderDetailsSubmitted()).isFalse();
         }
     }
 

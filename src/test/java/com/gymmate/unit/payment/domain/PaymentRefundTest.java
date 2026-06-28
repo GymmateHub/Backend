@@ -30,8 +30,8 @@ class PaymentRefundTest {
             // Act
             PaymentRefund refund = PaymentRefund.builder()
                     .gymId(gymId)
-                    .stripeRefundId("re_test123")
-                    .stripePaymentIntentId("pi_test123")
+                    .providerRefundId("re_test123")
+                    .providerTransactionId("txn_test123")
                     .amount(new BigDecimal("50.00"))
                     .currency("usd")
                     .reason("Customer request")
@@ -41,7 +41,7 @@ class PaymentRefundTest {
 
             // Assert
             assertThat(refund.getGymId()).isEqualTo(gymId);
-            assertThat(refund.getStripeRefundId()).isEqualTo("re_test123");
+            assertThat(refund.getProviderRefundId()).isEqualTo("re_test123");
             assertThat(refund.getAmount()).isEqualByComparingTo(new BigDecimal("50.00"));
             assertThat(refund.getStatus()).isEqualTo(RefundStatus.PENDING);
         }
@@ -57,8 +57,8 @@ class PaymentRefundTest {
             // Act
             PaymentRefund refund = PaymentRefund.builder()
                     .gymId(gymId)
-                    .stripeRefundId("re_test456")
-                    .stripePaymentIntentId("pi_test456")
+                    .providerRefundId("re_test456")
+                    .providerTransactionId("txn_test456")
                     .amount(new BigDecimal("25.00"))
                     .currency("usd")
                     .status(RefundStatus.SUCCEEDED)
@@ -137,8 +137,8 @@ class PaymentRefundTest {
 
             // Act
             PaymentRefund refund = PaymentRefund.builder()
-                    .stripeRefundId("re_test")
-                    .stripePaymentIntentId("pi_test")
+                    .providerRefundId("re_test")
+                    .providerTransactionId("txn_test")
                     .amount(originalAmount)
                     .currency("usd")
                     .status(RefundStatus.PENDING)
@@ -156,8 +156,8 @@ class PaymentRefundTest {
 
             // Act
             PaymentRefund refund = PaymentRefund.builder()
-                    .stripeRefundId("re_test")
-                    .stripePaymentIntentId("pi_test")
+                    .providerRefundId("re_test")
+                    .providerTransactionId("txn_test")
                     .amount(partialAmount)
                     .currency("usd")
                     .status(RefundStatus.PENDING)
@@ -177,8 +177,8 @@ class PaymentRefundTest {
         void updateStatus_ToSucceeded_Works() {
             // Arrange
             PaymentRefund refund = PaymentRefund.builder()
-                    .stripeRefundId("re_test")
-                    .stripePaymentIntentId("pi_test")
+                    .providerRefundId("re_test")
+                    .providerTransactionId("txn_test")
                     .amount(new BigDecimal("50.00"))
                     .status(RefundStatus.PENDING)
                     .build();
@@ -195,8 +195,8 @@ class PaymentRefundTest {
         void updateStatus_ToFailed_Works() {
             // Arrange
             PaymentRefund refund = PaymentRefund.builder()
-                    .stripeRefundId("re_test")
-                    .stripePaymentIntentId("pi_test")
+                    .providerRefundId("re_test")
+                    .providerTransactionId("txn_test")
                     .amount(new BigDecimal("50.00"))
                     .status(RefundStatus.PENDING)
                     .build();
@@ -223,8 +223,8 @@ class PaymentRefundTest {
 
             // Act
             PaymentRefund refund = PaymentRefund.builder()
-                    .stripeRefundId("re_test")
-                    .stripePaymentIntentId("pi_test")
+                    .providerRefundId("re_test")
+                    .providerTransactionId("txn_test")
                     .amount(new BigDecimal("50.00"))
                     .status(RefundStatus.PENDING)
                     .requestedBy(requesterId)
@@ -244,8 +244,8 @@ class PaymentRefundTest {
 
             // Act
             PaymentRefund refund = PaymentRefund.builder()
-                    .stripeRefundId("re_test")
-                    .stripePaymentIntentId("pi_test")
+                    .providerRefundId("re_test")
+                    .providerTransactionId("txn_test")
                     .amount(new BigDecimal("50.00"))
                     .status(RefundStatus.PENDING)
                     .subscriptionId(subscriptionId)
@@ -263,8 +263,8 @@ class PaymentRefundTest {
 
             // Act
             PaymentRefund refund = PaymentRefund.builder()
-                    .stripeRefundId("re_test")
-                    .stripePaymentIntentId("pi_test")
+                    .providerRefundId("re_test")
+                    .providerTransactionId("txn_test")
                     .amount(new BigDecimal("50.00"))
                     .status(RefundStatus.PENDING)
                     .invoiceId(invoiceId)

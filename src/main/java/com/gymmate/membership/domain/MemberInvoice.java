@@ -30,8 +30,8 @@ public class MemberInvoice extends GymScopedEntity {
     @Column(name = "membership_id")
     private UUID membershipId;
 
-    @Column(name = "stripe_invoice_id")
-    private String stripeInvoiceId;
+    @Column(name = "provider_invoice_id")
+    private String providerInvoiceId;
 
     @Column(name = "invoice_number", length = 50)
     private String invoiceNumber;

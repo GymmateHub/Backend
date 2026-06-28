@@ -74,12 +74,12 @@ public class MembershipPlan extends GymScopedEntity {
   @Builder.Default
   private boolean featured = false;
 
-  // Stripe integration
-  @Column(name = "stripe_product_id")
-  private String stripeProductId;
+  // Payment provider integration
+  @Column(name = "provider_product_id")
+  private String providerProductId;
 
-  @Column(name = "stripe_price_id")
-  private String stripePriceId;
+  @Column(name = "provider_plan_id")
+  private String providerPlanId;
 
   public void updatePricing(BigDecimal price, String billingCycle) {
     this.price = price;

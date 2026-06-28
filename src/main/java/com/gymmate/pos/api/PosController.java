@@ -80,7 +80,7 @@ public class PosController {
                 saleId,
                 request.paymentType(),
                 request.amountPaid(),
-                request.stripePaymentIntentId());
+                request.providerTransactionId());
 
         return ResponseEntity.ok(ApiResponse.success(SaleResponse.fromEntity(sale), "Sale completed successfully"));
     }

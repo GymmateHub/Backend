@@ -35,7 +35,7 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
   List<MemberMembership> findByMemberIdAndGymIdAndStatusIn(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId,
       @Param("statuses") List<MembershipStatus> statuses);
 
-  Optional<MemberMembership> findByStripeSubscriptionId(String stripeSubscriptionId);
+  Optional<MemberMembership> findByProviderSubscriptionId(String providerSubscriptionId);
 
   @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.endDate BETWEEN :startDate AND :endDate")
   List<MemberMembership> findExpiringMemberships(@Param("gymId") UUID gymId,

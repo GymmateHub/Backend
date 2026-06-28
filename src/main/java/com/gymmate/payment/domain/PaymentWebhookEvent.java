@@ -9,7 +9,7 @@ import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 
 /**
- * Entity for tracking processed Stripe webhook events to ensure idempotency.
+ * Entity for tracking processed provider webhook events to ensure idempotency.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -17,11 +17,14 @@ import java.time.LocalDateTime;
 @Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "stripe_webhook_events")
-public class StripeWebhookEvent extends BaseAuditEntity {
+@Table(name = "payment_webhook_events")
+public class PaymentWebhookEvent extends BaseAuditEntity {
 
-    @Column(name = "stripe_event_id", unique = true, nullable = false)
-    private String stripeEventId;
+    @Column(name = "provider_event_id", unique = true, nullable = false)
+    private String providerEventId;
+
+    @Column(name = "provider", nullable = false, length = 30)
+    private String provider;
 
     @Column(name = "event_type", nullable = false, length = 100)
     private String eventType;
@@ -50,4 +53,5 @@ public class StripeWebhookEvent extends BaseAuditEntity {
         this.errorMessage = errorMessage;
     }
 }
+
 

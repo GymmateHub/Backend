@@ -1,6 +1,5 @@
 package com.gymmate.payment.api.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,8 +14,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AttachPaymentMethodRequest {
 
-    @NotBlank(message = "Stripe payment method ID is required")
-    private String stripePaymentMethodId;
+    @jakarta.validation.constraints.NotBlank(message = "Payment method ID is required")
+    private String providerPaymentMethodId;
 
     private Boolean setAsDefault = true;
 }

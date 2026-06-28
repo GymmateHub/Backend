@@ -105,12 +105,12 @@ public class SubscriptionTier extends BaseAuditEntity {
     @Column(columnDefinition = "jsonb")
     private String metadata;
 
-    // Stripe Integration
-    @Column(name = "stripe_product_id")
-    private String stripeProductId;
+    // Billing provider integration
+    @Column(name = "provider_product_id")
+    private String providerProductId;
 
-    @Column(name = "stripe_price_id")
-    private String stripePriceId;
+    @Column(name = "provider_plan_id")
+    private String providerPlanId;
 
     @Column(name = "trial_days")
     @Builder.Default

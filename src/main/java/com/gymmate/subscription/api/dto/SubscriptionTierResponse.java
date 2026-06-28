@@ -48,8 +48,8 @@ public class SubscriptionTierResponse {
 
     private Integer sortOrder;
 
-    // Trial and Stripe configuration
+    // Trial and billing provider configuration
     private Integer trialDays;
-    private Boolean hasStripeIntegration;
+    private Boolean hasProviderIntegration;
 }
 

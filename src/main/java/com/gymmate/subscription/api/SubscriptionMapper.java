@@ -59,8 +59,8 @@ public class SubscriptionMapper {
             .isInTrial(subscription.isInTrial())
             .hasExceededMemberLimit(subscription.hasExceededMemberLimit())
             .memberOverage(subscription.getMemberOverage())
-            .hasStripeSubscription(subscription.getStripeSubscriptionId() != null)
-            .hasPaymentMethod(subscription.getStripeCustomerId() != null)
+            .hasProviderSubscription(subscription.getProviderSubscriptionId() != null)
+            .hasPaymentMethod(subscription.getProviderCustomerId() != null)
             .daysRemainingInTrial(daysRemainingInTrial)
             .daysUntilRenewal(daysUntilRenewal)
             .build();
@@ -93,7 +93,7 @@ public class SubscriptionMapper {
             .overageEmailPrice(tier.getOverageEmailPrice())
             .sortOrder(tier.getSortOrder())
             .trialDays(tier.getTrialDays())
-            .hasStripeIntegration(tier.getStripePriceId() != null && !tier.getStripePriceId().isBlank())
+            .hasProviderIntegration(tier.getProviderPlanId() != null && !tier.getProviderPlanId().isBlank())
             .build();
     }
 

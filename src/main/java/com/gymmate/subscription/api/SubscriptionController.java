@@ -36,7 +36,7 @@ public class SubscriptionController {
 
     @PostMapping
     @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
-    @Operation(summary = "Create a new subscription", description = "Create a subscription for an organisation with optional Stripe billing")
+    @Operation(summary = "Create a new subscription", description = "Create a subscription for an organisation with optional provider billing")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> createSubscription(
             @Valid @RequestBody CreateSubscriptionRequest request) {
 
@@ -46,7 +46,7 @@ public class SubscriptionController {
             request.getTierName(),
             Boolean.TRUE.equals(request.getStartTrial()),
             request.getPaymentMethodId(),
-            request.getEnableStripeBilling() != null ? request.getEnableStripeBilling() : true
+            request.getEnableProviderBilling() != null ? request.getEnableProviderBilling() : true
         );
 
         String message = Boolean.TRUE.equals(request.getStartTrial())

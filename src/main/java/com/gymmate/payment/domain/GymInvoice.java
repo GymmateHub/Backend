@@ -21,7 +21,7 @@ import java.util.UUID;
 @Builder
 @Table(name = "gym_invoices", indexes = {
         @Index(name = "idx_gi_organisation", columnList = "organisation_id"),
-        @Index(name = "idx_gi_stripe_invoice", columnList = "stripe_invoice_id")
+        @Index(name = "idx_gi_provider_invoice", columnList = "provider_invoice_id")
 })
 public class GymInvoice extends BaseAuditEntity {
 
@@ -32,8 +32,8 @@ public class GymInvoice extends BaseAuditEntity {
     @Column(name = "organisation_id")
     private UUID organisationId;
 
-    @Column(name = "stripe_invoice_id", unique = true)
-    private String stripeInvoiceId;
+    @Column(name = "provider_invoice_id", unique = true)
+    private String providerInvoiceId;
 
     @Column(name = "invoice_number", length = 50)
     private String invoiceNumber;

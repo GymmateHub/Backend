@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS pos_sales (
     amount_paid DECIMAL(12, 2) DEFAULT 0.00,
     change_given DECIMAL(12, 2) DEFAULT 0.00,
     refunded_amount DECIMAL(12, 2) DEFAULT 0.00,
-    stripe_payment_intent_id VARCHAR(100),
+    provider_transaction_id VARCHAR(100),
     external_reference VARCHAR(100),
     sale_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP,
@@ -39,13 +39,13 @@ CREATE TABLE IF NOT EXISTS pos_sales (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
-    CONSTRAINT fk_pos_sales_organisation FOREIGN KEY (organisation_id) 
+    CONSTRAINT fk_pos_sales_organisation FOREIGN KEY (organisation_id)
         REFERENCES organisations(id) ON DELETE CASCADE,
-    CONSTRAINT fk_pos_sales_gym FOREIGN KEY (gym_id) 
+    CONSTRAINT fk_pos_sales_gym FOREIGN KEY (gym_id)
         REFERENCES gyms(id) ON DELETE CASCADE,
-    CONSTRAINT fk_pos_sales_member FOREIGN KEY (member_id) 
+    CONSTRAINT fk_pos_sales_member FOREIGN KEY (member_id)
         REFERENCES members(id) ON DELETE SET NULL,
-    CONSTRAINT fk_pos_sales_staff FOREIGN KEY (staff_id) 
+    CONSTRAINT fk_pos_sales_staff FOREIGN KEY (staff_id)
         REFERENCES staff(id) ON DELETE SET NULL,
     CONSTRAINT chk_pos_sales_status CHECK (status IN ('PENDING', 'COMPLETED', 'REFUNDED', 'PARTIALLY_REFUNDED', 'CANCELLED', 'VOID')),
     CONSTRAINT chk_pos_sales_payment_type CHECK (payment_type IN ('CASH', 'CARD', 'STRIPE', 'MEMBER_ACCOUNT', 'SPLIT', 'GIFT_VOUCHER', 'CREDIT_NOTE'))
@@ -86,13 +86,13 @@ CREATE TABLE IF NOT EXISTS pos_sale_items (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
-    CONSTRAINT fk_pos_sale_items_sale FOREIGN KEY (sale_id) 
+    CONSTRAINT fk_pos_sale_items_sale FOREIGN KEY (sale_id)
         REFERENCES pos_sales(id) ON DELETE CASCADE,
-    CONSTRAINT fk_pos_sale_items_inventory FOREIGN KEY (inventory_item_id) 
+    CONSTRAINT fk_pos_sale_items_inventory FOREIGN KEY (inventory_item_id)
         REFERENCES inventory_items(id) ON DELETE SET NULL,
-    CONSTRAINT fk_pos_sale_items_organisation FOREIGN KEY (organisation_id) 
+    CONSTRAINT fk_pos_sale_items_organisation FOREIGN KEY (organisation_id)
         REFERENCES organisations(id) ON DELETE CASCADE,
-    CONSTRAINT fk_pos_sale_items_gym FOREIGN KEY (gym_id) 
+    CONSTRAINT fk_pos_sale_items_gym FOREIGN KEY (gym_id)
         REFERENCES gyms(id) ON DELETE CASCADE
 );
 
@@ -129,13 +129,13 @@ CREATE TABLE IF NOT EXISTS pos_cash_drawers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_by VARCHAR(255),
     is_active BOOLEAN DEFAULT TRUE,
-    CONSTRAINT fk_pos_cash_drawers_organisation FOREIGN KEY (organisation_id) 
+    CONSTRAINT fk_pos_cash_drawers_organisation FOREIGN KEY (organisation_id)
         REFERENCES organisations(id) ON DELETE CASCADE,
-    CONSTRAINT fk_pos_cash_drawers_gym FOREIGN KEY (gym_id) 
+    CONSTRAINT fk_pos_cash_drawers_gym FOREIGN KEY (gym_id)
         REFERENCES gyms(id) ON DELETE CASCADE,
-    CONSTRAINT fk_pos_cash_drawers_opened_by FOREIGN KEY (opened_by) 
+    CONSTRAINT fk_pos_cash_drawers_opened_by FOREIGN KEY (opened_by)
         REFERENCES staff(id) ON DELETE SET NULL,
-    CONSTRAINT fk_pos_cash_drawers_closed_by FOREIGN KEY (closed_by) 
+    CONSTRAINT fk_pos_cash_drawers_closed_by FOREIGN KEY (closed_by)
         REFERENCES staff(id) ON DELETE SET NULL
 );
 

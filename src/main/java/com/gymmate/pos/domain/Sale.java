@@ -87,8 +87,8 @@ public class Sale extends GymScopedEntity {
     private BigDecimal refundedAmount = BigDecimal.ZERO;
 
     // Payment reference
-    @Column(name = "stripe_payment_intent_id", length = 100)
-    private String stripePaymentIntentId;
+    @Column(name = "provider_transaction_id", length = 100)
+    private String providerTransactionId;
 
     @Column(name = "external_reference", length = 100)
     private String externalReference;

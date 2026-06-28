@@ -22,7 +22,7 @@ import java.util.UUID;
 @Table(name = "payment_refunds", indexes = {
     @Index(name = "idx_pr_organisation", columnList = "organisation_id"),
     @Index(name = "idx_pr_gym", columnList = "gym_id"),
-    @Index(name = "idx_pr_stripe_refund", columnList = "stripe_refund_id")
+    @Index(name = "idx_pr_provider_refund", columnList = "provider_refund_id")
 })
 public class PaymentRefund extends BaseAuditEntity {
 
@@ -36,14 +36,14 @@ public class PaymentRefund extends BaseAuditEntity {
     @Column(name = "gym_id")
     private UUID gymId;
 
-    @Column(name = "stripe_refund_id", unique = true, nullable = false)
-    private String stripeRefundId;
+    @Column(name = "provider_refund_id", unique = true, nullable = false)
+    private String providerRefundId;
 
-    @Column(name = "stripe_payment_intent_id", nullable = false)
-    private String stripePaymentIntentId;
+    @Column(name = "provider_transaction_id", nullable = false)
+    private String providerTransactionId;
 
-    @Column(name = "stripe_charge_id")
-    private String stripeChargeId;
+    @Column(name = "provider_charge_id")
+    private String providerChargeId;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
@@ -106,8 +106,8 @@ public class PaymentRefund extends BaseAuditEntity {
     @Column(name = "receipt_number")
     private String receiptNumber;
 
-    @Column(name = "stripe_created_at")
-    private LocalDateTime stripeCreatedAt;
+    @Column(name = "provider_created_at")
+    private LocalDateTime providerCreatedAt;
 
     @Column(columnDefinition = "TEXT")
     private String metadata;

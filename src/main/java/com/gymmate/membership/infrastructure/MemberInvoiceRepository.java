@@ -29,7 +29,7 @@ public interface MemberInvoiceRepository extends JpaRepository<MemberInvoice, UU
 
     List<MemberInvoice> findByMembershipIdOrderByCreatedAtDesc(UUID membershipId);
 
-    Optional<MemberInvoice> findByStripeInvoiceId(String stripeInvoiceId);
+    Optional<MemberInvoice> findByProviderInvoiceId(String providerInvoiceId);
 
     List<MemberInvoice> findByMemberIdAndStatus(UUID memberId, MemberInvoiceStatus status);
 }

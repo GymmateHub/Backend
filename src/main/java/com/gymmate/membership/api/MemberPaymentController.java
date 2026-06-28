@@ -44,7 +44,7 @@ public class MemberPaymentController {
                 request.getMemberId(),
                 request.getEmail(),
                 request.getName(),
-                request.getStripePaymentMethodId(),
+                request.getProviderPaymentMethodId(),
                 request.getSetAsDefault() != null ? request.getSetAsDefault() : true
         );
 
@@ -97,8 +97,8 @@ public class MemberPaymentController {
         private String email;
         @NotBlank(message = "Name is required")
         private String name;
-        @NotBlank(message = "Stripe payment method ID is required")
-        private String stripePaymentMethodId;
+        @NotBlank(message = "Payment method ID is required")
+        private String providerPaymentMethodId;
         private Boolean setAsDefault = true;
     }
 }
