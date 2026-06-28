@@ -30,7 +30,7 @@
 
 GymMate is a **multi-tenant SaaS gym management platform** built as a Spring Boot 3.5.6 modular monolith in Java 21. The codebase contains approximately **300 Java files** across **17 modules**, with a clean/hexagonal architecture pattern (`api/`, `application/`, `domain/`, `infrastructure/`) applied consistently.
 
-The product is in a **mid-to-late stage development phase** (~70–75% MVP complete). Core infrastructure and most business modules are well-built with full vertical slices (domain → service → API). Three placeholder modules remain empty, and test coverage is growing but incomplete.
+The product is in a **mid-to-late stage development phase** (~75–80% MVP complete). Core infrastructure and most business modules are well-built with full vertical slices (domain → service → API). Access control and AI modules are now partially implemented; booking and dashboard remain placeholders.
 
 **The core business flow is operational end-to-end:**
 Register Organisation → Create Gym → Add Members → Sell Memberships → Book Classes → Process Payments → View Analytics
@@ -81,8 +81,8 @@ src/main/java/com/gymmate/
 ├── health/                          # Workouts, exercises, fitness goals, health metrics
 ├── analytics/                       # KPI dashboard and reporting
 ├── booking/                         # ⚠️ Empty placeholder
-├── access/                          # ⚠️ Empty placeholder
-├── ai/                              # ⚠️ Empty placeholder
+├── access/                          # 🔄 Partially implemented (scan/credentials/events + anti-tailgating core)
+├── ai/                              # 🔄 Partially implemented (event-driven plan generation prototype)
 └── dashboard/                       # ⚠️ Empty placeholder (analytics serves this role)
 ```
 
@@ -153,6 +153,8 @@ The security layer is **production-grade** and one of the strongest areas of the
 ---
 
 ## 4. Module-by-Module Status
+
+Status legend: `✅ Complete` (fully delivered), `🔄 Partial` (usable but not full parity), `📋 Planned` (not implemented yet), `⚠️ Not started` (placeholder only), `⚠️ Stub/Limited` (scaffolded path).
 
 ### 4.1 Fully Implemented Modules ✅
 
@@ -252,14 +254,14 @@ The security layer is **production-grade** and one of the strongest areas of the
   - **Breakdowns:** Revenue by source, members by plan, bookings by class
   - **Additional:** Churn rate, expiring memberships, overdue payments, low stock items
 
-### 4.2 Scaffolded But Empty ⚠️
+### 4.2 Partially Implemented / Placeholder Modules ⚠️
 
-| Module | Directories | Purpose (Inferred) | Notes |
-|--------|-------------|-------------------|-------|
-| `booking/` | `api/`, `application/`, `domain/`, `infrastructure/` (all empty) | Standalone booking system | Class-level booking is fully handled in the `classes` module; this may be for facility/equipment booking |
-| `access/` | `api/`, `application/`, `domain/`, `infrastructure/` (all empty) | Gym access control / check-in gates | Physical access management (turnstiles, QR check-in, etc.) |
-| `ai/` | `api/`, `application/`, `domain/`, `infrastructure/` (all empty) | AI-powered features | Workout recommendations, churn prediction, etc. |
-| `dashboard/` | `api/`, `application/`, `domain/`, `infrastructure/` (all empty) | Dashboard aggregation | Currently served by `analytics` module; may be intended as a unified dashboard API |
+| Module | Status | Purpose | Notes |
+|--------|--------|---------|-------|
+| `booking/` | ⚠️ Not started | Standalone booking system | Class-level booking is already handled in `classes`; module directories remain empty |
+| `access/` | 🔄 Partial | Gym access control / anti-tailgating | `AccessController`, `AccessService`, domain entities, migration `V10__Access_Control_System.sql`; TURNSTILE/CV adapters and access SSE stream still pending |
+| `ai/` | 🔄 Partial (prototype) | AI-powered coaching | `AiTrainerService` + `AiRecommendation` implemented; full PRD model (`MemberPlanProfile`, `WorkoutPlan`, `MealPlan`) and `/api/v1/ai/**` endpoints pending |
+| `dashboard/` | ⚠️ Not started | Dashboard aggregation | Analytics is currently served by `analytics` module |
 
 ---
 
@@ -323,7 +325,7 @@ Tests **exist and pass in CI**. The surefire reports show **43 test classes** ac
 
 ## 7. Database Migrations
 
-Flyway is configured with **9 migration files** tracking schema evolution. In development, `hibernate.ddl-auto=update` is used and Flyway is disabled by default.
+Flyway is configured with **10 migration files** tracking schema evolution. In development, `hibernate.ddl-auto=update` is used and Flyway is disabled by default.
 
 | Migration | Description | Key Changes |
 |-----------|-------------|-------------|
@@ -337,6 +339,7 @@ Flyway is configured with **9 migration files** tracking schema evolution. In de
 | `V7__User_Invites.sql` | Invite system | `user_invites` table for staff/member invitations |
 | `V8__Add_GymOwner_Manager_Roles.sql` | Extended RBAC | GYM_OWNER and MANAGER roles |
 | `V9__Tenant_Isolation_And_Waitlist.sql` | Multi-tenancy hardening | Tenant isolation improvements and class waitlist support |
+| `V10__Access_Control_System.sql` | Access control module | Access points, credentials, schedules, door benefits, event audit trail |
 
 ---
 
@@ -398,7 +401,7 @@ Basic single-service setup. PostgreSQL service is **commented out** and Redis is
 | 1 | **Inconsistent repository pattern** | Some modules (`payment`, `user`) use JPA repositories directly in services. Others (`inventory`, `health`) use proper port/adapter pattern with domain repository interfaces. | Medium |
 | 2 | **H2 compatibility gaps** | `GymClass.equipmentNeeded` uses `text[]` (PostgreSQL array type) which won't work with H2. Some `jsonb` columns may also cause issues. | Medium |
 | 3 | **Stale copilot instructions** | `.github/copilot-instructions.md` references `~98 files`, `com.GymMateHub` package, and "no tests" — all outdated. Misleads AI assistants and new developers. | Low |
-| 4 | **Empty placeholder modules** | `booking/`, `access/`, `ai/`, `dashboard/` have empty directory trees. Clutters the codebase and creates false expectations. | Low |
+| 4 | **Partially delivered feature modules** | `access/` and `ai/` now contain real code but are still below PRD scope; docs and rollout plans must reflect MVP vs planned scope clearly. | Medium |
 | 5 | **No API versioning** | All endpoints are `/api/...` with no version prefix (e.g., `/api/v1/...`). Breaking changes will affect all clients. | Medium |
 | 6 | **Large monolithic services** | `AnalyticsService` (851 lines), `AuthenticationService` (524 lines) could benefit from decomposition into smaller, focused services. | Medium |
 | 7 | **JSON columns as raw Strings** | `preferences`, `features_enabled`, `billing_address`, `amenities`, `metadata` etc. are stored as `String` with `@JdbcTypeCode(SqlTypes.JSON)` — no type-safe Java objects, no compile-time validation. | Medium |
