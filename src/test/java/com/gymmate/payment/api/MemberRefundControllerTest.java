@@ -2,7 +2,10 @@ package com.gymmate.payment.api;
 
 import com.gymmate.payment.api.dto.CreateRefundRequestDTO;
 import com.gymmate.payment.api.dto.RefundRequestResponse;
+import com.gymmate.payment.application.PaystackWebhookService;
+import com.gymmate.payment.application.PaymentService;
 import com.gymmate.payment.application.RefundRequestService;
+import com.gymmate.payment.application.StripePaymentService;
 import com.gymmate.shared.constants.RefundReasonCategory;
 import com.gymmate.shared.constants.RefundRequestStatus;
 import com.gymmate.shared.constants.RefundType;
@@ -38,8 +41,17 @@ class MemberRefundControllerTest {
     @Mock
     private RefundRequestService refundRequestService;
 
+    @Mock
+    private PaymentService paymentService;
+
+    @Mock
+    private StripePaymentService stripePaymentService;
+
+    @Mock
+    private PaystackWebhookService paystackWebhookService;
+
     @InjectMocks
-    private MemberRefundController controller;
+    private PaymentController controller;
 
     private UUID gymId;
     private UUID memberId;
@@ -81,7 +93,7 @@ class MemberRefundControllerTest {
 
                 // Act
                 ResponseEntity<ApiResponse<RefundRequestResponse>> result =
-                        controller.requestRefund(request, memberUser);
+                        controller.requestMemberRefund(request, memberUser);
 
                 // Assert
                 assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -111,7 +123,7 @@ class MemberRefundControllerTest {
                         .thenReturn(response);
 
                 // Act
-                controller.requestRefund(request, memberUser);
+                controller.requestMemberRefund(request, memberUser);
 
                 // Assert - type should be changed to MEMBER_PAYMENT
                 assertThat(request.getRefundType()).isEqualTo(RefundType.MEMBER_PAYMENT);
@@ -132,7 +144,7 @@ class MemberRefundControllerTest {
 
             // Act
             ResponseEntity<ApiResponse<List<RefundRequestResponse>>> result =
-                    controller.getMyRefundRequests(memberUser);
+                    controller.getMyMemberRefundRequests(memberUser);
 
             // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -147,7 +159,7 @@ class MemberRefundControllerTest {
 
             // Act
             ResponseEntity<ApiResponse<List<RefundRequestResponse>>> result =
-                    controller.getMyRefundRequests(memberUser);
+                    controller.getMyMemberRefundRequests(memberUser);
 
             // Assert
             assertThat(result.getBody().getData()).isEmpty();
@@ -168,7 +180,7 @@ class MemberRefundControllerTest {
 
             // Act
             ResponseEntity<ApiResponse<RefundRequestResponse>> result =
-                    controller.getMyRefundRequest(requestId, memberUser);
+                    controller.getMyMemberRefundRequest(requestId, memberUser);
 
             // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -184,7 +196,7 @@ class MemberRefundControllerTest {
             when(refundRequestService.getRequest(requestId)).thenReturn(response);
 
             // Act & Assert
-            assertThatThrownBy(() -> controller.getMyRefundRequest(requestId, memberUser))
+            assertThatThrownBy(() -> controller.getMyMemberRefundRequest(requestId, memberUser))
                     .isInstanceOf(DomainException.class)
                     .hasFieldOrPropertyWithValue("errorCode", "ACCESS_DENIED");
         }
@@ -205,7 +217,7 @@ class MemberRefundControllerTest {
 
             // Act
             ResponseEntity<ApiResponse<RefundRequestResponse>> result =
-                    controller.cancelMyRefundRequest(requestId, memberUser);
+                    controller.cancelMyMemberRefundRequest(requestId, memberUser);
 
             // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);

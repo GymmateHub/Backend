@@ -1,7 +1,10 @@
 package com.gymmate.payment.api;
 
 import com.gymmate.payment.api.dto.RefundRequestResponse;
+import com.gymmate.payment.application.PaystackWebhookService;
 import com.gymmate.payment.application.RefundRequestService;
+import com.gymmate.payment.application.PaymentService;
+import com.gymmate.payment.application.StripePaymentService;
 import com.gymmate.payment.domain.*;
 import com.gymmate.shared.constants.RefundReasonCategory;
 import com.gymmate.shared.constants.RefundRequestStatus;
@@ -37,8 +40,17 @@ class GymOwnerRefundControllerTest {
     @Mock
     private RefundRequestService refundRequestService;
 
+    @Mock
+    private PaymentService paymentService;
+
+    @Mock
+    private StripePaymentService stripePaymentService;
+
+    @Mock
+    private PaystackWebhookService paystackWebhookService;
+
     @InjectMocks
-    private GymOwnerRefundController controller;
+    private PaymentController controller;
 
     private UUID gymId;
     private UUID requestId;
@@ -66,7 +78,7 @@ class GymOwnerRefundControllerTest {
                 when(refundRequestService.getAllRequests(gymId)).thenReturn(List.of(response));
 
                 // Act
-                ResponseEntity<ApiResponse<List<RefundRequestResponse>>> result = controller.getAllRefundRequests();
+                ResponseEntity<ApiResponse<List<RefundRequestResponse>>> result = controller.getAllGymRefundRequests();
 
                 // Assert
                 assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -85,7 +97,7 @@ class GymOwnerRefundControllerTest {
                 when(refundRequestService.getAllRequests(gymId)).thenReturn(List.of());
 
                 // Act
-                ResponseEntity<ApiResponse<List<RefundRequestResponse>>> result = controller.getAllRefundRequests();
+                ResponseEntity<ApiResponse<List<RefundRequestResponse>>> result = controller.getAllGymRefundRequests();
 
                 // Assert
                 assertThat(result.getBody().getData()).isEmpty();
@@ -108,7 +120,7 @@ class GymOwnerRefundControllerTest {
                 when(refundRequestService.getPendingRequests(gymId)).thenReturn(List.of(pendingRequest));
 
                 // Act
-                ResponseEntity<ApiResponse<List<RefundRequestResponse>>> result = controller.getPendingRefundRequests();
+                ResponseEntity<ApiResponse<List<RefundRequestResponse>>> result = controller.getPendingGymRefundRequests();
 
                 // Assert
                 assertThat(result.getBody().getData()).hasSize(1);
@@ -133,7 +145,7 @@ class GymOwnerRefundControllerTest {
 
             // Act
             ResponseEntity<ApiResponse<RefundRequestResponse>> result =
-                    controller.approveRefundRequest(requestId, "Approved", gymOwnerUser);
+                    controller.approveGymRefundRequest(requestId, "Approved", gymOwnerUser);
 
             // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -157,7 +169,7 @@ class GymOwnerRefundControllerTest {
 
             // Act
             ResponseEntity<ApiResponse<RefundRequestResponse>> result =
-                    controller.rejectRefundRequest(requestId, "Policy violation", "Customer violated terms", gymOwnerUser);
+                    controller.rejectGymRefundRequest(requestId, "Policy violation", "Customer violated terms", gymOwnerUser);
 
             // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -188,7 +200,7 @@ class GymOwnerRefundControllerTest {
 
             // Act
             ResponseEntity<ApiResponse<List<RefundAuditLog>>> result =
-                    controller.getRefundRequestAudit(requestId);
+                    controller.getGymRefundRequestAudit(requestId);
 
             // Assert
             assertThat(result.getBody().getData()).hasSize(2);
@@ -212,7 +224,7 @@ class GymOwnerRefundControllerTest {
 
             // Act
             ResponseEntity<ApiResponse<RefundRequestResponse>> result =
-                    controller.escalateRefundRequest(requestId, "SUPER_ADMIN", gymOwnerUser);
+                    controller.escalateGymRefundRequest(requestId, "SUPER_ADMIN", gymOwnerUser);
 
             // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
