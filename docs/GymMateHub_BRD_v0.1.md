@@ -68,6 +68,8 @@ Most gyms rely on fragmented tools for payments, attendance, scheduling, and mem
 
 ### 5.1 In Scope (Implemented)
 
+Status legend: `✅ Complete` (fully delivered), `🔄 Partial` (usable but not full parity), `📋 Planned` (not yet implemented), `⚠️ Stub/Limited` (scaffolded path).
+
 | Feature Area | Status | Description |
 |--------------|--------|-------------|
 | Multi-tenant gym onboarding | ✅ Complete | Organisation and gym registration with tenant isolation |
@@ -82,8 +84,8 @@ Most gyms rely on fragmented tools for payments, attendance, scheduling, and mem
 | Authentication & security | ✅ Complete | JWT, 2FA (TOTP), password reset, token blacklist |
 | **Newsletter & Campaign Management** | ✅ Complete | **NEW** - Email templates, bulk campaigns, recipient tracking |
 | **Multi-Channel Notification** | 🔄 Partial | Email complete, SMS/WhatsApp infrastructure ready (senders are stubs — see §10) |
-| **Access Control & Anti-Tailgating** | 📋 Planned | **NEW** - Software check-in (QR/passcode), anti-tailgating rules, pluggable turnstile/CV device port (Section 7.10) |
-| **AI Personal Trainer** | 📋 Planned | **NEW** - Goal-based workout + locally-tailored (African-cuisine) meal plans at onboarding (Section 7.11) |
+| **Access Control & Anti-Tailgating** | 🔄 Partial | Software check-in (QR/passcode), anti-tailgating rules, pluggable device port and migration are implemented; hardware adapters/SSE stream parity still pending (Section 7.10) |
+| **AI Personal Trainer** | 🔄 Partial (Prototype) | Event-driven AI plan generation and storage are implemented; full PRD entities/endpoints/guardrails are still pending (Section 7.11) |
 
 ### 5.2 Out of Scope (Future Phases)
 
@@ -107,7 +109,7 @@ Most gyms rely on fragmented tools for payments, attendance, scheduling, and mem
 | **Build** | Maven 3.x | Via Maven Wrapper (mvnw) |
 | **Database** | PostgreSQL 15+ | Production database |
 | **Dev Database** | H2 | In-memory for development |
-| **Migrations** | Flyway | Schema versioning (4 migrations) |
+| **Migrations** | Flyway | Schema versioning (10 migrations, including Access V10) |
 | **Security** | Spring Security + JWT | With TOTP 2FA support |
 | **API Docs** | SpringDoc OpenAPI 3.x | Swagger UI available |
 | **Payments** | Stripe (with Connect) | Platform & connected accounts |
@@ -285,43 +287,43 @@ Supporting rules: **`/api/v1` versioning** on all new endpoints; domain logic st
 - `MEMBERSHIP_PLAN` - Members on specific plans (pending integration)
 - `SPECIFIC_MEMBERS` - Manually selected members (pending integration)
 
-### 7.10 Access Control & Anti-Tailgating 📋 Planned (NEW)
+### 7.10 Access Control & Anti-Tailgating 🔄 Partially Implemented (NEW)
 
 **Business need:** the pilot gym requires prevention of **tailgating** — a second person entering on one valid scan. Strategy: enforce access in **software now** (zero-hardware, works on phone/kiosk) with a clean **device-adapter port** so turnstiles/maglocks and camera/CV plug in later. This also delivers the website's "QR/manual check-in, no hardware" promise and matches GymMaster's access-control surface.
 
 | Requirement | Status | Implementation (planned) |
 |-------------|--------|--------------------------|
-| Member check-in via QR / passcode | 📋 | `AccessCredential` (hashed, rotating token); `POST /api/v1/access/scan` |
+| Member check-in via QR / passcode | ✅ | `AccessCredential` (hashed token); `POST /api/v1/access/scan` |
 | Check-in via NFC / key-fob / Bluetooth | 📋 | via device-adapter port (later tiers) |
-| Entry-decision pipeline | 📋 | active-membership, signup-complete, overdue-limit, visits-remaining, door-benefit, access-window, stop-at-gate checks |
-| Standard denial reasons (GymMaster parity) | 📋 | `denyReason` enum: NO_ACTIVE_MEMBERSHIP, INCOMPLETE_SIGNUP, OVERDUE_OVER_LIMIT, VISITS_EXHAUSTED, NO_DOOR_BENEFIT, OUTSIDE_ACCESS_TIMES, STOP_AT_GATE_TASK, SUSPENDED_OR_FROZEN, TAILGATING_BLOCKED |
-| Door benefits (plan → which doors) | 📋 | `DoorBenefit` mapping `MembershipPlan` ↔ `AccessPoint` |
-| Per-member/plan access-time windows | 📋 | `AccessSchedule` |
-| **Anti-tailgating: one-open-session / pass-back** | 📋 | member already INSIDE cannot re-enter without an OUT |
-| **Anti-tailgating: re-entry lockout** | 📋 | configurable cooldown blocks instant credential reuse |
-| **Anti-tailgating: device-pass reconciliation** | 📋 | turnstile/CV reports pass-count; `passCount > validScanCount` ⇒ flagged |
-| **Anti-tailgating: CV image capture** | 📋 | camera adapter attaches entry image to the event (GymMaster parity) |
-| Real-time staff alerts | 📋 | reuse SSE (`SseEmitterRegistry`) + domain events (`AccessDeniedEvent`, `TailgatingSuspectedEvent`) |
-| Audit trail / Visitors log + tailgating report | 📋 | append-only `AccessEvent`; `GET /api/v1/access/events` |
-| Pluggable hardware (turnstile/maglock/camera) | 📋 | `AccessDevicePort` + adapters per `AccessPoint.mode` (SOFTWARE/TURNSTILE/CV) |
+| Entry-decision pipeline | 🔄 | implemented for credential/membership/signup/door-benefit/access-window; overdue/visits/stop-at-gate checks reserved |
+| Standard denial reasons (GymMaster parity) | 🔄 | `DenyReason` enum complete; some reasons are placeholders until related data sources are added |
+| Door benefits (plan → which doors) | ✅ | `DoorBenefit` mapping `MembershipPlan` ↔ `AccessPoint` |
+| Per-member/plan access-time windows | ✅ | `AccessSchedule` |
+| **Anti-tailgating: one-open-session / pass-back** | ✅ | member already INSIDE cannot re-enter without an OUT |
+| **Anti-tailgating: re-entry lockout** | ✅ | configurable cooldown blocks instant credential reuse |
+| **Anti-tailgating: device-pass reconciliation** | ✅ | device webhook supports `passCount > validScanCount` flagging |
+| **Anti-tailgating: CV image capture** | 🔄 | event supports `capturedImageUrl`; camera adapter integration pending |
+| Real-time staff alerts | 🔄 | domain events are published; dedicated `/api/v1/access/stream` feed not yet exposed |
+| Audit trail / Visitors log + tailgating report | ✅ | append-only `AccessEvent`; `GET /api/v1/access/events/gym/{gymId}` |
+| Pluggable hardware (turnstile/maglock/camera) | 🔄 | `AccessDevicePort` exists with SOFTWARE adapter; TURNSTILE/CV adapters pending |
 
 **Entities:** `AccessPoint`, `AccessCredential`, `DoorBenefit`, `AccessSchedule`, `AccessEvent` (all gym-scoped). **Migration:** `V10__Access_Control_System.sql`.
 
-### 7.11 AI Personal Trainer 📋 Planned (NEW)
+### 7.11 AI Personal Trainer 🔄 Partially Implemented (Prototype) (NEW)
 
 **Business need:** at onboarding, capture the member's fitness goal and basics, then generate a **personalized workout plan** (grounded in the gym's exercise library) and a **meal plan tailored to local cuisine** (derived from the gym's country/city — "Built for Africa") to help reach that goal. This is a primary **USP**: GymMaster has no nutrition/meal AI.
 
 | Requirement | Status | Implementation (planned) |
 |-------------|--------|--------------------------|
-| Onboarding goal + profile capture | 📋 | writes `FitnessGoal` + new `MemberPlanProfile` (age, height, weight, activity level, dietary preference, cuisine region, equipment access) |
-| Location-derived cuisine region | 📋 | default from gym `Address` country/city; member can override |
-| Provider-agnostic LLM | 📋 | `LlmClient` port; default `AnthropicLlmClient` (Claude); swappable via `${ai.provider}` |
-| Personalized workout plan | 📋 | `WorkoutPlan` grounded in `Exercise` library + member level/equipment |
-| Locally-tailored meal plan | 📋 | `MealPlan` with local dishes, macros/calories; respects dietary prefs + allergies |
-| Safety guardrails | 📋 | strict-JSON validation; allergy/medical-condition awareness; "consult a professional" disclaimer; no medical advice |
-| Async generation + scheduled refresh | 📋 | `@Async` + `@Scheduled` (re-plan from `HealthMetric` progress + `WorkoutLog` adherence) |
-| Traceability | 📋 | `AiRecommendation` audit (provider, model, tokens, status) |
-| Graceful degradation | 📋 | feature disabled when no `AI_API_KEY` (Redis-style optional) |
+| Onboarding goal + profile capture | 🔄 | event-driven flow consumes `MemberOnboardedEvent`; structured `MemberPlanProfile` entity not yet implemented |
+| Location-derived cuisine region | ✅ | AI prompt uses gym city/country context when available |
+| Provider-agnostic LLM | 🔄 | generation exists through Spring AI `ChatClient`; explicit `LlmClient` abstraction not yet implemented |
+| Personalized workout plan | 🔄 | AI-generated workout text is persisted; grounding to exercise IDs is pending |
+| Locally-tailored meal plan | 🔄 | AI-generated local meal text is persisted; macros/schema validation pending |
+| Safety guardrails | 📋 | strict JSON validation and medical/allergy guardrails not yet implemented |
+| Async generation + scheduled refresh | 🔄 | async generation implemented; scheduled re-planning not yet implemented |
+| Traceability | 🔄 | `AiRecommendation` persistence exists; provider/model/token audit fields pending |
+| Graceful degradation | 🔄 | failures are handled gracefully; env-key based feature gating is pending |
 
 **Entities:** `MemberPlanProfile`, `WorkoutPlan`/`WorkoutPlanDay`/`PlanExercise`, `MealPlan`/`MealPlanDay`/`PlanMeal`, `AiRecommendation`. **Migration:** `V11__AI_Trainer.sql`. **Endpoints:** `/api/v1/ai/**`.
 
@@ -400,8 +402,8 @@ The schema is defined across multiple Flyway migrations in `src/main/resources/d
 | **SMS Notifications** | Twilio | Renewal reminders, alerts (site lead value-prop) | 🔄 Stub — implement sender | 🔴 High |
 | **WhatsApp Messaging** | WhatsApp Business API / Twilio | Renewal reminders, member comms (site lead value-prop) | 🔄 Stub — implement sender | 🔴 High |
 | **Local payment rails** | Paystack, Flutterwave | African card/bank/USSD/mobile-money (Stripe coverage thin in Africa) | 📋 Strategic decision | 🔴 High |
-| AI / LLM | Anthropic Claude (default), provider-agnostic via `LlmClient` | AI Personal Trainer (§7.11) | 📋 Planned | 🟡 Med |
-| Access hardware | Turnstile/maglock controllers, camera/CV | Physical access via `AccessDevicePort` (§7.10) | 📋 Planned (port first) | 🟡 Med |
+| AI / LLM | Spring AI ChatClient (current), provider-agnostic port planned | AI Personal Trainer (§7.11) | 🔄 Partial prototype | 🟡 Med |
+| Access hardware | Turnstile/maglock controllers, camera/CV | Physical access via `AccessDevicePort` (§7.10) | 🔄 Port implemented; hardware adapters pending | 🟡 Med |
 | Additional gateways | PayPal, Square | Advertised on site | 📋 Not started | 🟢 Low |
 | Fitness Wearables | Apple Health, Google Fit, Fitbit, Garmin | Activity data sync | ⏳ Schema only | 🟢 Low |
 | Fitness apps | MyFitnessPal, Strava, Peloton | Advertised on site | ⏳ Not started | 🟢 Low |
@@ -718,6 +720,6 @@ The live marketing site sells features ahead of the product. Every advertised it
 
 ---
 
-**Document Version**: 0.1  
-**Last Updated**: June 27, 2026  
+**Document Version**: 0.1
+**Last Updated**: June 27, 2026
 **Classification**: Internal Use Only
