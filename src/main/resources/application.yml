@@ -182,3 +182,14 @@ stripe:
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   connect-webhook-secret: ${STRIPE_CONNECT_WEBHOOK_SECRET:}
   application-fee-percent: ${STRIPE_APPLICATION_FEE_PERCENT:1.0}
+
+# ============================================
+# AI Personal Trainer Configuration
+# ============================================
+ai:
+  plan:
+    cache:
+      # How long a generated plan is served from Redis before a new LLM call is made.
+      # Set AI_PLAN_CACHE_TTL_HOURS=0 to effectively disable caching in dev.
+      ttl-hours: ${AI_PLAN_CACHE_TTL_HOURS:24}
+
