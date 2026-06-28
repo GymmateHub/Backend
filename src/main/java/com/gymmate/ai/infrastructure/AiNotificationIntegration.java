@@ -2,7 +2,6 @@ package com.gymmate.ai.infrastructure;
 
 import com.gymmate.ai.domain.AiRecommendation;
 import com.gymmate.notification.application.NotificationService;
-import com.gymmate.notification.domain.Notification;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.user.application.MemberService;
 import com.gymmate.user.domain.Member;
@@ -35,7 +34,7 @@ public class AiNotificationIntegration {
             User user = userRepository.findById(member.getUserId()).orElseThrow();
 
             String title = "Your Personalized AI Gym Plan is Ready!";
-            String content = "Hello " + user.getFirstName() + ",\n\n" +
+            String messageContent = "Hello " + user.getFirstName() + ",\n\n" +
                     "Based on your location and fitness goals, our AI Gym Trainer has crafted a personalized plan for you:\n\n"
                     +
                     "**Workout Plan**\n" + recommendation.getWorkoutPlan() + "\n\n" +
@@ -45,10 +44,10 @@ public class AiNotificationIntegration {
             // Assuming NotificationService has a method to create standard notifications
             // If not, we will save it manually or use EmailService
             // TODO: Implement actual notification sending
-            notificationService.sendToUser(memberId, title, content, NotificationPriority.HIGH, content, null);
+            notificationService.sendToUser(memberId, title, messageContent, NotificationPriority.HIGH, messageContent, null);
 
             // As a fallback, we log it
-            log.info("AI Plan generated for user: {}. Content: {}", user.getEmail(), content);
+            log.info("AI Plan generated for user: {}. Content: {}", user.getEmail(), messageContent);
 
             // If the notification service requires more structure, we will adapt here
         } catch (Exception e) {
