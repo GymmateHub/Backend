@@ -75,6 +75,9 @@ GymMateHub provides an integrated, cloud-native solution that unifies:
 
 ### 1.4 Current Status
 
+Status legend: `✅ Complete` (fully delivered), `🔄 Partial` (usable but not full parity), `📋 Planned` (not implemented yet), `⚠️ Stub/Limited` (scaffolded path).
+Completion semantics: `100%` = production-ready scope complete, `1-99%` = partial implementation, `0%` = planned only.
+
 | Component | Status | Completion |
 |-----------|--------|------------|
 | Core Platform | ✅ Complete | 100% |
@@ -86,8 +89,8 @@ GymMateHub provides an integrated, cloud-native solution that unifies:
 | Inventory Management | ✅ Complete | 100% |
 | Newsletter & Campaigns | ✅ Complete | 100% |
 | Multi-Channel Notifications | 🔄 Partial | 70% |
-| Access Control & Anti-Tailgating | 📋 Planned | 0% |
-| AI Personal Trainer (workout + meal plans) | 📋 Planned | 0% |
+| Access Control & Anti-Tailgating | 🔄 Partial | 70% |
+| AI Personal Trainer (workout + meal plans) | 🔄 Partial (Prototype) | 25% |
 | Nutrition / Meal Planning | 📋 Planned | 0% |
 | Advanced/Predictive Analytics | 📋 Planned | 0% |
 | AI/ML Features (predictive, scheduling, engagement) | 📋 Planned | 0% |
@@ -590,7 +593,7 @@ BroadcastService (Orchestrator)
 
 **Fallback Behavior**: If preferred channel fails, system falls back to email.
 
-### 5.10 Access Control & Anti-Tailgating 📋 Planned (NEW)
+### 5.10 Access Control & Anti-Tailgating 🔄 Partially Implemented (NEW)
 
 **Goal:** every valid credential admits **exactly one** person per entry; detect and alert on tailgating; full audit trail. Software-enforced now (zero hardware), with a device-adapter port for turnstiles/maglocks and camera/CV later.
 
@@ -629,7 +632,7 @@ Violations → persist `AccessEvent` + publish `AccessDeniedEvent`/`TailgatingSu
 
 `AccessDevicePort` (`openOnce`, `getPassCount`, `isOnline`, inbound device webhook). Adapters: `SoftwareAccessAdapter` (default), `TurnstileAdapter`, `CvAccessAdapter` — selected per `AccessPoint.mode`. Migration: `V10__Access_Control_System.sql`.
 
-### 5.11 AI Personal Trainer 📋 Planned (NEW)
+### 5.11 AI Personal Trainer 🔄 Partially Implemented (Prototype) (NEW)
 
 **Goal:** at onboarding, capture the member's goal + basics, then generate a **workout plan** (from the gym's exercise library) and a **meal plan tailored to local cuisine** (gym country/city) to reach that goal. Provider-agnostic LLM (Claude default). USP — GymMaster has no nutrition/meal AI.
 
@@ -644,7 +647,7 @@ Violations → persist `AccessEvent` + publish `AccessDeniedEvent`/`TailgatingSu
 
 #### 5.11.2 LLM port (provider-agnostic)
 
-`LlmClient` interface; default `AnthropicLlmClient` (Claude) via shared `WebClient`; swappable via `${ai.provider}`. `LlmConfig` reads `${AI_API_KEY:}` (Stripe-config pattern), graceful-degrade when absent.
+Current implementation uses Spring AI `ChatClient` directly. Target architecture remains `LlmClient` + provider adapters (`AnthropicLlmClient`, etc.) with `${ai.provider}` selection and graceful degradation via optional API key.
 
 **Guardrails:** meal plans grounded in region + dietary prefs + allergies (from Member `allergies[]`/`medicalConditions[]`); workouts grounded in exercise library + experience level; strict-JSON schema validated before persist; medical disclaimer, no medical advice.
 
@@ -655,7 +658,7 @@ Violations → persist `AccessEvent` + publish `AccessDeniedEvent`/`TailgatingSu
 3. Member views/edits; trainer approves/tweaks
 4. Scheduled refresh re-plans from `HealthMetric` progress + `WorkoutLog` adherence
 
-Migration: `V11__AI_Trainer.sql`. Endpoints under `/api/v1/ai/**`. Predictive analytics / smart scheduling / engagement scoring are later AI-module phases.
+Current state: `AiRecommendation` persistence + async generation service are implemented. Migration `V11__AI_Trainer.sql` and `/api/v1/ai/**` endpoints remain pending. Predictive analytics / smart scheduling / engagement scoring are later AI-module phases.
 
 ---
 
@@ -819,24 +822,24 @@ Built in **Flutter/Dart** (single codebase → iOS + Android). The backend stays
 | POST | `/api/campaigns` | Create campaign |
 | POST | `/api/campaigns/{id}/send` | Send campaign |
 
-#### Access Control (Planned — `/api/v1`)
+#### Access Control (`/api/v1`)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | POST | `/api/v1/access/scan` | Validate credential + entry decision (kiosk/turnstile/mobile) |
-| POST | `/api/v1/access/devices/{id}/events` | Inbound device webhook (pass-counts/scans, HMAC-verified) |
+| POST | `/api/v1/access/devices/{id}/events` | Inbound device webhook (pass-counts/scans; HMAC verification planned) |
 | GET/POST | `/api/v1/access/points` | Manage access points |
 | GET/POST/DELETE | `/api/v1/access/credentials` | Issue / rotate / revoke member credentials |
 | GET | `/api/v1/access/events` | Audit log + tailgating report (filterable) |
-| GET | `/api/v1/access/stream` | SSE live entry feed / alerts |
+| GET | `/api/v1/access/stream` | SSE live entry feed / alerts (planned) |
 
-#### AI Personal Trainer (Planned — `/api/v1`)
+#### AI Personal Trainer (Partial prototype, `/api/v1` planned)
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/v1/ai/members/{id}/plan-profile` | Capture onboarding profile (goal, metrics, region, diet) |
-| POST | `/api/v1/ai/members/{id}/generate` | Trigger async plan generation |
-| GET | `/api/v1/ai/members/{id}/workout-plan` | Fetch workout plan |
-| GET | `/api/v1/ai/members/{id}/meal-plan` | Fetch locally-tailored meal plan |
-| PUT | `/api/v1/ai/members/{id}/workout-plan` | Edit plan; trainer approval |
+| POST | `/api/v1/ai/members/{id}/plan-profile` | Capture onboarding profile (planned) |
+| POST | `/api/v1/ai/members/{id}/generate` | Trigger async plan generation (planned endpoint; service exists internally) |
+| GET | `/api/v1/ai/members/{id}/workout-plan` | Fetch workout plan (planned) |
+| GET | `/api/v1/ai/members/{id}/meal-plan` | Fetch locally-tailored meal plan (planned) |
+| PUT | `/api/v1/ai/members/{id}/workout-plan` | Edit plan; trainer approval (planned) |
 
 ### 7.4 Response Format
 
@@ -888,10 +891,10 @@ X-RateLimit-Remaining-Burst: 450
 | **Inventory** | 6 | equipment, items, movements, maintenance_records, schedules, suppliers |
 | **Security** | 3 | pending_registrations, password_reset_tokens, token_blacklist |
 | **Newsletter** | 3 | templates, campaigns, recipients |
-| **Access (planned)** | 5 | access_points, access_credentials, door_benefits, access_schedules, access_events |
-| **AI Trainer (planned)** | 8 | member_plan_profiles, workout_plans, workout_plan_days, plan_exercises, meal_plans, meal_plan_days, plan_meals, ai_recommendations |
+| **Access (implemented, V10)** | 5 | access_points, access_credentials, door_benefits, access_schedules, access_events |
+| **AI Trainer (partial prototype)** | 1 + planned 7 | ai_recommendations (implemented), plus planned: member_plan_profiles, workout_plans, workout_plan_days, plan_exercises, meal_plans, meal_plan_days, plan_meals |
 
-**Total Tables: 46 (current) → 59 with planned Access + AI modules**
+**Total Tables: 51 currently (including Access V10) → 58 when planned AI trainer tables are added**
 
 > Planned tables use **PostgreSQL-safe types** (no `text[]`/raw jsonb in test-critical paths) so they validate under both H2 and Testcontainers Postgres.
 

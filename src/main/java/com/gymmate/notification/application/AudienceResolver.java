@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import com.gymmate.membership.domain.MembershipStatus;
 
 /**
  * Service for resolving target audience based on audience type and filters.
