@@ -56,6 +56,6 @@ public record OwnerRegistrationRequest(
         @NotBlank(message = "Country is required")
         String country) {
     public UserRole role() {
-        return UserRole.GYM_OWNER;
+        return UserRole.OWNER;
     }
 }

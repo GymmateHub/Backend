@@ -27,7 +27,7 @@ public class ClassCategoryController {
   private final ClassCategoryMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CreateCategoryRequest req) {
     ClassCategory c = mapper.toEntity(req);
     c.setGymId(req.getGymId());
@@ -49,7 +49,7 @@ public class ClassCategoryController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<CategoryResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateCategoryRequest req) {
     ClassCategory c = categoryService.getCategory(id);
     c.updateDetails(req.getName(), req.getDescription(), req.getColor());
@@ -58,7 +58,7 @@ public class ClassCategoryController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
     categoryService.deleteCategory(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Category deleted"));

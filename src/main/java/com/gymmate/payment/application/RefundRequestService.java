@@ -285,7 +285,7 @@ public class RefundRequestService {
 
         // Only the requester or an admin can cancel
         if (!request.getRequestedByUserId().equals(userId) &&
-                !userType.equals("SUPER_ADMIN") && !userType.equals("GYM_OWNER")) {
+                !userType.equals("SUPER_ADMIN") && !userType.equals("OWNER")) {
             throw new DomainException("CANCEL_NOT_ALLOWED",
                     "Only the requester or an admin can cancel this request");
         }

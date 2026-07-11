@@ -3,7 +3,7 @@ package com.gymmate.shared.constants;
 public enum UserRole {
   SUPER_ADMIN,
   ADMIN,
-  GYM_OWNER,
+  OWNER,
   MANAGER,
   TRAINER,
   STAFF,

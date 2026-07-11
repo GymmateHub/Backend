@@ -43,7 +43,7 @@ public class NotificationController {
      * Get all notifications for the current organisation with pagination.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @Operation(summary = "Get notifications", description = "Get paginated list of notifications")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -63,7 +63,7 @@ public class NotificationController {
      * Get unread notifications.
      */
     @GetMapping("/unread")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @Operation(summary = "Get unread notifications", description = "Get paginated list of unread notifications")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getUnreadNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -83,7 +83,7 @@ public class NotificationController {
      * Get unread notification count.
      */
     @GetMapping("/unread-count")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @Operation(summary = "Get unread count", description = "Get count of unread notifications for badge display")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getUnreadCount(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
@@ -100,7 +100,7 @@ public class NotificationController {
      * Get a single notification by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @Operation(summary = "Get notification by ID")
     public ResponseEntity<ApiResponse<NotificationResponse>> getNotification(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -120,7 +120,7 @@ public class NotificationController {
      * Mark a notification as read.
      */
     @PatchMapping("/{id}/read")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @Operation(summary = "Mark as read", description = "Mark a notification as read")
     public ResponseEntity<ApiResponse<NotificationResponse>> markAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -141,7 +141,7 @@ public class NotificationController {
      * Mark all notifications as read.
      */
     @PostMapping("/mark-all-read")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
     @Operation(summary = "Mark all as read", description = "Mark all notifications as read for the organisation")
     public ResponseEntity<ApiResponse<String>> markAllAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
@@ -157,7 +157,7 @@ public class NotificationController {
      * Get all notifications for a specific gym with pagination.
      */
     @GetMapping("/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'STAFF', 'ADMIN')")
     @Operation(summary = "Get gym notifications", description = "Get paginated list of notifications for a specific gym")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getGymNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -179,7 +179,7 @@ public class NotificationController {
      * Get unread notifications for a specific gym.
      */
     @GetMapping("/gym/{gymId}/unread")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'STAFF', 'ADMIN')")
     @Operation(summary = "Get unread gym notifications", description = "Get paginated list of unread notifications for a specific gym")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getUnreadGymNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -200,7 +200,7 @@ public class NotificationController {
      * Get unread notification count for a gym.
      */
     @GetMapping("/gym/{gymId}/unread-count")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'STAFF', 'ADMIN')")
     @Operation(summary = "Get gym unread count", description = "Get count of unread notifications for a gym (for badge display)")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getGymUnreadCount(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -221,7 +221,7 @@ public class NotificationController {
      * Mark all gym notifications as read.
      */
     @PostMapping("/gym/{gymId}/mark-all-read")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'MANAGER', 'STAFF', 'ADMIN')")
     @Operation(summary = "Mark all gym notifications as read", description = "Mark all notifications as read for a specific gym")
     public ResponseEntity<ApiResponse<String>> markAllGymNotificationsAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,

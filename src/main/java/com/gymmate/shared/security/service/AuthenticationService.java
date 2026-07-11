@@ -261,7 +261,7 @@ public class AuthenticationService {
                 .lastName(request.lastName())
                 .passwordHash(passwordService.encode(request.password()))
                 .phone(request.phone())
-                .role(UserRole.GYM_OWNER)
+                .role(UserRole.OWNER)
                 .status(UserStatus.INACTIVE) // Requires OTP verification
                 .emailVerified(false)
                 .build();

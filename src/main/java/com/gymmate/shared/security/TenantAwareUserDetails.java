@@ -6,8 +6,9 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -28,9 +29,7 @@ public class TenantAwareUserDetails implements UserDetails {
         this.organisationId = user.getOrganisationId();
         this.role = user.getRole().name();
         this.emailVerified = user.isEmailVerified();
-        this.authorities = Collections.singletonList(
-            new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-        );
+        this.authorities = buildAuthorities(user.getRole().name());
         this.active = user.isActive();
     }
 
@@ -42,8 +41,20 @@ public class TenantAwareUserDetails implements UserDetails {
         this.organisationId = organisationId;
         this.role = role;
         this.emailVerified = emailVerified;
-        this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+        this.authorities = buildAuthorities(role);
         this.active = active;
+    }
+
+    /**
+     * Builds the authority list for a role. "GYM_OWNER" is accepted as a
+     * legacy alias for OWNER so sessions or data created before the
+     * V11 role migration keep working.
+     */
+    private static List<GrantedAuthority> buildAuthorities(String role) {
+        List<GrantedAuthority> authorities = new ArrayList<>();
+        String effectiveRole = "GYM_OWNER".equals(role) ? "OWNER" : role;
+        authorities.add(new SimpleGrantedAuthority("ROLE_" + effectiveRole));
+        return authorities;
     }
 
     @Override

@@ -31,7 +31,7 @@ public class GymOwnerRefundController {
     private final RefundRequestService refundRequestService;
 
     @GetMapping
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('STAFF')")
     @Operation(summary = "Get all refund requests", description = "Get all refund requests for the gym")
     public ResponseEntity<ApiResponse<List<RefundRequestResponse>>> getAllRefundRequests() {
         UUID gymId = TenantContext.getCurrentTenantId();
@@ -40,7 +40,7 @@ public class GymOwnerRefundController {
     }
 
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('STAFF')")
     @Operation(summary = "Get pending refund requests",
                description = "Get all pending refund requests awaiting review")
     public ResponseEntity<ApiResponse<List<RefundRequestResponse>>> getPendingRefundRequests() {
@@ -50,7 +50,7 @@ public class GymOwnerRefundController {
     }
 
     @GetMapping("/{requestId}")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('STAFF')")
     @Operation(summary = "Get refund request details", description = "Get details of a specific refund request")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> getRefundRequest(@PathVariable UUID requestId) {
         RefundRequestResponse response = refundRequestService.getRequest(requestId);
@@ -58,7 +58,7 @@ public class GymOwnerRefundController {
     }
 
     @PutMapping("/{requestId}/approve")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER')")
     @Operation(summary = "Approve member refund request",
                description = "Approve a member's refund request")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> approveRefundRequest(
@@ -77,7 +77,7 @@ public class GymOwnerRefundController {
     }
 
     @PutMapping("/{requestId}/reject")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER')")
     @Operation(summary = "Reject member refund request",
                description = "Reject a member's refund request with a reason")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> rejectRefundRequest(
@@ -98,7 +98,7 @@ public class GymOwnerRefundController {
     }
 
     @PostMapping("/{requestId}/process")
-    @PreAuthorize("hasRole('GYM_OWNER')")
+    @PreAuthorize("hasRole('OWNER')")
     @Operation(summary = "Process approved refund",
                description = "Execute the Stripe refund for an approved member request")
     public ResponseEntity<ApiResponse<RefundResponse>> processRefundRequest(
@@ -115,7 +115,7 @@ public class GymOwnerRefundController {
     }
 
     @PutMapping("/{requestId}/escalate")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER')")
     @Operation(summary = "Escalate refund request",
                description = "Escalate a refund request for higher-level review")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> escalateRefundRequest(
@@ -134,7 +134,7 @@ public class GymOwnerRefundController {
     }
 
     @GetMapping("/{requestId}/audit")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER')")
     @Operation(summary = "Get audit trail", description = "Get the complete audit history for a refund request")
     public ResponseEntity<ApiResponse<List<RefundAuditLog>>> getRefundRequestAudit(@PathVariable UUID requestId) {
         List<RefundAuditLog> auditTrail = refundRequestService.getAuditTrail(requestId);

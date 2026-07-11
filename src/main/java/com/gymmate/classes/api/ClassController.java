@@ -27,7 +27,7 @@ public class ClassController {
   private final GymClassMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ClassResponse>> createClass(@Valid @RequestBody CreateClassRequest req) {
     GymClass gc = mapper.toEntity(req);
     GymClass created = classService.createClass(gc, req.getGymId());
@@ -48,7 +48,7 @@ public class ClassController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ClassResponse>> updateClass(@PathVariable UUID id, @Valid @RequestBody CreateClassRequest req) {
     GymClass gc = classService.getClass(id);
     gc.updateDetails(req.getName(), req.getDescription(), req.getDurationMinutes());
@@ -59,7 +59,7 @@ public class ClassController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<Void>> deleteClass(@PathVariable UUID id) {
     classService.deleteClass(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Class deleted"));
