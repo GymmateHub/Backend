@@ -10,8 +10,11 @@ import org.springframework.validation.BindException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -124,11 +127,44 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error(ex.getMessage()));
     }
 
+    /**
+     * Unmapped routes must surface as 404, not fall into the generic 500
+     * handler — otherwise every call to a not-yet-implemented endpoint
+     * reads as "internal server error" in the clients.
+     */
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    public ResponseEntity<ApiResponse<Object>> handleNoRoute(Exception ex) {
+        log.warn("No route: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error("Endpoint not found"));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMethodNotSupported(
+            HttpRequestMethodNotSupportedException ex) {
+        log.warn("Method not supported: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ApiResponse.error("Method not allowed"));
+    }
+
+    /**
+     * When app.debug-errors=true (dev only — APP_DEBUG_ERRORS in .env),
+     * include the exception class and message in 500 responses so failures
+     * can be diagnosed without console access. NEVER enable in production.
+     */
+    @org.springframework.beans.factory.annotation.Value("${app.debug-errors:false}")
+    private boolean debugErrors;
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGenericException(Exception ex) {
         log.error("Unexpected error occurred", ex);
+        String message = debugErrors
+                ? "An internal error occurred: [" + ex.getClass().getSimpleName() + "] " + ex.getMessage()
+                : "An internal error occurred";
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("An internal error occurred"));
+                .body(ApiResponse.error(message));
     }
 }

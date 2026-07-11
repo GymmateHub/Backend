@@ -27,7 +27,7 @@ public class ClassScheduleController {
   private final ClassScheduleMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> create(@Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = mapper.toEntity(req);
     ClassSchedule created = scheduleService.createSchedule(s);
@@ -48,7 +48,7 @@ public class ClassScheduleController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = scheduleService.getSchedule(id);
     s.setStartTime(req.getStartTime());
@@ -62,7 +62,7 @@ public class ClassScheduleController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
     scheduleService.deleteSchedule(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Schedule deleted"));

@@ -34,7 +34,7 @@ public class UserController {
      * SECURITY: Validates the fetched user belongs to the caller's organisation.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(
             @PathVariable UUID id,
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
@@ -66,7 +66,7 @@ public class UserController {
      * Get all users within the caller's organisation.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
         List<User> users = userService.findByOrganisationId(userDetails.getOrganisationId());
@@ -119,7 +119,7 @@ public class UserController {
      * Get all users by role within the caller's organisation.
      */
     @GetMapping("/by-role/{role}")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Get users by role", description = "Get users by role scoped to organisation")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getUsersByRole(
             @PathVariable UserRole role,
@@ -136,7 +136,7 @@ public class UserController {
      * Get all gym admins within the caller's organisation.
      */
     @GetMapping("/gym-admins")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     @Operation(summary = "Get gym admins", description = "Get active gym admins scoped to organisation")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getGymAdmins(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
@@ -153,7 +153,7 @@ public class UserController {
      * SECURITY: Validates user belongs to caller's organisation.
      */
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(
             @PathVariable UUID id,
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
@@ -173,7 +173,7 @@ public class UserController {
      * SECURITY: Validates user belongs to caller's organisation.
      */
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
     public ResponseEntity<ApiResponse<UserResponse>> activateUser(
             @PathVariable UUID id,
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {

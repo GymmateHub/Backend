@@ -36,7 +36,16 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     // Organisation-based queries
     List<User> findByOrganisationId(UUID organisationId);
 
+    /**
+     * Name-only projection. Deliberately avoids loading the full entity so
+     * legacy rows with pre-V11 role values (e.g. GYM_OWNER) that no longer
+     * map to the UserRole enum can still be displayed by admin screens.
+     */
+    @Query("SELECT CONCAT(u.firstName, ' ', u.lastName) FROM User u WHERE u.id = :id")
+    Optional<String> findFullNameById(@Param("id") UUID id);
+
     // Count queries for analytics
+    long countByRole(UserRole role);
     long countByOrganisationIdAndRole(UUID organisationId, UserRole role);
     long countByOrganisationIdAndRoleAndStatus(UUID organisationId, UserRole role, UserStatus status);
 

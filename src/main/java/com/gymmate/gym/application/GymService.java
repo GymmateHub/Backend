@@ -48,9 +48,9 @@ public class GymService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.ownerId().toString()));
 
         if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN
-                && owner.getRole() != UserRole.GYM_OWNER) {
+                && owner.getRole() != UserRole.OWNER) {
             throw new DomainException("INVALID_OWNER",
-                    "Only users with GYM_OWNER, ADMIN or SUPER_ADMIN role can register gyms");
+                    "Only users with OWNER, ADMIN or SUPER_ADMIN role can register gyms");
         }
 
         if (!owner.isActive()) {

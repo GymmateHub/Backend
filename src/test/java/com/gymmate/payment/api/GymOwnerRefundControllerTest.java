@@ -49,7 +49,7 @@ class GymOwnerRefundControllerTest {
         gymId = UUID.randomUUID();
         requestId = UUID.randomUUID();
         gymOwnerUser = new TenantAwareUserDetails(
-                UUID.randomUUID(), gymId, "owner@gym.com", "password", "GYM_OWNER", true, true);
+                UUID.randomUUID(), gymId, "owner@gym.com", "password", "OWNER", true, true);
     }
 
     @Nested
@@ -128,7 +128,7 @@ class GymOwnerRefundControllerTest {
             RefundRequestResponse approvedResponse = createRefundRequestResponse();
             approvedResponse.setStatus(RefundRequestStatus.APPROVED);
 
-            when(refundRequestService.approveRequest(eq(requestId), any(), eq("GYM_OWNER"), anyString()))
+            when(refundRequestService.approveRequest(eq(requestId), any(), eq("OWNER"), anyString()))
                     .thenReturn(approvedResponse);
 
             // Act
@@ -152,7 +152,7 @@ class GymOwnerRefundControllerTest {
             RefundRequestResponse rejectedResponse = createRefundRequestResponse();
             rejectedResponse.setStatus(RefundRequestStatus.REJECTED);
 
-            when(refundRequestService.rejectRequest(eq(requestId), any(), eq("GYM_OWNER"), anyString(), anyString()))
+            when(refundRequestService.rejectRequest(eq(requestId), any(), eq("OWNER"), anyString(), anyString()))
                     .thenReturn(rejectedResponse);
 
             // Act
@@ -207,7 +207,7 @@ class GymOwnerRefundControllerTest {
             escalatedResponse.setEscalated(true);
             escalatedResponse.setEscalatedTo("SUPER_ADMIN");
 
-            when(refundRequestService.escalateRequest(eq(requestId), any(), eq("GYM_OWNER"), eq("SUPER_ADMIN")))
+            when(refundRequestService.escalateRequest(eq(requestId), any(), eq("OWNER"), eq("SUPER_ADMIN")))
                     .thenReturn(escalatedResponse);
 
             // Act

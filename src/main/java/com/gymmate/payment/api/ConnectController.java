@@ -27,7 +27,7 @@ public class ConnectController {
     private final StripeConnectService connectService;
 
     @PostMapping("/onboard")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Start onboarding", description = "Start Stripe Connect onboarding to accept member payments")
     public ResponseEntity<ApiResponse<ConnectOnboardingResponse>> startOnboarding() {
         UUID gymId = TenantContext.getCurrentTenantId();
@@ -36,7 +36,7 @@ public class ConnectController {
     }
 
     @GetMapping("/status")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get account status", description = "Get the current Stripe Connect account status")
     public ResponseEntity<ApiResponse<ConnectAccountStatusResponse>> getAccountStatus() {
         UUID gymId = TenantContext.getCurrentTenantId();
@@ -45,7 +45,7 @@ public class ConnectController {
     }
 
     @PostMapping("/refresh")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Refresh onboarding link", description = "Get a new onboarding link if the previous one expired")
     public ResponseEntity<ApiResponse<ConnectOnboardingResponse>> refreshOnboardingLink() {
         UUID gymId = TenantContext.getCurrentTenantId();
@@ -54,7 +54,7 @@ public class ConnectController {
     }
 
     @GetMapping("/dashboard")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Get dashboard link", description = "Get a link to the Stripe Express dashboard")
     public ResponseEntity<ApiResponse<String>> getDashboardLink() {
         UUID gymId = TenantContext.getCurrentTenantId();
@@ -63,7 +63,7 @@ public class ConnectController {
     }
 
     @GetMapping("/can-accept-payments")
-    @PreAuthorize("hasRole('GYM_OWNER') or hasRole('MANAGER') or hasRole('STAFF') or hasRole('SUPER_ADMIN')")
+    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('STAFF') or hasRole('SUPER_ADMIN')")
     @Operation(summary = "Check payment capability", description = "Check if the gym can accept member payments")
     public ResponseEntity<ApiResponse<Boolean>> canAcceptPayments() {
         UUID gymId = TenantContext.getCurrentTenantId();

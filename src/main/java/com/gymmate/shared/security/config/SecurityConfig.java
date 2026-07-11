@@ -67,11 +67,22 @@ public class SecurityConfig {
                         .permitAll()
                         // Role-based endpoints
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
-                        .requestMatchers("/api/classes/**").hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
-                        .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
+                        .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "OWNER", "MANAGER")
+                        .requestMatchers("/api/classes/**").hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN", "OWNER", "MANAGER")
+                        .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN", "SUPER_ADMIN", "OWNER", "MANAGER")
                         // All other endpoints require authentication
                         .anyRequest().authenticated())
+                // Without an entry point, unauthenticated requests (e.g. an
+                // EXPIRED access token) get Spring's default 403 — which the
+                // frontend cannot distinguish from "forbidden" and so never
+                // attempts a token refresh. Return a proper 401 instead.
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.getWriter().write(
+                                    "{\"success\":false,\"message\":\"Authentication required\"}");
+                        }))
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(tenantFilter, JwtAuthenticationFilter.class);

@@ -2,7 +2,7 @@
 # Server Configuration
 # ============================================
 server:
-  port: ${APP_PORT:8080}
+  port: ${APP_PORT:8081}
   servlet:
     context-path: /
   compression:
@@ -134,6 +134,8 @@ cors:
 
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:3000}
+  seed-demo-data: ${APP_SEED_DEMO_DATA:false}
+  debug-errors: ${APP_DEBUG_ERRORS:false}
 
   # Admin Credentials
   admin:
