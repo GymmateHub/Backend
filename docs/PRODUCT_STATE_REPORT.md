@@ -1,9 +1,11 @@
 # GymMate Backend — Product State Report
 
-**Date:** March 24, 2026
-**Version:** 1.0
-**Status:** Living Document
+**Date:** June 27, 2026
+**Version:** 0.1
+**Status:** Living Document (Pre-launch Draft)
 **Scope:** Full backend codebase audit and module-by-module status assessment
+
+> **Versioning:** part of the GymMateHub v0.1 pre-launch document set — tracked centrally in [`VERSIONS.md`](VERSIONS.md).
 
 ---
 
@@ -28,7 +30,7 @@
 
 GymMate is a **multi-tenant SaaS gym management platform** built as a Spring Boot 3.5.6 modular monolith in Java 21. The codebase contains approximately **300 Java files** across **17 modules**, with a clean/hexagonal architecture pattern (`api/`, `application/`, `domain/`, `infrastructure/`) applied consistently.
 
-The product is in a **mid-to-late stage development phase** (~70–75% MVP complete). Core infrastructure and most business modules are well-built with full vertical slices (domain → service → API). Three placeholder modules remain empty, and test coverage is growing but incomplete.
+The product is in a **mid-to-late stage development phase** (~75–80% MVP complete). Core infrastructure and most business modules are well-built with full vertical slices (domain → service → API). Access control and AI modules are now partially implemented; booking and dashboard remain placeholders.
 
 **The core business flow is operational end-to-end:**
 Register Organisation → Create Gym → Add Members → Sell Memberships → Book Classes → Process Payments → View Analytics
@@ -37,24 +39,24 @@ Register Organisation → Create Gym → Add Members → Sell Memberships → Bo
 
 ## 2. Tech Stack
 
-| Component | Technology | Version |
-|-----------|-----------|---------|
-| Language | Java | 21 |
-| Framework | Spring Boot | 3.5.6 |
-| Build Tool | Maven Wrapper | — |
-| Database (prod) | PostgreSQL | 15+ |
-| Database (dev/test) | H2 (in-memory) | — |
-| Migrations | Flyway | 10.8.1 |
-| Auth | JWT (jjwt) | 0.12.5 |
-| Security | Spring Security | (Boot managed) |
-| API Docs | SpringDoc OpenAPI | 2.8.13 |
-| Payments | Stripe Java SDK | 31.1.0 |
-| Cache/Rate Limiting | Redis | (Boot managed) |
-| Email | Spring Mail + Thymeleaf | (Boot managed) |
-| Code Gen | Lombok 1.18.32, MapStruct 1.5.5 | — |
-| Testing | JUnit 5, Spring Boot Test, Testcontainers 1.19.3 | — |
-| Containerisation | Docker (multi-stage, Temurin 21) | — |
-| Deployment | Railway via GitHub Actions | — |
+| Component           | Technology                                       | Version        |
+| ------------------- | ------------------------------------------------ | -------------- |
+| Language            | Java                                             | 21             |
+| Framework           | Spring Boot                                      | 3.5.6          |
+| Build Tool          | Maven Wrapper                                    | —              |
+| Database (prod)     | PostgreSQL                                       | 15+            |
+| Database (dev/test) | H2 (in-memory)                                   | —              |
+| Migrations          | Flyway                                           | 10.8.1         |
+| Auth                | JWT (jjwt)                                       | 0.12.5         |
+| Security            | Spring Security                                  | (Boot managed) |
+| API Docs            | SpringDoc OpenAPI                                | 2.8.13         |
+| Payments            | Stripe Java SDK                                  | 31.1.0         |
+| Cache/Rate Limiting | Redis                                            | (Boot managed) |
+| Email               | Spring Mail + Thymeleaf                          | (Boot managed) |
+| Code Gen            | Lombok 1.18.32, MapStruct 1.5.5                  | —              |
+| Testing             | JUnit 5, Spring Boot Test, Testcontainers 1.19.3 | —              |
+| Containerisation    | Docker (multi-stage, Temurin 21)                 | —              |
+| Deployment          | Railway via GitHub Actions                       | —              |
 
 ---
 
@@ -79,8 +81,8 @@ src/main/java/com/gymmate/
 ├── health/                          # Workouts, exercises, fitness goals, health metrics
 ├── analytics/                       # KPI dashboard and reporting
 ├── booking/                         # ⚠️ Empty placeholder
-├── access/                          # ⚠️ Empty placeholder
-├── ai/                              # ⚠️ Empty placeholder
+├── access/                          # 🔄 Partially implemented (scan/credentials/events + anti-tailgating core)
+├── ai/                              # 🔄 Partially implemented (event-driven plan generation prototype)
 └── dashboard/                       # ⚠️ Empty placeholder (analytics serves this role)
 ```
 
@@ -107,10 +109,10 @@ GymScopedEntity extends TenantEntity
 
 **Which entities extend what:**
 
-| Base Class | Entities |
-|------------|----------|
-| `BaseAuditEntity` | `Organisation`, `Subscription`, `SubscriptionTier`, `PaymentRefund`, `RefundRequestEntity`, `RefundAuditLog`, `StripeWebhookEvent`, `GymInvoice`, `PaymentMethod`, `PasswordResetToken`, `TokenBlacklist`, `PendingRegistration` |
-| `TenantEntity` | `User`, `Gym`, `Notification`, `NewsletterCampaign`, `NewsletterTemplate`, `NotificationSettings`, `UserInvite` |
+| Base Class        | Entities                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `BaseAuditEntity` | `Organisation`, `Subscription`, `SubscriptionTier`, `PaymentRefund`, `RefundRequestEntity`, `RefundAuditLog`, `StripeWebhookEvent`, `GymInvoice`, `PaymentMethod`, `PasswordResetToken`, `TokenBlacklist`, `PendingRegistration`                                                                                                                                                                                                                                              |
+| `TenantEntity`    | `User`, `Gym`, `Notification`, `NewsletterCampaign`, `NewsletterTemplate`, `NotificationSettings`, `UserInvite`                                                                                                                                                                                                                                                                                                                                                               |
 | `GymScopedEntity` | `Member`, `Staff`, `Trainer`, `GymClass`, `ClassCategory`, `ClassSchedule`, `ClassBooking`, `GymArea`, `MembershipPlan`, `MemberMembership`, `MemberInvoice`, `MemberPaymentMethod`, `FreezePolicy`, `Equipment`, `InventoryItem`, `Supplier`, `MaintenanceRecord`, `MaintenanceSchedule`, `StockMovement`, `Sale`, `SaleItem`, `CashDrawer`, `WorkoutLog`, `WorkoutExercise`, `Exercise`, `ExerciseCategory`, `FitnessGoal`, `HealthMetric`, `ProgressPhoto`, `WearableSync` |
 
 ### 3.3 Multi-Tenancy
@@ -130,27 +132,29 @@ Key files:
 
 The security layer is **production-grade** and one of the strongest areas of the codebase.
 
-| Feature | Implementation | File(s) |
-|---------|----------------|---------|
-| JWT Auth | Access + refresh tokens, configurable expiration | `JwtService`, `JwtAuthenticationFilter` |
-| Token Blacklist | Revoke tokens on logout; scheduled cleanup | `TokenBlacklist`, `TokenBlacklistCleanupTask` |
-| Token Rotation | Refresh token rotation to prevent reuse | `TokenRotationService` |
-| RBAC | 8 roles with URL-pattern + method-level enforcement | `SecurityConfig`, `@EnableMethodSecurity` |
-| Account Lockout | Configurable max attempts (default 5), 30-min lockout | `LoginAttemptService` |
-| Password Policy | Min 12 chars, special chars, history tracking (12 previous) | `PasswordPolicyService` |
-| Rate Limiting | IP-based via security filter | `RateLimitingFilter`, `RateLimitingService` |
-| Input Sanitization | XSS prevention with custom validators | `InputSanitizationService`, `@NoXss`, `@SafeHtml` |
-| Security Headers | CSP, HSTS, X-Frame-Options, etc. | `SecurityHeadersFilter` |
-| Security Audit | AOP-based audit logging on sensitive operations | `@AuditLog`, `SecurityAuditAspect` |
-| OTP/2FA | TOTP-based OTP for email verification and 2FA | `TotpService` |
-| Secure File Upload | Type validation, size limits, path traversal prevention | `SecureFileUploadService` |
-| Super Admin Init | Auto-created on startup from env vars | `SuperAdminInitializer` |
+| Feature            | Implementation                                              | File(s)                                           |
+| ------------------ | ----------------------------------------------------------- | ------------------------------------------------- |
+| JWT Auth           | Access + refresh tokens, configurable expiration            | `JwtService`, `JwtAuthenticationFilter`           |
+| Token Blacklist    | Revoke tokens on logout; scheduled cleanup                  | `TokenBlacklist`, `TokenBlacklistCleanupTask`     |
+| Token Rotation     | Refresh token rotation to prevent reuse                     | `TokenRotationService`                            |
+| RBAC               | 8 roles with URL-pattern + method-level enforcement         | `SecurityConfig`, `@EnableMethodSecurity`         |
+| Account Lockout    | Configurable max attempts (default 5), 30-min lockout       | `LoginAttemptService`                             |
+| Password Policy    | Min 12 chars, special chars, history tracking (12 previous) | `PasswordPolicyService`                           |
+| Rate Limiting      | IP-based via security filter                                | `RateLimitingFilter`, `RateLimitingService`       |
+| Input Sanitization | XSS prevention with custom validators                       | `InputSanitizationService`, `@NoXss`, `@SafeHtml` |
+| Security Headers   | CSP, HSTS, X-Frame-Options, etc.                            | `SecurityHeadersFilter`                           |
+| Security Audit     | AOP-based audit logging on sensitive operations             | `@AuditLog`, `SecurityAuditAspect`                |
+| OTP/2FA            | TOTP-based OTP for email verification and 2FA               | `TotpService`                                     |
+| Secure File Upload | Type validation, size limits, path traversal prevention     | `SecureFileUploadService`                         |
+| Super Admin Init   | Auto-created on startup from env vars                       | `SuperAdminInitializer`                           |
 
 **Roles:** `SUPER_ADMIN`, `ADMIN`, `GYM_OWNER`, `MANAGER`, `TRAINER`, `STAFF`, `MEMBER`
 
 ---
 
 ## 4. Module-by-Module Status
+
+Status legend: `✅ Complete` (fully delivered), `🔄 Partial` (usable but not full parity), `📋 Planned` (not implemented yet), `⚠️ Not started` (placeholder only), `⚠️ Stub/Limited` (scaffolded path).
 
 ### 4.1 Fully Implemented Modules ✅
 
@@ -250,14 +254,14 @@ The security layer is **production-grade** and one of the strongest areas of the
   - **Breakdowns:** Revenue by source, members by plan, bookings by class
   - **Additional:** Churn rate, expiring memberships, overdue payments, low stock items
 
-### 4.2 Scaffolded But Empty ⚠️
+### 4.2 Partially Implemented / Placeholder Modules ⚠️
 
-| Module | Directories | Purpose (Inferred) | Notes |
-|--------|-------------|-------------------|-------|
-| `booking/` | `api/`, `application/`, `domain/`, `infrastructure/` (all empty) | Standalone booking system | Class-level booking is fully handled in the `classes` module; this may be for facility/equipment booking |
-| `access/` | `api/`, `application/`, `domain/`, `infrastructure/` (all empty) | Gym access control / check-in gates | Physical access management (turnstiles, QR check-in, etc.) |
-| `ai/` | `api/`, `application/`, `domain/`, `infrastructure/` (all empty) | AI-powered features | Workout recommendations, churn prediction, etc. |
-| `dashboard/` | `api/`, `application/`, `domain/`, `infrastructure/` (all empty) | Dashboard aggregation | Currently served by `analytics` module; may be intended as a unified dashboard API |
+| Module       | Status                 | Purpose                              | Notes                                                                                                                                                       |
+| ------------ | ---------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `booking/`   | ⚠️ Not started         | Standalone booking system            | Class-level booking is already handled in `classes`; module directories remain empty                                                                        |
+| `access/`    | 🔄 Partial             | Gym access control / anti-tailgating | `AccessController`, `AccessService`, domain entities, migration `V10__Access_Control_System.sql`; TURNSTILE/CV adapters and access SSE stream still pending |
+| `ai/`        | 🔄 Partial (prototype) | AI-powered coaching                  | `AiTrainerService` + `AiRecommendation` implemented; full PRD model (`MemberPlanProfile`, `WorkoutPlan`, `MealPlan`) and `/api/v1/ai/**` endpoints pending  |
+| `dashboard/` | ⚠️ Not started         | Dashboard aggregation                | Analytics is currently served by `analytics` module                                                                                                         |
 
 ---
 
@@ -271,28 +275,28 @@ Tests **exist and pass in CI**. The surefire reports show **43 test classes** ac
 
 ### 5.2 Test Infrastructure
 
-| Component | File | Purpose |
-|-----------|------|---------|
-| Base integration test | `config/BaseIntegrationTest.java` | Shared Spring Boot test config |
-| Test fixtures | `fixtures/TestFixtures.java` | Reusable test data factory |
-| Test profile | `application-test.yml` | H2 in-memory DB, Flyway disabled |
+| Component             | File                              | Purpose                          |
+| --------------------- | --------------------------------- | -------------------------------- |
+| Base integration test | `config/BaseIntegrationTest.java` | Shared Spring Boot test config   |
+| Test fixtures         | `fixtures/TestFixtures.java`      | Reusable test data factory       |
+| Test profile          | `application-test.yml`            | H2 in-memory DB, Flyway disabled |
 
 ### 5.3 Test Coverage by Module
 
-| Module | Test Classes | Test Types | Files |
-|--------|-------------|------------|-------|
-| **Payment** | 11 | Domain (8), API (2), Service (1) | `GymInvoiceTest`, `PaymentRefundTest`, `RefundAuditLogTest`, `RefundRequestEntityTest`, `InvoiceStatusTest`, `PaymentMethodEntityTest`, `RefundReasonCategoryTest`, `RefundRequestStatusTest`, `RefundStatusTest`, `RefundTypeTest`, `GymOwnerRefundControllerTest`, `MemberRefundControllerTest`, `RefundRequestServiceTest`, `PaymentMethodTest`, `StripeWebhookNewHandlersTest` |
-| **Notification** | 9 | Domain (4), Service (4), Infra (1) | `NotificationTest`, `NewsletterCampaignDomainTest`, `NewsletterTemplateDomainTest`, `CampaignRecipientDomainTest`, `NotificationServiceTest`, `AdminNotificationEventListenerTest`, `NewsletterCampaignServiceTest`, `NewsletterTemplateServiceTest`, `NotificationRepositoryAdapterTest` |
-| **Notification API** | 1 | Controller | `NotificationControllerTest` |
-| **Organisation** | 2 | API (1), Service (1) | `OrganisationControllerTest`, `OrganisationServiceTest` |
-| **Gym** | 3 | API (1), Domain (2) | `GymControllerGetMyGymsTest`, `GymDomainTest`, `GymTest` |
-| **User** | 2 | API (1), Domain (1) | `MemberControllerTenantTest`, `UserEntityTest` |
-| **Classes** | 2 | API (1), Service (1) | `ClassCategoryControllerTest`, `ClassBookingServiceTest` |
-| **Membership** | 2 | Service (1), Domain (1) | `MembershipServiceTest`, `MembershipDomainTest` |
-| **Subscription** | 1 | Domain | `SubscriptionDomainTest` |
-| **POS** | 3 | Service (1), Domain (2) | `PosServiceTest`, `SaleDomainTest`, `CashDrawerDomainTest` |
-| **Analytics** | 1 | Service | `AnalyticsServiceTest` |
-| **Shared** | 2 | Security (1), Domain (1) | `AuthenticationServiceTest`, `BaseEntityTest` |
+| Module               | Test Classes | Test Types                         | Files                                                                                                                                                                                                                                                                                                                                                                              |
+| -------------------- | ------------ | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Payment**          | 11           | Domain (8), API (2), Service (1)   | `GymInvoiceTest`, `PaymentRefundTest`, `RefundAuditLogTest`, `RefundRequestEntityTest`, `InvoiceStatusTest`, `PaymentMethodEntityTest`, `RefundReasonCategoryTest`, `RefundRequestStatusTest`, `RefundStatusTest`, `RefundTypeTest`, `GymOwnerRefundControllerTest`, `MemberRefundControllerTest`, `RefundRequestServiceTest`, `PaymentMethodTest`, `StripeWebhookNewHandlersTest` |
+| **Notification**     | 9            | Domain (4), Service (4), Infra (1) | `NotificationTest`, `NewsletterCampaignDomainTest`, `NewsletterTemplateDomainTest`, `CampaignRecipientDomainTest`, `NotificationServiceTest`, `AdminNotificationEventListenerTest`, `NewsletterCampaignServiceTest`, `NewsletterTemplateServiceTest`, `NotificationRepositoryAdapterTest`                                                                                          |
+| **Notification API** | 1            | Controller                         | `NotificationControllerTest`                                                                                                                                                                                                                                                                                                                                                       |
+| **Organisation**     | 2            | API (1), Service (1)               | `OrganisationControllerTest`, `OrganisationServiceTest`                                                                                                                                                                                                                                                                                                                            |
+| **Gym**              | 3            | API (1), Domain (2)                | `GymControllerGetMyGymsTest`, `GymDomainTest`, `GymTest`                                                                                                                                                                                                                                                                                                                           |
+| **User**             | 2            | API (1), Domain (1)                | `MemberControllerTenantTest`, `UserEntityTest`                                                                                                                                                                                                                                                                                                                                     |
+| **Classes**          | 2            | API (1), Service (1)               | `ClassCategoryControllerTest`, `ClassBookingServiceTest`                                                                                                                                                                                                                                                                                                                           |
+| **Membership**       | 2            | Service (1), Domain (1)            | `MembershipServiceTest`, `MembershipDomainTest`                                                                                                                                                                                                                                                                                                                                    |
+| **Subscription**     | 1            | Domain                             | `SubscriptionDomainTest`                                                                                                                                                                                                                                                                                                                                                           |
+| **POS**              | 3            | Service (1), Domain (2)            | `PosServiceTest`, `SaleDomainTest`, `CashDrawerDomainTest`                                                                                                                                                                                                                                                                                                                         |
+| **Analytics**        | 1            | Service                            | `AnalyticsServiceTest`                                                                                                                                                                                                                                                                                                                                                             |
+| **Shared**           | 2            | Security (1), Domain (1)           | `AuthenticationServiceTest`, `BaseEntityTest`                                                                                                                                                                                                                                                                                                                                      |
 
 ### 5.4 Testing Gaps
 
@@ -308,33 +312,34 @@ Tests **exist and pass in CI**. The surefire reports show **43 test classes** ac
 
 ## 6. External Integrations
 
-| Integration | Status | Key Files | Notes |
-|-------------|--------|-----------|-------|
-| **Stripe Payments** | ✅ Implemented | `StripePaymentService`, `StripeConnectService`, `StripeWebhookService`, `StripeConfig` | Platform subscriptions (org-level) + member payments via Stripe Connect (gym-level). Webhook processing for charge, refund, dispute events. |
-| **Email (SMTP)** | ✅ Implemented | `EmailService`, `EmailChannelSender`, templates in `resources/templates/` | 5 Thymeleaf templates: `welcome.html`, `registration-otp.html`, `subscription-expired.html`, `subscription-renewal.html`, `subscription-trial-ending.html`. Configured for Mailtrap in dev. |
-| **Redis** | ✅ Configured | `RedisConfig`, `RateLimitingService`, `RateLimitService` | Used for API rate limiting and token management. Optional in dev (graceful degradation). |
-| **SMS** | ⚠️ Scaffolded | `SmsChannelSender` | Channel sender exists but likely a stub — no SMS provider SDK in `pom.xml` |
-| **WhatsApp** | ⚠️ Scaffolded | `WhatsAppChannelSender` | Channel sender exists but likely a stub — no WhatsApp Business API SDK in `pom.xml` |
-| **Wearable Devices** | ⚠️ Entity Only | `WearableSync` entity, `WearableSyncRepository` | Data model and repository exist but no external API integration |
+| Integration          | Status         | Key Files                                                                              | Notes                                                                                                                                                                                       |
+| -------------------- | -------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Stripe Payments**  | ✅ Implemented | `StripePaymentService`, `StripeConnectService`, `StripeWebhookService`, `StripeConfig` | Platform subscriptions (org-level) + member payments via Stripe Connect (gym-level). Webhook processing for charge, refund, dispute events.                                                 |
+| **Email (SMTP)**     | ✅ Implemented | `EmailService`, `EmailChannelSender`, templates in `resources/templates/`              | 5 Thymeleaf templates: `welcome.html`, `registration-otp.html`, `subscription-expired.html`, `subscription-renewal.html`, `subscription-trial-ending.html`. Configured for Mailtrap in dev. |
+| **Redis**            | ✅ Configured  | `RedisConfig`, `RateLimitingService`, `RateLimitService`                               | Used for API rate limiting and token management. Optional in dev (graceful degradation).                                                                                                    |
+| **SMS**              | ⚠️ Scaffolded  | `SmsChannelSender`                                                                     | Channel sender exists but likely a stub — no SMS provider SDK in `pom.xml`                                                                                                                  |
+| **WhatsApp**         | ⚠️ Scaffolded  | `WhatsAppChannelSender`                                                                | Channel sender exists but likely a stub — no WhatsApp Business API SDK in `pom.xml`                                                                                                         |
+| **Wearable Devices** | ⚠️ Entity Only | `WearableSync` entity, `WearableSyncRepository`                                        | Data model and repository exist but no external API integration                                                                                                                             |
 
 ---
 
 ## 7. Database Migrations
 
-Flyway is configured with **9 migration files** tracking schema evolution. In development, `hibernate.ddl-auto=update` is used and Flyway is disabled by default.
+Flyway is configured with **10 migration files** tracking schema evolution. In development, `hibernate.ddl-auto=update` is used and Flyway is disabled by default.
 
-| Migration | Description | Key Changes |
-|-----------|-------------|-------------|
-| `V1__Complete_Schema.sql` | Initial full schema | All core tables: users, organisations, gyms, memberships, classes, etc. |
-| `V1_1__Add_Missing_Columns_To_Equipment.sql` | Equipment patch | Additional columns for equipment tracking |
-| `V2__Newsletter_Tables.sql` | Newsletter system | `newsletter_campaigns`, `newsletter_templates`, `campaign_recipients` |
-| `V3__Multi_Channel_Support.sql` | Notification channels | SMS/WhatsApp support for notification delivery |
-| `V4__POS_Module.sql` | Point-of-sale | `pos_sales`, `sale_items`, `cash_drawers` |
-| `V5__Admin_Notification_System.sql` | Admin notifications | `notifications` table with org-level scoping |
-| `V6__Gym_Level_Notifications.sql` | Gym-scoped notifications | Added gym-level notification support and indexes |
-| `V7__User_Invites.sql` | Invite system | `user_invites` table for staff/member invitations |
-| `V8__Add_GymOwner_Manager_Roles.sql` | Extended RBAC | GYM_OWNER and MANAGER roles |
-| `V9__Tenant_Isolation_And_Waitlist.sql` | Multi-tenancy hardening | Tenant isolation improvements and class waitlist support |
+| Migration                                    | Description              | Key Changes                                                             |
+| -------------------------------------------- | ------------------------ | ----------------------------------------------------------------------- |
+| `V1__Complete_Schema.sql`                    | Initial full schema      | All core tables: users, organisations, gyms, memberships, classes, etc. |
+| `V1_1__Add_Missing_Columns_To_Equipment.sql` | Equipment patch          | Additional columns for equipment tracking                               |
+| `V2__Newsletter_Tables.sql`                  | Newsletter system        | `newsletter_campaigns`, `newsletter_templates`, `campaign_recipients`   |
+| `V3__Multi_Channel_Support.sql`              | Notification channels    | SMS/WhatsApp support for notification delivery                          |
+| `V4__POS_Module.sql`                         | Point-of-sale            | `pos_sales`, `sale_items`, `cash_drawers`                               |
+| `V5__Admin_Notification_System.sql`          | Admin notifications      | `notifications` table with org-level scoping                            |
+| `V6__Gym_Level_Notifications.sql`            | Gym-scoped notifications | Added gym-level notification support and indexes                        |
+| `V7__User_Invites.sql`                       | Invite system            | `user_invites` table for staff/member invitations                       |
+| `V8__Add_GymOwner_Manager_Roles.sql`         | Extended RBAC            | GYM_OWNER and MANAGER roles                                             |
+| `V9__Tenant_Isolation_And_Waitlist.sql`      | Multi-tenancy hardening  | Tenant isolation improvements and class waitlist support                |
+| `V10__Access_Control_System.sql`             | Access control module    | Access points, credentials, schedules, door benefits, event audit trail |
 
 ---
 
@@ -351,11 +356,11 @@ Flyway is configured with **9 migration files** tracking schema evolution. In de
 └─────────┘     └─────────┘     └──────────────────┘
 ```
 
-| Job | Steps | Condition |
-|-----|-------|-----------|
-| **Build** | Checkout → JDK 21 Temurin + Maven cache → `./mvnw clean package -DskipTests` → `./mvnw -B test -Dspring.profiles.active=test` | Always |
-| **Docker** | Docker Buildx → Login to Docker Hub → Multi-stage build + push (tags: `<branch>`, `<branch>-<sha>`, `latest` for main) | Push to main/dev only |
-| **Deploy** | Install Railway CLI → Validate secrets → `railway up` | Push to main/dev only |
+| Job        | Steps                                                                                                                         | Condition             |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| **Build**  | Checkout → JDK 21 Temurin + Maven cache → `./mvnw clean package -DskipTests` → `./mvnw -B test -Dspring.profiles.active=test` | Always                |
+| **Docker** | Docker Buildx → Login to Docker Hub → Multi-stage build + push (tags: `<branch>`, `<branch>-<sha>`, `latest` for main)        | Push to main/dev only |
+| **Deploy** | Install Railway CLI → Validate secrets → `railway up`                                                                         | Push to main/dev only |
 
 **Required Secrets:** `DOCKER_USERNAME`, `DOCKER_PASSWORD`, `RAILWAY_TOKEN`, `RAILWAY_SERVICE_ID`
 
@@ -391,18 +396,18 @@ Basic single-service setup. PostgreSQL service is **commented out** and Redis is
 
 ## 10. Key Risks & Technical Debt
 
-| # | Risk | Detail | Severity |
-|---|------|--------|----------|
-| 1 | **Inconsistent repository pattern** | Some modules (`payment`, `user`) use JPA repositories directly in services. Others (`inventory`, `health`) use proper port/adapter pattern with domain repository interfaces. | Medium |
-| 2 | **H2 compatibility gaps** | `GymClass.equipmentNeeded` uses `text[]` (PostgreSQL array type) which won't work with H2. Some `jsonb` columns may also cause issues. | Medium |
-| 3 | **Stale copilot instructions** | `.github/copilot-instructions.md` references `~98 files`, `com.GymMateHub` package, and "no tests" — all outdated. Misleads AI assistants and new developers. | Low |
-| 4 | **Empty placeholder modules** | `booking/`, `access/`, `ai/`, `dashboard/` have empty directory trees. Clutters the codebase and creates false expectations. | Low |
-| 5 | **No API versioning** | All endpoints are `/api/...` with no version prefix (e.g., `/api/v1/...`). Breaking changes will affect all clients. | Medium |
-| 6 | **Large monolithic services** | `AnalyticsService` (851 lines), `AuthenticationService` (524 lines) could benefit from decomposition into smaller, focused services. | Medium |
-| 7 | **JSON columns as raw Strings** | `preferences`, `features_enabled`, `billing_address`, `amenities`, `metadata` etc. are stored as `String` with `@JdbcTypeCode(SqlTypes.JSON)` — no type-safe Java objects, no compile-time validation. | Medium |
-| 8 | **Incomplete Docker Compose** | PostgreSQL service is commented out; Redis service is absent. Cannot `docker-compose up` for a full dev environment. | Low |
-| 9 | **No Testcontainers usage** | `testcontainers` and `testcontainers-postgresql` are in `pom.xml` but no tests use them. Integration tests run against H2 only. | Medium |
-| 10 | **Shell scripts have hardcoded macOS paths** | `build.sh`, `run.sh`, `stop.sh` reference macOS-specific Java paths. Unusable on Linux/CI without modification. | Low |
+| #   | Risk                                         | Detail                                                                                                                                                                                                 | Severity |
+| --- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- |
+| 1   | **Inconsistent repository pattern**          | Some modules (`payment`, `user`) use JPA repositories directly in services. Others (`inventory`, `health`) use proper port/adapter pattern with domain repository interfaces.                          | Medium   |
+| 2   | **H2 compatibility gaps**                    | `GymClass.equipmentNeeded` uses `text[]` (PostgreSQL array type) which won't work with H2. Some `jsonb` columns may also cause issues.                                                                 | Medium   |
+| 3   | **Stale copilot instructions**               | `.github/copilot-instructions.md` references `~98 files`, `com.GymMateHub` package, and "no tests" — all outdated. Misleads AI assistants and new developers.                                          | Low      |
+| 4   | **Partially delivered feature modules**      | `access/` and `ai/` now contain real code but are still below PRD scope; docs and rollout plans must reflect MVP vs planned scope clearly.                                                             | Medium   |
+| 5   | **No API versioning**                        | All endpoints are `/api/...` with no version prefix (e.g., `/api/v1/...`). Breaking changes will affect all clients.                                                                                   | Medium   |
+| 6   | **Large monolithic services**                | `AnalyticsService` (851 lines), `AuthenticationService` (524 lines) could benefit from decomposition into smaller, focused services.                                                                   | Medium   |
+| 7   | **JSON columns as raw Strings**              | `preferences`, `features_enabled`, `billing_address`, `amenities`, `metadata` etc. are stored as `String` with `@JdbcTypeCode(SqlTypes.JSON)` — no type-safe Java objects, no compile-time validation. | Medium   |
+| 8   | **Incomplete Docker Compose**                | PostgreSQL service is commented out; Redis service is absent. Cannot `docker-compose up` for a full dev environment.                                                                                   | Low      |
+| 9   | **No Testcontainers usage**                  | `testcontainers` and `testcontainers-postgresql` are in `pom.xml` but no tests use them. Integration tests run against H2 only.                                                                        | Medium   |
+| 10  | **Shell scripts have hardcoded macOS paths** | `build.sh`, `run.sh`, `stop.sh` reference macOS-specific Java paths. Unusable on Linux/CI without modification.                                                                                        | Low      |
 
 ---
 
@@ -410,32 +415,32 @@ Basic single-service setup. PostgreSQL service is **commented out** and Redis is
 
 ### Must-Have
 
-| # | Gap | Description |
-|---|-----|-------------|
-| 1 | **Integration tests with real DB** | Use Testcontainers (already in `pom.xml`) to test against PostgreSQL. H2 hides PostgreSQL-specific issues (arrays, jsonb, uuidv7). |
-| 2 | **Complete Docker Compose** | Uncomment PostgreSQL, add Redis, add proper volume mounts and health checks for a one-command dev environment. |
-| 3 | **API versioning** | Add `/api/v1/` prefix to all endpoints before any public/frontend integration. |
-| 4 | **Expand test coverage** | Priority modules: `health`, `inventory`, `subscription` services, `GymService`, user-related services. |
-| 5 | **Update copilot instructions** | Reflect current package name (`com.gymmate`), file count (~300), test status (43 test classes), and module list. |
+| #   | Gap                                | Description                                                                                                                        |
+| --- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Integration tests with real DB** | Use Testcontainers (already in `pom.xml`) to test against PostgreSQL. H2 hides PostgreSQL-specific issues (arrays, jsonb, uuidv7). |
+| 2   | **Complete Docker Compose**        | Uncomment PostgreSQL, add Redis, add proper volume mounts and health checks for a one-command dev environment.                     |
+| 3   | **API versioning**                 | Add `/api/v1/` prefix to all endpoints before any public/frontend integration.                                                     |
+| 4   | **Expand test coverage**           | Priority modules: `health`, `inventory`, `subscription` services, `GymService`, user-related services.                             |
+| 5   | **Update copilot instructions**    | Reflect current package name (`com.gymmate`), file count (~300), test status (43 test classes), and module list.                   |
 
 ### Should-Have
 
-| # | Gap | Description |
-|---|-----|-------------|
-| 6 | **Observability** | Add structured logging (JSON format), distributed tracing (Micrometer + OTLP), and alerting. Currently only basic actuator endpoints. |
-| 7 | **Type-safe JSON columns** | Replace raw `String` JSON columns with proper Java records/classes using Jackson serialisation. |
-| 8 | **SMS/WhatsApp implementation** | Add actual provider SDKs (Twilio, WhatsApp Business API) to make multi-channel notifications functional. |
-| 9 | **Access/check-in module** | Implement gym access control (QR codes, physical access, check-in/check-out tracking). |
-| 10 | **Secrets management** | Move from `.env` file to proper secrets management (Vault, AWS Secrets Manager, or Railway's built-in). |
+| #   | Gap                             | Description                                                                                                                           |
+| --- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 6   | **Observability**               | Add structured logging (JSON format), distributed tracing (Micrometer + OTLP), and alerting. Currently only basic actuator endpoints. |
+| 7   | **Type-safe JSON columns**      | Replace raw `String` JSON columns with proper Java records/classes using Jackson serialisation.                                       |
+| 8   | **SMS/WhatsApp implementation** | Add actual provider SDKs (Twilio, WhatsApp Business API) to make multi-channel notifications functional.                              |
+| 9   | **Access/check-in module**      | Implement gym access control (QR codes, physical access, check-in/check-out tracking).                                                |
+| 10  | **Secrets management**          | Move from `.env` file to proper secrets management (Vault, AWS Secrets Manager, or Railway's built-in).                               |
 
 ### Nice-to-Have
 
-| # | Gap | Description |
-|---|-----|-------------|
-| 11 | **AI module** | Workout recommendations, churn prediction, revenue forecasting. |
-| 12 | **Booking module** | Facility/equipment booking (separate from class booking). |
-| 13 | **API documentation** | Generate versioned API docs from OpenAPI spec, publish changelog. |
-| 14 | **Performance testing** | Load test critical paths (login, booking, analytics dashboard). |
+| #   | Gap                     | Description                                                       |
+| --- | ----------------------- | ----------------------------------------------------------------- |
+| 11  | **AI module**           | Workout recommendations, churn prediction, revenue forecasting.   |
+| 12  | **Booking module**      | Facility/equipment booking (separate from class booking).         |
+| 13  | **API documentation**   | Generate versioned API docs from OpenAPI spec, publish changelog. |
+| 14  | **Performance testing** | Load test critical paths (login, booking, analytics dashboard).   |
 
 ---
 
@@ -455,5 +460,4 @@ The primary remaining work is:
 
 ---
 
-*This report was generated from a full codebase audit on March 24, 2026. It should be updated when major modules are completed or architectural changes are made.*
-
+_This report was generated from a full codebase audit on March 24, 2026. It should be updated when major modules are completed or architectural changes are made._
