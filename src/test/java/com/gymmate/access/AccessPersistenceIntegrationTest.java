@@ -57,6 +57,10 @@ class AccessPersistenceIntegrationTest {
     // Spring AI's OpenAiChatModel is an eager bean that throws if the key is
     // blank; a dummy value lets the context load (no real OpenAI call is made).
     registry.add("spring.ai.openai.api-key", () -> "test-openai-key");
+    // SuperAdminInitializer (ApplicationReadyEvent) requires non-blank admin
+    // email + password; firstName/lastName already default to System/Admin.
+    registry.add("app.admin.email", () -> "admin@gymmate.test");
+    registry.add("app.admin.password", () -> "Admin!Test123");
   }
 
   @Autowired AccessPointRepository accessPointRepository;
