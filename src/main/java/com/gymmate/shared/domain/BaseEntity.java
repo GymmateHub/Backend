@@ -21,8 +21,7 @@ public abstract class BaseEntity {
   @Column(
     name = "id",
     updatable = false,
-    nullable = false,
-    columnDefinition = "UUID DEFAULT uuidv7()"
+    nullable = false
   )
   private UUID id;
 }
