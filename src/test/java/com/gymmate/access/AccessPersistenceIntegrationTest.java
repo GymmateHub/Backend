@@ -46,6 +46,12 @@ class AccessPersistenceIntegrationTest {
     registry.add("spring.datasource.username", postgres::getUsername);
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
+    // The `test` profile (application-test.yml) forces H2Dialect, but this test
+    // runs against a real Postgres container. hibernate.dialect (properties.*)
+    // takes precedence over database-platform, so override BOTH — otherwise
+    // Hibernate maps SqlTypes.JSON to a binary type and binds jsonb columns as
+    // bytea ("column is of type jsonb but expression is of type bytea").
+    registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
     registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
     // Mirror production (application.yml: ddl-auto=${JPA_DDL_AUTO:update}, Flyway on):
     // Flyway builds the versioned schema (V1..V12) and Hibernate reconciles any
