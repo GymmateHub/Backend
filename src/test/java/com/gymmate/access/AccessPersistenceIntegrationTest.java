@@ -47,11 +47,11 @@ class AccessPersistenceIntegrationTest {
     registry.add("spring.datasource.password", postgres::getPassword);
     registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
     registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
-    // Mirror production: build the schema with the real Flyway migrations and let
-    // Hibernate only validate. Using ddl-auto=create-drop instead makes Hibernate
-    // emit DDL for BaseEntity's id (@GeneratedValue(IDENTITY) + DEFAULT uuidv7()),
-    // which Postgres rejects with "both default and identity specified".
-    registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
+    // Mirror production (application.yml: ddl-auto=${JPA_DDL_AUTO:update}, Flyway on):
+    // Flyway builds the versioned schema (V1..V12) and Hibernate reconciles any
+    // entity drift. Using ddl-auto=create-drop instead makes Hibernate emit DDL
+    // for BaseEntity's id (IDENTITY + DEFAULT uuidv7()), which Postgres rejects.
+    registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
     registry.add("spring.flyway.enabled", () -> "true");
     registry.add("spring.flyway.locations", () -> "classpath:db/migration");
   }
