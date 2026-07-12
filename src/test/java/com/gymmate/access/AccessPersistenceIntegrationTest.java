@@ -54,6 +54,9 @@ class AccessPersistenceIntegrationTest {
     registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
     registry.add("spring.flyway.enabled", () -> "true");
     registry.add("spring.flyway.locations", () -> "classpath:db/migration");
+    // Spring AI's OpenAiChatModel is an eager bean that throws if the key is
+    // blank; a dummy value lets the context load (no real OpenAI call is made).
+    registry.add("spring.ai.openai.api-key", () -> "test-openai-key");
   }
 
   @Autowired AccessPointRepository accessPointRepository;
