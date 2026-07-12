@@ -13,6 +13,7 @@ import com.gymmate.access.infrastructure.AccessPointRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -72,6 +73,27 @@ class AccessPersistenceIntegrationTest {
   @Autowired AccessPointRepository accessPointRepository;
   @Autowired AccessCredentialRepository accessCredentialRepository;
   @Autowired AccessEventRepository accessEventRepository;
+  @Autowired JdbcTemplate jdbc;
+
+  // access_* rows have NOT NULL FKs to organisations/gyms (and members for
+  // credentials). Seed the minimal parent rows so the inserts satisfy the
+  // foreign keys defined in V10__Access_Control_System.sql.
+  private void seedOrgAndGym(UUID orgId, UUID gymId) {
+    jdbc.update("INSERT INTO organisations (id, name, slug) VALUES (?, ?, ?)",
+        orgId, "Test Org", "org-" + orgId);
+    jdbc.update("INSERT INTO gyms (id, organisation_id, name, slug) VALUES (?, ?, ?, ?)",
+        gymId, orgId, "Test Gym", "gym-" + gymId);
+  }
+
+  private UUID seedMember(UUID orgId, UUID gymId) {
+    UUID userId = UUID.randomUUID();
+    jdbc.update("INSERT INTO users (id, email) VALUES (?, ?)",
+        userId, "member-" + userId + "@test.local");
+    UUID memberId = UUID.randomUUID();
+    jdbc.update("INSERT INTO members (id, organisation_id, gym_id, user_id) VALUES (?, ?, ?, ?)",
+        memberId, orgId, gymId, userId);
+    return memberId;
+  }
 
   private AccessPoint persistPoint(UUID gymId, UUID orgId) {
     AccessPoint p = AccessPoint.builder().name("Main Door").mode(AccessPointMode.SOFTWARE)
@@ -84,7 +106,9 @@ class AccessPersistenceIntegrationTest {
   @Test
   void persistsAccessPointWithGeneratedId() {
     UUID gymId = UUID.randomUUID();
-    AccessPoint saved = persistPoint(gymId, UUID.randomUUID());
+    UUID orgId = UUID.randomUUID();
+    seedOrgAndGym(orgId, gymId);
+    AccessPoint saved = persistPoint(gymId, orgId);
 
     assertNotNull(saved.getId());
     assertEquals(1, accessPointRepository.findByGymId(gymId).size());
@@ -93,11 +117,14 @@ class AccessPersistenceIntegrationTest {
   @Test
   void findsCredentialByTokenHash() {
     UUID gymId = UUID.randomUUID();
+    UUID orgId = UUID.randomUUID();
+    seedOrgAndGym(orgId, gymId);
+    UUID memberId = seedMember(orgId, gymId);
     AccessCredential c = AccessCredential.builder()
-        .memberId(UUID.randomUUID()).type(CredentialType.QR).tokenHash("hash-" + UUID.randomUUID())
+        .memberId(memberId).type(CredentialType.QR).tokenHash("hash-" + UUID.randomUUID())
         .build();
     c.setGymId(gymId);
-    c.setOrganisationId(UUID.randomUUID());
+    c.setOrganisationId(orgId);
     AccessCredential saved = accessCredentialRepository.save(c);
 
     Optional<AccessCredential> found =
@@ -111,6 +138,7 @@ class AccessPersistenceIntegrationTest {
     UUID gymId = UUID.randomUUID();
     UUID orgId = UUID.randomUUID();
     UUID memberId = UUID.randomUUID();
+    seedOrgAndGym(orgId, gymId);
     AccessPoint point = persistPoint(gymId, orgId);
 
     AccessEvent granted = AccessEvent.builder()
