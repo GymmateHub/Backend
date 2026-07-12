@@ -1,3 +1,9 @@
+# ═══════════════════════════════════════════════════════════════════════════
+# GymMateHub/Backend — CI/CD Pipeline
+# Triggers: push/PR to main, dev
+# Steps: build + test → build & push image to GHCR → dispatch deploy to
+#        Vantroxia-Labs/infra (which rolls the stack on the VPS).
+# ═══════════════════════════════════════════════════════════════════════════
 name: GymMate-hub CI/CD Pipeline
 
 on:
@@ -7,18 +13,19 @@ on:
     branches: [ "main", "dev" ]
 
 env:
-  REGISTRY: docker.io
-  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/gymmate-backend
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/gymmatehub/gymmate-backend
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Step 1: Build + Test
+  # ─────────────────────────────────────────────────────────────────────────
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Use Java 21 (Temurin) + Maven cache
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -26,7 +33,6 @@ jobs:
           java-version: '21'
           cache: 'maven'
 
-      # Prefer the Maven Wrapper if present for reproducible builds
       - name: Make mvnw executable
         run: chmod +x mvnw
 
@@ -36,32 +42,21 @@ jobs:
       - name: Run tests with test profile
         run: ./mvnw -B test -Dspring.profiles.active=test
         env:
-          # Ensure Flyway is disabled during tests (H2 doesn't support uuidv7())
+          # Flyway disabled during tests (H2 doesn't support uuidv7())
           SPRING_FLYWAY_ENABLED: false
 
-      - name: Sanitize branch name for artifact
-        id: sanitize
-        shell: bash
-        run: |
-          # Sanitize branch name by replacing invalid characters
-          BRANCH_NAME="${{ github.ref_name }}"
-          SANITIZED_NAME=$(echo "$BRANCH_NAME" \
-            | tr '[:upper:]' '[:lower:]' \
-            | sed 's#[/\\:*?"<>|]#-#g' \
-            | sed 's#[\r\n]##g')
-          echo "branch=${SANITIZED_NAME}" >> $GITHUB_OUTPUT
-
-      # - name: Archive JAR artifact
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: gymmate-backend-jar-${{ steps.sanitize.outputs.branch }}
-      #     path: target/*.jar
-
-  # Build & Push Docker (runs for main and dev branches)
+  # ─────────────────────────────────────────────────────────────────────────
+  # Step 2: Build & Push image to GHCR (main/dev pushes only)
+  # ─────────────────────────────────────────────────────────────────────────
   docker:
     runs-on: ubuntu-latest
     needs: build
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      sha_tag: ${{ steps.tags.outputs.sha_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -69,35 +64,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract branch name
+      - name: Set image tags
+        id: tags
         shell: bash
-        run: echo "BRANCH_NAME=${GITHUB_REF#refs/heads/}" >> $GITHUB_ENV
-
-      # add before the "Build and push Docker image" step
-      - name: Prepare image name and tag
-        id: image
-        shell: bash
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         run: |
-          # derive branch name and sanitize
+          SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           BRANCH="${GITHUB_REF#refs/heads/}"
-          BRANCH_TAG=$(echo "$BRANCH" \
-            | tr '[:upper:]' '[:lower:]' \
-            | sed 's#[/[:space:]]#-#g' \
-            | sed 's#[^a-z0-9._-]#-#g' )
-
-          # build image repo (keep username as provided by secret)
-          IMAGE="${DOCKER_USERNAME}/gymmate-backend"
-
-          echo "image=${IMAGE}" >> $GITHUB_OUTPUT
-          echo "tag=${BRANCH_TAG}" >> $GITHUB_OUTPUT
+          echo "sha_tag=$SHA" >> "$GITHUB_OUTPUT"
+          echo "branch_tag=$BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6
@@ -105,43 +86,31 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ steps.image.outputs.image }}:${{ steps.image.outputs.tag }}
-            ${{ steps.image.outputs.image }}:${{ steps.image.outputs.tag }}-${{ github.sha }}
-            ${{ github.ref == 'refs/heads/main' && format('{0}:latest', steps.image.outputs.image) || '' }}
-          cache-from: type=registry,ref=${{ steps.image.outputs.image }}:buildcache-${{ steps.image.outputs.tag }}
-          cache-to: type=registry,ref=${{ steps.image.outputs.image }}:buildcache-${{ steps.image.outputs.tag }},mode=max
+            ${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.branch_tag }}
+            ${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.sha_tag }}
+            ${{ github.ref == 'refs/heads/main' && format('{0}:latest', env.IMAGE_NAME) || '' }}
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-${{ steps.tags.outputs.branch_tag }}
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-${{ steps.tags.outputs.branch_tag }},mode=max
 
-  deploy-to-railway:
+  # ─────────────────────────────────────────────────────────────────────────
+  # Step 3: Trigger deploy on the VPS via the infra repo (main only)
+  # ─────────────────────────────────────────────────────────────────────────
+  trigger-deploy:
     runs-on: ubuntu-latest
     needs: docker
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
-
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js (for Railway CLI)
-        uses: actions/setup-node@v4
+      - name: Dispatch deploy workflow
+        uses: peter-evans/repository-dispatch@v3
         with:
-          node-version: '18'
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Validate Railway Secrets
-        run: |
-          if [ -z "${{ secrets.RAILWAY_TOKEN }}" ]; then
-            echo "Error: RAILWAY_TOKEN is not set or is empty."
-            exit 1
-          fi
-          if [ -z "${{ secrets.RAILWAY_SERVICE_ID }}" ]; then
-            echo "Error: RAILWAY_SERVICE_ID is not set or is empty."
-            exit 1
-          fi
-
-      - name: Deploy to Railway
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-        run: |
-          # Deploy using Railway CLI with service ID and environment
-          railway up --service ${{ secrets.RAILWAY_SERVICE_ID }} --detach --environment production
+          token: ${{ secrets.INFRA_DEPLOY_TOKEN }}
+          repository: Vantroxia-Labs/infra
+          event-type: deploy
+          client-payload: |
+            {
+              "service": "gymmate",
+              "image_tag": "${{ needs.docker.outputs.sha_tag || 'latest' }}",
+              "triggered_by": "${{ github.repository }}",
+              "commit_sha": "${{ github.sha }}",
+              "commit_message": "${{ github.event.head_commit.message }}"
+            }
