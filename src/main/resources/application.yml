@@ -18,6 +18,14 @@ spring:
   application:
     name: ${APP_NAME:gymmatehub-backend}
 
+  # Spring AI (1.0.0-M1) transitively pulls spring-cloud-function-context, whose
+  # ContextFunctionCatalogAutoConfiguration is incompatible with Spring Boot 3.5.x
+  # (fails component scan in the REGISTER_BEAN phase). The AI services use only
+  # plain ChatClient text calls (no function/tool calling), so it is safe to exclude.
+  autoconfigure:
+    exclude:
+      - org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration
+
   # Servlet & Multipart
   servlet:
     multipart:
