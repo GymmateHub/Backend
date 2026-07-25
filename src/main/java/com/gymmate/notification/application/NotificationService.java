@@ -250,6 +250,9 @@ public class NotificationService {
     @Transactional
     public void sendToUser(UUID userId, String title, String message, NotificationPriority priority, String eventType,
             Map<String, Object> metadata) {
-        // TODO: Implement sending notification to a user.
-    }
+        // TODO: Implement actual push/email notification delivery to the end user.
+        // Currently, we just log the notification since a MemberNotification entity does not exist yet.
+        log.info("Sending notification to user {}: Title='{}', Priority='{}', EventType='{}'",
+                userId, title, priority, eventType);
+}
 }

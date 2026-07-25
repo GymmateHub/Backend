@@ -74,6 +74,11 @@ public class GymRepositoryAdapter implements GymRepository {
     }
 
     @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
     public boolean existsById(UUID id) {
         return jpaRepository.existsById(id);
     }
