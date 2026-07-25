@@ -72,7 +72,11 @@ spring:
       on-profile: dev
   mail:
     port: 587
-    test-connection: true
+    test-connection: false
+management:
+  health:
+    mail:
+      enabled: false
 
 ---
 # Production

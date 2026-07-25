@@ -27,6 +27,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
     // Role-based queries
     List<User> findByRole(UserRole role);
+    long countByRole(UserRole role);
     List<User> findByRoleAndOrganisationId(UserRole role, UUID organisationId);
 
     // Status-based queries

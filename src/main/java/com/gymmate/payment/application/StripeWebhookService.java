@@ -428,7 +428,9 @@ public class StripeWebhookService {
         // Find subscription by customer ID and create/update invoice
         subscriptionRepository.findByStripeCustomerId(stripeInvoice.getCustomer())
                 .ifPresent(subscription -> {
-                    // TODO: GymInvoice should be renamed to OrganisationInvoice since subscriptions
+                    // TODO (Tech Debt): GymInvoice should be renamed to OrganisationInvoice since subscriptions
+                    // are at the organisation level, not the gym level. 
+                    // This will require a Flyway schema migration to rename the underlying table.
                     // are now org-level
                     GymInvoice invoice = invoiceRepository.findByStripeInvoiceId(stripeInvoice.getId())
                             .orElseGet(() -> createInvoiceFromStripe(stripeInvoice, null));
