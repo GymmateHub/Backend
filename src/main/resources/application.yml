@@ -13,6 +13,9 @@ server:
 # Spring Application Configuration
 # ============================================
 spring:
+  ai:
+    openai:
+      api-key: ${SPRING_AI_OPENAI_API_KEY:dummy}
   profiles:
     include: email-config
   application:

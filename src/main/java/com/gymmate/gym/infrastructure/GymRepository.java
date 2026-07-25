@@ -49,5 +49,7 @@ public interface GymRepository {
 
     void deleteById(UUID id);
 
+    long count();
+
     boolean existsById(UUID id);
 }
