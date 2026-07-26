@@ -99,6 +99,14 @@ public class NewsletterCampaignService {
     }
 
     /**
+     * Get all campaigns for an organisation.
+     */
+    @Transactional(readOnly = true)
+    public List<NewsletterCampaign> getByOrganisationId(UUID orgId) {
+        return campaignRepository.findByOrganisationId(orgId);
+    }
+
+    /**
      * Schedule a campaign for future delivery.
      */
     @Transactional
