@@ -109,6 +109,16 @@ public class NewsletterTemplateService {
     }
 
     /**
+     * Get active templates for an organisation.
+     */
+    @Transactional(readOnly = true)
+    public List<NewsletterTemplate> getActiveByOrganisationId(UUID orgId) {
+        return templateRepository.findByOrganisationId(orgId).stream()
+                .filter(NewsletterTemplate::isActive)
+                .toList();
+    }
+
+    /**
      * Soft delete a template.
      */
     @Transactional
