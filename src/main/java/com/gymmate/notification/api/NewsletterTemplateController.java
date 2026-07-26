@@ -6,6 +6,7 @@ import com.gymmate.notification.api.dto.UpdateTemplateRequest;
 import com.gymmate.notification.application.NewsletterTemplateService;
 import com.gymmate.notification.domain.NewsletterTemplate;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.service.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +38,7 @@ public class NewsletterTemplateController {
      * Create a new newsletter template.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
     @Operation(summary = "Create template", description = "Create a new newsletter template")
     public ResponseEntity<ApiResponse<TemplateResponse>> createTemplate(
             @Valid @RequestBody CreateTemplateRequest request,
@@ -53,27 +54,33 @@ public class NewsletterTemplateController {
     }
 
     /**
-     * Get all templates for a gym.
+     * Get all templates for a gym or organisation.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
-    @Operation(summary = "List templates", description = "Get all newsletter templates for a gym")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @Operation(summary = "List templates", description = "Get all newsletter templates for a gym or organisation")
     public ResponseEntity<ApiResponse<List<TemplateResponse>>> getTemplates(
-            @RequestParam UUID gymId) {
+            @RequestParam(required = false) UUID gymId) {
 
-        List<TemplateResponse> templates = templateService.getActiveByGymId(gymId)
-                .stream()
+        List<NewsletterTemplate> templates;
+        if (gymId != null) {
+            templates = templateService.getActiveByGymId(gymId);
+        } else {
+            templates = templateService.getActiveByOrganisationId(TenantContext.getCurrentTenantId());
+        }
+
+        List<TemplateResponse> response = templates.stream()
                 .map(TemplateResponse::fromEntity)
                 .toList();
 
-        return ResponseEntity.ok(ApiResponse.success(templates));
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
      * Get a template by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
     @Operation(summary = "Get template", description = "Get a newsletter template by ID")
     public ResponseEntity<ApiResponse<TemplateResponse>> getTemplate(@PathVariable UUID id) {
         NewsletterTemplate template = templateService.getById(id);
@@ -84,7 +91,7 @@ public class NewsletterTemplateController {
      * Update a template.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
     @Operation(summary = "Update template", description = "Update a newsletter template")
     public ResponseEntity<ApiResponse<TemplateResponse>> updateTemplate(
             @PathVariable UUID id,
@@ -101,7 +108,7 @@ public class NewsletterTemplateController {
      * Delete a template.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
     @Operation(summary = "Delete template", description = "Delete a newsletter template")
     public ResponseEntity<ApiResponse<Void>> deleteTemplate(@PathVariable UUID id) {
         templateService.delete(id);
