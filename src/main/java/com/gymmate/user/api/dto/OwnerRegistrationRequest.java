@@ -38,22 +38,18 @@ public record OwnerRegistrationRequest(
         @Size(max = 20, message = "Phone number must not exceed 20 characters")
         String phone,
 
-        @NotBlank(message = "Organisation name is required")
         @SafeHtml
         @Size(min = 2, max = 100, message = "Organisation name must be between 2 and 100 characters")
         String organisationName,
 
-        @NotBlank(message = "Gym name is required")
         @SafeHtml
         @Size(min = 2, max = 100, message = "Gym name must be between 2 and 100 characters")
         String gymName,
 
-        @NotBlank(message = "Timezone is required")
         @SafeHtml
         String timezone,
 
         @SafeHtml
-        @NotBlank(message = "Country is required")
         String country) {
     public UserRole role() {
         return UserRole.GYM_OWNER;
