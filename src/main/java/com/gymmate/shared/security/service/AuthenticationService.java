@@ -36,6 +36,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -268,17 +269,31 @@ public class AuthenticationService {
 
         user = userRepository.save(user);
 
+        // Fallback default values for optional fields
+        String organisationName = StringUtils.hasText(request.organisationName()) 
+                ? request.organisationName() 
+                : request.firstName() + "'s Organisation";
+        String gymName = StringUtils.hasText(request.gymName()) 
+                ? request.gymName() 
+                : request.firstName() + "'s Gym";
+        String timezone = StringUtils.hasText(request.timezone()) 
+                ? request.timezone() 
+                : "UTC";
+        String country = StringUtils.hasText(request.country()) 
+                ? request.country() 
+                : "United States";
+
         // 2. Create Organisation & Hub (Atomic transaction)
         // createHub creates Organisation, Subscription, and links owner
-        Organisation organisation = organisationService.createHub(request.organisationName(), request.email(), user);
+        Organisation organisation = organisationService.createHub(organisationName, request.email(), user);
 
         // 3. Create initial Gym
         // We create it manually to bypass the active-owner check in
         // GymService.registerGym
-        Gym gym = new Gym(request.gymName(), "Main Gym", request.email(), request.phone(), user.getId());
+        Gym gym = new Gym(gymName, "Main Gym", request.email(), request.phone(), user.getId());
         gym.setOrganisationId(organisation.getId());
-        gym.setTimezone(request.timezone());
-        gym.updateAddress(null, null, null, request.country(), null);
+        gym.setTimezone(timezone);
+        gym.updateAddress(null, null, null, country, null);
 
         gymService.saveGym(gym);
 

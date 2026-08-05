@@ -98,6 +98,33 @@ class AuthenticationServiceTest {
     }
 
     @Test
+    void shouldRegisterOwnerWithNullOptionalFields() {
+        OwnerRegistrationRequest request = new OwnerRegistrationRequest(
+                "owner@example.com", "Owner", "User", "Password123!", "1234567890", null, null, null, null);
+
+        when(userRepository.existsByEmail(request.email())).thenReturn(false);
+        when(passwordService.encode(anyString())).thenReturn("encodedPassword");
+        when(passwordPolicyService.validatePassword(anyString(), any()))
+                .thenReturn(new PasswordPolicyService.PasswordValidationResult(true, List.of()));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(UUID.randomUUID());
+            return user;
+        });
+
+        Organisation mockOrg = Organisation.builder().build();
+        mockOrg.setId(UUID.randomUUID());
+        when(organisationService.createHub(anyString(), anyString(), any(User.class))).thenReturn(mockOrg);
+
+        User result = authenticationService.registerOwner(request);
+
+        assertNotNull(result);
+        assertEquals(UserRole.GYM_OWNER, result.getRole());
+        verify(organisationService).createHub(eq("Owner's Organisation"), eq("owner@example.com"), any(User.class));
+        verify(gymService).saveGym(any(Gym.class));
+    }
+
+    @Test
     void shouldThrowExceptionIfOwnerExists() {
         OwnerRegistrationRequest request = new OwnerRegistrationRequest(
                 "owner@example.com", "Owner", "User", "Password123!", "1234567890", "My Org", "My Gym", "UTC", "US");
