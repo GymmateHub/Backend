@@ -282,6 +282,9 @@ public class AuthenticationService {
         String country = StringUtils.hasText(request.country()) 
                 ? request.country() 
                 : "United States";
+        String phone = StringUtils.hasText(request.phone()) 
+                ? request.phone() 
+                : "+10000000000";
 
         // 2. Create Organisation & Hub (Atomic transaction)
         // createHub creates Organisation, Subscription, and links owner
@@ -290,7 +293,7 @@ public class AuthenticationService {
         // 3. Create initial Gym
         // We create it manually to bypass the active-owner check in
         // GymService.registerGym
-        Gym gym = new Gym(gymName, "Main Gym", request.email(), request.phone(), user.getId());
+        Gym gym = new Gym(gymName, "Main Gym", request.email(), phone, user.getId());
         gym.setOrganisationId(organisation.getId());
         gym.setTimezone(timezone);
         gym.updateAddress(null, null, null, country, null);
