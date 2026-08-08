@@ -95,10 +95,12 @@
       <scope>runtime</scope>
     </dependency>
 
-    <!-- API Documentation -->
+    <!-- API Documentation: springdoc generates the /v3/api-docs OpenAPI JSON;
+         "-api" (not "-ui") variant excludes the bundled Swagger UI webjar since
+         Scalar (static/scalar.html) is the served API reference UI. -->
     <dependency>
       <groupId>org.springdoc</groupId>
-      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
       <version>${springdoc.version}</version>
     </dependency>
 
