@@ -29,6 +29,9 @@
     <jwt.version>0.12.5</jwt.version>
     <stripe.version>31.1.0</stripe.version>
     <testcontainers.version>1.19.3</testcontainers.version>
+    <redisson.version>3.35.0</redisson.version>
+    <!-- 1.4.x targets Boot 3.5.x (1.3.x targets 3.4.x) -->
+    <spring-modulith.version>1.4.12</spring-modulith.version>
     <rest-assured.version>5.4.0</rest-assured.version>
     <java-faker.version>1.0.2</java-faker.version>
   </properties>
@@ -49,6 +52,14 @@
         <groupId>org.testcontainers</groupId>
         <artifactId>testcontainers-bom</artifactId>
         <version>${testcontainers.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- Spring Modulith BOM -->
+      <dependency>
+        <groupId>org.springframework.modulith</groupId>
+        <artifactId>spring-modulith-bom</artifactId>
+        <version>${spring-modulith.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -168,6 +179,24 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-redis</artifactId>
+    </dependency>
+
+    <!-- Redisson: distributed lock for the class-booking capacity contention path -->
+    <dependency>
+      <groupId>org.redisson</groupId>
+      <artifactId>redisson-spring-boot-starter</artifactId>
+      <version>${redisson.version}</version>
+    </dependency>
+
+    <!-- Spring Modulith: module boundary declaration + verification -->
+    <dependency>
+      <groupId>org.springframework.modulith</groupId>
+      <artifactId>spring-modulith-starter-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.modulith</groupId>
+      <artifactId>spring-modulith-starter-test</artifactId>
+      <scope>test</scope>
     </dependency>
 
     <!-- Stripe SDK for payment processing -->

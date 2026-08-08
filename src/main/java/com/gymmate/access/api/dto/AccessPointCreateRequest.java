@@ -1,7 +1,7 @@
 package com.gymmate.access.api.dto;
 
-import com.gymmate.access.domain.enums.AccessPointMode;
-import com.gymmate.access.domain.enums.AccessPointType;
+import com.gymmate.access.internal.domain.enums.AccessPointMode;
+import com.gymmate.access.internal.domain.enums.AccessPointType;
 import jakarta.validation.constraints.NotBlank;
 
 import java.util.UUID;

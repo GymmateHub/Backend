@@ -1,6 +1,6 @@
 package com.gymmate.classes.api.dto;
 
-import com.gymmate.classes.domain.ClassBooking;
+import com.gymmate.classes.internal.domain.ClassBooking;
 import java.time.LocalDateTime;
 import java.util.UUID;
 

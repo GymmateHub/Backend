@@ -1,6 +1,8 @@
 package com.gymmate.notification.events;
 
 import com.gymmate.shared.constants.NotificationPriority;
+import com.gymmate.shared.multitenancy.TenantAwareEvent;
+import com.gymmate.shared.multitenancy.TenantIdentity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,7 +15,7 @@ import java.util.UUID;
  */
 @Getter
 @Builder
-public class SubscriptionPausedEvent implements DomainEvent {
+public class SubscriptionPausedEvent implements DomainEvent, TenantAwareEvent {
 
     @Builder.Default
     private final UUID eventId = UUID.randomUUID();
@@ -25,6 +27,11 @@ public class SubscriptionPausedEvent implements DomainEvent {
     private final UUID subscriptionId;
     private final String tierName;
     private final LocalDateTime pausedAt;
+
+    @Override
+    public TenantIdentity getTenantIdentity() {
+        return TenantIdentity.forOrganisation(organisationId);
+    }
 
     @Override
     public String getEventType() {

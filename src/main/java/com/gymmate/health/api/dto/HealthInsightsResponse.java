@@ -1,6 +1,6 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.application.HealthAnalyticsService;
+import com.gymmate.health.internal.service.HealthAnalyticsService;
 
 import java.time.LocalDateTime;
 import java.util.List;

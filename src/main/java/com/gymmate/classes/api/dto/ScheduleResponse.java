@@ -1,6 +1,6 @@
 package com.gymmate.classes.api.dto;
 
-import com.gymmate.classes.domain.ClassSchedule;
+import com.gymmate.classes.internal.domain.ClassSchedule;
 import lombok.Data;
 
 import java.math.BigDecimal;

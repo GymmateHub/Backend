@@ -1,7 +1,7 @@
 package com.gymmate.inventory.api.dto;
 
-import com.gymmate.inventory.domain.MovementType;
-import com.gymmate.inventory.domain.StockMovement;
+import com.gymmate.inventory.internal.domain.MovementType;
+import com.gymmate.inventory.internal.domain.StockMovement;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

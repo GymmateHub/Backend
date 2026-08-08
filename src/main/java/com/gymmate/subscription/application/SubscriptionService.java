@@ -1,6 +1,7 @@
 package com.gymmate.subscription.application;
 
 import com.gymmate.payment.application.StripePaymentService;
+import com.gymmate.payment.application.port.OrganisationBillingInfoProvider;
 import com.gymmate.shared.constants.SubscriptionStatus;
 import com.gymmate.subscription.domain.*;
 import com.gymmate.subscription.infrastructure.*;
@@ -9,8 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import com.gymmate.notification.application.EmailService;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.shared.constants.NotificationPriority;
-import com.gymmate.organisation.domain.Organisation;
-import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,7 +32,7 @@ public class SubscriptionService {
     private final StripePaymentService stripePaymentService;
     private final EmailService emailService;
     private final NotificationService notificationService;
-    private final OrganisationRepository organisationRepository;
+    private final OrganisationBillingInfoProvider organisationBillingInfoProvider;
 
     public Subscription createSubscription(UUID organisationId, String tierName, boolean startTrial) {
         return createSubscription(organisationId, tierName, startTrial, null, true);
@@ -215,14 +214,12 @@ public class SubscriptionService {
                     ));
 
             // Send email to organisation contact
-            organisationRepository.findById(organisationId).ifPresent(org -> {
-                String email = org.getBillingEmail() != null && !org.getBillingEmail().isBlank()
-                        ? org.getBillingEmail()
-                        : org.getContactEmail();
+            organisationBillingInfoProvider.findBillingInfo(organisationId).ifPresent(org -> {
+                String email = org.preferredEmail();
                 if (email != null && !email.isBlank()) {
                     emailService.sendHtmlEmail(email,
                             "Consider Upgrading Your GymMate Plan",
-                            "<p>Hi " + org.getName() + ",</p>"
+                            "<p>Hi " + org.name() + ",</p>"
                                     + "<p>Your current member count (" + memberCount + ") has exceeded your plan limits. "
                                     + "Overage charges now exceed 50% of your base cost.</p>"
                                     + "<p>We recommend upgrading to reduce costs and unlock more features.</p>"
@@ -295,9 +292,8 @@ public class SubscriptionService {
                 SubscriptionRepository.save(subscription);
 
                 UUID orgId = subscription.getOrganisationId();
-                String orgName = organisationRepository.findById(orgId)
-                        .map(Organisation::getName)
-                        .orElse("Your Gym");
+                OrganisationBillingInfoProvider.BillingInfo org = organisationBillingInfoProvider.findBillingInfo(orgId).orElse(null);
+                String orgName = org != null ? org.name() : "Your Gym";
 
                 // Notify via SSE
                 notificationService.createAndBroadcast(
@@ -309,12 +305,9 @@ public class SubscriptionService {
                         Map.of("subscriptionId", subscription.getId()));
 
                 // Notify via Email
-                // Assuming contact email is same as owner email or stored in Organisation
-                // For now, we'll need to fetch the owner's email or organisation contact email
-                Organisation org = organisationRepository.findById(orgId).orElse(null);
-                if (org != null && org.getContactEmail() != null) {
+                if (org != null && org.contactEmail() != null) {
                     emailService.sendSubscriptionExpiredEmail(
-                            org.getContactEmail(),
+                            org.contactEmail(),
                             orgName,
                             java.time.LocalDate.now());
                 }
@@ -323,6 +316,40 @@ public class SubscriptionService {
             } catch (Exception e) {
                 log.error("Error processing expired subscription for organisation {}",
                         subscription.getOrganisationId(), e);
+            }
+        }
+    }
+
+    /**
+     * Suspend subscriptions that have been PAST_DUE longer than the grace period
+     * (Subscription.PAST_DUE_GRACE_PERIOD_DAYS). The failure emails already went out
+     * at each webhook-driven payment failure (see AdminNotificationEventListener /
+     * PaymentNotificationService) — this is the enforcement step once that grace
+     * period has run out with no successful retry.
+     */
+    @Async
+    public void escalatePastDueSubscriptions() {
+        LocalDateTime graceCutoff = LocalDateTime.now().minusDays(Subscription.PAST_DUE_GRACE_PERIOD_DAYS);
+        List<Subscription> stalePastDue = SubscriptionRepository.findStalePastDueSubscriptions(graceCutoff);
+
+        for (Subscription subscription : stalePastDue) {
+            try {
+                subscription.suspend();
+                SubscriptionRepository.save(subscription);
+
+                UUID orgId = subscription.getOrganisationId();
+                notificationService.createAndBroadcast(
+                        "Subscription Suspended",
+                        "Your subscription has been suspended after a payment failure was not resolved within the grace period. Please update your payment method to restore access.",
+                        orgId,
+                        NotificationPriority.CRITICAL,
+                        "SUBSCRIPTION_SUSPENDED",
+                        Map.of("subscriptionId", subscription.getId()));
+
+                log.warn("Suspended subscription {} for organisation {} — past due since {}",
+                        subscription.getId(), orgId, subscription.getPastDueSince());
+            } catch (Exception e) {
+                log.error("Error suspending past-due subscription {}", subscription.getId(), e);
             }
         }
     }
@@ -338,9 +365,8 @@ public class SubscriptionService {
         for (Subscription subscription : upcomingRenewals) {
             try {
                 UUID orgId = subscription.getOrganisationId();
-                String orgName = organisationRepository.findById(orgId)
-                        .map(Organisation::getName)
-                        .orElse("Your Gym");
+                OrganisationBillingInfoProvider.BillingInfo org = organisationBillingInfoProvider.findBillingInfo(orgId).orElse(null);
+                String orgName = org != null ? org.name() : "Your Gym";
 
                 // Notify via SSE
                 notificationService.createAndBroadcast(
@@ -353,10 +379,9 @@ public class SubscriptionService {
                                 subscription.getCurrentPeriodEnd()));
 
                 // Notify via Email
-                Organisation org = organisationRepository.findById(orgId).orElse(null);
-                if (org != null && org.getContactEmail() != null) {
+                if (org != null && org.contactEmail() != null) {
                     emailService.sendSubscriptionRenewalEmail(
-                            org.getContactEmail(),
+                            org.contactEmail(),
                             orgName,
                             subscription.getTier().getName(),
                             subscription.getCurrentPeriodEnd().toLocalDate(),
@@ -381,9 +406,8 @@ public class SubscriptionService {
         for (Subscription subscription : endingTrials) {
             try {
                 UUID orgId = subscription.getOrganisationId();
-                String orgName = organisationRepository.findById(orgId)
-                        .map(Organisation::getName)
-                        .orElse("Your Gym");
+                OrganisationBillingInfoProvider.BillingInfo org = organisationBillingInfoProvider.findBillingInfo(orgId).orElse(null);
+                String orgName = org != null ? org.name() : "Your Gym";
 
                 // Notify via SSE
                 notificationService.createAndBroadcast(
@@ -395,10 +419,9 @@ public class SubscriptionService {
                         Map.of("subscriptionId", subscription.getId(), "trialEnd", subscription.getTrialEnd()));
 
                 // Notify via Email
-                Organisation org = organisationRepository.findById(orgId).orElse(null);
-                if (org != null && org.getContactEmail() != null) {
+                if (org != null && org.contactEmail() != null) {
                     emailService.sendTrialEndingEmail(
-                            org.getContactEmail(),
+                            org.contactEmail(),
                             orgName,
                             subscription.getTrialEnd().toLocalDate());
                 }

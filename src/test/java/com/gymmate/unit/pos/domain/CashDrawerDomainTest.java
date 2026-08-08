@@ -1,6 +1,6 @@
 package com.gymmate.unit.pos.domain;
 
-import com.gymmate.pos.domain.CashDrawer;
+import com.gymmate.pos.internal.domain.CashDrawer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

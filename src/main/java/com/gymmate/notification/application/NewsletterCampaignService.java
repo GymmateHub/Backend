@@ -8,6 +8,7 @@ import com.gymmate.notification.infrastructure.NewsletterCampaignRepository;
 import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.shared.multitenancy.TenantScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -171,56 +172,58 @@ public class NewsletterCampaignService {
     public void sendCampaignAsync(NewsletterCampaign campaign) {
         log.info("Starting async send for campaign: {}", campaign.getId());
 
-        List<AudienceResolver.MemberRecipient> recipients = audienceResolver.resolveAudience(
-                campaign.getGymId(),
-                campaign.getAudienceType(),
-                campaign.getAudienceFilter());
+        try (TenantScope ignored = TenantScope.activate(campaign.getOrganisationId(), campaign.getGymId())) {
+            List<AudienceResolver.MemberRecipient> recipients = audienceResolver.resolveAudience(
+                    campaign.getGymId(),
+                    campaign.getAudienceType(),
+                    campaign.getAudienceFilter());
 
-        int deliveredCount = 0;
-        int failedCount = 0;
+            int deliveredCount = 0;
+            int failedCount = 0;
 
-        for (AudienceResolver.MemberRecipient recipient : recipients) {
-            CampaignRecipient campaignRecipient = CampaignRecipient.builder()
-                    .campaignId(campaign.getId())
-                    .memberId(recipient.memberId())
-                    .email(recipient.email())
-                    .build();
+            for (AudienceResolver.MemberRecipient recipient : recipients) {
+                CampaignRecipient campaignRecipient = CampaignRecipient.builder()
+                        .campaignId(campaign.getId())
+                        .memberId(recipient.memberId())
+                        .email(recipient.email())
+                        .build();
 
-            try {
-                // Render personalized content
-                Map<String, Object> variables = buildRecipientVariables(recipient);
-                String subject = templateService.renderSubject(campaign.getSubject(), variables);
-                String body = templateService.renderTemplate(campaign.getBody(), variables);
+                try {
+                    // Render personalized content
+                    Map<String, Object> variables = buildRecipientVariables(recipient);
+                    String subject = templateService.renderSubject(campaign.getSubject(), variables);
+                    String body = templateService.renderTemplate(campaign.getBody(), variables);
 
-                // Send via preferred channel with email fallback
-                BroadcastService.BroadcastResult result = broadcastService.send(
-                        recipient.email(), // phone number would go here when available
-                        recipient.email(),
-                        subject,
-                        body);
+                    // Send via preferred channel with email fallback
+                    BroadcastService.BroadcastResult result = broadcastService.send(
+                            recipient.email(), // phone number would go here when available
+                            recipient.email(),
+                            subject,
+                            body);
 
-                if (result.success()) {
-                    campaignRecipient.markSent(result.channelUsed(), result.fallbackUsed());
-                    deliveredCount++;
-                } else {
-                    campaignRecipient.markFailed(result.errorMessage());
+                    if (result.success()) {
+                        campaignRecipient.markSent(result.channelUsed(), result.fallbackUsed());
+                        deliveredCount++;
+                    } else {
+                        campaignRecipient.markFailed(result.errorMessage());
+                        failedCount++;
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to send to {}: {}", recipient.email(), e.getMessage());
+                    campaignRecipient.markFailed(e.getMessage());
                     failedCount++;
                 }
-            } catch (Exception e) {
-                log.error("Failed to send to {}: {}", recipient.email(), e.getMessage());
-                campaignRecipient.markFailed(e.getMessage());
-                failedCount++;
+
+                recipientRepository.save(campaignRecipient);
             }
 
-            recipientRepository.save(campaignRecipient);
+            // Update campaign stats
+            campaign.completeSending(recipients.size(), deliveredCount, failedCount);
+            campaignRepository.save(campaign);
+
+            log.info("Completed campaign: {} - Total: {}, Delivered: {}, Failed: {}",
+                    campaign.getId(), recipients.size(), deliveredCount, failedCount);
         }
-
-        // Update campaign stats
-        campaign.completeSending(recipients.size(), deliveredCount, failedCount);
-        campaignRepository.save(campaign);
-
-        log.info("Completed campaign: {} - Total: {}, Delivered: {}, Failed: {}",
-                campaign.getId(), recipients.size(), deliveredCount, failedCount);
     }
 
     /**

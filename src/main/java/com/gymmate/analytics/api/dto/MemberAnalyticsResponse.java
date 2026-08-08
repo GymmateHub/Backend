@@ -1,7 +1,7 @@
 package com.gymmate.analytics.api.dto;
 
-import com.gymmate.analytics.domain.CategoryBreakdown;
-import com.gymmate.analytics.domain.TimeSeriesDataPoint;
+import com.gymmate.analytics.internal.domain.CategoryBreakdown;
+import com.gymmate.analytics.internal.domain.TimeSeriesDataPoint;
 
 import java.math.BigDecimal;
 import java.util.List;

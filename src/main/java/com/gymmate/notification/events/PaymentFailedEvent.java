@@ -1,6 +1,8 @@
 package com.gymmate.notification.events;
 
 import com.gymmate.shared.constants.NotificationPriority;
+import com.gymmate.shared.multitenancy.TenantAwareEvent;
+import com.gymmate.shared.multitenancy.TenantIdentity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -13,7 +15,7 @@ import java.util.UUID;
  */
 @Getter
 @Builder
-public class PaymentFailedEvent implements DomainEvent {
+public class PaymentFailedEvent implements DomainEvent, TenantAwareEvent {
 
     @Builder.Default
     private final UUID eventId = UUID.randomUUID();
@@ -27,6 +29,21 @@ public class PaymentFailedEvent implements DomainEvent {
     private final String failureReason;
     private final LocalDateTime nextRetryDate;
     private final String invoiceId;
+
+    /**
+     * Set only for Stripe Connect (member-payment) failures — null for platform
+     * subscription failures. Lets {@code membership.application.MembershipPaymentEventListener}
+     * react without {@code payment} depending on {@code membership} directly (see that
+     * listener's Javadoc for why: it used to be a direct repository write from
+     * {@code StripeWebhookService}, which created a module dependency cycle).
+     */
+    private final UUID membershipId;
+    private final String currency;
+
+    @Override
+    public TenantIdentity getTenantIdentity() {
+        return TenantIdentity.of(organisationId, gymId);
+    }
 
     @Override
     public String getEventType() {

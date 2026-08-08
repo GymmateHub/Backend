@@ -1,6 +1,6 @@
 package com.gymmate.classes.api.dto;
 
-import com.gymmate.classes.domain.GymArea;
+import com.gymmate.classes.internal.domain.GymArea;
 import lombok.Data;
 
 import java.util.UUID;

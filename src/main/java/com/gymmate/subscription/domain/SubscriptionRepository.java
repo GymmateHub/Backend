@@ -49,6 +49,13 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, UUID
     @Query("SELECT COUNT(os) FROM Subscription os WHERE os.status = :status")
     long countByStatus(@Param("status") SubscriptionStatus status);
 
+    /**
+     * Subscriptions past due for longer than the grace period — candidates for
+     * escalation to SUSPENDED. See Subscription.PAST_DUE_GRACE_PERIOD_DAYS.
+     */
+    @Query("SELECT os FROM Subscription os WHERE os.status = 'PAST_DUE' AND os.pastDueSince < :cutoff")
+    List<Subscription> findStalePastDueSubscriptions(@Param("cutoff") LocalDateTime cutoff);
+
     boolean existsByOrganisationId(UUID organisationId);
 }
 

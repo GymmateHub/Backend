@@ -1,8 +1,8 @@
 package com.gymmate.inventory.api.dto;
 
-import com.gymmate.inventory.domain.Equipment;
-import com.gymmate.inventory.domain.EquipmentCategory;
-import com.gymmate.inventory.domain.EquipmentStatus;
+import com.gymmate.inventory.internal.domain.Equipment;
+import com.gymmate.inventory.internal.domain.EquipmentCategory;
+import com.gymmate.inventory.internal.domain.EquipmentStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

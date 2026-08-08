@@ -1,6 +1,6 @@
 package com.gymmate.inventory.api.dto;
 
-import com.gymmate.inventory.domain.MaintenanceSchedule;
+import com.gymmate.inventory.internal.domain.MaintenanceSchedule;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

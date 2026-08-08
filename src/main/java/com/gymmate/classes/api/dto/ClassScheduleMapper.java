@@ -1,6 +1,6 @@
 package com.gymmate.classes.api.dto;
 
-import com.gymmate.classes.domain.ClassSchedule;
+import com.gymmate.classes.internal.domain.ClassSchedule;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -30,5 +30,6 @@ public interface ClassScheduleMapper {
   @Mapping(target = "cancellationReason", ignore = true)
   @Mapping(target = "instructorNotes", ignore = true)
   @Mapping(target = "adminNotes", ignore = true)
+  @Mapping(target = "bookedCount", ignore = true)
   ClassSchedule toEntity(CreateScheduleRequest dto);
 }

@@ -1,18 +1,16 @@
 package com.gymmate.unit.analytics.application;
 
 import com.gymmate.analytics.api.dto.*;
-import com.gymmate.analytics.application.AnalyticsService;
-import com.gymmate.analytics.domain.AnalyticsPeriod;
+import com.gymmate.analytics.internal.service.AnalyticsService;
+import com.gymmate.analytics.internal.domain.AnalyticsPeriod;
 import com.gymmate.shared.constants.BookingStatus;
-import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
-import com.gymmate.classes.infrastructure.ClassScheduleJpaRepository;
-import com.gymmate.classes.infrastructure.GymClassJpaRepository;
-import com.gymmate.inventory.infrastructure.InventoryItemJpaRepository;
+import com.gymmate.classes.api.ClassesFacade;
+import com.gymmate.inventory.api.InventoryFacade;
 import com.gymmate.membership.domain.MembershipStatus;
 import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
 import com.gymmate.membership.infrastructure.MembershipPlanJpaRepository;
-import com.gymmate.pos.infrastructure.SaleJpaRepository;
+import com.gymmate.pos.api.PosFacade;
 import com.gymmate.user.infrastructure.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -45,19 +43,13 @@ class AnalyticsServiceTest {
         private MembershipPlanJpaRepository membershipPlanRepository;
 
         @Mock
-        private ClassBookingJpaRepository classBookingRepository;
+        private ClassesFacade classesFacade;
 
         @Mock
-        private ClassScheduleJpaRepository classScheduleRepository;
+        private InventoryFacade inventoryFacade;
 
         @Mock
-        private GymClassJpaRepository gymClassRepository;
-
-        @Mock
-        private InventoryItemJpaRepository inventoryItemRepository;
-
-        @Mock
-        private SaleJpaRepository saleRepository;
+        private PosFacade posFacade;
 
         @Mock
         private MemberInvoiceRepository memberInvoiceRepository;
@@ -72,11 +64,9 @@ class AnalyticsServiceTest {
                                 memberRepository,
                                 membershipRepository,
                                 membershipPlanRepository,
-                                classBookingRepository,
-                                classScheduleRepository,
-                                gymClassRepository,
-                                inventoryItemRepository,
-                                saleRepository,
+                                classesFacade,
+                                inventoryFacade,
+                                posFacade,
                                 memberInvoiceRepository);
 
                 gymId = UUID.randomUUID();
@@ -122,7 +112,7 @@ class AnalyticsServiceTest {
                         // Arrange - All repos return 0/empty
                         when(memberRepository.countByGymId(gymId)).thenReturn(0L);
                         when(membershipRepository.countActiveByGymId(gymId)).thenReturn(0L);
-                        when(inventoryItemRepository.countByGymIdAndCurrentStockLessThanMinimumStock(gymId))
+                        when(inventoryFacade.countLowStockItems(gymId))
                                         .thenReturn(0L);
 
                         // Act
@@ -231,12 +221,12 @@ class AnalyticsServiceTest {
                 @DisplayName("Should calculate total revenue")
                 void getRevenueAnalytics_TotalRevenue() {
                         // Arrange
-                        when(saleRepository.sumTotalByGymIdAndDateRange(eq(gymId), any(), any()))
+                        when(posFacade.sumRevenueByGymIdAndDateRange(eq(gymId), any(), any()))
                                         .thenReturn(BigDecimal.valueOf(5000));
                         when(membershipRepository.sumProjectedRevenueByGymIdAndDateRange(eq(gymId), any(), any()))
                                         .thenReturn(BigDecimal.valueOf(3000));
-                        when(saleRepository.findByGymIdAndDateRange(eq(gymId), any(), any()))
-                                        .thenReturn(List.of());
+                        when(posFacade.countTransactionsByGymIdAndDateRange(eq(gymId), any(), any()))
+                                        .thenReturn(0L);
 
                         // Act
                         RevenueAnalyticsResponse result = analyticsService.getRevenueAnalytics(gymId,
@@ -250,13 +240,15 @@ class AnalyticsServiceTest {
                 @Test
                 @DisplayName("Should handle null POS revenue")
                 void getRevenueAnalytics_NullPosRevenue_ReturnsZero() {
-                        // Arrange
-                        when(saleRepository.sumTotalByGymIdAndDateRange(eq(gymId), any(), any()))
-                                        .thenReturn(null);
+                        // Arrange — PosFacade guarantees a non-null sum (see PosFacadeImpl,
+                        // which normalizes a null underlying SUM to ZERO), so the mock honors
+                        // that contract rather than returning null directly.
+                        when(posFacade.sumRevenueByGymIdAndDateRange(eq(gymId), any(), any()))
+                                        .thenReturn(BigDecimal.ZERO);
                         when(membershipRepository.sumProjectedRevenueByGymIdAndDateRange(eq(gymId), any(), any()))
                                         .thenReturn(null);
-                        when(saleRepository.findByGymIdAndDateRange(eq(gymId), any(), any()))
-                                        .thenReturn(List.of());
+                        when(posFacade.countTransactionsByGymIdAndDateRange(eq(gymId), any(), any()))
+                                        .thenReturn(0L);
 
                         // Act
                         RevenueAnalyticsResponse result = analyticsService.getRevenueAnalytics(gymId,
@@ -276,25 +268,25 @@ class AnalyticsServiceTest {
                 @DisplayName("Should return class analytics with booking counts")
                 void getClassAnalytics_ReturnsCounts() {
                         // Arrange
-                        when(gymClassRepository.countByGymId(gymId)).thenReturn(15L);
-                        when(classScheduleRepository.countByGymIdAndStartTimeBetween(eq(gymId), any(), any()))
+                        when(classesFacade.countByGymId(gymId)).thenReturn(15L);
+                        when(classesFacade.countByGymIdAndStartTimeBetween(eq(gymId), any(), any()))
                                         .thenReturn(50L);
-                        when(classBookingRepository.countByGymIdAndDateRange(eq(gymId), any(), any()))
+                        when(classesFacade.countByGymIdAndDateRange(eq(gymId), any(), any()))
                                         .thenReturn(200L);
-                        when(classBookingRepository.countByGymIdAndStatusAndDateRange(
+                        when(classesFacade.countByGymIdAndStatusAndDateRange(
                                         eq(gymId), eq(BookingStatus.COMPLETED), any(), any()))
                                         .thenReturn(180L);
-                        when(classBookingRepository.countByGymIdAndStatusAndDateRange(
+                        when(classesFacade.countByGymIdAndStatusAndDateRange(
                                         eq(gymId), eq(BookingStatus.CANCELLED), any(), any()))
                                         .thenReturn(15L);
-                        when(classBookingRepository.countByGymIdAndStatusAndDateRange(
+                        when(classesFacade.countByGymIdAndStatusAndDateRange(
                                         eq(gymId), eq(BookingStatus.NO_SHOW), any(), any()))
                                         .thenReturn(5L);
-                        when(classBookingRepository.countBookingsByClassForGym(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByClassForGym(eq(gymId), any(), any()))
                                         .thenReturn(List.of());
-                        when(classBookingRepository.countBookingsByDayOfWeek(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByDayOfWeek(eq(gymId), any(), any()))
                                         .thenReturn(List.of());
-                        when(classBookingRepository.countBookingsByTimeSlot(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByTimeSlot(eq(gymId), any(), any()))
                                         .thenReturn(List.of());
 
                         // Act
@@ -315,25 +307,25 @@ class AnalyticsServiceTest {
                 @DisplayName("Should calculate attendance rate correctly")
                 void getClassAnalytics_CalculatesAttendanceRate() {
                         // Arrange
-                        when(gymClassRepository.countByGymId(gymId)).thenReturn(10L);
-                        when(classScheduleRepository.countByGymIdAndStartTimeBetween(eq(gymId), any(), any()))
+                        when(classesFacade.countByGymId(gymId)).thenReturn(10L);
+                        when(classesFacade.countByGymIdAndStartTimeBetween(eq(gymId), any(), any()))
                                         .thenReturn(20L);
-                        when(classBookingRepository.countByGymIdAndDateRange(eq(gymId), any(), any()))
+                        when(classesFacade.countByGymIdAndDateRange(eq(gymId), any(), any()))
                                         .thenReturn(100L);
-                        when(classBookingRepository.countByGymIdAndStatusAndDateRange(
+                        when(classesFacade.countByGymIdAndStatusAndDateRange(
                                         eq(gymId), eq(BookingStatus.COMPLETED), any(), any()))
                                         .thenReturn(80L); // 80% attendance
-                        when(classBookingRepository.countByGymIdAndStatusAndDateRange(
+                        when(classesFacade.countByGymIdAndStatusAndDateRange(
                                         eq(gymId), eq(BookingStatus.CANCELLED), any(), any()))
                                         .thenReturn(10L);
-                        when(classBookingRepository.countByGymIdAndStatusAndDateRange(
+                        when(classesFacade.countByGymIdAndStatusAndDateRange(
                                         eq(gymId), eq(BookingStatus.NO_SHOW), any(), any()))
                                         .thenReturn(10L);
-                        when(classBookingRepository.countBookingsByClassForGym(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByClassForGym(eq(gymId), any(), any()))
                                         .thenReturn(List.of());
-                        when(classBookingRepository.countBookingsByDayOfWeek(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByDayOfWeek(eq(gymId), any(), any()))
                                         .thenReturn(List.of());
-                        when(classBookingRepository.countBookingsByTimeSlot(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByTimeSlot(eq(gymId), any(), any()))
                                         .thenReturn(List.of());
 
                         // Act
@@ -354,11 +346,11 @@ class AnalyticsServiceTest {
                                         new Object[] { "Yoga", 50L },
                                         new Object[] { "Spin", 30L },
                                         new Object[] { "HIIT", 20L });
-                        when(classBookingRepository.countBookingsByClassForGym(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByClassForGym(eq(gymId), any(), any()))
                                         .thenReturn(classData);
-                        when(classBookingRepository.countBookingsByDayOfWeek(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByDayOfWeek(eq(gymId), any(), any()))
                                         .thenReturn(List.of());
-                        when(classBookingRepository.countBookingsByTimeSlot(eq(gymId), any(), any()))
+                        when(classesFacade.countBookingsByTimeSlot(eq(gymId), any(), any()))
                                         .thenReturn(List.of());
 
                         // Act
@@ -423,14 +415,14 @@ class AnalyticsServiceTest {
 
         private void setupOtherMocks() {
                 when(membershipRepository.countActiveByGymId(gymId)).thenReturn(90L);
-                when(inventoryItemRepository.countByGymIdAndCurrentStockLessThanMinimumStock(gymId)).thenReturn(3L);
+                when(inventoryFacade.countLowStockItems(gymId)).thenReturn(3L);
         }
 
         private void setupClassMocks() {
-                when(gymClassRepository.countByGymId(gymId)).thenReturn(10L);
-                when(classScheduleRepository.countByGymIdAndStartTimeBetween(eq(gymId), any(), any())).thenReturn(20L);
-                when(classBookingRepository.countByGymIdAndDateRange(eq(gymId), any(), any())).thenReturn(100L);
-                when(classBookingRepository.countByGymIdAndStatusAndDateRange(eq(gymId), any(), any(), any()))
+                when(classesFacade.countByGymId(gymId)).thenReturn(10L);
+                when(classesFacade.countByGymIdAndStartTimeBetween(eq(gymId), any(), any())).thenReturn(20L);
+                when(classesFacade.countByGymIdAndDateRange(eq(gymId), any(), any())).thenReturn(100L);
+                when(classesFacade.countByGymIdAndStatusAndDateRange(eq(gymId), any(), any(), any()))
                                 .thenReturn(0L);
         }
 }

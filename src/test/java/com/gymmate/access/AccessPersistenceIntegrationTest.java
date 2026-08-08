@@ -1,15 +1,15 @@
 package com.gymmate.access;
 
-import com.gymmate.access.domain.AccessCredential;
-import com.gymmate.access.domain.AccessEvent;
-import com.gymmate.access.domain.AccessPoint;
-import com.gymmate.access.domain.enums.AccessDecision;
-import com.gymmate.access.domain.enums.AccessDirection;
-import com.gymmate.access.domain.enums.AccessPointMode;
-import com.gymmate.access.domain.enums.CredentialType;
-import com.gymmate.access.infrastructure.AccessCredentialRepository;
-import com.gymmate.access.infrastructure.AccessEventRepository;
-import com.gymmate.access.infrastructure.AccessPointRepository;
+import com.gymmate.access.internal.domain.AccessCredential;
+import com.gymmate.access.internal.domain.AccessEvent;
+import com.gymmate.access.internal.domain.AccessPoint;
+import com.gymmate.access.internal.domain.enums.AccessDecision;
+import com.gymmate.access.internal.domain.enums.AccessDirection;
+import com.gymmate.access.internal.domain.enums.AccessPointMode;
+import com.gymmate.access.internal.domain.enums.CredentialType;
+import com.gymmate.access.internal.repository.AccessCredentialRepository;
+import com.gymmate.access.internal.repository.AccessEventRepository;
+import com.gymmate.access.internal.repository.AccessPointRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

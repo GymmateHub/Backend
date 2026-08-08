@@ -3,10 +3,9 @@ package com.gymmate.notification.application;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.notification.application.channel.ChannelException;
 import com.gymmate.notification.application.channel.ChannelSender;
+import com.gymmate.notification.application.port.OrganisationSettingsSource;
 import com.gymmate.notification.domain.NotificationChannel;
 import com.gymmate.notification.domain.NotificationSettings;
-import com.gymmate.organisation.domain.Organisation;
-import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import com.gymmate.shared.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,7 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BroadcastService {
 
-    private final OrganisationRepository organisationRepository;
+    private final OrganisationSettingsSource organisationSettingsSource;
     private final List<ChannelSender> channelSenders;
     private final ObjectMapper objectMapper;
 
@@ -111,8 +110,8 @@ public class BroadcastService {
             return new NotificationSettings();
         }
 
-        return organisationRepository.findById(organisationId)
-                .map(this::parseNotificationSettings)
+        return organisationSettingsSource.findSettingsJson(organisationId)
+                .map(settingsJson -> parseNotificationSettings(organisationId, settingsJson))
                 .orElseGet(() -> {
                     log.warn("Organisation not found: {}, using default settings", organisationId);
                     return new NotificationSettings();
@@ -120,10 +119,9 @@ public class BroadcastService {
     }
 
     /**
-     * Parse NotificationSettings from Organisation.settings JSON.
+     * Parse NotificationSettings from an organisation's raw settings JSON.
      */
-    private NotificationSettings parseNotificationSettings(Organisation organisation) {
-        String settingsJson = organisation.getSettings();
+    private NotificationSettings parseNotificationSettings(UUID organisationId, String settingsJson) {
         if (settingsJson == null || settingsJson.isBlank() || "{}".equals(settingsJson)) {
             return new NotificationSettings();
         }
@@ -132,7 +130,7 @@ public class BroadcastService {
             return objectMapper.readValue(settingsJson, NotificationSettings.class);
         } catch (Exception e) {
             log.warn("Failed to parse notification settings for org {}: {}",
-                    organisation.getId(), e.getMessage());
+                    organisationId, e.getMessage());
             return new NotificationSettings();
         }
     }

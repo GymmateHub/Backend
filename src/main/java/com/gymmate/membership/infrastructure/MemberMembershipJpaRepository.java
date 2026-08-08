@@ -71,6 +71,13 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
   @Query("SELECT mm FROM MemberMembership mm WHERE mm.status = 'ACTIVE' AND mm.endDate < :today AND mm.autoRenew = true")
   List<MemberMembership> findAutoRenewExpiredMemberships(@Param("today") LocalDateTime today);
 
+  /**
+   * Memberships past due for longer than the grace period — candidates for
+   * escalation to SUSPENDED. See MembershipService.escalatePastDueMemberships.
+   */
+  @Query("SELECT mm FROM MemberMembership mm WHERE mm.status = 'PAST_DUE' AND mm.pastDueSince < :cutoff")
+  List<MemberMembership> findStalePastDueMemberships(@Param("cutoff") LocalDateTime cutoff);
+
   // ===== Analytics Queries =====
 
   @Query("SELECT COUNT(mm) FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = :status")
