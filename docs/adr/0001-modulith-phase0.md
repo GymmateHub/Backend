@@ -218,11 +218,31 @@ One mirrored controller test moved per module where one existed:
 Remaining Stage 3 work: `payment`/`subscription` — deliberately last, still `Type.OPEN`
 (decision 6), most complex, folded into Stage 4's merge rather than converted separately.
 
+## Addendum (2026-08-08, part 5): `classes` → `scheduling` rename (Stage 5)
+
+Pure package rename, no merge, no class renames: `com.gymmate.classes` →
+`com.gymmate.scheduling` (top-level package only — `ClassBookingService`,
+`ClassSchedule`, `ClassesFacade`, etc. all kept their names). Motivated by
+`package_hierarchy_design.md`'s naming — "classes" collides conceptually
+with the Java keyword/OOP term and undersells the module (bookings,
+capacity/waitlist, check-in, not just class definitions).
+
+`analytics.internal.service.AnalyticsService` was the one real external
+importer (`ClassesFacade`) — updated along with its test. `displayName`
+("Classes & Scheduling") on the module's `@ApplicationModule` left as-is,
+still accurate. `ModularityTests` confirms the module now registers as
+logical name `scheduling`, base package `com.gymmate.scheduling`.
+
+This closes out Phase 1's plan (Stages 1-3 done across `docs/adr/`
+addenda 1-4, Stage 5 here). Stage 4 (5 module merges, including retiring
+this ADR's decision 6 `subscription` `Type.OPEN` workaround via the
+`payment`+`subscription`→`billing` merge) remains the only undone item.
+
 ## Consequences
 
 - `ModularityTests` (`ApplicationModules.verify()`) runs in the existing
   `./mvnw -B test` CI step — any new illegal cross-module reach-in fails the build.
-- `access`, `admin`, `ai`, `analytics`, `health`, `inventory`, `pos`, `classes`, `gym`,
+- `access`, `admin`, `ai`, `analytics`, `health`, `inventory`, `pos`, `scheduling`, `gym`,
   `user`, `membership`, `organisation`, `notification`, `payment` are independently
   verified modules. `shared` and `subscription` are `Type.OPEN` (not independently
   cycle-checked).

@@ -5,7 +5,7 @@ import com.gymmate.analytics.internal.domain.AnalyticsPeriod;
 import com.gymmate.analytics.internal.domain.CategoryBreakdown;
 import com.gymmate.analytics.internal.domain.TimeSeriesDataPoint;
 import com.gymmate.shared.constants.BookingStatus;
-import com.gymmate.classes.api.ClassesFacade;
+import com.gymmate.scheduling.api.ClassesFacade;
 import com.gymmate.inventory.api.InventoryFacade;
 import com.gymmate.membership.domain.MembershipStatus;
 import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
