@@ -1,6 +1,6 @@
 package com.gymmate.pos.api.dto;
 
-import com.gymmate.pos.domain.PaymentType;
+import com.gymmate.pos.internal.domain.PaymentType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 

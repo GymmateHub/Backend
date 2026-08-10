@@ -12,6 +12,7 @@ import com.gymmate.notification.infrastructure.NewsletterCampaignRepository;
 import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.whitelabel.application.WhitelabelSettingsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -53,6 +54,9 @@ class NewsletterCampaignServiceTest {
     @Mock
     private BroadcastService broadcastService;
 
+    @Mock
+    private WhitelabelSettingsService whitelabelSettingsService;
+
     private NewsletterCampaignService campaignService;
 
     private UUID gymId;
@@ -67,7 +71,8 @@ class NewsletterCampaignServiceTest {
                 recipientRepository,
                 audienceResolver,
                 templateService,
-                broadcastService);
+                broadcastService,
+                whitelabelSettingsService);
         gymId = UUID.randomUUID();
         organisationId = UUID.randomUUID();
         createdBy = UUID.randomUUID();

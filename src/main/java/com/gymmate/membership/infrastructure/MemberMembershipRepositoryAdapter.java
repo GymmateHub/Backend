@@ -96,6 +96,11 @@ public class MemberMembershipRepositoryAdapter implements MemberMembershipReposi
   }
 
   @Override
+  public List<MemberMembership> findStalePastDueMemberships(LocalDateTime cutoff) {
+    return jpaRepository.findStalePastDueMemberships(cutoff);
+  }
+
+  @Override
   public void delete(MemberMembership membership) {
     jpaRepository.delete(membership);
   }

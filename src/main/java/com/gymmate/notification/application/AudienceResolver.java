@@ -2,37 +2,37 @@ package com.gymmate.notification.application;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gymmate.classes.infrastructure.ClassBookingJpaRepository;
-import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
 import com.gymmate.notification.api.dto.AudiencePreviewResponse;
+import com.gymmate.notification.application.port.AudienceMemberIdsResolver;
+import com.gymmate.notification.application.port.MemberDirectory;
 import com.gymmate.notification.domain.AudienceType;
-import com.gymmate.user.domain.Member;
-import com.gymmate.shared.constants.MemberStatus;
-import com.gymmate.user.domain.User;
-import com.gymmate.user.infrastructure.MemberRepository;
-import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import com.gymmate.membership.domain.MembershipStatus;
 
 /**
- * Service for resolving target audience based on audience type and filters.
+ * Resolves target audiences for newsletter campaigns. Type-specific member-ID
+ * resolution ({@code CLASS_SUBSCRIBERS}/{@code BOOKING_PARTICIPANTS}/
+ * {@code MEMBERSHIP_PLAN}) and member/user enrichment are delegated to
+ * {@link AudienceMemberIdsResolver}/{@link MemberDirectory} implementations owned by
+ * the modules that actually have that data (classes, membership, user) — see
+ * {@code com.gymmate.notification.application.port} package Javadoc for why.
  */
 @Service
 @Slf4j
 @RequiredArgsConstructor
 public class AudienceResolver {
 
-    private final MemberRepository memberRepository;
-    private final UserRepository userRepository;
-    private final ClassBookingJpaRepository classBookingRepository;
-    private final MemberMembershipJpaRepository memberMembershipRepository;
+    private final List<AudienceMemberIdsResolver> memberIdsResolvers;
+    private final MemberDirectory memberDirectory;
     private final ObjectMapper objectMapper;
 
     /**
@@ -53,194 +53,58 @@ public class AudienceResolver {
     public List<MemberRecipient> resolveAudience(UUID gymId, AudienceType audienceType, String audienceFilter) {
         log.debug("Resolving audience for gym: {}, type: {}", gymId, audienceType);
 
-        List<Member> members = switch (audienceType) {
-            case ALL_MEMBERS -> resolveAllMembers(gymId);
-            case CLASS_SUBSCRIBERS -> resolveClassSubscribers(gymId, audienceFilter);
-            case BOOKING_PARTICIPANTS -> resolveBookingParticipants(gymId, audienceFilter);
-            case MEMBERSHIP_PLAN -> resolveMembershipPlan(gymId, audienceFilter);
+        return switch (audienceType) {
+            case ALL_MEMBERS -> memberDirectory.findActiveMembersByGym(gymId);
             case CUSTOM -> resolveCustom(gymId, audienceFilter);
+            case CLASS_SUBSCRIBERS -> resolveViaIdResolver(gymId, audienceType, audienceFilter, true);
+            case BOOKING_PARTICIPANTS, MEMBERSHIP_PLAN -> resolveViaIdResolver(gymId, audienceType, audienceFilter, false);
         };
-
-        return enrichMembersWithUserData(members);
     }
 
     /**
-     * Enrich members with user data (email, names).
+     * Delegates to whichever {@link AudienceMemberIdsResolver} supports this type,
+     * then enriches the resulting IDs via {@link MemberDirectory}. A {@code null}
+     * result from the resolver means "no usable filter" — falls back to all active
+     * members, matching the original single-module behavior.
      */
-    private List<MemberRecipient> enrichMembersWithUserData(List<Member> members) {
-        if (members.isEmpty()) {
+    private List<MemberRecipient> resolveViaIdResolver(UUID gymId, AudienceType type, String audienceFilter, boolean activeOnly) {
+        AudienceMemberIdsResolver resolver = memberIdsResolvers.stream()
+                .filter(r -> r.supports(type))
+                .findFirst()
+                .orElse(null);
+
+        if (resolver == null) {
+            log.warn("No AudienceMemberIdsResolver registered for {}, falling back to all active members", type);
+            return memberDirectory.findActiveMembersByGym(gymId);
+        }
+
+        Set<UUID> memberIds = resolver.resolveMemberIds(gymId, type, audienceFilter);
+        if (memberIds == null) {
+            return memberDirectory.findActiveMembersByGym(gymId);
+        }
+        if (memberIds.isEmpty()) {
             return Collections.emptyList();
         }
 
-        // Get all user IDs
-        Set<UUID> userIds = members.stream()
-                .map(Member::getUserId)
-                .collect(Collectors.toSet());
-
-        // Fetch users in batch
-        List<User> users = userRepository.findAllById(userIds);
-        Map<UUID, User> userMap = users.stream()
-                .collect(Collectors.toMap(User::getId, u -> u));
-
-        // Build recipient list
-        return members.stream()
-                .map(member -> {
-                    User user = userMap.get(member.getUserId());
-                    if (user == null) {
-                        log.warn("User not found for member: {}", member.getId());
-                        return null;
-                    }
-                    return new MemberRecipient(
-                            member.getId(),
-                            user.getId(),
-                            user.getFirstName(),
-                            user.getLastName(),
-                            user.getEmail());
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Get all active members for a gym.
-     */
-    private List<Member> resolveAllMembers(UUID gymId) {
-        List<Member> members = memberRepository.findByGymId(gymId);
-        return members.stream()
-                .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Get members subscribed to specific classes.
-     * Filter format: {"classIds": ["uuid1", "uuid2"]}
-     */
-    private List<Member> resolveClassSubscribers(UUID gymId, String audienceFilter) {
-        try {
-            Set<UUID> classScheduleIds = parseUuidListFromFilter(audienceFilter, "classIds");
-            if (classScheduleIds.isEmpty()) {
-                log.warn("No classIds provided in audience filter, returning all members");
-                return resolveAllMembers(gymId);
-            }
-
-            // Get all bookings for this gym and filter by matching class schedule IDs
-            Set<UUID> memberIds = classBookingRepository.findByGymId(gymId).stream()
-                    .filter(booking -> classScheduleIds.contains(booking.getClassScheduleId()))
-                    .map(booking -> booking.getMemberId())
-                    .collect(Collectors.toSet());
-
-            if (memberIds.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            return memberRepository.findAllById(memberIds).stream()
-                    .filter(m -> m.getGymId().equals(gymId))
-                    .filter(m -> m.getStatus() == MemberStatus.ACTIVE)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            log.error("Failed to resolve class subscribers: {}", e.getMessage());
-            return resolveAllMembers(gymId);
-        }
-    }
-
-    /**
-     * Get members with active/upcoming bookings.
-     * Filter format: {"dateFrom": "2026-01-01", "dateTo": "2026-12-31"}
-     */
-    private List<Member> resolveBookingParticipants(UUID gymId, String audienceFilter) {
-        try {
-            LocalDateTime dateFrom = LocalDateTime.now().minusMonths(1);
-            LocalDateTime dateTo = LocalDateTime.now().plusMonths(1);
-
-            if (audienceFilter != null && !audienceFilter.isBlank()) {
-                JsonNode node = objectMapper.readTree(audienceFilter);
-                if (node.has("dateFrom")) {
-                    dateFrom = LocalDateTime.parse(node.get("dateFrom").asText() + "T00:00:00");
-                }
-                if (node.has("dateTo")) {
-                    dateTo = LocalDateTime.parse(node.get("dateTo").asText() + "T23:59:59");
-                }
-            }
-
-            // Find distinct members with bookings in the date range for this gym
-            final LocalDateTime from = dateFrom;
-            final LocalDateTime to = dateTo;
-            Set<UUID> memberIds = classBookingRepository.findByGymId(gymId).stream()
-                    .filter(booking -> booking.getBookingDate() != null
-                            && !booking.getBookingDate().isBefore(from)
-                            && !booking.getBookingDate().isAfter(to))
-                    .map(booking -> booking.getMemberId())
-                    .collect(Collectors.toSet());
-
-            if (memberIds.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            return memberRepository.findAllById(memberIds).stream()
-                    .filter(m -> m.getGymId().equals(gymId))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            log.error("Failed to resolve booking participants: {}", e.getMessage());
-            return resolveAllMembers(gymId);
-        }
-    }
-
-    /**
-     * Get members on specific membership plans.
-     * Filter format: {"planIds": ["uuid1", "uuid2"]}
-     */
-    private List<Member> resolveMembershipPlan(UUID gymId, String audienceFilter) {
-        try {
-            Set<UUID> planIds = parseUuidListFromFilter(audienceFilter, "planIds");
-            if (planIds.isEmpty()) {
-                log.warn("No planIds provided in audience filter, returning all members");
-                return resolveAllMembers(gymId);
-            }
-
-            // Get all memberships for this gym and filter by plan
-            Set<UUID> memberIds = memberMembershipRepository.findByGymId(gymId).stream()
-                    .filter(mm -> mm.getMembershipPlanId() != null && planIds.contains(mm.getMembershipPlanId()))
-                    .filter(mm -> mm.getStatus() == com.gymmate.membership.domain.MembershipStatus.ACTIVE)
-                    .map(mm -> mm.getMemberId())
-                    .collect(Collectors.toSet());
-
-            if (memberIds.isEmpty()) {
-                return Collections.emptyList();
-            }
-
-            return memberRepository.findAllById(memberIds).stream()
-                    .filter(m -> m.getGymId().equals(gymId))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            log.error("Failed to resolve membership plan audience: {}", e.getMessage());
-            return resolveAllMembers(gymId);
-        }
+        return memberDirectory.findMembersByIds(gymId, memberIds, activeOnly);
     }
 
     /**
      * Custom member selection.
      * Filter format: {"memberIds": ["uuid1", "uuid2"]}
      */
-    private List<Member> resolveCustom(UUID gymId, String audienceFilter) {
-        try {
-            Set<UUID> memberIds = parseUuidListFromFilter(audienceFilter, "memberIds");
-            if (memberIds.isEmpty()) {
-                log.warn("No memberIds provided in custom audience filter, returning empty list");
-                return Collections.emptyList();
-            }
-
-            return memberRepository.findAllById(memberIds).stream()
-                    .filter(m -> m.getGymId().equals(gymId))
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            log.error("Failed to resolve custom audience: {}", e.getMessage());
+    private List<MemberRecipient> resolveCustom(UUID gymId, String audienceFilter) {
+        Set<UUID> memberIds = parseUuidListFromFilter(audienceFilter, "memberIds");
+        if (memberIds.isEmpty()) {
+            log.warn("No memberIds provided in custom audience filter, returning empty list");
             return Collections.emptyList();
         }
+        return memberDirectory.findMembersByIds(gymId, memberIds, false);
     }
 
     /**
      * Parse a list of UUIDs from a JSON filter string.
-     * E.g. {"classIds": ["uuid1", "uuid2"]} → Set of UUIDs
+     * E.g. {"memberIds": ["uuid1", "uuid2"]} -> Set of UUIDs
      */
     private Set<UUID> parseUuidListFromFilter(String audienceFilter, String fieldName) {
         if (audienceFilter == null || audienceFilter.isBlank()) {

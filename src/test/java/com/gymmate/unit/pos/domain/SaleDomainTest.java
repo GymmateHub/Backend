@@ -1,9 +1,9 @@
 package com.gymmate.unit.pos.domain;
 
-import com.gymmate.pos.domain.PaymentType;
-import com.gymmate.pos.domain.Sale;
-import com.gymmate.pos.domain.SaleItem;
-import com.gymmate.pos.domain.SaleStatus;
+import com.gymmate.pos.internal.domain.PaymentType;
+import com.gymmate.pos.internal.domain.Sale;
+import com.gymmate.pos.internal.domain.SaleItem;
+import com.gymmate.pos.internal.domain.SaleStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

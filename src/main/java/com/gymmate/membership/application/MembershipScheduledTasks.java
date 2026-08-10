@@ -49,6 +49,22 @@ public class MembershipScheduledTasks {
   }
 
   /**
+   * Suspend memberships past due beyond the grace period. Runs hourly, matching the
+   * subscription-side escalation cadence (SubscriptionScheduledTasks).
+   */
+  @Scheduled(cron = "0 30 * * * *") // Every hour at minute 30
+  @Transactional
+  public void escalatePastDueMemberships() {
+    log.info("Starting scheduled task: Escalate past-due memberships");
+    try {
+      int suspendedCount = membershipService.escalatePastDueMemberships();
+      log.info("Completed scheduled task: Escalate past-due memberships (suspended: {})", suspendedCount);
+    } catch (Exception e) {
+      log.error("Error escalating past-due memberships", e);
+    }
+  }
+
+  /**
    * Auto-unfreeze memberships that have passed their freeze end date.
    * Runs daily at 1 AM.
    */
