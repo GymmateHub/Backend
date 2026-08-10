@@ -1,6 +1,6 @@
 package com.gymmate.access.api.dto;
 
-import com.gymmate.access.domain.enums.CredentialType;
+import com.gymmate.access.internal.domain.enums.CredentialType;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;

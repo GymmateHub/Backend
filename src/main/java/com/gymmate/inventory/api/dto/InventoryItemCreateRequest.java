@@ -1,6 +1,6 @@
 package com.gymmate.inventory.api.dto;
 
-import com.gymmate.inventory.domain.InventoryCategory;
+import com.gymmate.inventory.internal.domain.InventoryCategory;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

@@ -1,7 +1,7 @@
 package com.gymmate.access.api.dto;
 
-import com.gymmate.access.application.IssuedCredential;
-import com.gymmate.access.domain.enums.CredentialType;
+import com.gymmate.access.internal.service.IssuedCredential;
+import com.gymmate.access.internal.domain.enums.CredentialType;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

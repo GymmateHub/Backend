@@ -1,9 +1,9 @@
 package com.gymmate.access.api.dto;
 
-import com.gymmate.access.domain.AccessEvent;
-import com.gymmate.access.domain.enums.AccessDecision;
-import com.gymmate.access.domain.enums.AccessDirection;
-import com.gymmate.access.domain.enums.DenyReason;
+import com.gymmate.access.internal.domain.AccessEvent;
+import com.gymmate.access.internal.domain.enums.AccessDecision;
+import com.gymmate.access.internal.domain.enums.AccessDirection;
+import com.gymmate.access.internal.domain.enums.DenyReason;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

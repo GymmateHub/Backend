@@ -74,22 +74,13 @@ spring:
       - org.springframework.cloud.function.context.config.ContextFunctionCatalogAutoConfiguration
 
 # ============================================
-# API Documentation (OpenAPI/Swagger)
+# API Documentation (OpenAPI spec, served via Scalar — see /scalar.html)
 # ============================================
 springdoc:
   api-docs:
     path: /v3/api-docs
     enabled: true
-  swagger-ui:
-    path: /swagger-ui.html
-    operations-sorter: method
-    tags-sorter: alpha
-    doc-expansion: none
-    filter: true
-    try-it-out-enabled: true
-    persist-authorization: true
   show-actuator: true
-  show-login-endpoint: true
   cache:
     disabled: false
 

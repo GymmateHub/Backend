@@ -1,6 +1,6 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.application.HealthMetricService;
+import com.gymmate.health.internal.service.HealthMetricService;
 
 /**
  * Response DTO for body composition snapshot.

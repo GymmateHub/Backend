@@ -1,13 +1,13 @@
 package com.gymmate.unit.pos.application;
 
-import com.gymmate.inventory.application.InventoryService;
+import com.gymmate.inventory.api.InventoryFacade;
 import com.gymmate.pos.api.dto.CreateSaleRequest;
 import com.gymmate.pos.api.dto.SaleItemRequest;
-import com.gymmate.pos.application.PosService;
-import com.gymmate.pos.domain.*;
-import com.gymmate.pos.infrastructure.CashDrawerJpaRepository;
-import com.gymmate.pos.infrastructure.SaleItemJpaRepository;
-import com.gymmate.pos.infrastructure.SaleJpaRepository;
+import com.gymmate.pos.internal.service.PosService;
+import com.gymmate.pos.internal.domain.*;
+import com.gymmate.pos.internal.repository.CashDrawerJpaRepository;
+import com.gymmate.pos.internal.repository.SaleItemJpaRepository;
+import com.gymmate.pos.internal.repository.SaleJpaRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +43,7 @@ class PosServiceTest {
     private CashDrawerJpaRepository cashDrawerRepository;
 
     @Mock
-    private InventoryService inventoryService;
+    private InventoryFacade inventoryFacade;
 
     private PosService posService;
 
@@ -57,7 +57,7 @@ class PosServiceTest {
                 saleRepository,
                 saleItemRepository,
                 cashDrawerRepository,
-                inventoryService);
+                inventoryFacade);
 
         gymId = UUID.randomUUID();
         staffId = UUID.randomUUID();
@@ -170,8 +170,8 @@ class PosServiceTest {
 
             // Assert
             assertThat(result.getStatus()).isEqualTo(SaleStatus.COMPLETED);
-            // Verify inventory service was called for sale recording
-            verify(inventoryService).recordSale(eq(inventoryItemId), eq(2), any(), any(), any(), any());
+            // Verify inventory facade was called for sale recording
+            verify(inventoryFacade).recordSale(eq(inventoryItemId), eq(2), any(), any(), any(), any());
         }
 
         @Test

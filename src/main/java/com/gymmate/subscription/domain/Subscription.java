@@ -80,12 +80,29 @@ public class Subscription extends BaseAuditEntity {
     @Column(columnDefinition = "jsonb")
     private String metadata;
 
+    // When this subscription first entered PAST_DUE — drives the grace-period
+    // escalation in SubscriptionService.escalatePastDueSubscriptions. Null while not
+    // past due.
+    @Column(name = "past_due_since")
+    private LocalDateTime pastDueSince;
+
+    /** Also used by SubscriptionService.escalatePastDueSubscriptions — the single source of truth for this window. */
+    public static final long PAST_DUE_GRACE_PERIOD_DAYS = 7;
+
     // Business Methods
     public boolean isActive() {
         return status.isActive();
     }
 
     public boolean canAccess() {
+        if (status == SubscriptionStatus.PAST_DUE && pastDueSince != null
+                && pastDueSince.plusDays(PAST_DUE_GRACE_PERIOD_DAYS).isBefore(LocalDateTime.now())) {
+            // Belt-and-braces: closes the window between grace-period expiry and the
+            // next hourly escalation run (SubscriptionScheduledTasks) actually flipping
+            // status to SUSPENDED. SubscriptionStatus.canAccess() alone can't express
+            // this — it has no notion of duration, only the status enum value.
+            return false;
+        }
         return status.canAccess() && !isExpired();
     }
 
@@ -132,13 +149,22 @@ public class Subscription extends BaseAuditEntity {
 
     public void activate() {
         this.status = SubscriptionStatus.ACTIVE;
+        this.pastDueSince = null;
     }
 
     public void markExpired() {
         this.status = SubscriptionStatus.EXPIRED;
     }
 
+    /**
+     * Idempotent on the timestamp: a second failure while already PAST_DUE does not
+     * push pastDueSince forward, since that would reset the grace-period clock every
+     * time Stripe retries.
+     */
     public void markPastDue() {
+        if (this.status != SubscriptionStatus.PAST_DUE) {
+            this.pastDueSince = LocalDateTime.now();
+        }
         this.status = SubscriptionStatus.PAST_DUE;
     }
 
@@ -151,6 +177,7 @@ public class Subscription extends BaseAuditEntity {
         this.currentPeriodEnd = newEnd;
         if (this.status == SubscriptionStatus.EXPIRED) {
             this.status = SubscriptionStatus.ACTIVE;
+            this.pastDueSince = null;
         }
     }
 }

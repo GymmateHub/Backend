@@ -93,6 +93,30 @@ class AdminNotificationEventListenerTest {
         }
 
         @Test
+        @DisplayName("Should handle PaymentFailedEvent with null gymId as organisation-scoped")
+        void shouldHandlePaymentFailedEventOrganisationScoped() {
+            // Platform (subscription) failures have no single gym — see
+            // StripeWebhookService.handleInvoicePaymentFailed.
+            PaymentFailedEvent event = PaymentFailedEvent.builder()
+                    .organisationId(organisationId)
+                    .amount(BigDecimal.valueOf(49.99))
+                    .failureReason("Card declined")
+                    .nextRetryDate(LocalDateTime.now().plusDays(3))
+                    .invoiceId("inv-789")
+                    .build();
+
+            ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
+
+            listener.handlePaymentFailedEvent(event);
+
+            verify(notificationRepository).save(captor.capture());
+            Notification saved = captor.getValue();
+            assertThat(saved.getScope()).isEqualTo(Notification.NotificationScope.ORGANISATION);
+            assertThat(saved.getRelatedEntityType()).isEqualTo("ORGANISATION");
+            assertThat(saved.getRelatedEntityId()).isEqualTo(organisationId);
+        }
+
+        @Test
         @DisplayName("Should handle PaymentSuccessEvent")
         void shouldHandlePaymentSuccessEvent() {
             // Arrange

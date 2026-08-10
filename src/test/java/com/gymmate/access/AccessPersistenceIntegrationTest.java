@@ -1,19 +1,20 @@
 package com.gymmate.access;
 
-import com.gymmate.access.domain.AccessCredential;
-import com.gymmate.access.domain.AccessEvent;
-import com.gymmate.access.domain.AccessPoint;
-import com.gymmate.access.domain.enums.AccessDecision;
-import com.gymmate.access.domain.enums.AccessDirection;
-import com.gymmate.access.domain.enums.AccessPointMode;
-import com.gymmate.access.domain.enums.CredentialType;
-import com.gymmate.access.infrastructure.AccessCredentialRepository;
-import com.gymmate.access.infrastructure.AccessEventRepository;
-import com.gymmate.access.infrastructure.AccessPointRepository;
+import com.gymmate.access.internal.domain.AccessCredential;
+import com.gymmate.access.internal.domain.AccessEvent;
+import com.gymmate.access.internal.domain.AccessPoint;
+import com.gymmate.access.internal.domain.enums.AccessDecision;
+import com.gymmate.access.internal.domain.enums.AccessDirection;
+import com.gymmate.access.internal.domain.enums.AccessPointMode;
+import com.gymmate.access.internal.domain.enums.CredentialType;
+import com.gymmate.access.internal.repository.AccessCredentialRepository;
+import com.gymmate.access.internal.repository.AccessEventRepository;
+import com.gymmate.access.internal.repository.AccessPointRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -27,19 +28,25 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Verifies the access-control entities and derived queries map correctly to a
- * real PostgreSQL instance (covers the H2-vs-Postgres drift gap, C1/C2). Uses a
- * uuidv7() shim so the schema builds on postgres:16.
+ * real PostgreSQL instance (covers the H2-vs-Postgres drift gap).
+ * Uses postgres:18-alpine which has native uuidv7() support.
+ *
+ * <p>{@code @ActiveProfiles("test")} loads application-test.yml which provides
+ * defaults for jwt.secret, cors, mail, etc. that application.yml would otherwise
+ * try to resolve from missing CI environment variables. The {@code @DynamicPropertySource}
+ * then overrides only the Postgres-specific settings.</p>
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 class AccessPersistenceIntegrationTest {
 
+
   @Container
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
       .withDatabaseName("gymmate_test")
       .withUsername("test")
-      .withPassword("test")
-      .withInitScript("db/testcontainers/uuidv7.sql");
+      .withPassword("test");
 
   @DynamicPropertySource
   static void props(DynamicPropertyRegistry registry) {
@@ -65,9 +72,11 @@ class AccessPersistenceIntegrationTest {
     // blank; a dummy value lets the context load (no real OpenAI call is made).
     registry.add("spring.ai.openai.api-key", () -> "test-openai-key");
     // SuperAdminInitializer (ApplicationReadyEvent) requires non-blank admin
-    // email + password; firstName/lastName already default to System/Admin.
+    // email + password + firstName + lastName.
     registry.add("app.admin.email", () -> "admin@gymmate.test");
     registry.add("app.admin.password", () -> "Admin!Test123");
+    registry.add("app.admin.firstName", () -> "System");
+    registry.add("app.admin.lastName", () -> "Admin");
   }
 
   @Autowired AccessPointRepository accessPointRepository;

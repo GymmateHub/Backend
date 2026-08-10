@@ -30,6 +30,23 @@ public class SubscriptionScheduledTasks {
     }
 
     /**
+     * Escalate subscriptions past due beyond the grace period to SUSPENDED. Runs
+     * hourly, same cadence as processExpiredSubscriptions — this is what closes the
+     * window on Subscription.canAccess()'s belt-and-braces grace-period check.
+     */
+    @Scheduled(cron = "0 30 * * * *") // Every hour at minute 30 (offset from expiry check)
+    @Transactional
+    public void escalatePastDueSubscriptions() {
+        log.info("Starting scheduled task: Escalate past-due subscriptions");
+        try {
+            subscriptionService.escalatePastDueSubscriptions();
+            log.info("Completed scheduled task: Escalate past-due subscriptions");
+        } catch (Exception e) {
+            log.error("Error escalating past-due subscriptions", e);
+        }
+    }
+
+    /**
      * Send renewal notifications daily at 9 AM
      */
     @Scheduled(cron = "0 0 9 * * *") // Daily at 9 AM

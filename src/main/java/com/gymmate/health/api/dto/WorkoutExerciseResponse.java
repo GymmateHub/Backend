@@ -1,6 +1,6 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.domain.WorkoutExercise;
+import com.gymmate.health.internal.domain.WorkoutExercise;
 
 import java.math.BigDecimal;
 import java.util.UUID;

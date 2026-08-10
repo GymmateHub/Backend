@@ -114,7 +114,7 @@ public class MemberService {
         
         // Trigger AI plan generation if fitness goals are provided
         if (fitnessGoals != null && fitnessGoals.length > 0) {
-            eventPublisher.publishEvent(new com.gymmate.user.domain.events.MemberOnboardedEvent(this, savedMember.getId(), savedMember.getGymId(), fitnessGoals));
+            eventPublisher.publishEvent(new com.gymmate.user.domain.events.MemberOnboardedEvent(this, savedMember.getOrganisationId(), savedMember.getId(), savedMember.getGymId(), fitnessGoals));
         }
         
         return savedMember;

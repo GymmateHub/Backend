@@ -2,6 +2,7 @@ package com.gymmate.ai.application;
 
 import com.gymmate.ai.api.dto.AiPlanRequest;
 import com.gymmate.ai.api.dto.AiPlanResponse;
+import com.gymmate.ai.application.port.LlmClient;
 import com.gymmate.ai.domain.AiRecommendation;
 import com.gymmate.ai.infrastructure.AiRecommendationRepository;
 import com.gymmate.gym.domain.Gym;
@@ -11,7 +12,6 @@ import com.gymmate.user.application.MemberService;
 import com.gymmate.user.domain.Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -48,7 +48,7 @@ public class AiPlanService {
 
     private static final String CACHE_KEY_PREFIX = "ai:plan:";
 
-    private final ChatClient.Builder chatClientBuilder;
+    private final LlmClient llmClient;
     private final AiRecommendationRepository recommendationRepository;
     private final MemberService memberService;
     private final GymRepository gymRepository;
@@ -139,7 +139,7 @@ public class AiPlanService {
         log.info("Calling AI for member {} with goals: {}", memberId, goals);
         String aiResponse;
         try {
-            aiResponse = chatClientBuilder.build().prompt().user(prompt).call().content();
+            aiResponse = llmClient.complete(null, prompt);
         } catch (Exception e) {
             log.error("AI provider call failed for member {}", memberId, e);
             throw new IllegalStateException("AI service is temporarily unavailable. Please try again shortly.", e);

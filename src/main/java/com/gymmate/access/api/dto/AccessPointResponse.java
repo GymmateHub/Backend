@@ -1,8 +1,8 @@
 package com.gymmate.access.api.dto;
 
-import com.gymmate.access.domain.AccessPoint;
-import com.gymmate.access.domain.enums.AccessPointMode;
-import com.gymmate.access.domain.enums.AccessPointType;
+import com.gymmate.access.internal.domain.AccessPoint;
+import com.gymmate.access.internal.domain.enums.AccessPointMode;
+import com.gymmate.access.internal.domain.enums.AccessPointType;
 
 import java.util.UUID;
 

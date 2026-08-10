@@ -1,6 +1,6 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.application.FitnessGoalService;
+import com.gymmate.health.internal.service.FitnessGoalService;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

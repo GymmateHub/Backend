@@ -7,11 +7,8 @@ import com.gymmate.notification.events.PaymentSuccessEvent;
 import com.gymmate.notification.events.SubscriptionPausedEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.notification.application.NotificationService;
-import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
-import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
-import com.gymmate.membership.domain.MemberInvoice;
-import com.gymmate.membership.domain.MemberInvoiceStatus;
-import com.gymmate.membership.domain.MembershipStatus;
+import com.gymmate.gym.domain.Gym;
+import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.payment.domain.*;
 import com.gymmate.payment.infrastructure.GymInvoiceRepository;
 import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
@@ -54,71 +51,67 @@ public class StripeWebhookService {
     private final ApplicationEventPublisher eventPublisher;
     private final UtilityService utilityService;
     private final NotificationService notificationService;
-    private final MemberMembershipJpaRepository memberMembershipRepository;
-    private final MemberInvoiceRepository memberInvoiceRepository;
+    private final GymRepository gymRepository;
+    private final WebhookEventTracker webhookEventTracker;
+    private final PaymentNotificationService paymentNotificationService;
 
     /**
      * Process a platform webhook event (for gym subscriptions to GymMate).
+     *
+     * <p>On a genuine processing failure this now rethrows (via
+     * {@link WebhookProcessingException}) instead of swallowing the exception — the
+     * controller lets it propagate to a 5xx so Stripe's own retry schedule redelivers
+     * the event, instead of always acking with 200 regardless of outcome. The
+     * pending/outcome rows are recorded via {@link WebhookEventTracker} in their own
+     * transactions so the audit trail survives this method's transaction rolling back.
      */
     @Transactional
     public void processPlatformWebhook(String payload, String signature) {
         Event event = verifyAndParseEvent(payload, signature, stripeConfig.getWebhookSecret());
 
-        // Check for duplicate processing
-        if (webhookEventRepository.existsByStripeEventId(event.getId())) {
+        // Only skip events that were previously processed successfully — a row that
+        // exists but failed must be retried, not silently skipped (see
+        // existsByStripeEventIdAndProcessedTrue's javadoc).
+        if (webhookEventRepository.existsByStripeEventIdAndProcessedTrue(event.getId())) {
             log.info("Webhook event {} already processed, skipping", event.getId());
             return;
         }
 
-        // Save event for tracking
-        StripeWebhookEvent webhookEvent = StripeWebhookEvent.builder()
-                .stripeEventId(event.getId())
-                .eventType(event.getType())
-                .payload(payload)
-                .build();
-        webhookEventRepository.save(webhookEvent);
+        webhookEventTracker.recordPending(event.getId(), event.getType(), payload);
 
         try {
             handlePlatformEvent(event);
-            webhookEvent.markProcessed();
+            webhookEventTracker.recordSuccess(event.getId());
         } catch (Exception e) {
             log.error("Failed to process webhook event {}: {}", event.getId(), e.getMessage());
-            webhookEvent.markFailed(e.getMessage());
+            webhookEventTracker.recordFailure(event.getId(), e.getMessage());
+            throw new WebhookProcessingException("Failed to process platform webhook event " + event.getId(), e);
         }
-
-        webhookEventRepository.save(webhookEvent);
     }
 
     /**
-     * Process a Connect webhook event (for member payments to gyms).
+     * Process a Connect webhook event (for member payments to gyms). See
+     * {@link #processPlatformWebhook} for the redelivery/idempotency behavior.
      */
     @Transactional
     public void processConnectWebhook(String payload, String signature) {
         Event event = verifyAndParseEvent(payload, signature, stripeConfig.getConnectWebhookSecret());
 
-        // Check for duplicate processing
-        if (webhookEventRepository.existsByStripeEventId(event.getId())) {
+        if (webhookEventRepository.existsByStripeEventIdAndProcessedTrue(event.getId())) {
             log.info("Connect webhook event {} already processed, skipping", event.getId());
             return;
         }
 
-        // Save event for tracking
-        StripeWebhookEvent webhookEvent = StripeWebhookEvent.builder()
-                .stripeEventId(event.getId())
-                .eventType(event.getType())
-                .payload(payload)
-                .build();
-        webhookEventRepository.save(webhookEvent);
+        webhookEventTracker.recordPending(event.getId(), event.getType(), payload);
 
         try {
             handleConnectEvent(event);
-            webhookEvent.markProcessed();
+            webhookEventTracker.recordSuccess(event.getId());
         } catch (Exception e) {
             log.error("Failed to process Connect webhook event {}: {}", event.getId(), e.getMessage());
-            webhookEvent.markFailed(e.getMessage());
+            webhookEventTracker.recordFailure(event.getId(), e.getMessage());
+            throw new WebhookProcessingException("Failed to process Connect webhook event " + event.getId(), e);
         }
-
-        webhookEventRepository.save(webhookEvent);
     }
 
     /**
@@ -167,6 +160,10 @@ public class StripeWebhookService {
                 handleChargeRefunded(event);
                 break;
 
+            case "charge.failed":
+                handleChargeFailed(event);
+                break;
+
             default:
                 log.debug("Unhandled platform event type: {}", eventType);
         }
@@ -202,6 +199,10 @@ public class StripeWebhookService {
 
             case "charge.refunded":
                 handleChargeRefunded(event);
+                break;
+
+            case "charge.failed":
+                handleChargeFailed(event);
                 break;
 
             default:
@@ -345,7 +346,10 @@ public class StripeWebhookService {
                 subscriptionRepository.findByStripeSubscriptionId(subscriptionId)
                         .ifPresent(subscription -> {
                             if (subscription.getStatus() == SubscriptionStatus.PAST_DUE) {
-                                subscription.setStatus(SubscriptionStatus.ACTIVE);
+                                // activate() clears pastDueSince too, resetting the grace-period clock
+                                // (see escalatePastDueSubscriptions) — a raw status flip would leave it
+                                // stale.
+                                subscription.activate();
                                 subscriptionRepository.save(subscription);
                                 log.info("Subscription {} reactivated after payment", subscription.getId());
                             }
@@ -380,10 +384,24 @@ public class StripeWebhookService {
                             subscriptionRepository.save(subscription);
                             log.warn("Subscription {} marked as past due due to payment failure", subscription.getId());
 
-                            // Get failure reason and next retry date
+                            // Get failure reason and next retry date. Invoices don't carry a decline
+                            // reason directly (that lives on the Charge/PaymentIntent) but recent
+                            // Stripe API versions surface finalization failures on the invoice itself;
+                            // fall back to a generic message only when nothing more specific is present.
                             String failureReason = "Payment could not be processed";
-                            LocalDateTime nextRetryDate = LocalDateTime.now().plusDays(3);
+                            try {
+                                if (rawJson.has("last_finalization_error")
+                                        && !rawJson.get("last_finalization_error").isJsonNull()) {
+                                    com.google.gson.JsonObject finalizationError = rawJson.getAsJsonObject("last_finalization_error");
+                                    if (finalizationError.has("message") && !finalizationError.get("message").isJsonNull()) {
+                                        failureReason = finalizationError.get("message").getAsString();
+                                    }
+                                }
+                            } catch (Exception ex) {
+                                log.debug("Could not parse last_finalization_error: {}", ex.getMessage());
+                            }
 
+                            LocalDateTime nextRetryDate = LocalDateTime.now().plusDays(3);
                             try {
                                 if (rawJson.has("next_payment_attempt")
                                         && !rawJson.get("next_payment_attempt").isJsonNull()) {
@@ -394,13 +412,15 @@ public class StripeWebhookService {
                                 log.debug("Could not parse next_payment_attempt: {}", ex.getMessage());
                             }
 
-                            // Publish payment failed event
+                            // Publish payment failed event. This is a platform (organisation-level)
+                            // subscription failure — there is no single gym it belongs to, so gymId is
+                            // left null rather than faked with the organisation id (see AdminNotificationEventListener,
+                            // which falls back to ORGANISATION scope when gymId is null).
                             BigDecimal amount = BigDecimal.valueOf(stripeInvoice.getAmountDue())
                                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
                             PaymentFailedEvent paymentFailedEvent = PaymentFailedEvent.builder()
                                     .organisationId(subscription.getOrganisationId())
-                                    .gymId(subscription.getOrganisationId()) // Using org ID since gyms are org-level now
                                     .amount(amount)
                                     .failureReason(failureReason)
                                     .nextRetryDate(nextRetryDate)
@@ -409,6 +429,10 @@ public class StripeWebhookService {
 
                             eventPublisher.publishEvent(paymentFailedEvent);
                             log.info("Published PaymentFailedEvent for organisation {}", subscription.getOrganisationId());
+
+                            // Platform (subscription) failure has no single gym — email the org owner directly.
+                            paymentNotificationService.sendPaymentFailedNotificationForOrganisation(
+                                    subscription.getOrganisationId(), amount, failureReason, nextRetryDate);
                         });
             }
         } catch (Exception e) {
@@ -494,58 +518,35 @@ public class StripeWebhookService {
         log.info("Connect payment succeeded: {} for amount {} {}",
                 paymentIntent.getId(), amount, currency);
 
-        // Look up the membership via metadata on the PaymentIntent
+        // membership_id is carried through so MembershipPaymentEventListener (in the
+        // membership module) can react — this service intentionally has no membership
+        // dependency itself (see that listener's Javadoc for why: it used to write to
+        // membership directly, which created a module dependency cycle).
         var metadata = paymentIntent.getMetadata();
-        String membershipId = metadata != null ? metadata.get("membership_id") : null;
-        String memberId = metadata != null ? metadata.get("member_id") : null;
+        String membershipIdStr = metadata != null ? metadata.get("membership_id") : null;
         String gymIdStr = metadata != null ? metadata.get("gym_id") : null;
 
-        if (membershipId != null) {
-            memberMembershipRepository.findById(UUID.fromString(membershipId))
-                    .ifPresent(membership -> {
-                        // Mark membership active if it was pending/past_due
-                        if (membership.getStatus() == MembershipStatus.EXPIRED
-                                || membership.getStatus() == MembershipStatus.CANCELLED) {
-                            membership.setStatus(MembershipStatus.ACTIVE);
-                            memberMembershipRepository.save(membership);
-                            log.info("Membership {} reactivated after payment", membershipId);
-                        }
-
-                        // Create a paid invoice record
-                        MemberInvoice invoice = MemberInvoice.builder()
-                                .memberId(membership.getMemberId())
-                                .membershipId(membership.getId())
-                                .amount(amount)
-                                .currency(currency)
-                                .status(MemberInvoiceStatus.PAID)
-                                .description("Membership payment via Stripe Connect")
-                                .paidAt(LocalDateTime.now())
-                                .build();
-                        invoice.setGymId(membership.getGymId());
-                        invoice.setOrganisationId(membership.getOrganisationId());
-                        memberInvoiceRepository.save(invoice);
-                    });
+        if (gymIdStr == null) {
+            log.warn("Connect payment succeeded with no gym_id in metadata, cannot publish event: {}", paymentIntent.getId());
+            return;
         }
 
-        // Publish payment success event for notifications
-        if (gymIdStr != null) {
-            UUID gymId = UUID.fromString(gymIdStr);
-            UUID organisationId = null;
-            if (membershipId != null) {
-                organisationId = memberMembershipRepository.findById(UUID.fromString(membershipId))
-                        .map(m -> m.getOrganisationId()).orElse(null);
-            }
-
-            if (organisationId != null) {
-                PaymentSuccessEvent successEvent = PaymentSuccessEvent.builder()
-                        .organisationId(organisationId)
-                        .gymId(gymId)
-                        .amount(amount)
-                        .invoiceNumber(paymentIntent.getId())
-                        .build();
-                eventPublisher.publishEvent(successEvent);
-            }
+        UUID gymId = UUID.fromString(gymIdStr);
+        Gym gym = gymRepository.findById(gymId).orElse(null);
+        if (gym == null) {
+            log.warn("Gym {} not found, cannot publish PaymentSuccessEvent for {}", gymId, paymentIntent.getId());
+            return;
         }
+
+        PaymentSuccessEvent successEvent = PaymentSuccessEvent.builder()
+                .organisationId(gym.getOrganisationId())
+                .gymId(gymId)
+                .membershipId(membershipIdStr != null ? UUID.fromString(membershipIdStr) : null)
+                .amount(amount)
+                .currency(currency)
+                .invoiceNumber(paymentIntent.getId())
+                .build();
+        eventPublisher.publishEvent(successEvent);
     }
 
     private void handleConnectPaymentFailed(Event event) {
@@ -558,56 +559,44 @@ public class StripeWebhookService {
         String failureMessage = paymentIntent.getLastPaymentError() != null
                 ? paymentIntent.getLastPaymentError().getMessage()
                 : "Payment could not be processed";
+        String currency = paymentIntent.getCurrency() != null ? paymentIntent.getCurrency().toUpperCase() : "USD";
 
         log.warn("Connect payment failed: {} - {}", paymentIntent.getId(), failureMessage);
 
-        // Look up the membership via metadata
+        // membership_id is carried through so MembershipPaymentEventListener (in the
+        // membership module) can react — see handleConnectPaymentSucceeded's comment
+        // for why this service has no membership dependency itself.
         var metadata = paymentIntent.getMetadata();
-        String membershipId = metadata != null ? metadata.get("membership_id") : null;
+        String membershipIdStr = metadata != null ? metadata.get("membership_id") : null;
         String gymIdStr = metadata != null ? metadata.get("gym_id") : null;
 
-        UUID organisationId = null;
-
-        if (membershipId != null) {
-            var membershipOpt = memberMembershipRepository.findById(UUID.fromString(membershipId));
-            if (membershipOpt.isPresent()) {
-                var membership = membershipOpt.get();
-                organisationId = membership.getOrganisationId();
-
-                // Mark membership as past due so access can be restricted
-                membership.setStatus(MembershipStatus.PAST_DUE);
-                memberMembershipRepository.save(membership);
-                log.warn("Membership {} marked as PAST_DUE due to payment failure", membershipId);
-
-                // Create a failed invoice record
-                MemberInvoice invoice = MemberInvoice.builder()
-                        .memberId(membership.getMemberId())
-                        .membershipId(membership.getId())
-                        .amount(amount)
-                        .currency(paymentIntent.getCurrency() != null ? paymentIntent.getCurrency().toUpperCase() : "USD")
-                        .status(MemberInvoiceStatus.PAYMENT_FAILED)
-                        .description("Payment failed: " + failureMessage)
-                        .build();
-                invoice.setGymId(membership.getGymId());
-                invoice.setOrganisationId(membership.getOrganisationId());
-                memberInvoiceRepository.save(invoice);
-            }
+        if (gymIdStr == null) {
+            log.warn("Connect payment failed with no gym_id in metadata, cannot publish event: {}", paymentIntent.getId());
+            return;
         }
 
-        // Publish payment failed event to notify gym owner and member
-        if (gymIdStr != null && organisationId != null) {
-            UUID gymId = UUID.fromString(gymIdStr);
-            PaymentFailedEvent failedEvent = PaymentFailedEvent.builder()
-                    .organisationId(organisationId)
-                    .gymId(gymId)
-                    .amount(amount)
-                    .failureReason(failureMessage)
-                    .nextRetryDate(LocalDateTime.now().plusDays(3))
-                    .invoiceId(paymentIntent.getId())
-                    .build();
-            eventPublisher.publishEvent(failedEvent);
-            log.info("Published PaymentFailedEvent for Connect payment failure on gym {}", gymIdStr);
+        UUID gymId = UUID.fromString(gymIdStr);
+        Gym gym = gymRepository.findById(gymId).orElse(null);
+        if (gym == null) {
+            log.warn("Gym {} not found, cannot publish PaymentFailedEvent for {}", gymId, paymentIntent.getId());
+            return;
         }
+
+        PaymentFailedEvent failedEvent = PaymentFailedEvent.builder()
+                .organisationId(gym.getOrganisationId())
+                .gymId(gymId)
+                .membershipId(membershipIdStr != null ? UUID.fromString(membershipIdStr) : null)
+                .amount(amount)
+                .currency(currency)
+                .failureReason(failureMessage)
+                .nextRetryDate(LocalDateTime.now().plusDays(3))
+                .invoiceId(paymentIntent.getId())
+                .build();
+        eventPublisher.publishEvent(failedEvent);
+        log.info("Published PaymentFailedEvent for Connect payment failure on gym {}", gymIdStr);
+
+        paymentNotificationService.sendPaymentFailedNotification(
+                gymId, amount, failureMessage, failedEvent.getNextRetryDate());
     }
 
     // Helper methods
@@ -678,6 +667,26 @@ public class StripeWebhookService {
             // Fallback: create a system-level notification via direct service call
             log.warn("Could not resolve organisation for dispute {}. Logging only.", dispute.getId());
         }
+    }
+
+    /**
+     * Handle a failed charge. Stripe fires charge.failed alongside either
+     * invoice.payment_failed (platform) or payment_intent.payment_failed (Connect) for
+     * the same underlying failure — those handlers already update state and publish
+     * PaymentFailedEvent. Re-driving the same side effects here would double-publish
+     * and create duplicate failed-invoice records, so this is intentionally
+     * observability-only: it surfaces the failure above debug level so a charge
+     * failure with no corresponding invoice/payment-intent event (e.g. a one-off
+     * charge not tied to either) doesn't disappear silently, which is what the
+     * previous unhandled default case did.
+     */
+    private void handleChargeFailed(Event event) {
+        Charge charge = extractEventObject(event, Charge.class);
+        if (charge == null)
+            return;
+
+        log.warn("Charge failed: {} reason={} paymentIntent={}",
+                charge.getId(), charge.getFailureMessage(), charge.getPaymentIntent());
     }
 
     /**

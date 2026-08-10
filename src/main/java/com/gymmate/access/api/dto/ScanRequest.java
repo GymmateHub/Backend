@@ -1,6 +1,6 @@
 package com.gymmate.access.api.dto;
 
-import com.gymmate.access.domain.enums.AccessDirection;
+import com.gymmate.access.internal.domain.enums.AccessDirection;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 

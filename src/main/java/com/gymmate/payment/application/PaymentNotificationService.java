@@ -2,9 +2,9 @@ package com.gymmate.payment.application;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.organisation.domain.Organisation;
-import com.gymmate.organisation.infrastructure.OrganisationRepository;
+import com.gymmate.payment.application.port.OrganisationBillingInfoProvider;
 import com.gymmate.payment.domain.GymInvoice;
+import com.gymmate.shared.multitenancy.TenantScope;
 import com.gymmate.subscription.domain.Subscription;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.UserRepository;
@@ -35,7 +35,7 @@ public class PaymentNotificationService {
 
     private final JavaMailSender emailSender;
     private final GymRepository gymRepository;
-    private final OrganisationRepository organisationRepository;
+    private final OrganisationBillingInfoProvider organisationBillingInfoProvider;
     private final UserRepository userRepository;
 
     @Value("${spring.mail.from:no-reply@gymmatehub.com}")
@@ -51,24 +51,26 @@ public class PaymentNotificationService {
      */
     @Async
     public void sendTrialEndingReminder(UUID organisationId, Subscription subscription) {
-        // Resolve the organisation owner's email for billing notifications
-        String recipientEmail = resolveOrganisationOwnerEmail(organisationId);
-        if (recipientEmail == null) return;
+        try (TenantScope ignored = TenantScope.activate(organisationId, null)) {
+            // Resolve the organisation owner's email for billing notifications
+            String recipientEmail = resolveOrganisationOwnerEmail(organisationId);
+            if (recipientEmail == null) return;
 
-        // Fall back to gym name for display if available
-        String orgName = organisationRepository.findById(organisationId)
-                .map(Organisation::getName)
-                .orElse("Your Gym");
+            // Fall back to gym name for display if available
+            String orgName = organisationBillingInfoProvider.findBillingInfo(organisationId)
+                    .map(OrganisationBillingInfoProvider.BillingInfo::name)
+                    .orElse("Your Gym");
 
-        String subject = "Your GymMate Trial Ends in 3 Days";
-        String tierName = subscription.getTier().getDisplayName();
-        BigDecimal price = subscription.getTier().getPrice();
-        LocalDateTime trialEnd = subscription.getTrialEnd();
+            String subject = "Your GymMate Trial Ends in 3 Days";
+            String tierName = subscription.getTier().getDisplayName();
+            BigDecimal price = subscription.getTier().getPrice();
+            LocalDateTime trialEnd = subscription.getTrialEnd();
 
-        String htmlContent = buildTrialEndingEmail(orgName, tierName, price, trialEnd);
+            String htmlContent = buildTrialEndingEmail(orgName, tierName, price, trialEnd);
 
-        sendEmail(recipientEmail, subject, htmlContent);
-        log.info("Sent trial ending reminder to organisation {} ({})", organisationId, recipientEmail);
+            sendEmail(recipientEmail, subject, htmlContent);
+            log.info("Sent trial ending reminder to organisation {} ({})", organisationId, recipientEmail);
+        }
     }
 
     /**
@@ -79,18 +81,20 @@ public class PaymentNotificationService {
         Gym gym = getGym(gymId);
         if (gym == null) return;
 
-        String subject = "Payment Received - $" + invoice.getAmount().setScale(2, RoundingMode.HALF_UP);
-        String htmlContent = buildPaymentSuccessEmail(
-            gym.getName(),
-            invoice.getAmount(),
-            invoice.getInvoiceNumber(),
-            invoice.getPeriodEnd(),
-            invoice.getHostedInvoiceUrl(),
-            invoice.getInvoicePdfUrl()
-        );
+        try (TenantScope ignored = TenantScope.activate(gym.getOrganisationId(), gymId)) {
+            String subject = "Payment Received - $" + invoice.getAmount().setScale(2, RoundingMode.HALF_UP);
+            String htmlContent = buildPaymentSuccessEmail(
+                gym.getName(),
+                invoice.getAmount(),
+                invoice.getInvoiceNumber(),
+                invoice.getPeriodEnd(),
+                invoice.getHostedInvoiceUrl(),
+                invoice.getInvoicePdfUrl()
+            );
 
-        sendEmail(gym.getContactEmail(), subject, htmlContent);
-        log.info("Sent payment success notification to gym {} for invoice {}", gymId, invoice.getInvoiceNumber());
+            sendEmail(gym.getContactEmail(), subject, htmlContent);
+            log.info("Sent payment success notification to gym {} for invoice {}", gymId, invoice.getInvoiceNumber());
+        }
     }
 
     /**
@@ -102,11 +106,37 @@ public class PaymentNotificationService {
         Gym gym = getGym(gymId);
         if (gym == null) return;
 
-        String subject = "⚠️ Payment Failed - Action Required";
-        String htmlContent = buildPaymentFailedEmail(gym.getName(), amount, failureReason, nextRetryDate);
+        try (TenantScope ignored = TenantScope.activate(gym.getOrganisationId(), gymId)) {
+            String subject = "⚠️ Payment Failed - Action Required";
+            String htmlContent = buildPaymentFailedEmail(gym.getName(), amount, failureReason, nextRetryDate);
 
-        sendEmail(gym.getContactEmail(), subject, htmlContent);
-        log.info("Sent payment failed notification to gym {}", gymId);
+            sendEmail(gym.getContactEmail(), subject, htmlContent);
+            log.info("Sent payment failed notification to gym {}", gymId);
+        }
+    }
+
+    /**
+     * Send payment failed notification for an organisation-level (platform
+     * subscription) failure, where there is no single gym to address the email to —
+     * see the gymId-is-null case in StripeWebhookService.handleInvoicePaymentFailed.
+     */
+    @Async
+    public void sendPaymentFailedNotificationForOrganisation(UUID organisationId, BigDecimal amount,
+                                                               String failureReason, LocalDateTime nextRetryDate) {
+        try (TenantScope ignored = TenantScope.activate(organisationId, null)) {
+            String recipientEmail = resolveOrganisationOwnerEmail(organisationId);
+            if (recipientEmail == null) return;
+
+            String orgName = organisationBillingInfoProvider.findBillingInfo(organisationId)
+                    .map(OrganisationBillingInfoProvider.BillingInfo::name)
+                    .orElse("Your Gym");
+
+            String subject = "⚠️ Payment Failed - Action Required";
+            String htmlContent = buildPaymentFailedEmail(orgName, amount, failureReason, nextRetryDate);
+
+            sendEmail(recipientEmail, subject, htmlContent);
+            log.info("Sent org-level payment failed notification to organisation {} ({})", organisationId, recipientEmail);
+        }
     }
 
     /**
@@ -117,11 +147,13 @@ public class PaymentNotificationService {
         Gym gym = getGym(gymId);
         if (gym == null) return;
 
-        String subject = "Your GymMate Subscription Has Been Cancelled";
-        String htmlContent = buildSubscriptionCancelledEmail(gym.getName(), accessEndsAt);
+        try (TenantScope ignored = TenantScope.activate(gym.getOrganisationId(), gymId)) {
+            String subject = "Your GymMate Subscription Has Been Cancelled";
+            String htmlContent = buildSubscriptionCancelledEmail(gym.getName(), accessEndsAt);
 
-        sendEmail(gym.getContactEmail(), subject, htmlContent);
-        log.info("Sent subscription cancelled notification to gym {}", gymId);
+            sendEmail(gym.getContactEmail(), subject, htmlContent);
+            log.info("Sent subscription cancelled notification to gym {}", gymId);
+        }
     }
 
     /**
@@ -132,11 +164,13 @@ public class PaymentNotificationService {
         Gym gym = getGym(gymId);
         if (gym == null) return;
 
-        String subject = "Welcome Back! Your GymMate Subscription is Active";
-        String htmlContent = buildSubscriptionReactivatedEmail(gym.getName(), tierName);
+        try (TenantScope ignored = TenantScope.activate(gym.getOrganisationId(), gymId)) {
+            String subject = "Welcome Back! Your GymMate Subscription is Active";
+            String htmlContent = buildSubscriptionReactivatedEmail(gym.getName(), tierName);
 
-        sendEmail(gym.getContactEmail(), subject, htmlContent);
-        log.info("Sent subscription reactivated notification to gym {}", gymId);
+            sendEmail(gym.getContactEmail(), subject, htmlContent);
+            log.info("Sent subscription reactivated notification to gym {}", gymId);
+        }
     }
 
     /**
@@ -147,11 +181,13 @@ public class PaymentNotificationService {
         Gym gym = getGym(gymId);
         if (gym == null) return;
 
-        String subject = "Welcome to GymMate! Your Free Trial Has Started";
-        String htmlContent = buildTrialStartedEmail(gym.getName(), tierName, trialEnd);
+        try (TenantScope ignored = TenantScope.activate(gym.getOrganisationId(), gymId)) {
+            String subject = "Welcome to GymMate! Your Free Trial Has Started";
+            String htmlContent = buildTrialStartedEmail(gym.getName(), tierName, trialEnd);
 
-        sendEmail(gym.getContactEmail(), subject, htmlContent);
-        log.info("Sent trial started email to gym {}", gymId);
+            sendEmail(gym.getContactEmail(), subject, htmlContent);
+            log.info("Sent trial started email to gym {}", gymId);
+        }
     }
 
     // Private helper methods
@@ -165,15 +201,15 @@ public class PaymentNotificationService {
      * Priority: owner user email → org billing email → org contact email.
      */
     private String resolveOrganisationOwnerEmail(UUID organisationId) {
-        Organisation org = organisationRepository.findById(organisationId).orElse(null);
+        OrganisationBillingInfoProvider.BillingInfo org = organisationBillingInfoProvider.findBillingInfo(organisationId).orElse(null);
         if (org == null) {
             log.warn("Organisation {} not found, cannot send notification", organisationId);
             return null;
         }
 
         // 1. Try the owner user's email
-        if (org.getOwnerUserId() != null) {
-            String ownerEmail = userRepository.findById(org.getOwnerUserId())
+        if (org.ownerUserId() != null) {
+            String ownerEmail = userRepository.findById(org.ownerUserId())
                     .map(User::getEmail)
                     .orElse(null);
             if (ownerEmail != null && !ownerEmail.isBlank()) {
@@ -182,13 +218,13 @@ public class PaymentNotificationService {
         }
 
         // 2. Fall back to org billing email
-        if (org.getBillingEmail() != null && !org.getBillingEmail().isBlank()) {
-            return org.getBillingEmail();
+        if (org.billingEmail() != null && !org.billingEmail().isBlank()) {
+            return org.billingEmail();
         }
 
         // 3. Fall back to org contact email
-        if (org.getContactEmail() != null && !org.getContactEmail().isBlank()) {
-            return org.getContactEmail();
+        if (org.contactEmail() != null && !org.contactEmail().isBlank()) {
+            return org.contactEmail();
         }
 
         log.warn("No email found for organisation {}", organisationId);

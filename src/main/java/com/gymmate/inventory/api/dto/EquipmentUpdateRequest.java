@@ -1,6 +1,6 @@
 package com.gymmate.inventory.api.dto;
 
-import com.gymmate.inventory.domain.EquipmentCategory;
+import com.gymmate.inventory.internal.domain.EquipmentCategory;
 
 import java.util.UUID;
 

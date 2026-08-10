@@ -1,6 +1,6 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.domain.ExerciseCategory;
+import com.gymmate.health.internal.domain.ExerciseCategory;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
