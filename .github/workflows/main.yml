@@ -41,9 +41,6 @@ jobs:
 
       - name: Run tests with test profile
         run: ./mvnw -B test -Dspring.profiles.active=test
-        env:
-          # Flyway disabled during tests (H2 doesn't support uuidv7())
-          SPRING_FLYWAY_ENABLED: false
 
   # ─────────────────────────────────────────────────────────────────────────
   # Step 2: Build & Push image to GHCR (main/dev pushes only)

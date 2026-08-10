@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -27,27 +28,19 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Verifies the access-control entities and derived queries map correctly to a
- * real PostgreSQL instance (covers the H2-vs-Postgres drift gap, C1/C2). Uses a
- * uuidv7() shim so the schema builds on postgres:16.
+ * real PostgreSQL instance (covers the H2-vs-Postgres drift gap).
+ * Uses postgres:18-alpine which has native uuidv7() support.
+ *
+ * <p>{@code @ActiveProfiles("test")} loads application-test.yml which provides
+ * defaults for jwt.secret, cors, mail, etc. that application.yml would otherwise
+ * try to resolve from missing CI environment variables. The {@code @DynamicPropertySource}
+ * then overrides only the Postgres-specific settings.</p>
  */
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.NONE,
-    properties = {
-        "spring.flyway.enabled=true",
-        "SPRING_FLYWAY_ENABLED=true",
-        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect",
-        "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect"
-    }
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 class AccessPersistenceIntegrationTest {
 
-  static {
-    System.setProperty("spring.flyway.enabled", "true");
-    System.setProperty("SPRING_FLYWAY_ENABLED", "true");
-    System.setProperty("spring.jpa.properties.hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-    System.setProperty("spring.jpa.database-platform", "org.hibernate.dialect.PostgreSQLDialect");
-  }
 
   @Container
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
