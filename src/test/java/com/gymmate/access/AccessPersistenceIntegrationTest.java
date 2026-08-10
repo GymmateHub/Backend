@@ -30,9 +30,20 @@ import static org.junit.jupiter.api.Assertions.*;
  * real PostgreSQL instance (covers the H2-vs-Postgres drift gap, C1/C2). Uses a
  * uuidv7() shim so the schema builds on postgres:16.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest(
+    webEnvironment = SpringBootTest.WebEnvironment.NONE,
+    properties = {
+        "spring.flyway.enabled=true",
+        "SPRING_FLYWAY_ENABLED=true"
+    }
+)
 @Testcontainers(disabledWithoutDocker = true)
 class AccessPersistenceIntegrationTest {
+
+  static {
+    System.setProperty("spring.flyway.enabled", "true");
+    System.setProperty("SPRING_FLYWAY_ENABLED", "true");
+  }
 
   @Container
   static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
