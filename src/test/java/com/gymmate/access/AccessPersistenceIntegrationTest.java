@@ -50,11 +50,10 @@ class AccessPersistenceIntegrationTest {
   }
 
   @Container
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
       .withDatabaseName("gymmate_test")
       .withUsername("test")
-      .withPassword("test")
-      .withInitScript("db/testcontainers/uuidv7.sql");
+      .withPassword("test");
 
   @DynamicPropertySource
   static void props(DynamicPropertyRegistry registry) {
