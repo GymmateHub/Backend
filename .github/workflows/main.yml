@@ -40,7 +40,18 @@ jobs:
         run: ./mvnw -B clean package -DskipTests
 
       - name: Run tests with test profile
-        run: ./mvnw -B test -Dspring.profiles.active=test
+        run: ./mvnw -B -e test -Dspring.profiles.active=test
+
+      - name: Print surefire reports on failure
+        if: failure()
+        run: |
+          echo "=== Surefire Reports ==="
+          for f in target/surefire-reports/com.gymmate.access.AccessPersistenceIntegrationTest.txt; do
+            if [ -f "$f" ]; then
+              echo "--- $f ---"
+              cat "$f"
+            fi
+          done
 
   # ─────────────────────────────────────────────────────────────────────────
   # Step 2: Build & Push image to GHCR (main/dev pushes only)
