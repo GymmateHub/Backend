@@ -34,7 +34,9 @@ import static org.junit.jupiter.api.Assertions.*;
     webEnvironment = SpringBootTest.WebEnvironment.NONE,
     properties = {
         "spring.flyway.enabled=true",
-        "SPRING_FLYWAY_ENABLED=true"
+        "SPRING_FLYWAY_ENABLED=true",
+        "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect",
+        "spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect"
     }
 )
 @Testcontainers(disabledWithoutDocker = true)
@@ -43,6 +45,8 @@ class AccessPersistenceIntegrationTest {
   static {
     System.setProperty("spring.flyway.enabled", "true");
     System.setProperty("SPRING_FLYWAY_ENABLED", "true");
+    System.setProperty("spring.jpa.properties.hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+    System.setProperty("spring.jpa.database-platform", "org.hibernate.dialect.PostgreSQLDialect");
   }
 
   @Container
