@@ -56,6 +56,15 @@ public class RedissonConfig {
                 new Class<?>[]{RLock.class},
                 (proxy, method, args) -> {
                     String methodName = method.getName();
+                    if ("equals".equals(methodName)) {
+                        return proxy == args[0];
+                    }
+                    if ("hashCode".equals(methodName)) {
+                        return System.identityHashCode(proxy);
+                    }
+                    if ("toString".equals(methodName)) {
+                        return "FallbackRLockProxy";
+                    }
                     if ("tryLock".equals(methodName)) {
                         return true;
                     }
@@ -87,6 +96,15 @@ public class RedissonConfig {
                 new Class<?>[]{RedissonClient.class},
                 (proxy, method, args) -> {
                     String methodName = method.getName();
+                    if ("equals".equals(methodName)) {
+                        return proxy == args[0];
+                    }
+                    if ("hashCode".equals(methodName)) {
+                        return System.identityHashCode(proxy);
+                    }
+                    if ("toString".equals(methodName)) {
+                        return "FallbackRedissonClientProxy";
+                    }
                     if ("getLock".equals(methodName)) {
                         return fallbackLock;
                     }
@@ -99,6 +117,12 @@ public class RedissonConfig {
                     Class<?> returnType = method.getReturnType();
                     if (returnType.equals(boolean.class) || returnType.equals(Boolean.class)) {
                         return false;
+                    }
+                    if (returnType.equals(long.class) || returnType.equals(Long.class)) {
+                        return 0L;
+                    }
+                    if (returnType.equals(int.class) || returnType.equals(Integer.class)) {
+                        return 0;
                     }
                     return null;
                 }
