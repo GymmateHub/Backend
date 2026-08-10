@@ -1,6 +1,6 @@
 package com.gymmate.pos.api.dto;
 
-import com.gymmate.pos.domain.CashDrawer;
+import com.gymmate.pos.internal.domain.CashDrawer;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

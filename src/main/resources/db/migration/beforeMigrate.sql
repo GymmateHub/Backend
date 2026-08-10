@@ -1,21 +1,23 @@
 -- Flyway beforeMigrate callback: runs before every migrate.
 --
--- The schema (V1__Complete_Schema.sql onward) declares UUID primary keys with
--- DEFAULT uuidv7(). uuidv7() is only built-in on PostgreSQL 18+, so on older
--- servers (the VPS runs PostgreSQL 17) the very first migration fails with
--- "function uuidv7() does not exist". Provide a pure-SQL implementation so the
--- app self-migrates on any PostgreSQL >= 13 without a manual DB shim.
---
--- CREATE OR REPLACE is idempotent and harmless on PostgreSQL 18 (it simply
--- shadows the native function in the public schema with an equivalent one).
-CREATE OR REPLACE FUNCTION public.uuidv7() RETURNS uuid AS $$
-  SELECT encode(
-    set_bit(
-      set_bit(
-        overlay(uuid_send(gen_random_uuid())
-                PLACING substring(int8send(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint) FROM 3)
-                FROM 1 FOR 6),
-        52, 1),
-      53, 1),
-    'hex')::uuid;
-$$ LANGUAGE sql VOLATILE;
+-- PostgreSQL 18+ provides native uuidv7() support.
+-- If running on PostgreSQL < 18, create a PL/pgSQL uuidv7() fallback if missing.
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'uuidv7') THEN
+        CREATE OR REPLACE FUNCTION public.uuidv7() RETURNS uuid AS $func$
+        DECLARE
+            unix_time_ms bytea;
+            rand_bytes bytea;
+        BEGIN
+            unix_time_ms := substring(int8send(floor(extract(epoch FROM clock_timestamp()) * 1000)::bigint) FROM 3);
+            rand_bytes := gen_random_bytes(10);
+            rand_bytes := set_byte(rand_bytes, 0, (get_byte(rand_bytes, 0) & 15) | 112);
+            rand_bytes := set_byte(rand_bytes, 2, (get_byte(rand_bytes, 2) & 63) | 128);
+            RETURN encode(unix_time_ms || rand_bytes, 'hex')::uuid;
+        END;
+        $func$ LANGUAGE plpgsql VOLATILE;
+    END IF;
+END $$;
+
+

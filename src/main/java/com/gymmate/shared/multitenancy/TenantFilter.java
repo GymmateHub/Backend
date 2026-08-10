@@ -41,7 +41,7 @@ public class TenantFilter extends OncePerRequestFilter {
             "/api/users/verify-otp",
             "/api/users/resend-otp",
             "/v3/api-docs",
-            "/swagger-ui",
+            "/scalar.html",
             "/actuator");
 
     @Override

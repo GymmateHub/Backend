@@ -1,6 +1,6 @@
 package com.gymmate.unit.gym.api;
 
-import com.gymmate.gym.api.GymController;
+import com.gymmate.gym.internal.web.GymController;
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;

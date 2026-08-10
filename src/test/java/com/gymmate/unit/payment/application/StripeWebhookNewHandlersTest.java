@@ -1,13 +1,14 @@
 package com.gymmate.unit.payment.application;
 
-import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
-import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
+import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.notification.events.ChargeDisputedEvent;
 import com.gymmate.notification.events.ChargeRefundedEvent;
 import com.gymmate.notification.events.SubscriptionPausedEvent;
+import com.gymmate.payment.application.PaymentNotificationService;
 import com.gymmate.payment.application.StripeConnectService;
 import com.gymmate.payment.application.StripeWebhookService;
+import com.gymmate.payment.application.WebhookEventTracker;
 import com.gymmate.payment.infrastructure.GymInvoiceRepository;
 import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
 import com.gymmate.shared.config.StripeConfig;
@@ -49,8 +50,9 @@ class StripeWebhookNewHandlersTest {
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private UtilityService utilityService;
     @Mock private NotificationService notificationService;
-    @Mock private MemberMembershipJpaRepository memberMembershipRepository;
-    @Mock private MemberInvoiceRepository memberInvoiceRepository;
+    @Mock private GymRepository gymRepository;
+    @Mock private WebhookEventTracker webhookEventTracker;
+    @Mock private PaymentNotificationService paymentNotificationService;
 
     private StripeWebhookService webhookService;
 
@@ -67,8 +69,9 @@ class StripeWebhookNewHandlersTest {
                 eventPublisher,
                 utilityService,
                 notificationService,
-                memberMembershipRepository,
-                memberInvoiceRepository
+                gymRepository,
+                webhookEventTracker,
+                paymentNotificationService
         );
         organisationId = UUID.randomUUID();
     }

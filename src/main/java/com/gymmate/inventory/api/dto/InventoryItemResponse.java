@@ -1,7 +1,7 @@
 package com.gymmate.inventory.api.dto;
 
-import com.gymmate.inventory.domain.InventoryCategory;
-import com.gymmate.inventory.domain.InventoryItem;
+import com.gymmate.inventory.internal.domain.InventoryCategory;
+import com.gymmate.inventory.internal.domain.InventoryItem;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

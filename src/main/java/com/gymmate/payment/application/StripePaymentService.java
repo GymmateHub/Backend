@@ -2,8 +2,7 @@ package com.gymmate.payment.application;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.organisation.domain.Organisation;
-import com.gymmate.organisation.infrastructure.OrganisationRepository;
+import com.gymmate.payment.application.port.OrganisationBillingInfoProvider;
 import com.gymmate.payment.api.dto.InvoiceResponse;
 import com.gymmate.payment.api.dto.PaymentMethodResponse;
 import com.gymmate.payment.api.dto.RefundRequest;
@@ -50,7 +49,7 @@ public class StripePaymentService {
 
     private final StripeConfig stripeConfig;
     private final GymRepository gymRepository;
-    private final OrganisationRepository organisationRepository;
+    private final OrganisationBillingInfoProvider organisationBillingInfoProvider;
     private final SubscriptionRepository subscriptionRepository;
     private final PaymentMethodRepository paymentMethodRepository;
     private final GymInvoiceRepository invoiceRepository;
@@ -65,7 +64,7 @@ public class StripePaymentService {
      */
     @Transactional
     public String createOrGetStripeCustomerForOrganisation(UUID organisationId) {
-        Organisation organisation = getOrganisation(organisationId);
+        OrganisationBillingInfoProvider.BillingInfo organisation = getOrganisation(organisationId);
         Subscription subscription = getSubscriptionByOrganisationId(organisationId);
 
         // Return existing customer ID if present
@@ -77,8 +76,8 @@ public class StripePaymentService {
 
         try {
             CustomerCreateParams params = CustomerCreateParams.builder()
-                    .setEmail(organisation.getContactEmail())
-                    .setName(organisation.getName())
+                    .setEmail(organisation.contactEmail())
+                    .setName(organisation.name())
                     .putMetadata("organisation_id", organisationId.toString())
                     .build();
 
@@ -425,8 +424,8 @@ public class StripePaymentService {
 
     // ==================== Helper methods ====================
 
-    private Organisation getOrganisation(UUID organisationId) {
-        return organisationRepository.findById(organisationId)
+    private OrganisationBillingInfoProvider.BillingInfo getOrganisation(UUID organisationId) {
+        return organisationBillingInfoProvider.findBillingInfo(organisationId)
                 .orElseThrow(() -> new DomainException("ORGANISATION_NOT_FOUND",
                         "Organisation not found: " + organisationId));
     }

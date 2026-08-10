@@ -1,6 +1,8 @@
 package com.gymmate.notification.events;
 
 import com.gymmate.shared.constants.NotificationPriority;
+import com.gymmate.shared.multitenancy.TenantAwareEvent;
+import com.gymmate.shared.multitenancy.TenantIdentity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,7 +16,7 @@ import java.util.UUID;
  */
 @Getter
 @Builder
-public class ChargeRefundedEvent implements DomainEvent {
+public class ChargeRefundedEvent implements DomainEvent, TenantAwareEvent {
 
     @Builder.Default
     private final UUID eventId = UUID.randomUUID();
@@ -28,6 +30,11 @@ public class ChargeRefundedEvent implements DomainEvent {
     private final String refundId;
     private final String paymentIntentId;
     private final String reason;
+
+    @Override
+    public TenantIdentity getTenantIdentity() {
+        return TenantIdentity.forOrganisation(organisationId);
+    }
 
     @Override
     public String getEventType() {

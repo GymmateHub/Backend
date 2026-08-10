@@ -13,7 +13,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 public abstract class BaseIntegrationTest {
 
   @Container
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
     .withDatabaseName("gymmate_test")
     .withUsername("test")
     .withPassword("test")

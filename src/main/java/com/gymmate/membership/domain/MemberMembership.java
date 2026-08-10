@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
@@ -95,6 +96,15 @@ public class MemberMembership extends GymScopedEntity {
   @Builder.Default
   private Integer freezeCount = 0;
 
+  // When this membership first entered PAST_DUE — drives the grace-period
+  // escalation in MembershipService.escalatePastDueMemberships. Null while not
+  // past due.
+  @Column(name = "past_due_since")
+  private LocalDateTime pastDueSince;
+
+  /** Also used by MembershipService.escalatePastDueMemberships — the single source of truth for this window. */
+  public static final long PAST_DUE_GRACE_PERIOD_DAYS = 7;
+
   public void useClassCredit() {
     if (classCreditsRemaining != null && classCreditsRemaining > 0) {
       classCreditsRemaining--;
@@ -162,6 +172,31 @@ public class MemberMembership extends GymScopedEntity {
 
   public void expire() {
     this.status = MembershipStatus.EXPIRED;
+  }
+
+  /**
+   * Mark past due on a payment failure. Idempotent on the timestamp: a second failure
+   * while already PAST_DUE does not push pastDueSince forward, since that would reset
+   * the grace-period clock every time Stripe retries.
+   */
+  public void markPastDue() {
+    if (this.status != MembershipStatus.PAST_DUE) {
+      this.pastDueSince = LocalDateTime.now();
+    }
+    this.status = MembershipStatus.PAST_DUE;
+  }
+
+  /** Restore to ACTIVE after a payment succeeds, clearing the past-due clock. */
+  public void clearPastDue() {
+    this.pastDueSince = null;
+    if (this.status == MembershipStatus.PAST_DUE) {
+      this.status = MembershipStatus.ACTIVE;
+    }
+  }
+
+  /** Suspend after PAST_DUE has exceeded the grace period. */
+  public void suspend() {
+    this.status = MembershipStatus.SUSPENDED;
   }
 
   public boolean isActive() {

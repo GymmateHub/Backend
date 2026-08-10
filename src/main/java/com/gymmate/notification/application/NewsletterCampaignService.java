@@ -8,6 +8,9 @@ import com.gymmate.notification.infrastructure.NewsletterCampaignRepository;
 import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.shared.multitenancy.TenantScope;
+import com.gymmate.whitelabel.application.WhitelabelSettingsService;
+import com.gymmate.whitelabel.domain.WhitelabelSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -18,11 +21,12 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Service for managing newsletter campaigns.
- * Sends via organisation's preferred channel with email fallback.
+ * Sends via organisation's or gym's configured channels and incorporates whitelabel branding.
  */
 @Service
 @Slf4j
@@ -35,6 +39,7 @@ public class NewsletterCampaignService {
     private final AudienceResolver audienceResolver;
     private final NewsletterTemplateService templateService;
     private final BroadcastService broadcastService;
+    private final WhitelabelSettingsService whitelabelSettingsService;
 
     /**
      * Create a new campaign.
@@ -165,68 +170,73 @@ public class NewsletterCampaignService {
     }
 
     /**
-     * Asynchronously send messages to all recipients via preferred channel.
+     * Asynchronously send messages to all recipients via configured channel.
      */
     @Async
     public void sendCampaignAsync(NewsletterCampaign campaign) {
         log.info("Starting async send for campaign: {}", campaign.getId());
 
-        List<AudienceResolver.MemberRecipient> recipients = audienceResolver.resolveAudience(
-                campaign.getGymId(),
-                campaign.getAudienceType(),
-                campaign.getAudienceFilter());
+        try (TenantScope ignored = TenantScope.activate(campaign.getOrganisationId(), campaign.getGymId())) {
+            List<AudienceResolver.MemberRecipient> recipients = audienceResolver.resolveAudience(
+                    campaign.getGymId(),
+                    campaign.getAudienceType(),
+                    campaign.getAudienceFilter());
 
-        int deliveredCount = 0;
-        int failedCount = 0;
+            Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(
+                    campaign.getOrganisationId(), campaign.getGymId());
 
-        for (AudienceResolver.MemberRecipient recipient : recipients) {
-            CampaignRecipient campaignRecipient = CampaignRecipient.builder()
-                    .campaignId(campaign.getId())
-                    .memberId(recipient.memberId())
-                    .email(recipient.email())
-                    .build();
+            int deliveredCount = 0;
+            int failedCount = 0;
 
-            try {
-                // Render personalized content
-                Map<String, Object> variables = buildRecipientVariables(recipient);
-                String subject = templateService.renderSubject(campaign.getSubject(), variables);
-                String body = templateService.renderTemplate(campaign.getBody(), variables);
+            for (AudienceResolver.MemberRecipient recipient : recipients) {
+                CampaignRecipient campaignRecipient = CampaignRecipient.builder()
+                        .campaignId(campaign.getId())
+                        .memberId(recipient.memberId())
+                        .email(recipient.email())
+                        .build();
 
-                // Send via preferred channel with email fallback
-                BroadcastService.BroadcastResult result = broadcastService.send(
-                        recipient.email(), // phone number would go here when available
-                        recipient.email(),
-                        subject,
-                        body);
+                try {
+                    // Render personalized & whitelabel branded content
+                    Map<String, Object> variables = buildRecipientVariables(recipient, whitelabelOpt);
+                    String subject = templateService.renderSubject(campaign.getSubject(), variables);
+                    String body = templateService.renderTemplate(campaign.getBody(), variables);
 
-                if (result.success()) {
-                    campaignRecipient.markSent(result.channelUsed(), result.fallbackUsed());
-                    deliveredCount++;
-                } else {
-                    campaignRecipient.markFailed(result.errorMessage());
+                    // Send via configured channel
+                    BroadcastService.BroadcastResult result = broadcastService.send(
+                            recipient.email(),
+                            recipient.email(),
+                            subject,
+                            body);
+
+                    if (result.success()) {
+                        campaignRecipient.markSent(result.channelUsed(), result.fallbackUsed());
+                        deliveredCount++;
+                    } else {
+                        campaignRecipient.markFailed(result.errorMessage());
+                        failedCount++;
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to send to {}: {}", recipient.email(), e.getMessage());
+                    campaignRecipient.markFailed(e.getMessage());
                     failedCount++;
                 }
-            } catch (Exception e) {
-                log.error("Failed to send to {}: {}", recipient.email(), e.getMessage());
-                campaignRecipient.markFailed(e.getMessage());
-                failedCount++;
+
+                recipientRepository.save(campaignRecipient);
             }
 
-            recipientRepository.save(campaignRecipient);
+            // Update campaign stats
+            campaign.completeSending(recipients.size(), deliveredCount, failedCount);
+            campaignRepository.save(campaign);
+
+            log.info("Completed campaign: {} - Total: {}, Delivered: {}, Failed: {}",
+                    campaign.getId(), recipients.size(), deliveredCount, failedCount);
         }
-
-        // Update campaign stats
-        campaign.completeSending(recipients.size(), deliveredCount, failedCount);
-        campaignRepository.save(campaign);
-
-        log.info("Completed campaign: {} - Total: {}, Delivered: {}, Failed: {}",
-                campaign.getId(), recipients.size(), deliveredCount, failedCount);
     }
 
     /**
-     * Build template variables for a recipient.
+     * Build template variables for a recipient including whitelabel branding context.
      */
-    private Map<String, Object> buildRecipientVariables(AudienceResolver.MemberRecipient recipient) {
+    private Map<String, Object> buildRecipientVariables(AudienceResolver.MemberRecipient recipient, Optional<WhitelabelSettings> whitelabelOpt) {
         Map<String, Object> variables = new HashMap<>();
         String firstName = recipient.firstName() != null ? recipient.firstName() : "";
         String lastName = recipient.lastName() != null ? recipient.lastName() : "";
@@ -234,6 +244,17 @@ public class NewsletterCampaignService {
         variables.put("first_name", firstName);
         variables.put("last_name", lastName);
         variables.put("email", recipient.email());
+
+        whitelabelOpt.ifPresent(w -> {
+            if (w.getBrandName() != null) variables.put("brand_name", w.getBrandName());
+            if (w.getLogoUrl() != null) variables.put("logo_url", w.getLogoUrl());
+            if (w.getPrimaryColor() != null) variables.put("primary_color", w.getPrimaryColor());
+            if (w.getSecondaryColor() != null) variables.put("secondary_color", w.getSecondaryColor());
+            if (w.getSupportEmail() != null) variables.put("support_email", w.getSupportEmail());
+            if (w.getSupportPhone() != null) variables.put("support_phone", w.getSupportPhone());
+            if (w.getEmailFooterText() != null) variables.put("email_footer", w.getEmailFooterText());
+        });
+
         return variables;
     }
 

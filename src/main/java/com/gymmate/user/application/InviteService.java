@@ -1,7 +1,5 @@
 package com.gymmate.user.application;
 
-import com.gymmate.gym.application.GymService;
-import com.gymmate.gym.domain.Gym;
 import com.gymmate.notification.application.EmailService;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
@@ -9,6 +7,7 @@ import com.gymmate.user.api.dto.InviteRequest;
 import com.gymmate.user.api.dto.InviteResponse;
 import com.gymmate.user.api.dto.ValidateInviteResponse;
 import com.gymmate.shared.constants.InviteStatus;
+import com.gymmate.user.application.port.GymDirectory;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.domain.UserInvite;
 import com.gymmate.shared.constants.UserRole;
@@ -35,7 +34,7 @@ public class InviteService {
 
     private final UserInviteRepository userInviteRepository;
     private final UserRepository userRepository;
-    private final GymService gymService;
+    private final GymDirectory gymDirectory;
     private final EmailService emailService;
 
     @Value("${app.frontend-url:http://localhost:3000}")
@@ -43,7 +42,7 @@ public class InviteService {
 
     @Transactional
     public InviteResponse createInvite(UUID gymId, InviteRequest request, UUID invitedByUserId) {
-        Gym gym = gymService.getGymById(gymId);
+        GymDirectory.GymSummary gym = gymDirectory.getGymSummary(gymId);
         User inviter = userRepository.findById(invitedByUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", invitedByUserId.toString()));
 
@@ -70,7 +69,7 @@ public class InviteService {
 
         UserInvite invite = UserInvite.builder()
                 .gymId(gymId)
-                .organisationId(gym.getOrganisationId())
+                .organisationId(gym.organisationId())
                 .invitedBy(invitedByUserId)
                 .email(request.email())
                 .role(request.role())
@@ -84,7 +83,7 @@ public class InviteService {
 
         userInviteRepository.save(invite);
 
-        sendInviteEmail(invite, gym.getName(), inviter.getFullName());
+        sendInviteEmail(invite, gym.name(), inviter.getFullName());
 
         return InviteResponse.fromEntity(invite);
     }
@@ -94,7 +93,7 @@ public class InviteService {
         UserInvite invite = userInviteRepository.findByToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException("Invite", "token", token));
 
-        Gym gym = gymService.getGymById(invite.getGymId());
+        GymDirectory.GymSummary gym = gymDirectory.getGymSummary(invite.getGymId());
         User inviter = userRepository.findById(invite.getInvitedBy())
                 .orElseThrow(() -> new ResourceNotFoundException("User", invite.getInvitedBy().toString()));
 
@@ -106,7 +105,7 @@ public class InviteService {
                 invite.getFirstName(),
                 invite.getLastName(),
                 invite.getRole(),
-                gym.getName(),
+                gym.name(),
                 inviter.getFullName(),
                 invite.getOrganisationId(),
                 invite.getGymId(),
@@ -136,7 +135,7 @@ public class InviteService {
         UserInvite invite = userInviteRepository.findById(inviteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invite", inviteId.toString()));
 
-        Gym gym = gymService.getGymById(invite.getGymId());
+        GymDirectory.GymSummary gym = gymDirectory.getGymSummary(invite.getGymId());
         User inviter = userRepository.findById(userId).orElseThrow();
 
         // Regenerate token/expiry
@@ -148,7 +147,7 @@ public class InviteService {
 
         userInviteRepository.save(invite);
 
-        sendInviteEmail(invite, gym.getName(), inviter.getFullName());
+        sendInviteEmail(invite, gym.name(), inviter.getFullName());
 
         return InviteResponse.fromEntity(invite);
     }
