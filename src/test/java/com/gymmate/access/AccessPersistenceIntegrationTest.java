@@ -79,9 +79,11 @@ class AccessPersistenceIntegrationTest {
     // blank; a dummy value lets the context load (no real OpenAI call is made).
     registry.add("spring.ai.openai.api-key", () -> "test-openai-key");
     // SuperAdminInitializer (ApplicationReadyEvent) requires non-blank admin
-    // email + password; firstName/lastName already default to System/Admin.
+    // email + password + firstName + lastName.
     registry.add("app.admin.email", () -> "admin@gymmate.test");
     registry.add("app.admin.password", () -> "Admin!Test123");
+    registry.add("app.admin.firstName", () -> "System");
+    registry.add("app.admin.lastName", () -> "Admin");
   }
 
   @Autowired AccessPointRepository accessPointRepository;

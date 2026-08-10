@@ -17,23 +17,6 @@ services:
       retries: 3
       start_period: 40s
 
-  # Example database service (uncomment and configure as needed)
-  # postgres:
-  #   image: postgres:15-alpine
-  #   environment:
-  #     POSTGRES_DB: gymmate
-  #     POSTGRES_USER: gymmate
-  #     POSTGRES_PASSWORD: gymmate_password
-  #   ports:
-  #     - "5432:5432"
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   networks:
-  #     - gymmate-network
-
 networks:
   gymmate-network:
     driver: bridge
-
-# volumes:
-#   postgres_data:
