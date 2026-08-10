@@ -1,8 +1,8 @@
 package com.gymmate.pos.api.dto;
 
-import com.gymmate.pos.domain.PaymentType;
-import com.gymmate.pos.domain.Sale;
-import com.gymmate.pos.domain.SaleStatus;
+import com.gymmate.pos.internal.domain.PaymentType;
+import com.gymmate.pos.internal.domain.Sale;
+import com.gymmate.pos.internal.domain.SaleStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

@@ -62,7 +62,7 @@ public class SecurityConfig {
                                 "/api/gyms/register", "/api/gyms/city/**",
                                 "/api/users/register/gym-owner",
                                 "/api/webhooks/**",
-                                "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/webjars/**",
+                                "/v3/api-docs/**", "/scalar.html",
                                 "/actuator/**", "/actuator/info")
                         .permitAll()
                         // Role-based endpoints

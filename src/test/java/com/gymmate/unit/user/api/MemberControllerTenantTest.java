@@ -3,7 +3,7 @@ package com.gymmate.unit.user.api;
 import com.gymmate.organisation.application.OrganisationLimitService;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.user.api.MemberController;
+import com.gymmate.user.internal.web.MemberController;
 import com.gymmate.user.api.dto.MemberResponse;
 import com.gymmate.user.application.MemberService;
 import com.gymmate.user.domain.Member;

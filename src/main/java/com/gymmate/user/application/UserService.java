@@ -1,6 +1,7 @@
 package com.gymmate.user.application;
 
 import com.gymmate.shared.exception.ResourceNotFoundException;
+import com.gymmate.shared.multitenancy.TenantScope;
 import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.UserRepository;
 import com.gymmate.shared.constants.UserRole;
@@ -56,8 +57,10 @@ public class UserService {
     @Async
     public void recordLogin(UUID userId) {
         User user = findById(userId);
-        user.updateLastLogin();
-        userRepository.save(user);
+        try (TenantScope ignored = TenantScope.activate(user.getOrganisationId(), null)) {
+            user.updateLastLogin();
+            userRepository.save(user);
+        }
     }
 
     /**

@@ -1,6 +1,6 @@
 package com.gymmate.inventory.api.dto;
 
-import com.gymmate.inventory.domain.MovementType;
+import com.gymmate.inventory.internal.domain.MovementType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 

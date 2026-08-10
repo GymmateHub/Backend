@@ -397,7 +397,39 @@ public class MembershipService {
     if (expiredCount > 0) {
       log.info("Expired {} memberships", expiredCount);
     }
+
     return expiredCount;
+  }
+
+  /**
+   * Suspend memberships that have been PAST_DUE longer than the grace period. The
+   * failure notification already went out at the webhook-driven payment failure (see
+   * AdminNotificationEventListener / PaymentNotificationService, and
+   * StripeWebhookService.handleConnectPaymentFailed which calls
+   * MemberMembership.markPastDue()) — this is the enforcement step once that grace
+   * period has run out with no successful retry.
+   */
+  public int escalatePastDueMemberships() {
+    LocalDateTime graceCutoff = LocalDateTime.now().minusDays(MemberMembership.PAST_DUE_GRACE_PERIOD_DAYS);
+    List<MemberMembership> stalePastDue = membershipRepository.findStalePastDueMemberships(graceCutoff);
+
+    int suspendedCount = 0;
+    for (MemberMembership membership : stalePastDue) {
+      try {
+        membership.suspend();
+        membershipRepository.save(membership);
+        log.warn("Suspended membership {} for member {} — past due since {}",
+            membership.getId(), membership.getMemberId(), membership.getPastDueSince());
+        suspendedCount++;
+      } catch (Exception e) {
+        log.error("Error suspending past-due membership {}: {}", membership.getId(), e.getMessage());
+      }
+    }
+
+    if (suspendedCount > 0) {
+      log.info("Suspended {} past-due memberships", suspendedCount);
+    }
+    return suspendedCount;
   }
 
   /**

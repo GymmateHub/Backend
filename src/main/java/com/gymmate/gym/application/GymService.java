@@ -8,12 +8,10 @@ import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 
 import com.gymmate.shared.constants.MemberStatus;
-import com.gymmate.user.domain.User;
+import com.gymmate.user.application.port.UserQueryPort;
 
-import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
-import com.gymmate.payment.infrastructure.GymInvoiceRepository;
-import com.gymmate.user.infrastructure.MemberRepository;
-import com.gymmate.user.infrastructure.UserRepository;
+import com.gymmate.gym.application.port.MembershipRevenueSource;
+import com.gymmate.gym.application.port.PlatformInvoiceRevenueSource;
 import com.gymmate.shared.constants.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -33,10 +31,9 @@ import java.util.UUID;
 public class GymService {
 
     private final GymRepository gymRepository;
-    private final UserRepository userRepository;
-    private final MemberRepository memberRepository;
-    private final MemberInvoiceRepository memberInvoiceRepository;
-    private final GymInvoiceRepository gymInvoiceRepository;
+    private final UserQueryPort userQueryPort;
+    private final MembershipRevenueSource membershipRevenueSource;
+    private final PlatformInvoiceRevenueSource platformInvoiceRevenueSource;
 
     /**
      * Register a new gym with the system.
@@ -44,21 +41,21 @@ public class GymService {
     @Transactional
     public Gym registerGym(com.gymmate.gym.api.dto.GymRegistrationRequest request) {
         // Validate that the owner exists and has the correct role
-        User owner = userRepository.findById(request.ownerId())
+        UserQueryPort.UserOwnerSummary owner = userQueryPort.findOwnerSummaryById(request.ownerId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.ownerId().toString()));
 
-        if (owner.getRole() != UserRole.ADMIN && owner.getRole() != UserRole.SUPER_ADMIN
-                && owner.getRole() != UserRole.GYM_OWNER) {
+        if (owner.role() != UserRole.ADMIN && owner.role() != UserRole.SUPER_ADMIN
+                && owner.role() != UserRole.GYM_OWNER) {
             throw new DomainException("INVALID_OWNER",
                     "Only users with GYM_OWNER, ADMIN or SUPER_ADMIN role can register gyms");
         }
 
-        if (!owner.isActive()) {
+        if (!owner.active()) {
             throw new DomainException("INACTIVE_OWNER",
                     "Owner account must be active to register a gym");
         }
 
-        if (owner.getOrganisationId() == null) {
+        if (owner.organisationId() == null) {
             throw new DomainException("NO_ORGANISATION",
                     "Owner must be associated with an organisation to register a gym");
         }
@@ -68,7 +65,7 @@ public class GymService {
                 request.contactPhone(), request.ownerId());
 
         // Set organisation ID from owner
-        gym.setOrganisationId(owner.getOrganisationId());
+        gym.setOrganisationId(owner.organisationId());
 
         // Set optional fields
         if (request.website() != null) {
@@ -338,14 +335,14 @@ public class GymService {
      */
     public GymAnalyticsResponse getOwnerAnalytics(UUID ownerId) {
         // Validate owner exists
-        User owner = userRepository.findById(ownerId)
+        UserQueryPort.UserOwnerSummary owner = userQueryPort.findOwnerSummaryById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
 
         // Get all gyms owned by this user via their organisation
-        if (owner.getOrganisationId() == null) {
+        if (owner.organisationId() == null) {
             throw new DomainException("NO_ORGANISATION", "User is not associated with an organisation");
         }
-        List<Gym> ownedGyms = gymRepository.findByOrganisationId(owner.getOrganisationId());
+        List<Gym> ownedGyms = gymRepository.findByOrganisationId(owner.organisationId());
 
         // Calculate total gyms
         int totalGyms = ownedGyms.size();
@@ -368,19 +365,19 @@ public class GymService {
 
         for (Gym gym : ownedGyms) {
             // Count members from members table (not users table)
-            totalMembers += memberRepository.countByGymId(gym.getId());
-            totalActiveMembers += memberRepository.countByGymIdAndStatus(gym.getId(), MemberStatus.ACTIVE);
+            totalMembers += (int) userQueryPort.countMembersByGymId(gym.getId());
+            totalActiveMembers += (int) userQueryPort.countActiveMembersByGymId(gym.getId(), MemberStatus.ACTIVE);
 
             // Staff and trainers are in the organisation, not specific to a gym
             // For now, count them from the organisation
         }
 
         // Count staff and trainers at organisation level
-        if (owner.getOrganisationId() != null) {
-            totalStaff = (int) userRepository.countByOrganisationIdAndRole(
-                    owner.getOrganisationId(), UserRole.STAFF);
-            totalTrainers = (int) userRepository.countByOrganisationIdAndRole(
-                    owner.getOrganisationId(), UserRole.TRAINER);
+        if (owner.organisationId() != null) {
+            totalStaff = (int) userQueryPort.countUsersByOrganisationAndRole(
+                    owner.organisationId(), UserRole.STAFF);
+            totalTrainers = (int) userQueryPort.countUsersByOrganisationAndRole(
+                    owner.organisationId(), UserRole.TRAINER);
         }
 
         // Calculate average utilization across all gyms
@@ -394,12 +391,12 @@ public class GymService {
         LocalDateTime monthEnd = monthStart.plusMonths(1);
         BigDecimal totalRevenue = BigDecimal.ZERO;
         for (Gym gym : ownedGyms) {
-            totalRevenue = totalRevenue.add(memberInvoiceRepository.sumPaidAmountByGymIdAndPeriod(
+            totalRevenue = totalRevenue.add(membershipRevenueSource.sumPaidAmountByGymIdAndPeriod(
                     gym.getId(), monthStart, monthEnd));
         }
         // Add platform subscription invoice revenue for the organisation
-        totalRevenue = totalRevenue.add(gymInvoiceRepository.sumPaidAmountByOrganisationIdAndPeriod(
-                owner.getOrganisationId(), monthStart, monthEnd));
+        totalRevenue = totalRevenue.add(platformInvoiceRevenueSource.sumPaidAmountByOrganisationIdAndPeriod(
+                owner.organisationId(), monthStart, monthEnd));
 
         return GymAnalyticsResponse.builder()
                 .totalGyms(totalGyms)
@@ -423,24 +420,24 @@ public class GymService {
         Gym gym = getGymById(gymId);
 
         // Get the owner's organisation and verify the gym belongs to it
-        User owner = userRepository.findById(ownerId)
+        UserQueryPort.UserOwnerSummary owner = userQueryPort.findOwnerSummaryById(ownerId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
 
-        if (owner.getOrganisationId() == null || !gym.getOrganisationId().equals(owner.getOrganisationId())) {
+        if (owner.organisationId() == null || !gym.getOrganisationId().equals(owner.organisationId())) {
             throw new DomainException("ACCESS_DENIED",
                     "You do not have permission to view analytics for this gym");
         }
 
         // Calculate gym-specific metrics
-        long currentMembers = memberRepository.countByGymId(gymId);
-        long activeMembers = memberRepository.countByGymIdAndStatus(gymId, MemberStatus.ACTIVE);
+        long currentMembers = userQueryPort.countMembersByGymId(gymId);
+        long activeMembers = userQueryPort.countActiveMembersByGymId(gymId, MemberStatus.ACTIVE);
 
         // Staff and trainers are organisation-level, not gym-specific
         long staff = 0;
         long trainers = 0;
         if (gym.getOrganisationId() != null) {
-            staff = userRepository.countByOrganisationIdAndRole(gym.getOrganisationId(), UserRole.STAFF);
-            trainers = userRepository.countByOrganisationIdAndRole(gym.getOrganisationId(), UserRole.TRAINER);
+            staff = userQueryPort.countUsersByOrganisationAndRole(gym.getOrganisationId(), UserRole.STAFF);
+            trainers = userQueryPort.countUsersByOrganisationAndRole(gym.getOrganisationId(), UserRole.TRAINER);
         }
 
         int maxMembers = gym.getMaxMembers() != null ? gym.getMaxMembers() : 0;
@@ -452,7 +449,7 @@ public class GymService {
         // Calculate revenue for this gym this month from member payments
         LocalDateTime monthStart = LocalDateTime.now().withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
         LocalDateTime monthEnd = monthStart.plusMonths(1);
-        BigDecimal gymRevenue = memberInvoiceRepository.sumPaidAmountByGymIdAndPeriod(gymId, monthStart, monthEnd);
+        BigDecimal gymRevenue = membershipRevenueSource.sumPaidAmountByGymIdAndPeriod(gymId, monthStart, monthEnd);
 
         return GymAnalyticsResponse.builder()
                 .gymId(gymId)

@@ -1,8 +1,8 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.domain.FitnessGoal;
-import com.gymmate.health.domain.Enums.GoalStatus;
-import com.gymmate.health.domain.Enums.GoalType;
+import com.gymmate.health.internal.domain.FitnessGoal;
+import com.gymmate.health.internal.domain.enums.GoalStatus;
+import com.gymmate.health.internal.domain.enums.GoalType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

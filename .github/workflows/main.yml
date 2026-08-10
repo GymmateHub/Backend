@@ -40,10 +40,18 @@ jobs:
         run: ./mvnw -B clean package -DskipTests
 
       - name: Run tests with test profile
-        run: ./mvnw -B test -Dspring.profiles.active=test
-        env:
-          # Flyway disabled during tests (H2 doesn't support uuidv7())
-          SPRING_FLYWAY_ENABLED: false
+        run: ./mvnw -B -e test -Dspring.profiles.active=test
+
+      - name: Print surefire reports on failure
+        if: failure()
+        run: |
+          echo "=== Surefire Reports ==="
+          for f in target/surefire-reports/com.gymmate.access.AccessPersistenceIntegrationTest.txt; do
+            if [ -f "$f" ]; then
+              echo "--- $f ---"
+              cat "$f"
+            fi
+          done
 
   # ─────────────────────────────────────────────────────────────────────────
   # Step 2: Build & Push image to GHCR (main/dev pushes only)
@@ -98,7 +106,7 @@ jobs:
   trigger-deploy:
     runs-on: ubuntu-latest
     needs: docker
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.INFRA_DEPLOY_TOKEN != ''
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Dispatch deploy workflow
         uses: peter-evans/repository-dispatch@v3

@@ -16,7 +16,7 @@ import java.util.Map;
 @RestController
 public class WelcomeController {
 
-    @Value("${spring.application.name:GymMate Backend}")
+    @Value("${spring.application.name:GymMateHub Backend}")
     private String applicationName;
 
     @Value("${server.port:8080}")
@@ -44,4 +44,3 @@ public class WelcomeController {
         return ResponseEntity.ok(ApiResponse.success(health, "Service is healthy"));
     }
 }
-

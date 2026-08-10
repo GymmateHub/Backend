@@ -44,6 +44,8 @@ public interface MemberMembershipRepository {
 
   List<MemberMembership> findAutoRenewExpiredMemberships(java.time.LocalDateTime today);
 
+  List<MemberMembership> findStalePastDueMemberships(LocalDateTime cutoff);
+
   void delete(MemberMembership membership);
 }
 

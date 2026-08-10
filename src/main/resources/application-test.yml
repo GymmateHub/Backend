@@ -20,7 +20,7 @@ spring:
     username: sa
     password:
     driver-class-name: org.h2.Driver
-  
+
   # Disable Flyway for tests - H2 doesn't support PostgreSQL functions like uuidv7()
   flyway:
     enabled: false
@@ -49,7 +49,7 @@ jwt:
   refresh-expiration: 86400000
 
 cors:
-  allowed-origins: "http://localhost:3000"
+  allowed-origins: "http://localhost:5173"
   allow-credentials: true
 
 file:
@@ -61,3 +61,11 @@ management:
   health:
     mail:
       enabled: false
+
+app:
+  frontend-url: http://localhost:5173
+  admin:
+    email: admin@gymmate.test
+    password: Admin!Test123
+    firstName: System
+    lastName: Admin

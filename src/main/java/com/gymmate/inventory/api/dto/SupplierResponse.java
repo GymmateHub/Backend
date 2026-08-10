@@ -1,6 +1,6 @@
 package com.gymmate.inventory.api.dto;
 
-import com.gymmate.inventory.domain.Supplier;
+import com.gymmate.inventory.internal.domain.Supplier;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

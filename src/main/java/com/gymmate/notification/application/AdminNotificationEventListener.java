@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.notification.domain.Notification;
 import com.gymmate.notification.events.*;
 import com.gymmate.notification.infrastructure.NotificationRepository;
+import com.gymmate.shared.multitenancy.TenantScope;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -36,7 +37,7 @@ public class AdminNotificationEventListener {
     public void handlePaymentFailedEvent(PaymentFailedEvent event) {
         log.info("Handling PaymentFailedEvent for organisation: {}", event.getOrganisationId());
 
-        try {
+        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.getGymId())) {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("gymId", event.getGymId());
             metadata.put("amount", event.getAmount());
@@ -44,6 +45,11 @@ public class AdminNotificationEventListener {
             metadata.put("nextRetryDate", event.getNextRetryDate());
             metadata.put("invoiceId", event.getInvoiceId());
 
+            // A platform (organisation-level) subscription failure has no single gym
+            // (event.getGymId() is null — see StripeWebhookService.handleInvoicePaymentFailed);
+            // a Connect (member payment) failure always has one. Scope the in-app
+            // notification accordingly instead of forcing GYM scope with a null id.
+            boolean isGymScoped = event.getGymId() != null;
             Notification notification = Notification.builder()
                     .gymId(event.getGymId())
                     .title(event.getNotificationTitle())
@@ -51,10 +57,10 @@ public class AdminNotificationEventListener {
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
-                    .relatedEntityId(event.getGymId())
-                    .relatedEntityType("GYM")
+                    .relatedEntityId(isGymScoped ? event.getGymId() : event.getOrganisationId())
+                    .relatedEntityType(isGymScoped ? "GYM" : "ORGANISATION")
                     .recipientRole(Notification.RecipientRole.OWNER)
-                    .scope(Notification.NotificationScope.GYM)
+                    .scope(isGymScoped ? Notification.NotificationScope.GYM : Notification.NotificationScope.ORGANISATION)
                     .build();
 
             Notification saved = notificationRepository.save(notification);
@@ -62,6 +68,11 @@ public class AdminNotificationEventListener {
 
             // Dispatch to SSE
             notificationDispatcher.dispatch(saved);
+
+            // The failure email itself is sent from StripeWebhookService directly
+            // (same module as PaymentNotificationService) rather than from here —
+            // notification calling back into payment would create a module cycle
+            // (payment already depends on gym, gym on user, user on notification).
 
         } catch (Exception e) {
             log.error("Failed to handle PaymentFailedEvent: {}", e.getMessage(), e);
@@ -77,7 +88,7 @@ public class AdminNotificationEventListener {
     public void handlePaymentSuccessEvent(PaymentSuccessEvent event) {
         log.info("Handling PaymentSuccessEvent for organisation: {}", event.getOrganisationId());
 
-        try {
+        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.getGymId())) {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("gymId", event.getGymId());
             metadata.put("amount", event.getAmount());
@@ -118,7 +129,7 @@ public class AdminNotificationEventListener {
     public void handleSubscriptionExpiringEvent(SubscriptionExpiringEvent event) {
         log.info("Handling SubscriptionExpiringEvent for organisation: {}", event.getOrganisationId());
 
-        try {
+        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), null)) {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("subscriptionId", event.getSubscriptionId());
             metadata.put("tierName", event.getTierName());
@@ -158,7 +169,7 @@ public class AdminNotificationEventListener {
     public void handleMemberJoinedEvent(MemberJoinedEvent event) {
         log.info("Handling MemberJoinedEvent for organisation: {}", event.getOrganisationId());
 
-        try {
+        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.getGymId())) {
             Map<String, Object> metadata = new HashMap<>();
             metadata.put("gymId", event.getGymId());
             metadata.put("memberId", event.getMemberId());
