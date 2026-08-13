@@ -41,6 +41,7 @@ import org.springframework.util.StringUtils;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CompletionException;
 
 /**
  * Authentication Service handling user registration, login, logout, and token
@@ -115,7 +116,7 @@ public class AuthenticationService {
 
                 String userId = user.getId().toString();
                 String otp = totpService.generateOtp(userId);
-                emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, 5, userId);
+                sendOtpEmailOrThrow(user.getEmail(), user.getFirstName(), otp, userId);
 
                 log.info("OTP sent to unverified user during login: {}", user.getEmail());
 
@@ -429,7 +430,7 @@ public class AuthenticationService {
         String userId = user.getId().toString();
         String otp = totpService.generateOtp(userId);
 
-        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, userId);
+        sendOtpEmailOrThrow(user.getEmail(), user.getFirstName(), otp, userId);
         log.info("OTP email sent to user: {}", user.getEmail());
 
         return RegistrationResponse.builder()
@@ -455,7 +456,7 @@ public class AuthenticationService {
         }
 
         String otp = totpService.generateOtp(request.getUserId());
-        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, request.getUserId());
+        sendOtpEmailOrThrow(user.getEmail(), user.getFirstName(), otp, request.getUserId());
 
         log.info("OTP resent to user: {}", user.getEmail());
 
@@ -497,6 +498,16 @@ public class AuthenticationService {
                 .message("Email verified successfully. Your account is now active.")
                 .expiresIn(0)
                 .build();
+    }
+
+    private void sendOtpEmailOrThrow(String email, String firstName, String otp, String userId) {
+        try {
+            emailService.sendOtpEmail(email, firstName, otp, OTP_VALIDITY_MINUTES, userId).join();
+        } catch (CompletionException e) {
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            throw new DomainException("OTP_EMAIL_FAILED",
+                    "Failed to send verification email: " + cause.getMessage());
+        }
     }
 
     // Update password change methods to check history

@@ -203,7 +203,7 @@ public class NewsletterCampaignService {
 
                     // Send via configured channel
                     BroadcastService.BroadcastResult result = broadcastService.send(
-                            recipient.email(),
+                            recipient.phone(),
                             recipient.email(),
                             subject,
                             body);

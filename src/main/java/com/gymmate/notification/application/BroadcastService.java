@@ -12,6 +12,7 @@ import com.gymmate.whitelabel.domain.WhitelabelSettings;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -80,6 +81,13 @@ public class BroadcastService {
 
         // Determine recipient for the channel
         String channelRecipient = getRecipientForChannel(recipient, email, preferredChannel);
+        if ((preferredChannel == NotificationChannel.SMS || preferredChannel == NotificationChannel.WHATSAPP)
+                && !StringUtils.hasText(channelRecipient)) {
+            return new BroadcastResult(false, preferredChannel, false, "Recipient phone number is missing");
+        }
+        if (preferredChannel == NotificationChannel.EMAIL && !StringUtils.hasText(channelRecipient)) {
+            return new BroadcastResult(false, preferredChannel, false, "Recipient email is missing");
+        }
         ChannelSender sender = senderMap.get(preferredChannel);
 
         if (sender != null) {

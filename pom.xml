@@ -34,6 +34,7 @@
     <spring-modulith.version>1.4.12</spring-modulith.version>
     <rest-assured.version>5.4.0</rest-assured.version>
     <java-faker.version>1.0.2</java-faker.version>
+    <aws.sdk.version>2.29.43</aws.sdk.version>
   </properties>
 
   <!-- Dependency Management for BOMs -->
@@ -60,6 +61,14 @@
         <groupId>org.springframework.modulith</groupId>
         <artifactId>spring-modulith-bom</artifactId>
         <version>${spring-modulith.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+      <!-- AWS SDK v2 BOM -->
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${aws.sdk.version}</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -204,6 +213,12 @@
       <groupId>com.stripe</groupId>
       <artifactId>stripe-java</artifactId>
       <version>${stripe.version}</version>
+    </dependency>
+
+    <!-- AWS SNS -->
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>sns</artifactId>
     </dependency>
 
     <!-- Spring AI -->

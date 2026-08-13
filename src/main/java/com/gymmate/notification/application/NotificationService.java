@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.beans.BeanProperty;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -32,7 +31,7 @@ import java.util.Map;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
-    private final com.gymmate.notification.infrastructure.SseEmitterRegistry sseEmitterRegistry;
+private final NotificationDispatcher notificationDispatcher;
     private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     private final EmailService emailService;
@@ -75,16 +74,13 @@ public class NotificationService {
                 .metadata(metadataJson)
                 .scope(scope)
                 .recipientRole(role)
-                .deliveredVia(Notification.DeliveryChannel.SSE)
-                .deliveredAt(LocalDateTime.now())
                 .build();
 
         notification.setOrganisationId(organisationId);
 
         Notification saved = notificationRepository.save(notification);
 
-        // Broadcast via SSE
-        sseEmitterRegistry.sendToOrganisation(organisationId, saved);
+        notificationDispatcher.dispatch(saved);
 
         log.info("Created and broadcasted notification {} (type: {}) to organisation {}",
                 saved.getId(), eventType, organisationId);
@@ -248,11 +244,30 @@ public class NotificationService {
      * send notification to a user
      */
     @Transactional
+    @SneakyThrows
     public void sendToUser(UUID userId, String title, String message, NotificationPriority priority, String eventType,
             Map<String, Object> metadata) {
-        // TODO: Implement actual push/email notification delivery to the end user.
-        // Currently, we just log the notification since a MemberNotification entity does not exist yet.
-        log.info("Sending notification to user {}: Title='{}', Priority='{}', EventType='{}'",
-                userId, title, priority, eventType);
-}
+        UUID organisationId = com.gymmate.shared.multitenancy.TenantContext.getCurrentTenantId();
+        UUID gymId = com.gymmate.shared.multitenancy.TenantContext.getCurrentGymId();
+
+        if (organisationId == null) {
+            throw new IllegalStateException("Tenant context is required to send a user notification");
+        }
+
+        String metadataJson = metadata != null ? objectMapper.writeValueAsString(metadata) : "{}";
+        Notification notification = Notification.builder()
+                .gymId(gymId)
+                .title(title)
+                .message(message)
+                .priority(priority)
+                .eventType(eventType)
+                .metadata(metadataJson)
+                .scope(gymId != null ? NotificationScope.GYM : NotificationScope.ORGANISATION)
+                .build();
+        notification.setId(UUID.randomUUID());
+        notification.setOrganisationId(organisationId);
+
+        notificationDispatcher.dispatchToUser(organisationId, userId, notification);
+        log.info("Sent user notification {} to user {}", notification.getId(), userId);
+    }
 }

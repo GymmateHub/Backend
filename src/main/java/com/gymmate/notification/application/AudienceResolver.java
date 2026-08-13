@@ -43,7 +43,8 @@ public class AudienceResolver {
             UUID userId,
             String firstName,
             String lastName,
-            String email) {
+            String email,
+            String phone) {
     }
 
     /**

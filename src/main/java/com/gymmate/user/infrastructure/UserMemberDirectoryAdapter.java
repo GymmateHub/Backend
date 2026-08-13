@@ -76,7 +76,8 @@ public class UserMemberDirectoryAdapter implements MemberDirectory {
                             user.getId(),
                             user.getFirstName(),
                             user.getLastName(),
-                            user.getEmail());
+                            user.getEmail(),
+                            user.getPhone());
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());

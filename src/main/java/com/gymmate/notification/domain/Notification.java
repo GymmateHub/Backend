@@ -156,6 +156,7 @@ public class Notification extends TenantEntity {
     public enum DeliveryChannel {
         EMAIL,
         SSE,
+        SNS,
         BOTH
     }
 }

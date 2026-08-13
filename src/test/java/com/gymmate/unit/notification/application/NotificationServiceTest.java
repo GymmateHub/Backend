@@ -33,7 +33,7 @@ class NotificationServiceTest {
         @Mock
         private NotificationRepository notificationRepository;
         @Mock
-        private com.gymmate.notification.infrastructure.SseEmitterRegistry sseEmitterRegistry;
+        private com.gymmate.notification.application.NotificationDispatcher notificationDispatcher;
         @Mock
         private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
         @Mock
@@ -47,7 +47,7 @@ class NotificationServiceTest {
 
         @BeforeEach
         void setUp() {
-                service = new NotificationService(notificationRepository, sseEmitterRegistry, objectMapper, emailService);
+                service = new NotificationService(notificationRepository, notificationDispatcher, objectMapper, emailService);
                 organisationId = UUID.randomUUID();
                 gymId = UUID.randomUUID();
                 notificationId = UUID.randomUUID();
@@ -83,7 +83,7 @@ class NotificationServiceTest {
                         assertThat(result.getOrganisationId()).isEqualTo(organisationId); // Verified via setter
 
                         verify(notificationRepository).save(any(Notification.class));
-                        verify(sseEmitterRegistry).sendToOrganisation(eq(organisationId), any(Notification.class));
+                        verify(notificationDispatcher).dispatch(any(Notification.class));
                 }
         }
 

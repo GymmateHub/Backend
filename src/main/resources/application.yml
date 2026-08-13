@@ -192,3 +192,13 @@ ai:
       # Set AI_PLAN_CACHE_TTL_HOURS=0 to effectively disable caching in dev.
       ttl-hours: ${AI_PLAN_CACHE_TTL_HOURS:24}
 
+# ============================================
+# AWS Configuration
+# ============================================
+aws:
+  region: ${AWS_REGION:us-east-1}
+  access-key-id: ${GYMMATE_AWS_ACCESS_KEY_ID:}
+  secret-access-key: ${GYMMATE_AWS_SECRET_ACCESS_KEY:}
+  sns:
+    enabled: ${AWS_SNS_ENABLED:false}
+    default-topic-arn: ${GYMMATE_SNS_TOPIC_ARN:}

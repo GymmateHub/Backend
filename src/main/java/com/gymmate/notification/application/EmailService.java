@@ -25,6 +25,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @Slf4j
@@ -56,7 +57,7 @@ public class EmailService {
     }
 
     @Async
-    public void sendOtpEmail(String to, String firstName, String otp, int validityMinutes, String userId) {
+    public CompletableFuture<Void> sendOtpEmail(String to, String firstName, String otp, int validityMinutes, String userId) {
         sseEmitterRegistry.sendEmailStatus(userId, "SENDING", "Sending verification email...");
 
         try {
@@ -72,11 +73,12 @@ public class EmailService {
             log.info("OTP email sent successfully to: {}", to);
 
             sseEmitterRegistry.sendEmailStatus(userId, "SENT", "Verification email sent successfully");
-
+            return CompletableFuture.completedFuture(null);
         } catch (Exception e) {
             log.error("Failed to send OTP email to: {}", to, e);
             sseEmitterRegistry.sendEmailStatus(userId, "FAILED",
                     "Failed to send verification email. Please try resending.");
+            return CompletableFuture.failedFuture(e);
         }
     }
 
