@@ -3,12 +3,16 @@ package com.gymmate.shared.security.service;
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.notification.application.EmailService;
+import com.gymmate.organisation.application.OrganisationLimitService;
 import com.gymmate.organisation.application.OrganisationService;
 import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.user.api.dto.MemberRegistrationRequest;
 import com.gymmate.user.api.dto.OwnerRegistrationRequest;
 import com.gymmate.user.application.InviteService;
+import com.gymmate.user.application.MemberService;
+import com.gymmate.user.application.StaffService;
+import com.gymmate.user.application.TrainerService;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
 import com.gymmate.shared.constants.UserRole;
@@ -48,6 +52,14 @@ class AuthenticationServiceTest {
     private InviteService inviteService;
     @Mock
     private TotpService totpService;
+    @Mock
+    private OrganisationLimitService organisationLimitService;
+    @Mock
+    private MemberService memberService;
+    @Mock
+    private StaffService staffService;
+    @Mock
+    private TrainerService trainerService;
 
     // We need all dependencies for @InjectMocks to work if constructor injection is
     // used (which it is)

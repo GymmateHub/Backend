@@ -3,6 +3,7 @@ package com.gymmate.shared.security.service;
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.notification.application.EmailService;
+import com.gymmate.organisation.application.OrganisationLimitService;
 import com.gymmate.organisation.application.OrganisationService;
 import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.shared.constants.AuditEventType;
@@ -21,6 +22,9 @@ import com.gymmate.user.api.dto.InviteAcceptRequest;
 import com.gymmate.user.api.dto.MemberRegistrationRequest;
 import com.gymmate.user.api.dto.OwnerRegistrationRequest;
 import com.gymmate.user.application.InviteService;
+import com.gymmate.user.application.MemberService;
+import com.gymmate.user.application.StaffService;
+import com.gymmate.user.application.TrainerService;
 import com.gymmate.user.application.UserService;
 import com.gymmate.user.domain.User;
 import com.gymmate.shared.constants.UserRole;
@@ -60,8 +64,12 @@ public class AuthenticationService {
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final TotpService totpService;
     private final OrganisationService organisationService;
+    private final OrganisationLimitService organisationLimitService;
     private final GymService gymService;
     private final InviteService inviteService;
+    private final MemberService memberService;
+    private final StaffService staffService;
+    private final TrainerService trainerService;
 
     private final LoginAttemptService loginAttemptService;
     private final PasswordPolicyService passwordPolicyService;
@@ -290,6 +298,10 @@ public class AuthenticationService {
         // createHub creates Organisation, Subscription, and links owner
         Organisation organisation = organisationService.createHub(organisationName, request.email(), user);
 
+        // BUG-014: enforce the org's subscription tier gym limit even for the very first
+        // gym, instead of only checking it on the /organisations/current/gyms endpoint.
+        organisationLimitService.checkCanCreateGym(organisation.getId());
+
         // 3. Create initial Gym
         // We create it manually to bypass the active-owner check in
         // GymService.registerGym
@@ -309,6 +321,7 @@ public class AuthenticationService {
 
         // Resolve gym if slug provided
         UUID organisationId = null;
+        UUID gymId;
 
         if (request.gymSlug() != null) {
             Organisation org = organisationService.getBySlug(request.gymSlug());
@@ -331,7 +344,7 @@ public class AuthenticationService {
             if (gyms.isEmpty()) {
                 throw new DomainException("NO_ACTIVE_GYM", "No active gym find for this link");
             }
-            // gymId = gyms.get(0).getId(); // Unused
+            gymId = gyms.get(0).getId();
         } else {
             throw new DomainException("INVALID_REQUEST", "Gym slug is required for public registration");
         }
@@ -357,14 +370,14 @@ public class AuthenticationService {
                 .build();
         user.setOrganisationId(organisationId); // Associate with org (inherited from TenantEntity)
 
-        // We also need to create Member entity?
-        // GymService/MemberService should handle that.
-        // But `AuthenticationService` registers the USER.
-        // Member creation (in `members` table) happens after?
-        // "Step 4 — Membership Selection... POST /api/member-memberships"
-        // So here we only create the User.
+        user = userRepository.save(user);
 
-        return userRepository.save(user);
+        // BUG-004: public self-registration previously only saved the User, with no
+        // Member row and no gymId link — every member endpoint (/api/members/me,
+        // /api/member-memberships, bookings) then 404'd for these users.
+        memberService.createMember(user.getId(), gymId, null);
+
+        return user;
     }
 
     @Transactional
@@ -400,6 +413,21 @@ public class AuthenticationService {
         user.setOrganisationId(validated.organisationId());
 
         user = userRepository.save(user);
+
+        // BUG-003: acceptInvite() previously only created the User row, leaving no
+        // Member/Staff/Trainer domain entity — every subsequent /api/members/me,
+        // /api/staff, /api/trainers call for this user then 404'd. Create the matching
+        // profile now, with sensible defaults for fields the invite flow doesn't collect.
+        switch (user.getRole()) {
+            case MEMBER -> memberService.createMember(user.getId(), validated.gymId(), null);
+            case STAFF -> staffService.createStaff(user.getId(), "Staff", "General",
+                    null, java.time.LocalDate.now(), "full_time");
+            case TRAINER -> trainerService.createTrainer(user.getId(), new String[0], null,
+                    null, null, java.time.LocalDate.now(), "full_time");
+            default -> {
+                // ADMIN and other org-level roles have no separate domain profile.
+            }
+        }
 
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
@@ -492,10 +520,20 @@ public class AuthenticationService {
 
         log.info("Email verified and user activated for userId: {}", user.getId());
 
+        // BUG-002: issue tokens on verify so the user is immediately logged in, same as acceptInvite().
+        String accessToken = jwtService.generateToken(user);
+        String refreshToken = jwtService.generateRefreshToken(user);
+
         return VerificationTokenResponse.builder()
                 .verificationToken(null)
                 .message("Email verified successfully. Your account is now active.")
                 .expiresIn(0)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .userId(user.getId())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .organisationId(user.getOrganisationId())
                 .build();
     }
 
