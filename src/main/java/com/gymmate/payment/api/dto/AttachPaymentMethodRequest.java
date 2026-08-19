@@ -18,6 +18,7 @@ public class AttachPaymentMethodRequest {
     @NotBlank(message = "Stripe payment method ID is required")
     private String stripePaymentMethodId;
 
+    @Builder.Default
     private Boolean setAsDefault = true;
 }
 
