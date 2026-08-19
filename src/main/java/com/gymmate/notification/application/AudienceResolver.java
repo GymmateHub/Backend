@@ -34,6 +34,7 @@ public class AudienceResolver {
     private final List<AudienceMemberIdsResolver> memberIdsResolvers;
     private final MemberDirectory memberDirectory;
     private final ObjectMapper objectMapper;
+    private final EmailSuppressionService suppressionService;
 
     /**
      * DTO to hold combined member and user info for newsletters.
@@ -53,12 +54,20 @@ public class AudienceResolver {
     public List<MemberRecipient> resolveAudience(UUID gymId, AudienceType audienceType, String audienceFilter) {
         log.debug("Resolving audience for gym: {}, type: {}", gymId, audienceType);
 
-        return switch (audienceType) {
+        List<MemberRecipient> rawRecipients = switch (audienceType) {
             case ALL_MEMBERS -> memberDirectory.findActiveMembersByGym(gymId);
             case CUSTOM -> resolveCustom(gymId, audienceFilter);
             case CLASS_SUBSCRIBERS -> resolveViaIdResolver(gymId, audienceType, audienceFilter, true);
             case BOOKING_PARTICIPANTS, MEMBERSHIP_PLAN -> resolveViaIdResolver(gymId, audienceType, audienceFilter, false);
         };
+
+        if (rawRecipients == null || rawRecipients.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return rawRecipients.stream()
+                .filter(r -> r.email() != null && !suppressionService.isSuppressed(r.email()))
+                .collect(Collectors.toList());
     }
 
     /**
