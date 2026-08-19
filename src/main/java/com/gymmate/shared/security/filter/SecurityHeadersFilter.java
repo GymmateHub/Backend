@@ -22,35 +22,34 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
   @Value("${app.security.hsts.enabled:true}")
   private boolean hstsEnabled;
 
-  @Value("${app.frontend-url:http://localhost:3000}")
+  @Value("${app.frontend-url:http://localhost:5173}")
   private String frontendUrl;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request,
-                                  HttpServletResponse response,
-                                  FilterChain filterChain) throws ServletException, IOException {
+      HttpServletResponse response,
+      FilterChain filterChain) throws ServletException, IOException {
 
     // Content Security Policy
     if (cspEnabled) {
       String csp = String.format(
-        "default-src 'self'; " +
-          "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-          "style-src 'self' 'unsafe-inline'; " +
-          "img-src 'self' data: https:; " +
-          "font-src 'self'; " +
-          "connect-src 'self' %s; " +
-          "frame-ancestors 'none'; " +
-          "base-uri 'self'; " +
-          "form-action 'self'",
-        frontendUrl
-      );
+          "default-src 'self'; " +
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; " +
+              "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+              "img-src 'self' data: https:; " +
+              "font-src 'self' https://cdn.jsdelivr.net; " +
+              "connect-src 'self' %s; " +
+              "frame-ancestors 'none'; " +
+              "base-uri 'self'; " +
+              "form-action 'self'",
+          frontendUrl);
       response.setHeader("Content-Security-Policy", csp);
     }
 
     // HTTP Strict Transport Security
     if (hstsEnabled && request.isSecure()) {
       response.setHeader("Strict-Transport-Security",
-        "max-age=31536000; includeSubDomains; preload");
+          "max-age=31536000; includeSubDomains; preload");
     }
 
     // Other security headers
@@ -59,7 +58,7 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
     response.setHeader("X-XSS-Protection", "1; mode=block");
     response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     response.setHeader("Permissions-Policy",
-      "geolocation=(), microphone=(), camera=(), payment=(), usb=()");
+        "geolocation=(), microphone=(), camera=(), payment=(), usb=()");
 
     // Remove server information
     response.setHeader("Server", "");

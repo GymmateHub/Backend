@@ -1,0 +1,39 @@
+server:
+  port: ${APP_PORT:8080}
+
+management:
+  health:
+    mail:
+      enabled: false
+
+spring:
+  # AWS SES SMTP Configuration
+  mail:
+    host: ${SES_SMTP_HOST:${MAIL_HOST:email-smtp.us-east-2.amazonaws.com}}
+    port: ${SES_SMTP_PORT:${MAIL_PORT:587}}
+    username: ${SES_SMTP_USERNAME:${MAIL_USERNAME:}}
+    password: ${SES_SMTP_PASSWORD:${MAIL_PASSWORD:}}
+    from: ${MAIL_FROM:noreply@gymmatehub.com}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: ${SES_SMTP_HOST:${MAIL_HOST:email-smtp.us-east-2.amazonaws.com}}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+        transport:
+          protocol: smtp
+        debug: false
+    test-connection: false
+
+app:
+  email:
+    from:
+      address: ${MAIL_FROM:noreply@gymmatehub.com}
+      name: GymMateHub
+    configuration-set: ${SES_CONFIGURATION_SET:gymmatehub-prod}
