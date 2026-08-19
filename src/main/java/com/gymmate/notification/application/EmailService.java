@@ -1,7 +1,6 @@
 package com.gymmate.notification.application;
 
 import com.gymmate.notification.infrastructure.SseEmitterRegistry;
-import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.whitelabel.application.DynamicMailSenderFactory;
 import com.gymmate.whitelabel.application.WhitelabelSettingsService;
@@ -35,9 +34,17 @@ public class EmailService {
     private final SseEmitterRegistry sseEmitterRegistry;
     private final WhitelabelSettingsService whitelabelSettingsService;
     private final DynamicMailSenderFactory mailSenderFactory;
+    // System default sender, autoconfigured by Spring Boot from spring.mail.* (application-email-config.yml).
+    // Used whenever the tenant has no whitelabel SMTP configured/enabled — e.g. every /api/auth/**
+    // request, where TenantContext is never populated (see TenantFilter.NON_TENANT_ENDPOINTS), so a
+    // whitelabel lookup is guaranteed to come back empty. BUG-001.
+    private final JavaMailSender defaultMailSender;
 
     @Value("${spring.mail.from:noreply@gymmatehub.com}")
     private String defaultFromEmail;
+
+    @Value("${app.email.configuration-set:}")
+    private String configurationSet;
 
     @Async
     public void sendPasswordResetEmail(String to, String name, String resetLink) {
@@ -160,22 +167,27 @@ public class EmailService {
 
         Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(organisationId, gymId);
 
-        if (whitelabelOpt.isEmpty() || !whitelabelOpt.get().isSmtpEnabled()) {
-            throw new DomainException("SMTP_NOT_CONFIGURED",
-                    "Custom SMTP configuration is missing or disabled for tenant: " + organisationId);
-        }
+        JavaMailSender mailSender;
+        String from;
 
-        WhitelabelSettings settings = whitelabelOpt.get();
-        JavaMailSender mailSender = mailSenderFactory.getMailSender(settings);
+        if (whitelabelOpt.isPresent() && whitelabelOpt.get().isSmtpEnabled()) {
+            WhitelabelSettings settings = whitelabelOpt.get();
+            mailSender = mailSenderFactory.getMailSender(settings);
 
-        String from = StringUtils.hasText(settings.getSmtpFromEmail())
-                ? settings.getSmtpFromEmail()
-                : (StringUtils.hasText(settings.getSmtpUsername()) ? settings.getSmtpUsername() : defaultFromEmail);
+            from = StringUtils.hasText(settings.getSmtpFromEmail())
+                    ? settings.getSmtpFromEmail()
+                    : (StringUtils.hasText(settings.getSmtpUsername()) ? settings.getSmtpUsername() : defaultFromEmail);
 
-        if (StringUtils.hasText(settings.getSmtpFromName())) {
-            from = settings.getSmtpFromName() + " <" + from + ">";
-        } else if (StringUtils.hasText(settings.getBrandName())) {
-            from = settings.getBrandName() + " <" + from + ">";
+            if (StringUtils.hasText(settings.getSmtpFromName())) {
+                from = settings.getSmtpFromName() + " <" + from + ">";
+            } else if (StringUtils.hasText(settings.getBrandName())) {
+                from = settings.getBrandName() + " <" + from + ">";
+            }
+        } else {
+            // No tenant custom SMTP (or none applicable, e.g. unauthenticated /api/auth/** requests) —
+            // fall back to the system default sender instead of failing the request. BUG-001.
+            mailSender = defaultMailSender;
+            from = defaultFromEmail;
         }
 
         MimeMessage message = mailSender.createMimeMessage();
@@ -185,6 +197,12 @@ public class EmailService {
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(content, true);
+
+        // Attach AWS SES Configuration Set and tag headers when using system sender and config set is specified
+        if (mailSender == defaultMailSender && StringUtils.hasText(configurationSet)) {
+            message.setHeader("X-SES-CONFIGURATION-SET", configurationSet);
+            message.setHeader("X-SES-MESSAGE-TAGS", "app=gymmatehub,type=transactional");
+        }
 
         mailSender.send(message);
     }

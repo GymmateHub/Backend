@@ -38,8 +38,11 @@ public class PaymentNotificationService {
     private final OrganisationBillingInfoProvider organisationBillingInfoProvider;
     private final UserRepository userRepository;
 
-    @Value("${spring.mail.from:no-reply@gymmatehub.com}")
+    @Value("${spring.mail.from:noreply@gymmatehub.com}")
     private String fromEmail;
+
+    @Value("${app.email.configuration-set:}")
+    private String configurationSet;
 
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
@@ -240,6 +243,11 @@ public class PaymentNotificationService {
             helper.setTo(to);
             helper.setSubject(subject);
             helper.setText(htmlContent, true);
+
+            if (org.springframework.util.StringUtils.hasText(configurationSet)) {
+                message.setHeader("X-SES-CONFIGURATION-SET", configurationSet);
+                message.setHeader("X-SES-MESSAGE-TAGS", "app=gymmatehub,type=payment");
+            }
 
             emailSender.send(message);
         } catch (MessagingException e) {
