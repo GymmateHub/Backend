@@ -36,4 +36,5 @@ app:
     from:
       address: ${MAIL_FROM:noreply@gymmatehub.com}
       name: GymMateHub
-    configuration-set: ${SES_CONFIGURATION_SET:gymmatehub-prod}
+    ses-tenant: ${SES_TENANT:gymmatehub}
+    configuration-set: ${SES_CONFIGURATION_SET:gymmatehub-transactional}

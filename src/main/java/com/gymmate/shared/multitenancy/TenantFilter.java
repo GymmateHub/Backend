@@ -36,6 +36,7 @@ public class TenantFilter extends OncePerRequestFilter {
     // leftover from a prior route rename.
     private static final List<String> NON_TENANT_ENDPOINTS = Arrays.asList(
             "/api/auth",
+            "/api/webhooks",
             "/api/gyms/register",
             "/api/gyms/my-gyms",
             "/api/gyms/active",
