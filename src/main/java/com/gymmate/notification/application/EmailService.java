@@ -34,6 +34,9 @@ public class EmailService {
     private final SseEmitterRegistry sseEmitterRegistry;
     private final WhitelabelSettingsService whitelabelSettingsService;
     private final DynamicMailSenderFactory mailSenderFactory;
+    private final EmailSuppressionService suppressionService;
+    private final com.gymmate.notification.application.port.SesTenantResolver sesTenantResolver;
+    private final com.gymmate.notification.application.port.SesConfigurationSetResolver sesConfigurationSetResolver;
     // System default sender, autoconfigured by Spring Boot from spring.mail.* (application-email-config.yml).
     // Used whenever the tenant has no whitelabel SMTP configured/enabled — e.g. every /api/auth/**
     // request, where TenantContext is never populated (see TenantFilter.NON_TENANT_ENDPOINTS), so a
@@ -42,9 +45,6 @@ public class EmailService {
 
     @Value("${spring.mail.from:noreply@gymmatehub.com}")
     private String defaultFromEmail;
-
-    @Value("${app.email.configuration-set:}")
-    private String configurationSet;
 
     @Async
     public void sendPasswordResetEmail(String to, String name, String resetLink) {
@@ -161,7 +161,28 @@ public class EmailService {
         }
     }
 
+    @Async
+    public void sendMarketingHtmlEmail(String to, String subject, String htmlBody, String unsubscribeUrl) {
+        try {
+            sendEmailInternal(to, subject, htmlBody, unsubscribeUrl);
+            log.info("Marketing HTML email sent to: {} with subject: {}", to, subject);
+        } catch (MessagingException e) {
+            log.error("Failed to send marketing HTML email to: {}", to, e);
+            throw new RuntimeException("Failed to send marketing HTML email", e);
+        }
+    }
+
     private void sendEmailInternal(String to, String subject, String content) throws MessagingException {
+        sendEmailInternal(to, subject, content, null);
+    }
+
+    private void sendEmailInternal(String to, String subject, String content, String unsubscribeUrl) throws MessagingException {
+        // Enforce deliverability check: skip send if recipient is actively suppressed
+        if (suppressionService.isSuppressed(to)) {
+            log.warn("Suppressed email recipient detected [{}]. Aborting outbound send for subject: {}", to, subject);
+            return;
+        }
+
         UUID organisationId = TenantContext.getCurrentTenantId();
         UUID gymId = TenantContext.getCurrentGymId();
 
@@ -198,10 +219,25 @@ public class EmailService {
         helper.setSubject(subject);
         helper.setText(content, true);
 
-        // Attach AWS SES Configuration Set and tag headers when using system sender and config set is specified
-        if (mailSender == defaultMailSender && StringUtils.hasText(configurationSet)) {
-            message.setHeader("X-SES-CONFIGURATION-SET", configurationSet);
-            message.setHeader("X-SES-MESSAGE-TAGS", "app=gymmatehub,type=transactional");
+        // Attach AWS SES Tenant, Configuration Set, and tag headers when using system sender
+        if (mailSender == defaultMailSender) {
+            String sesTenant = sesTenantResolver.resolveTenant(organisationId, gymId);
+            if (StringUtils.hasText(sesTenant)) {
+                message.setHeader("X-SES-TENANT", sesTenant);
+            }
+
+            String sesConfigSet = sesConfigurationSetResolver.resolveConfigurationSet(organisationId, gymId);
+            if (StringUtils.hasText(sesConfigSet)) {
+                message.setHeader("X-SES-CONFIGURATION-SET", sesConfigSet);
+            }
+
+            message.setHeader("X-SES-MESSAGE-TAGS", "app=" + (StringUtils.hasText(sesTenant) ? sesTenant : "gymmatehub") + ",type=transactional");
+        }
+
+        // Attach RFC 8058 one-click unsubscribe headers if an unsubscribe link is supplied
+        if (StringUtils.hasText(unsubscribeUrl)) {
+            message.setHeader("List-Unsubscribe", "<" + unsubscribeUrl + ">, <mailto:unsubscribe@gymmatehub.com>");
+            message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");
         }
 
         mailSender.send(message);
