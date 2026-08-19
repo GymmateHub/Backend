@@ -123,7 +123,8 @@ spring:
 
 app:
   email:
-    configuration-set: ${SES_CONFIGURATION_SET:gymmatehub-prod}
+    ses-tenant: ${SES_TENANT:gymmatehub}
+    configuration-set: ${SES_CONFIGURATION_SET:gymmatehub-transactional}
 
 management:
   health:
