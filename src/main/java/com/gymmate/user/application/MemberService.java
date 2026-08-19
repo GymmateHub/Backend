@@ -2,6 +2,7 @@ package com.gymmate.user.application;
 
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
+import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.user.domain.Member;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.user.domain.User;
@@ -66,6 +67,15 @@ public class MemberService {
 
         // Set gymId from inherited GymScopedEntity (not in builder)
         member.setGymId(gymId);
+
+        // BUG-005: set organisationId explicitly instead of relying on TenantEntity.prePersist's
+        // TenantContext fallback, which is only populated on authenticated tenant-scoped HTTP
+        // requests. Callers like invite-accept / public self-registration run without that
+        // context, which previously persisted organisation_id = NULL and made the member
+        // invisible to every organisationId-scoped query.
+        member.setOrganisationId(user.getOrganisationId() != null
+                ? user.getOrganisationId()
+                : TenantContext.getCurrentTenantId());
 
         return memberRepository.save(member);
     }

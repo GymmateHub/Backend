@@ -4,6 +4,7 @@ import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.organisation.domain.Organisation;
 import com.gymmate.organisation.infrastructure.OrganisationRepository;
 import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
 import com.gymmate.user.infrastructure.MemberRepository;
@@ -69,7 +70,11 @@ public class OrganisationLimitService {
     public void checkCanAddMember(UUID organisationId) {
         Organisation organisation = getOrganisation(organisationId);
 
-        long currentMemberCount = memberRepository.countByOrganisationId(organisationId);
+        // BUG-028: countByOrganisationId counted CANCELLED/INACTIVE members too, permanently
+        // consuming a tier slot even after a member cancelled. Only ACTIVE + SUSPENDED members
+        // should count against the limit.
+        long currentMemberCount = memberRepository.countByOrganisationIdAndStatus(organisationId, MemberStatus.ACTIVE)
+                + memberRepository.countByOrganisationIdAndStatus(organisationId, MemberStatus.SUSPENDED);
         int maxMembers = organisation.getMaxMembers() != null ? organisation.getMaxMembers() : 200;
 
         log.debug("Checking member limit for org {}: current={}, max={}",

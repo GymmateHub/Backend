@@ -33,9 +33,30 @@ spring:
     clean-disabled: false
     locations: classpath:db/migration
 
+  # Development Email Configuration (Mailtrap)
+  mail:
+    host: ${MAILTRAP_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAILTRAP_PORT:2525}
+    username: ${MAILTRAP_USERNAME:74f485d35b9e56}
+    password: ${MAILTRAP_PASSWORD:1bab170254a5de}
+    from: ${MAIL_FROM:noreply@gymmatehub.com}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: false
+          ssl:
+            trust: "*"
+        transport:
+          protocol: smtp
+        debug: true
+    test-connection: false
+
 # CORS Configuration for development
 cors:
-  allowed-origins: "http://localhost:3000,http://localhost:5173,http://localhost:4200,http://127.0.0.1:3000,http://127.0.0.1:5173,http://127.0.0.1:4200,http://gymmatehub.com"
+  allowed-origins: "http://localhost:5173,http://127.0.0.1:5173,http://gymmatehub.com"
   allowed-methods: "GET,POST,PUT,DELETE,PATCH,OPTIONS"
   allowed-headers: "*"
   exposed-headers: "Authorization,Content-Type,Content-Disposition,X-Requested-With,Accept"
@@ -51,4 +72,4 @@ app:
     lastName: Administrator
   password-reset:
     expiration-minutes: 30
-  frontend-url: http://localhost:3000
+  frontend-url: http://localhost:5173

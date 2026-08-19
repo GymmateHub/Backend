@@ -30,6 +30,10 @@ public class TenantFilter extends OncePerRequestFilter {
     private final JwtService jwtService;
 
     // Endpoints that don't require tenant context
+    // BUG-033: "/api/users/register", "/api/users/verify-otp", "/api/users/resend-otp" were
+    // removed — no such routes exist on UserController (real routes are
+    // /api/auth/register/*, already covered by the "/api/auth" prefix below); they were
+    // leftover from a prior route rename.
     private static final List<String> NON_TENANT_ENDPOINTS = Arrays.asList(
             "/api/auth",
             "/api/gyms/register",
@@ -37,9 +41,6 @@ public class TenantFilter extends OncePerRequestFilter {
             "/api/gyms/active",
             "/api/gyms/city",
             "/api/organisations/current",
-            "/api/users/register",
-            "/api/users/verify-otp",
-            "/api/users/resend-otp",
             "/v3/api-docs",
             "/scalar.html",
             "/actuator");
