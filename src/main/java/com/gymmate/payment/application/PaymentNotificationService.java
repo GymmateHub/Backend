@@ -248,6 +248,7 @@ public class PaymentNotificationService {
                 message.setHeader("X-SES-CONFIGURATION-SET", configurationSet);
                 message.setHeader("X-SES-MESSAGE-TAGS", "app=gymmatehub,type=payment");
             }
+            message.setHeader("X-SES-TENANT", "gymmatehub");
 
             emailSender.send(message);
         } catch (MessagingException e) {
