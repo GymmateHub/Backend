@@ -8,6 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
+import org.springframework.security.access.expression.method.MethodSecurityExpressionHandler;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -43,7 +47,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-          .addFilterBefore(securityHeadersFilter, ChannelProcessingFilter.class)
+                .addFilterBefore(securityHeadersFilter, ChannelProcessingFilter.class)
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -67,9 +71,12 @@ public class SecurityConfig {
                         .permitAll()
                         // Role-based endpoints
                         .requestMatchers("/api/admin/**").hasRole("SUPER_ADMIN")
-                        .requestMatchers("/api/gyms/**").hasAnyRole("ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
-                        .requestMatchers("/api/classes/**").hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
-                        .requestMatchers("/api/staff/**").hasAnyRole("STAFF", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
+                        .requestMatchers("/api/gyms/**")
+                        .hasAnyRole("ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
+                        .requestMatchers("/api/classes/**")
+                        .hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
+                        .requestMatchers("/api/staff/**")
+                        .hasAnyRole("STAFF", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
                         // All other endpoints require authentication
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())
@@ -98,10 +105,38 @@ public class SecurityConfig {
     }
 
     /**
+     * BUG-031: registerOwner() assigns UserRole.GYM_OWNER, but the vast majority of
+     * 
+     * @PreAuthorize checks across the codebase only allow 'OWNER'. Without this
+     *               hierarchy,
+     *               a freshly-registered owner gets 403 on almost every
+     *               owner-scoped write endpoint
+     *               (invite staff, create member, create second gym, switch gym)
+     *               despite the URL-level
+     *               matchers above already granting GYM_OWNER. Method security must
+     *               know GYM_OWNER
+     *               implies OWNER too.
+     */
+    @Bean
+    public RoleHierarchy roleHierarchy() {
+        return RoleHierarchyImpl.withDefaultRolePrefix()
+                .role("GYM_OWNER").implies("OWNER")
+                .build();
+    }
+
+    @Bean
+    static MethodSecurityExpressionHandler methodSecurityExpressionHandler(RoleHierarchy roleHierarchy) {
+        DefaultMethodSecurityExpressionHandler handler = new DefaultMethodSecurityExpressionHandler();
+        handler.setRoleHierarchy(roleHierarchy);
+        return handler;
+    }
+
+    /**
      * Prevent auto-registration of security filters as servlet filters.
      * These filters are managed exclusively by Spring Security's FilterChainProxy.
      * Without this, @Component + OncePerRequestFilter causes double-registration:
-     * the filter runs as a servlet filter first, marks itself as "already executed",
+     * the filter runs as a servlet filter first, marks itself as "already
+     * executed",
      * and then gets skipped inside the security chain — breaking authentication.
      */
     @Bean
@@ -119,7 +154,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public FilterRegistrationBean<SecurityHeadersFilter> securityHeadersFilterRegistration(SecurityHeadersFilter filter) {
+    public FilterRegistrationBean<SecurityHeadersFilter> securityHeadersFilterRegistration(
+            SecurityHeadersFilter filter) {
         FilterRegistrationBean<SecurityHeadersFilter> registration = new FilterRegistrationBean<>(filter);
         registration.setEnabled(false);
         return registration;
