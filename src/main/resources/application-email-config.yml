@@ -4,9 +4,9 @@
 
 spring:
   mail:
-    host: ${MAIL_HOST:premium700.web-hosting.com}
+    host: ${MAIL_HOST:live.smtp.mailtrap.io}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:noreply@gymmatehub.com}
+    username: ${MAIL_USERNAME:api}
     password: ${MAIL_PASSWORD:}
     from: ${MAIL_FROM:noreply@gymmatehub.com}
     properties:
@@ -17,7 +17,7 @@ spring:
             enable: true
             required: true
           ssl:
-            trust: ${MAIL_HOST:premium700.web-hosting.com}
+            trust: ${MAIL_HOST:live.smtp.mailtrap.io}
         transport:
           protocol: smtp
         debug: false
@@ -93,16 +93,16 @@ management:
       enabled: false
 
 ---
-# Production / Server (AWS SES SMTP)
+# Production / Server (Mailtrap Live / AWS SES SMTP)
 spring:
   config:
     activate:
       on-profile: prod | production
   mail:
-    host: ${SES_SMTP_HOST:${MAIL_HOST:email-smtp.us-east-2.amazonaws.com}}
-    port: ${SES_SMTP_PORT:${MAIL_PORT:587}}
-    username: ${SES_SMTP_USERNAME:${MAIL_USERNAME:}}
-    password: ${SES_SMTP_PASSWORD:${MAIL_PASSWORD:}}
+    host: ${MAIL_HOST:${SES_SMTP_HOST:live.smtp.mailtrap.io}}
+    port: ${MAIL_PORT:${SES_SMTP_PORT:587}}
+    username: ${MAIL_USERNAME:${SES_SMTP_USERNAME:api}}
+    password: ${MAIL_PASSWORD:${SES_SMTP_PASSWORD:}}
     from: ${MAIL_FROM:noreply@gymmatehub.com}
     properties:
       mail:
@@ -112,7 +112,7 @@ spring:
             enable: true
             required: true
           ssl:
-            trust: ${SES_SMTP_HOST:${MAIL_HOST:email-smtp.us-east-2.amazonaws.com}}
+            trust: ${MAIL_HOST:${SES_SMTP_HOST:live.smtp.mailtrap.io}}
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000

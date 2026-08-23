@@ -37,8 +37,8 @@ spring:
   mail:
     host: ${MAILTRAP_HOST:sandbox.smtp.mailtrap.io}
     port: ${MAILTRAP_PORT:2525}
-    username: ${MAILTRAP_USERNAME:74f485d35b9e56}
-    password: ${MAILTRAP_PASSWORD:1bab170254a5de}
+    username: ${MAILTRAP_USERNAME:}
+    password: ${MAILTRAP_PASSWORD:}
     from: ${MAIL_FROM:noreply@gymmatehub.com}
     properties:
       mail:

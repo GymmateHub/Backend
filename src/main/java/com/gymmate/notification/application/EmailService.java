@@ -37,9 +37,12 @@ public class EmailService {
     private final EmailSuppressionService suppressionService;
     private final com.gymmate.notification.application.port.SesTenantResolver sesTenantResolver;
     private final com.gymmate.notification.application.port.SesConfigurationSetResolver sesConfigurationSetResolver;
-    // System default sender, autoconfigured by Spring Boot from spring.mail.* (application-email-config.yml).
-    // Used whenever the tenant has no whitelabel SMTP configured/enabled — e.g. every /api/auth/**
-    // request, where TenantContext is never populated (see TenantFilter.NON_TENANT_ENDPOINTS), so a
+    // System default sender, autoconfigured by Spring Boot from spring.mail.*
+    // (application-email-config.yml).
+    // Used whenever the tenant has no whitelabel SMTP configured/enabled — e.g.
+    // every /api/auth/**
+    // request, where TenantContext is never populated (see
+    // TenantFilter.NON_TENANT_ENDPOINTS), so a
     // whitelabel lookup is guaranteed to come back empty. BUG-001.
     private final JavaMailSender defaultMailSender;
 
@@ -179,7 +182,8 @@ public class EmailService {
         sendEmailInternal(to, subject, content, null);
     }
 
-    private void sendEmailInternal(String to, String subject, String content, String unsubscribeUrl) throws MessagingException {
+    private void sendEmailInternal(String to, String subject, String content, String unsubscribeUrl)
+            throws MessagingException {
         // Enforce deliverability check: skip send if recipient is actively suppressed
         if (suppressionService.isSuppressed(to)) {
             log.warn("Suppressed email recipient detected [{}]. Aborting outbound send for subject: {}", to, subject);
@@ -189,7 +193,8 @@ public class EmailService {
         UUID organisationId = TenantContext.getCurrentTenantId();
         UUID gymId = TenantContext.getCurrentGymId();
 
-        Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(organisationId, gymId);
+        Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(organisationId,
+                gymId);
 
         JavaMailSender mailSender;
         String from;
@@ -208,8 +213,10 @@ public class EmailService {
                 from = settings.getBrandName() + " <" + from + ">";
             }
         } else {
-            // No tenant custom SMTP (or none applicable, e.g. unauthenticated /api/auth/** requests) —
-            // fall back to the system default sender instead of failing the request. BUG-001.
+            // No tenant custom SMTP (or none applicable, e.g. unauthenticated /api/auth/**
+            // requests) —
+            // fall back to the system default sender instead of failing the request.
+            // BUG-001.
             mailSender = defaultMailSender;
             from = defaultFromEmail;
         }
@@ -222,7 +229,8 @@ public class EmailService {
         helper.setSubject(subject);
         helper.setText(content, true);
 
-        // Attach AWS SES Tenant, Configuration Set, and tag headers when using system sender
+        // Attach AWS SES Tenant, Configuration Set, and tag headers when using system
+        // sender
         if (mailSender == defaultMailSender) {
             String sesTenant = sesTenantResolver.resolveTenant(organisationId, gymId);
             if (StringUtils.hasText(sesTenant)) {
@@ -234,10 +242,12 @@ public class EmailService {
                 message.setHeader("X-SES-CONFIGURATION-SET", sesConfigSet);
             }
 
-            message.setHeader("X-SES-MESSAGE-TAGS", "app=" + (StringUtils.hasText(sesTenant) ? sesTenant : "gymmatehub") + ",type=transactional");
+            message.setHeader("X-SES-MESSAGE-TAGS",
+                    "app=" + (StringUtils.hasText(sesTenant) ? sesTenant : "gymmatehub") + ",type=transactional");
         }
 
-        // Attach RFC 8058 one-click unsubscribe headers if an unsubscribe link is supplied
+        // Attach RFC 8058 one-click unsubscribe headers if an unsubscribe link is
+        // supplied
         if (StringUtils.hasText(unsubscribeUrl)) {
             message.setHeader("List-Unsubscribe", "<" + unsubscribeUrl + ">, <mailto:unsubscribe@gymmatehub.com>");
             message.setHeader("List-Unsubscribe-Post", "List-Unsubscribe=One-Click");

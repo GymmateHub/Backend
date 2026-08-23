@@ -7,12 +7,12 @@ management:
       enabled: false
 
 spring:
-  # AWS SES SMTP Configuration
+  # Email Configuration (Mailtrap Live / AWS SES SMTP)
   mail:
-    host: ${SES_SMTP_HOST:${MAIL_HOST:email-smtp.us-east-2.amazonaws.com}}
-    port: ${SES_SMTP_PORT:${MAIL_PORT:587}}
-    username: ${SES_SMTP_USERNAME:${MAIL_USERNAME:}}
-    password: ${SES_SMTP_PASSWORD:${MAIL_PASSWORD:}}
+    host: ${MAIL_HOST:${SES_SMTP_HOST:live.smtp.mailtrap.io}}
+    port: ${MAIL_PORT:${SES_SMTP_PORT:587}}
+    username: ${MAIL_USERNAME:${SES_SMTP_USERNAME:api}}
+    password: ${MAIL_PASSWORD:${SES_SMTP_PASSWORD:}}
     from: ${MAIL_FROM:noreply@gymmatehub.com}
     properties:
       mail:
@@ -22,7 +22,7 @@ spring:
             enable: true
             required: true
           ssl:
-            trust: ${SES_SMTP_HOST:${MAIL_HOST:email-smtp.us-east-2.amazonaws.com}}
+            trust: ${MAIL_HOST:${SES_SMTP_HOST:live.smtp.mailtrap.io}}
           connectiontimeout: 5000
           timeout: 5000
           writetimeout: 5000
