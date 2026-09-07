@@ -92,22 +92,23 @@ public class AuthenticationService {
             if (loginAttemptService.isAccountLocked(request.email())) {
                 long remainingTime = loginAttemptService.getRemainingLockoutTime(request.email());
                 throw new BadCredentialsException(
-                    String.format("Account is locked. Try again in %d minutes", remainingTime));
+                        String.format("Account is locked. Try again in %d minutes", remainingTime));
             }
 
             log.debug("Attempting authentication for user: {}", request.email());
 
             User user = userRepository.findByEmail(request.email())
-                .orElseThrow(() -> {
-                    loginAttemptService.loginFailed(request.email());
-                    return new BadCredentialsException("User not found");
-                });
+                    .orElseThrow(() -> {
+                        loginAttemptService.loginFailed(request.email());
+                        return new BadCredentialsException("User not found");
+                    });
 
             log.debug("User found - ID: {}, email: {}", user.getId(), user.getEmail());
 
-            // SECURITY: Spring Security's AuthenticationManager validates credentials - ONLY ONCE
+            // SECURITY: Spring Security's AuthenticationManager validates credentials -
+            // ONLY ONCE
             authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.email(), request.password()));
+                    new UsernamePasswordAuthenticationToken(request.email(), request.password()));
 
             // Successful login - clear attempts
             loginAttemptService.loginSucceeded(request.email());
@@ -140,7 +141,10 @@ public class AuthenticationService {
                         .build();
             }
 
-            String accessToken = jwtService.generateToken(user);
+            UUID defaultGymId = resolveDefaultGymId(user);
+            String accessToken = defaultGymId != null
+                    ? jwtService.generateToken(user, defaultGymId)
+                    : jwtService.generateToken(user);
             String refreshToken = jwtService.generateRefreshToken(user);
 
             userService.recordLogin(user.getId());
@@ -156,13 +160,14 @@ public class AuthenticationService {
                     .lastName(user.getLastName())
                     .role(user.getRole())
                     .organisationId(user.getOrganisationId())
+                    .gymId(defaultGymId)
                     .emailVerified(true)
                     .build();
 
         } catch (AuthenticationException ex) {
-          loginAttemptService.loginFailed(request.email());
-          log.error("Authentication failed for user: {}", request.email(), ex);
-          throw new BadCredentialsException("Invalid email or password");
+            loginAttemptService.loginFailed(request.email());
+            log.error("Authentication failed for user: {}", request.email(), ex);
+            throw new BadCredentialsException("Invalid email or password");
         }
     }
 
@@ -239,6 +244,8 @@ public class AuthenticationService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
 
+        // TODO: This logic is incomplete. the existing refresh token should be
+        // blacklisted upon generating a new one.
         String newAccessToken = request.getTenantId() != null
                 ? jwtService.generateToken(user, request.getTenantId())
                 : jwtService.generateToken(user);
@@ -278,27 +285,28 @@ public class AuthenticationService {
         user = userRepository.save(user);
 
         // Fallback default values for optional fields
-        String organisationName = StringUtils.hasText(request.organisationName()) 
-                ? request.organisationName() 
+        String organisationName = StringUtils.hasText(request.organisationName())
+                ? request.organisationName()
                 : request.firstName() + "'s Organisation";
-        String gymName = StringUtils.hasText(request.gymName()) 
-                ? request.gymName() 
+        String gymName = StringUtils.hasText(request.gymName())
+                ? request.gymName()
                 : request.firstName() + "'s Gym";
-        String timezone = StringUtils.hasText(request.timezone()) 
-                ? request.timezone() 
+        String timezone = StringUtils.hasText(request.timezone())
+                ? request.timezone()
                 : "UTC";
-        String country = StringUtils.hasText(request.country()) 
-                ? request.country() 
+        String country = StringUtils.hasText(request.country())
+                ? request.country()
                 : "United States";
-        String phone = StringUtils.hasText(request.phone()) 
-                ? request.phone() 
+        String phone = StringUtils.hasText(request.phone())
+                ? request.phone()
                 : "+10000000000";
 
         // 2. Create Organisation & Hub (Atomic transaction)
         // createHub creates Organisation, Subscription, and links owner
         Organisation organisation = organisationService.createHub(organisationName, request.email(), user);
 
-        // BUG-014: enforce the org's subscription tier gym limit even for the very first
+        // BUG-014: enforce the org's subscription tier gym limit even for the very
+        // first
         // gym, instead of only checking it on the /organisations/current/gyms endpoint.
         organisationLimitService.checkCanCreateGym(organisation.getId());
 
@@ -417,7 +425,8 @@ public class AuthenticationService {
         // BUG-003: acceptInvite() previously only created the User row, leaving no
         // Member/Staff/Trainer domain entity — every subsequent /api/members/me,
         // /api/staff, /api/trainers call for this user then 404'd. Create the matching
-        // profile now, with sensible defaults for fields the invite flow doesn't collect.
+        // profile now, with sensible defaults for fields the invite flow doesn't
+        // collect.
         switch (user.getRole()) {
             case MEMBER -> memberService.createMember(user.getId(), validated.gymId(), null);
             case STAFF -> staffService.createStaff(user.getId(), "Staff", "General",
@@ -520,8 +529,12 @@ public class AuthenticationService {
 
         log.info("Email verified and user activated for userId: {}", user.getId());
 
-        // BUG-002: issue tokens on verify so the user is immediately logged in, same as acceptInvite().
-        String accessToken = jwtService.generateToken(user);
+        // BUG-002: issue tokens on verify so the user is immediately logged in, same as
+        // acceptInvite().
+        UUID defaultGymId = resolveDefaultGymId(user);
+        String accessToken = defaultGymId != null
+                ? jwtService.generateToken(user, defaultGymId)
+                : jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
         return VerificationTokenResponse.builder()
@@ -534,46 +547,63 @@ public class AuthenticationService {
                 .email(user.getEmail())
                 .role(user.getRole())
                 .organisationId(user.getOrganisationId())
+                .gymId(defaultGymId)
                 .build();
     }
 
     // Update password change methods to check history
     @AuditLog(eventType = AuditEventType.PASSWORD_CHANGE, message = "Password changed successfully")
     public void changePassword(UUID userId, String oldPassword, String newPassword) {
-      User user = userRepository.findById(userId)
-        .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
 
-      // Verify old password
-      if (!passwordService.matches(oldPassword, user.getPasswordHash())) {
-        throw new BadCredentialsException("Current password is incorrect");
-      }
+        // Verify old password
+        if (!passwordService.matches(oldPassword, user.getPasswordHash())) {
+            throw new BadCredentialsException("Current password is incorrect");
+        }
 
-      // Validate new password
-      PasswordPolicyService.PasswordValidationResult result =
-        passwordPolicyService.validatePassword(newPassword, userId);
+        // Validate new password
+        PasswordPolicyService.PasswordValidationResult result = passwordPolicyService.validatePassword(newPassword,
+                userId);
 
-      if (!result.valid()) {
-        throw new DomainException("WEAK_PASSWORD",
-          "Password does not meet security requirements: " + String.join(", ", result.errors()));
-      }
+        if (!result.valid()) {
+            throw new DomainException("WEAK_PASSWORD",
+                    "Password does not meet security requirements: " + String.join(", ", result.errors()));
+        }
 
-      // Update password
-      String newHashedPassword = passwordService.encode(newPassword);
-      user.setPasswordHash(newHashedPassword);
-      userRepository.save(user);
+        // Update password
+        String newHashedPassword = passwordService.encode(newPassword);
+        user.setPasswordHash(newHashedPassword);
+        userRepository.save(user);
 
-      // Add to password history
-      passwordPolicyService.addToPasswordHistory(userId, newHashedPassword);
+        // Add to password history
+        passwordPolicyService.addToPasswordHistory(userId, newHashedPassword);
     }
 
     // ==================== PRIVATE HELPERS ====================
 
-  private void validatePassword(String password) {
-    PasswordPolicyService.PasswordValidationResult result = passwordPolicyService.validatePassword(password, null);
+    private void validatePassword(String password) {
+        PasswordPolicyService.PasswordValidationResult result = passwordPolicyService.validatePassword(password, null);
 
-    if (!result.valid()) {
-      throw new DomainException("WEAK_PASSWORD",
-        "Password does not meet security requirements: " + String.join(", ", result.errors()));
+        if (!result.valid()) {
+            throw new DomainException("WEAK_PASSWORD",
+                    "Password does not meet security requirements: " + String.join(", ", result.errors()));
+        }
     }
-  }
+
+    private UUID resolveDefaultGymId(User user) {
+        if (user == null || user.getOrganisationId() == null) {
+            return null;
+        }
+        try {
+            List<Gym> gyms = gymService.getActiveGymsByOrganisation(user.getOrganisationId());
+            if (!gyms.isEmpty()) {
+                return gyms.get(0).getId();
+            }
+        } catch (Exception e) {
+            log.debug("Could not resolve active gym for user {}: {}", user.getEmail(), e.getMessage());
+        }
+        return null;
+    }
+
 }

@@ -60,11 +60,11 @@ public class RateLimitService {
         rateLimitRepository.save(rateLimit);
 
         // Update usage tracking
-        updateUsageTracking(subscription.getId());
+        updateUsageTracking(subscription);
 
         // If blocked, record the hit
         if (rateLimit.isCurrentlyBlocked()) {
-            recordRateLimitHit(subscription.getId());
+            recordRateLimitHit(subscription);
             log.warn("Organisation {} has been rate limited. Requests: {}/{}",
                 organisationId, rateLimit.getRequestCount(), rateLimit.getLimitThreshold());
             return false;
@@ -188,19 +188,39 @@ public class RateLimitService {
         };
     }
 
-    private void updateUsageTracking(UUID subscriptionId) {
+    private void updateUsageTracking(Subscription subscription) {
+        LocalDateTime now = LocalDateTime.now();
         SubscriptionUsage usage = usageRepository
-            .findBySubscriptionAndPeriod(subscriptionId, LocalDateTime.now())
-            .orElseThrow(() -> new IllegalStateException("No current usage record found"));
+            .findBySubscriptionAndPeriod(subscription.getId(), now)
+            .orElseGet(() -> {
+                SubscriptionUsage newUsage = SubscriptionUsage.builder()
+                    .subscription(subscription)
+                    .billingPeriodStart(now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS))
+                    .billingPeriodEnd(now.withDayOfMonth(1).plusMonths(1).truncatedTo(ChronoUnit.DAYS))
+                    .apiRequests(0)
+                    .apiRateLimitHits(0)
+                    .build();
+                return usageRepository.save(newUsage);
+            });
 
         usage.incrementApiRequest();
         usageRepository.save(usage);
     }
 
-    private void recordRateLimitHit(UUID subscriptionId) {
+    private void recordRateLimitHit(Subscription subscription) {
+        LocalDateTime now = LocalDateTime.now();
         SubscriptionUsage usage = usageRepository
-            .findBySubscriptionAndPeriod(subscriptionId, LocalDateTime.now())
-            .orElseThrow(() -> new IllegalStateException("No current usage record found"));
+            .findBySubscriptionAndPeriod(subscription.getId(), now)
+            .orElseGet(() -> {
+                SubscriptionUsage newUsage = SubscriptionUsage.builder()
+                    .subscription(subscription)
+                    .billingPeriodStart(now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS))
+                    .billingPeriodEnd(now.withDayOfMonth(1).plusMonths(1).truncatedTo(ChronoUnit.DAYS))
+                    .apiRequests(0)
+                    .apiRateLimitHits(0)
+                    .build();
+                return usageRepository.save(newUsage);
+            });
 
         usage.recordRateLimitHit();
         usageRepository.save(usage);

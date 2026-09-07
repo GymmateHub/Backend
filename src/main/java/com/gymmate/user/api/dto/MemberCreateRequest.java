@@ -4,16 +4,18 @@ import java.util.UUID;
 
 /**
  * DTO for creating a new member.
+ * Supports both creating for an existing user (by userId) or registering with details.
  */
-public record MemberCreateRequest(UUID userId, UUID gymId, String membershipNumber) {
-  public MemberCreateRequest{
-    if (userId == null)
-      throw new IllegalArgumentException("User ID is required");
-    if (gymId == null)
-      throw new IllegalArgumentException("Gym ID is required");
-    if (membershipNumber == null)
-      throw new IllegalArgumentException("Membership number is required");
-    if (membershipNumber.isBlank())
-      throw new IllegalArgumentException("Membership number is required");
-  }
+public record MemberCreateRequest(
+    UUID userId,
+    UUID gymId,
+    String membershipNumber,
+    String email,
+    String firstName,
+    String lastName,
+    String phone
+) {
+    public MemberCreateRequest(UUID userId, UUID gymId, String membershipNumber) {
+        this(userId, gymId, membershipNumber, null, null, null, null);
+    }
 }

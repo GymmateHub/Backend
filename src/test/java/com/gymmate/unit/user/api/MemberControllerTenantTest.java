@@ -9,6 +9,7 @@ import com.gymmate.user.application.MemberService;
 import com.gymmate.user.domain.Member;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.user.infrastructure.MemberRepository;
+import com.gymmate.user.infrastructure.UserRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -38,6 +39,8 @@ class MemberControllerTenantTest {
     private MemberRepository memberRepository;
     @Mock
     private OrganisationLimitService limitService;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private MemberController memberController;

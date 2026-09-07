@@ -23,13 +23,13 @@ public class RateLimitingService {
 
   // Rate limit configurations
   private static final Map<String, RateLimitConfig> RATE_LIMITS = Map.of(
-    "/api/auth/login", new RateLimitConfig(5, Duration.ofMinutes(15)), // 5 attempts per 15 min
-    "/api/auth/register", new RateLimitConfig(3, Duration.ofMinutes(60)), // 3 registrations per hour
-    "/api/auth/forgot-password", new RateLimitConfig(3, Duration.ofMinutes(60)), // 3 password resets per hour
-    "/api/auth/verify-otp", new RateLimitConfig(10, Duration.ofMinutes(5)), // 10 OTP attempts per 5 min
-    "/api/auth/resend-otp", new RateLimitConfig(3, Duration.ofMinutes(5)), // 3 resends per 5 min
-    "default", new RateLimitConfig(100, Duration.ofMinutes(1)), // 100 requests per minute
-    "upload", new RateLimitConfig(10, Duration.ofMinutes(5)) // 10 uploads per 5 minutes
+    "/api/auth/login", new RateLimitConfig(500, Duration.ofMinutes(15)), // 500 attempts per 15 min
+    "/api/auth/register", new RateLimitConfig(100, Duration.ofMinutes(60)), // 100 registrations per hour
+    "/api/auth/forgot-password", new RateLimitConfig(50, Duration.ofMinutes(60)), // 50 password resets per hour
+    "/api/auth/verify-otp", new RateLimitConfig(100, Duration.ofMinutes(5)), // 100 OTP attempts per 5 min
+    "/api/auth/resend-otp", new RateLimitConfig(50, Duration.ofMinutes(5)), // 50 resends per 5 min
+    "default", new RateLimitConfig(1000, Duration.ofMinutes(1)), // 1000 requests per minute
+    "upload", new RateLimitConfig(100, Duration.ofMinutes(5)) // 100 uploads per 5 minutes
   );
 
   public boolean isAllowed(String identifier, String endpoint, String clientIp) {

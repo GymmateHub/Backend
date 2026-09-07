@@ -6,6 +6,7 @@ import com.gymmate.scheduling.api.dto.ClassCategoryMapper;
 import com.gymmate.scheduling.internal.service.ClassCategoryService;
 import com.gymmate.scheduling.internal.domain.ClassCategory;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,10 +28,11 @@ public class ClassCategoryController {
   private final ClassCategoryMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CreateCategoryRequest req) {
     ClassCategory c = mapper.toEntity(req);
-    c.setGymId(req.getGymId());
+    UUID effectiveGymId = req.getGymId() != null ? req.getGymId() : TenantContext.getCurrentGymId();
+    c.setGymId(effectiveGymId);
     ClassCategory created = categoryService.createCategory(c);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Category created"));
   }
@@ -49,7 +51,7 @@ public class ClassCategoryController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<CategoryResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateCategoryRequest req) {
     ClassCategory c = categoryService.getCategory(id);
     c.updateDetails(req.getName(), req.getDescription(), req.getColor());
@@ -58,7 +60,7 @@ public class ClassCategoryController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
     categoryService.deleteCategory(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Category deleted"));

@@ -1,5 +1,7 @@
 package com.gymmate.user.application;
 
+import com.gymmate.shared.constants.UserRole;
+import com.gymmate.shared.constants.UserStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
@@ -9,11 +11,13 @@ import com.gymmate.user.domain.User;
 import com.gymmate.user.infrastructure.MemberRepository;
 import com.gymmate.user.infrastructure.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -26,7 +30,70 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
+
+    /**
+     * Create a new member profile for an existing user or create user if needed.
+     */
+    @Transactional
+    public Member createMemberWithDetails(String email, String firstName, String lastName, String phone,
+                                          UUID gymId, String membershipNumber) {
+        UUID orgId = TenantContext.getCurrentTenantId();
+
+        if (email == null || email.isBlank()) {
+            throw new DomainException("EMAIL_REQUIRED", "Email is required to create a member");
+        }
+        if (firstName == null || firstName.isBlank()) {
+            throw new DomainException("FIRST_NAME_REQUIRED", "First name is required to create a member");
+        }
+        if (lastName == null || lastName.isBlank()) {
+            throw new DomainException("LAST_NAME_REQUIRED", "Last name is required to create a member");
+        }
+
+        User user = userRepository.findByEmail(email.trim()).orElseGet(() -> {
+            User newUser = User.builder()
+                    .email(email.trim())
+                    .firstName(firstName.trim())
+                    .lastName(lastName.trim())
+                    .phone(phone != null ? phone.trim() : null)
+                    .passwordHash(passwordEncoder.encode(UUID.randomUUID().toString()))
+                    .role(UserRole.MEMBER)
+                    .status(UserStatus.ACTIVE)
+                    .emailVerified(true)
+                    .build();
+            newUser.setOrganisationId(orgId);
+            return userRepository.save(newUser);
+        });
+
+        // Generate membership number if none provided
+        String memberNo = membershipNumber;
+        if (memberNo == null || memberNo.isBlank()) {
+            memberNo = "GM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+
+        // If member profile already exists for this user, return it
+        Optional<Member> existing = memberRepository.findByUserId(user.getId());
+        if (existing.isPresent()) {
+            return existing.get();
+        }
+
+        UUID targetGymId = gymId;
+
+        Member member = Member.builder()
+                .userId(user.getId())
+                .membershipNumber(memberNo)
+                .joinDate(LocalDate.now())
+                .status(MemberStatus.ACTIVE)
+                .waiverSigned(false)
+                .photoConsent(false)
+                .build();
+
+        member.setGymId(targetGymId);
+        member.setOrganisationId(user.getOrganisationId() != null ? user.getOrganisationId() : orgId);
+
+        return memberRepository.save(member);
+    }
 
     /**
      * Create a new member profile for an existing user.
@@ -49,36 +116,29 @@ public class MemberService {
                     "Member profile already exists for user: " + userId);
         }
 
-        // Check membership number uniqueness
-        if (membershipNumber != null && memberRepository.existsByMembershipNumber(membershipNumber)) {
-            throw new DomainException("MEMBERSHIP_NUMBER_EXISTS",
-                    "Membership number already exists: " + membershipNumber);
+        String memberNo = membershipNumber;
+        if (memberNo == null || memberNo.isBlank()) {
+            memberNo = "GM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         }
 
         // Create member
         Member member = Member.builder()
                 .userId(userId)
-                .membershipNumber(membershipNumber)
+                .membershipNumber(memberNo)
                 .joinDate(LocalDate.now())
                 .status(MemberStatus.ACTIVE)
                 .waiverSigned(false)
                 .photoConsent(false)
                 .build();
 
-        // Set gymId from inherited GymScopedEntity (not in builder)
         member.setGymId(gymId);
-
-        // BUG-005: set organisationId explicitly instead of relying on TenantEntity.prePersist's
-        // TenantContext fallback, which is only populated on authenticated tenant-scoped HTTP
-        // requests. Callers like invite-accept / public self-registration run without that
-        // context, which previously persisted organisation_id = NULL and made the member
-        // invisible to every organisationId-scoped query.
         member.setOrganisationId(user.getOrganisationId() != null
                 ? user.getOrganisationId()
                 : TenantContext.getCurrentTenantId());
 
         return memberRepository.save(member);
     }
+
     /**
      * Update emergency contact information.
      */
@@ -160,37 +220,31 @@ public class MemberService {
         return memberRepository.save(member);
     }
 
-  /**
-   * Find member by ID.
-   */
-  public Member findById(UUID id) {
-    return memberRepository.findById(id)
-      .orElseThrow(() -> new ResourceNotFoundException("Member", id.toString()));
-  }
+    /**
+     * Find member by ID.
+     */
+    public Member findById(UUID id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Member", id.toString()));
+    }
 
-  /**
-   * Find member by user ID.
-   */
-  public Member findByUserId(UUID userId) {
-    return memberRepository.findByUserId(userId)
-      .orElseThrow(() -> new ResourceNotFoundException("Member", "userId=" + userId));
-  }
+    /**
+     * Find member by user ID.
+     */
+    public Member findByUserId(UUID userId) {
+        return memberRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("Member", "userId=" + userId));
+    }
 
-  /**
-   * Find Memeber by GymId
-   */
+    /**
+     * Find member by membership number.
+     */
+    public Member findByMembershipNumber(String membershipNumber) {
+        return memberRepository.findByMembershipNumber(membershipNumber)
+                .orElseThrow(() -> new ResourceNotFoundException("Member", "membershipNumber=" + membershipNumber));
+    }
 
-
-
-  /**
-   * Find member by membership number.
-   */
-  public Member findByMembershipNumber(String membershipNumber) {
-    return memberRepository.findByMembershipNumber(membershipNumber)
-      .orElseThrow(() -> new ResourceNotFoundException("Member", "membershipNumber=" + membershipNumber));
-  }
-
-  /**
+    /**
      * Find members by status.
      */
     public List<Member> findByStatus(MemberStatus status) {
@@ -219,26 +273,10 @@ public class MemberService {
     }
 
     /**
-     * @deprecated Use {@link #countByStatus(UUID, MemberStatus)} instead.
-     */
-    @Deprecated
-    public long countByStatus(MemberStatus status) {
-        return memberRepository.countByStatus(status);
-    }
-
-    /**
      * Find new members joined after a date within an organisation.
      */
     public List<Member> findNewMembers(UUID organisationId, LocalDate afterDate) {
         return memberRepository.findByOrganisationIdAndJoinDateAfter(organisationId, afterDate);
-    }
-
-    /**
-     * @deprecated Use {@link #findNewMembers(UUID, LocalDate)} instead.
-     */
-    @Deprecated
-    public List<Member> findNewMembers(LocalDate afterDate) {
-        return memberRepository.findByJoinDateAfter(afterDate);
     }
 
     /**
@@ -248,4 +286,3 @@ public class MemberService {
         return memberRepository.findAll();
     }
 }
-

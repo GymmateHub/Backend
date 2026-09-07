@@ -79,15 +79,24 @@ public class TenantFilter extends OncePerRequestFilter {
                     log.debug("Setting tenant context for organisation: {}", organisationId);
                     TenantContext.setCurrentTenantId(organisationId);
 
-                    // Try to extract gym context from JWT if present
+                    // Try to extract gym context from JWT or X-Gym-Id header
                     String authHeader = request.getHeader("Authorization");
+                    UUID gymId = null;
                     if (authHeader != null && authHeader.startsWith("Bearer ")) {
                         String token = authHeader.substring(7);
-                        UUID gymId = jwtService.extractGymId(token);
-                        if (gymId != null) {
-                            TenantContext.setCurrentGymId(gymId);
-                            log.debug("Setting gym context: {}", gymId);
+                        gymId = jwtService.extractGymId(token);
+                    }
+                    if (gymId == null) {
+                        String gymHeader = request.getHeader("X-Gym-Id");
+                        if (org.springframework.util.StringUtils.hasText(gymHeader)) {
+                            try {
+                                gymId = UUID.fromString(gymHeader);
+                            } catch (IllegalArgumentException ignored) {}
                         }
+                    }
+                    if (gymId != null) {
+                        TenantContext.setCurrentGymId(gymId);
+                        log.debug("Setting gym context: {}", gymId);
                     }
 
                     filterChain.doFilter(request, response);
