@@ -1,5 +1,7 @@
 package com.gymmate.inventory.internal.domain;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 /**
  * Equipment category enumeration.
  * Categorizes gym equipment by type.
@@ -14,5 +16,16 @@ public enum EquipmentCategory {
   SPORTS,           // Basketballs, soccer balls, etc.
   ACCESSIBILITY,    // Wheelchairs, adaptive equipment
   RECOVERY,         // Foam rollers, massage guns
-  OTHER             // Miscellaneous equipment
+  OTHER;            // Miscellaneous equipment
+
+  @JsonCreator
+  public static EquipmentCategory fromString(String value) {
+    if (value == null || value.isBlank()) return OTHER;
+    for (EquipmentCategory cat : values()) {
+      if (cat.name().equalsIgnoreCase(value.trim())) {
+        return cat;
+      }
+    }
+    return OTHER;
+  }
 }

@@ -21,5 +21,6 @@ public class LoginResponse {
     private String lastName;
     private UserRole role;
     private UUID organisationId;
+    private UUID gymId;
     private boolean emailVerified;
 }

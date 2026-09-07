@@ -51,6 +51,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            response.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                            response.setContentType("application/json");
+                            response.setCharacterEncoding("UTF-8");
+                            response.getWriter().write("{\"success\":false,\"message\":\"Unauthorized: " +
+                                    (authException.getMessage() != null ? authException.getMessage().replace("\"", "\\\"") : "Authentication required") +
+                                    "\",\"status\":401}");
+                        })
+                )
                 .authorizeHttpRequests(auth -> auth
                         // Deny sensitive paths
                         .requestMatchers("/.git/**", "/.env", "/config/**").denyAll()
@@ -74,9 +84,17 @@ public class SecurityConfig {
                         .requestMatchers("/api/gyms/**")
                         .hasAnyRole("ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
                         .requestMatchers("/api/classes/**")
+                        .hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER", "MEMBER")
+                        .requestMatchers("/api/class-categories/**")
                         .hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
+                        .requestMatchers("/api/class-schedules/**")
+                        .hasAnyRole("TRAINER", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER", "MEMBER")
+                        .requestMatchers("/api/bookings/**")
+                        .authenticated()
                         .requestMatchers("/api/staff/**")
                         .hasAnyRole("STAFF", "ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER")
+                        .requestMatchers("/api/inventory/**")
+                        .hasAnyRole("ADMIN", "SUPER_ADMIN", "GYM_OWNER", "OWNER", "MANAGER", "STAFF")
                         // All other endpoints require authentication
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider())

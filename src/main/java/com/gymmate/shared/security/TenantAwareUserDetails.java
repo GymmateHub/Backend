@@ -28,9 +28,7 @@ public class TenantAwareUserDetails implements UserDetails {
         this.organisationId = user.getOrganisationId();
         this.role = user.getRole().name();
         this.emailVerified = user.isEmailVerified();
-        this.authorities = Collections.singletonList(
-            new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-        );
+        this.authorities = buildAuthorities(user.getRole().name());
         this.active = user.isActive();
     }
 
@@ -42,8 +40,29 @@ public class TenantAwareUserDetails implements UserDetails {
         this.organisationId = organisationId;
         this.role = role;
         this.emailVerified = emailVerified;
-        this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+        this.authorities = buildAuthorities(role);
         this.active = active;
+    }
+
+    private static Collection<? extends GrantedAuthority> buildAuthorities(String roleName) {
+        java.util.Set<GrantedAuthority> auths = new java.util.HashSet<>();
+        if (roleName != null) {
+            auths.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+            if ("GYM_OWNER".equalsIgnoreCase(roleName) || "OWNER".equalsIgnoreCase(roleName)) {
+                auths.add(new SimpleGrantedAuthority("ROLE_GYM_OWNER"));
+                auths.add(new SimpleGrantedAuthority("ROLE_OWNER"));
+                auths.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            } else if ("SUPER_ADMIN".equalsIgnoreCase(roleName)) {
+                auths.add(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
+                auths.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+                auths.add(new SimpleGrantedAuthority("ROLE_OWNER"));
+                auths.add(new SimpleGrantedAuthority("ROLE_GYM_OWNER"));
+            } else if ("MANAGER".equalsIgnoreCase(roleName) || "GYM_MANAGER".equalsIgnoreCase(roleName)) {
+                auths.add(new SimpleGrantedAuthority("ROLE_MANAGER"));
+                auths.add(new SimpleGrantedAuthority("ROLE_GYM_MANAGER"));
+            }
+        }
+        return auths;
     }
 
     @Override

@@ -29,6 +29,7 @@ public interface GymClassMapper {
   })
   ClassResponse toResponse(GymClass entity);
 
+  @Mapping(target = "categoryId", expression = "java(dto.getParsedCategoryId())")
   @Mapping(target = "skillLevel", ignore = true)
   @Mapping(target = "ageRestriction", ignore = true)
   @Mapping(target = "equipmentNeeded", ignore = true)
