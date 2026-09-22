@@ -6,6 +6,7 @@ import com.gymmate.scheduling.api.dto.ScheduleResponse;
 import com.gymmate.scheduling.internal.service.ClassScheduleService;
 import com.gymmate.scheduling.internal.domain.ClassSchedule;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,9 +28,13 @@ public class ClassScheduleController {
   private final ClassScheduleMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> create(@Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = mapper.toEntity(req);
+    UUID effectiveGymId = req.getGymId() != null ? req.getGymId() : TenantContext.getCurrentGymId();
+    if (s.getGymId() == null) {
+      s.setGymId(effectiveGymId);
+    }
     ClassSchedule created = scheduleService.createSchedule(s);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Schedule created"));
   }
@@ -48,7 +53,7 @@ public class ClassScheduleController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = scheduleService.getSchedule(id);
     s.setStartTime(req.getStartTime());
@@ -62,7 +67,7 @@ public class ClassScheduleController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
     scheduleService.deleteSchedule(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Schedule deleted"));

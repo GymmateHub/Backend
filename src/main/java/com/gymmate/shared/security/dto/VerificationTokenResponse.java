@@ -18,13 +18,11 @@ public class VerificationTokenResponse {
   private String message;
   private int expiresIn; // seconds
 
-  // BUG-002: verifyOtp() previously left the user verified-but-signed-out, forcing a second
-  // separate login call. These mirror LoginResponse so the client can log the user straight in.
   private String accessToken;
   private String refreshToken;
   private UUID userId;
   private String email;
   private UserRole role;
   private UUID organisationId;
+  private UUID gymId;
 }
-

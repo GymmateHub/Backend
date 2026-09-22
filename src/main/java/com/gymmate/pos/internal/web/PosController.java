@@ -286,12 +286,13 @@ public class PosController {
     // ===== HELPER METHODS =====
 
     private UUID getStaffIdFromUser(UserDetails userDetails) {
-        // Try to parse the username as UUID first
+        if (userDetails == null) {
+            return null;
+        }
         try {
             return UUID.fromString(userDetails.getUsername());
         } catch (IllegalArgumentException e) {
-            // If not a UUID, use a hash-based approach as fallback
-            return UUID.nameUUIDFromBytes(userDetails.getUsername().getBytes());
+            return null;
         }
     }
 }

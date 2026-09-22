@@ -8,8 +8,10 @@ import com.gymmate.user.api.dto.MemberUpdateRequest;
 import com.gymmate.user.application.MemberService;
 import com.gymmate.user.application.port.MemberLimitGuard;
 import com.gymmate.user.domain.Member;
+import com.gymmate.user.domain.User;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.user.infrastructure.MemberRepository;
+import com.gymmate.user.infrastructure.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -21,8 +23,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * REST controller for member management operations.
@@ -36,7 +39,31 @@ public class MemberController {
 
     private final MemberService memberService;
     private final MemberRepository memberRepository;
+    private final UserRepository userRepository;
     private final MemberLimitGuard limitService;
+
+    private MemberResponse mapWithUser(Member member) {
+        User user = null;
+        if (member.getUserId() != null) {
+            user = userRepository.findById(member.getUserId()).orElse(null);
+        }
+        return MemberResponse.fromEntity(member, user);
+    }
+
+    private List<MemberResponse> mapWithUsers(List<Member> members) {
+        if (members == null || members.isEmpty()) return Collections.emptyList();
+        Set<UUID> userIds = members.stream()
+                .map(Member::getUserId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<UUID, User> userMap = userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(User::getId, Function.identity()));
+
+        return members.stream()
+                .map(m -> MemberResponse.fromEntity(m, userMap.get(m.getUserId())))
+                .toList();
+    }
 
     /**
      * Create a new member profile.
@@ -52,10 +79,24 @@ public class MemberController {
             limitService.checkCanAddMember(organisationId);
         }
 
-        Member member = memberService.createMember(request.userId(), request.gymId(), request.membershipNumber());
-        MemberResponse response = MemberResponse.fromEntity(member);
+        Member member;
+        if (request.email() != null && !request.email().isBlank()) {
+            member = memberService.createMemberWithDetails(
+                    request.email(),
+                    request.firstName(),
+                    request.lastName(),
+                    request.phone(),
+                    request.gymId(),
+                    request.membershipNumber()
+            );
+        } else if (request.userId() != null) {
+            member = memberService.createMember(request.userId(), request.gymId(), request.membershipNumber());
+        } else {
+            throw new IllegalArgumentException("Either email and name or userId must be provided");
+        }
+
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(response, "Member created successfully"));
+                .body(ApiResponse.success(mapWithUser(member), "Member created successfully"));
     }
 
     /**
@@ -66,15 +107,13 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
     public ResponseEntity<ApiResponse<MemberResponse>> getMemberById(@PathVariable UUID id) {
         Member member = memberService.findById(id);
-        // Tenant isolation: findById bypasses Hibernate @Filter
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null && member.getOrganisationId() != null
                 && !tenantId.equals(member.getOrganisationId())) {
             return ResponseEntity.status(403)
                     .body(ApiResponse.error("You do not have permission to access this member"));
         }
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member)));
     }
 
     /**
@@ -85,15 +124,13 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
     public ResponseEntity<ApiResponse<MemberResponse>> getMemberByUserId(@PathVariable UUID userId) {
         Member member = memberService.findByUserId(userId);
-        // Tenant isolation: findByUserId may bypass Hibernate @Filter
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null && member.getOrganisationId() != null
                 && !tenantId.equals(member.getOrganisationId())) {
             return ResponseEntity.status(403)
                     .body(ApiResponse.error("You do not have permission to access this member"));
         }
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member)));
     }
 
     /**
@@ -104,15 +141,13 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
     public ResponseEntity<ApiResponse<MemberResponse>> getMemberByMembershipNumber(@PathVariable String number) {
         Member member = memberService.findByMembershipNumber(number);
-        // Tenant isolation: findByMembershipNumber may bypass Hibernate @Filter
         UUID tenantId = TenantContext.getCurrentTenantId();
         if (tenantId != null && member.getOrganisationId() != null
                 && !tenantId.equals(member.getOrganisationId())) {
             return ResponseEntity.status(403)
                     .body(ApiResponse.error("You do not have permission to access this member"));
         }
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member)));
     }
 
     /**
@@ -124,10 +159,7 @@ public class MemberController {
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getAllMembers() {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         List<Member> members = memberRepository.findByOrganisationId(organisationId);
-        List<MemberResponse> responses = members.stream()
-                .map(MemberResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUsers(members)));
     }
 
     /**
@@ -139,10 +171,7 @@ public class MemberController {
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getMembersByGym(@PathVariable UUID gymId) {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         List<Member> members = memberRepository.findByOrganisationIdAndGymId(organisationId, gymId);
-        List<MemberResponse> responses = members.stream()
-                .map(MemberResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUsers(members)));
     }
 
     /**
@@ -154,10 +183,7 @@ public class MemberController {
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getOrganisationMembers() {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         List<Member> members = memberRepository.findByOrganisationId(organisationId);
-        List<MemberResponse> responses = members.stream()
-                .map(MemberResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUsers(members)));
     }
 
     /**
@@ -169,10 +195,7 @@ public class MemberController {
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getActiveMembers() {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         List<Member> members = memberRepository.findByOrganisationIdAndStatus(organisationId, MemberStatus.ACTIVE);
-        List<MemberResponse> responses = members.stream()
-                .map(MemberResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUsers(members)));
     }
 
     /**
@@ -184,10 +207,7 @@ public class MemberController {
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getMembersByStatus(@PathVariable MemberStatus status) {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         List<Member> members = memberRepository.findByOrganisationIdAndStatus(organisationId, status);
-        List<MemberResponse> responses = members.stream()
-                .map(MemberResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUsers(members)));
     }
 
     /**
@@ -199,10 +219,7 @@ public class MemberController {
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getMembersWithoutWaiver() {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         List<Member> members = memberRepository.findByOrganisationIdAndWaiverSignedFalse(organisationId);
-        List<MemberResponse> responses = members.stream()
-                .map(MemberResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUsers(members)));
     }
 
     /**
@@ -219,8 +236,7 @@ public class MemberController {
                 request.emergencyContactPhone(),
                 request.emergencyContactRelationship()
         );
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response, "Emergency contact updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Emergency contact updated successfully"));
     }
 
     /**
@@ -230,8 +246,7 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'MEMBER')")
     public ResponseEntity<ApiResponse<MemberResponse>> signWaiver(@PathVariable UUID id) {
         Member member = memberService.signWaiver(id);
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response, "Waiver signed successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Waiver signed successfully"));
     }
 
     /**
@@ -248,8 +263,7 @@ public class MemberController {
                 request.allergies(),
                 request.medications()
         );
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response, "Health information updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Health information updated successfully"));
     }
 
     /**
@@ -265,8 +279,7 @@ public class MemberController {
                 request.fitnessGoals(),
                 request.experienceLevel()
         );
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response, "Fitness goals updated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Fitness goals updated successfully"));
     }
 
     /**
@@ -276,8 +289,7 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<MemberResponse>> activate(@PathVariable UUID id) {
         Member member = memberService.activate(id);
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response, "Member activated successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Member activated successfully"));
     }
 
     /**
@@ -287,8 +299,7 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<MemberResponse>> suspend(@PathVariable UUID id) {
         Member member = memberService.suspend(id);
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response, "Member suspended successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Member suspended successfully"));
     }
 
     /**
@@ -298,8 +309,7 @@ public class MemberController {
     @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
     public ResponseEntity<ApiResponse<MemberResponse>> cancel(@PathVariable UUID id) {
         Member member = memberService.cancel(id);
-        MemberResponse response = MemberResponse.fromEntity(member);
-        return ResponseEntity.ok(ApiResponse.success(response, "Member cancelled successfully"));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Member cancelled successfully"));
     }
 
     /**
@@ -322,10 +332,6 @@ public class MemberController {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         LocalDate afterDate = LocalDate.parse(date);
         List<Member> members = memberService.findNewMembers(organisationId, afterDate);
-        List<MemberResponse> responses = members.stream()
-                .map(MemberResponse::fromEntity)
-                .toList();
-        return ResponseEntity.ok(ApiResponse.success(responses));
+        return ResponseEntity.ok(ApiResponse.success(mapWithUsers(members)));
     }
 }
-

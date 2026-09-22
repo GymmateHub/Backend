@@ -6,6 +6,8 @@ import com.gymmate.scheduling.api.dto.GymClassMapper;
 import com.gymmate.scheduling.internal.service.GymClassService;
 import com.gymmate.scheduling.internal.domain.GymClass;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.multitenancy.TenantContext;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,11 +29,28 @@ public class ClassController {
   private final GymClassMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ClassResponse>> createClass(@Valid @RequestBody CreateClassRequest req) {
     GymClass gc = mapper.toEntity(req);
-    GymClass created = classService.createClass(gc, req.getGymId());
+    UUID effectiveGymId = req.getGymId() != null ? req.getGymId() : TenantContext.getCurrentGymId();
+    if (effectiveGymId == null) {
+      throw new DomainException("GYM_REQUIRED", "Gym ID is required to create a class");
+    }
+    gc.setGymId(effectiveGymId);
+    GymClass created = classService.createClass(gc, effectiveGymId);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Class created"));
+  }
+
+  @GetMapping
+  @PreAuthorize("hasAnyRole('TRAINER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'MANAGER', 'MEMBER')")
+  public ResponseEntity<ApiResponse<List<ClassResponse>>> listClasses(@RequestParam(required = false) UUID gymId) {
+    UUID effectiveGymId = gymId != null ? gymId : TenantContext.getCurrentGymId();
+    if (effectiveGymId == null) {
+      return ResponseEntity.ok(ApiResponse.success(List.of()));
+    }
+    List<GymClass> list = classService.listByGym(effectiveGymId);
+    List<ClassResponse> res = list.stream().map(mapper::toResponse).collect(Collectors.toList());
+    return ResponseEntity.ok(ApiResponse.success(res));
   }
 
   @GetMapping("/{id}")
@@ -48,7 +67,7 @@ public class ClassController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ClassResponse>> updateClass(@PathVariable UUID id, @Valid @RequestBody CreateClassRequest req) {
     GymClass gc = classService.getClass(id);
     gc.updateDetails(req.getName(), req.getDescription(), req.getDurationMinutes());
@@ -59,7 +78,7 @@ public class ClassController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<Void>> deleteClass(@PathVariable UUID id) {
     classService.deleteClass(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Class deleted"));

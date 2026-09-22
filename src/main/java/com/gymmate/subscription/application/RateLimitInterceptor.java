@@ -83,7 +83,9 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                path.startsWith("/swagger-ui") ||
                path.startsWith("/v3/api-docs") ||
                path.equals("/") ||
+               path.startsWith("/api/auth/") ||
                path.startsWith("/auth/") ||
+               path.startsWith("/api/public/") ||
                path.startsWith("/public/");
     }
 
