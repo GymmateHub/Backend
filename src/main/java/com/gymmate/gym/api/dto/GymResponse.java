@@ -20,7 +20,12 @@ public record GymResponse(
         GymStatus status,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        boolean active) {
+        boolean active,
+        String website,
+        String logoUrl,
+        String currency,
+        String timezone,
+        String businessHours) {
 
     public static GymResponse fromEntity(Gym gym) {
         AddressResponse addressResponse = null;
@@ -44,7 +49,12 @@ public record GymResponse(
                 gym.getStatus(),
                 gym.getCreatedAt(),
                 gym.getUpdatedAt(),
-                gym.isActive());
+                gym.isActive(),
+                gym.getWebsite(),
+                gym.getLogoUrl(),
+                gym.getCurrency(),
+                gym.getTimezone(),
+                gym.getBusinessHours());
     }
 
     public record AddressResponse(

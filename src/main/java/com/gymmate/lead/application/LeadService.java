@@ -5,6 +5,7 @@ import com.gymmate.lead.api.dto.LeadUpdateRequest;
 import com.gymmate.lead.domain.Lead;
 import com.gymmate.lead.domain.LeadStatus;
 import com.gymmate.lead.infrastructure.LeadRepository;
+import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,10 @@ public class LeadService {
     @Transactional
     public Lead createLead(UUID gymId, LeadCreateRequest request) {
         UUID orgId = TenantContext.requireCurrentTenantId();
+        UUID targetGymId = gymId != null ? gymId : TenantContext.getCurrentGymId();
+        if (targetGymId == null) {
+            throw new DomainException("GYM_ID_REQUIRED", "A gym must be selected before adding a lead");
+        }
         Lead lead = Lead.builder()
                 .firstName(request.firstName().trim())
                 .lastName(request.lastName().trim())
@@ -38,7 +43,7 @@ public class LeadService {
                 .status(LeadStatus.NEW)
                 .build();
 
-        lead.setGymId(gymId);
+        lead.setGymId(targetGymId);
         lead.setOrganisationId(orgId);
 
         return leadRepository.save(lead);

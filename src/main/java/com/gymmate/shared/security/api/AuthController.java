@@ -6,6 +6,8 @@ import com.gymmate.notification.infrastructure.SseEmitterRegistry;
 import com.gymmate.organisation.api.dto.GymSwitchResponse;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.security.TenantAwareUserDetails;
+import com.gymmate.shared.security.dto.ChangePasswordRequest;
 import com.gymmate.shared.security.dto.LoginRequest;
 import com.gymmate.shared.security.dto.LoginResponse;
 import com.gymmate.shared.security.dto.PasswordResetConfirmRequest;
@@ -33,6 +35,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -163,6 +166,18 @@ public class AuthController {
                         @Valid @RequestBody PasswordResetConfirmRequest request) {
                 authenticationService.confirmPasswordReset(request);
                 return ResponseEntity.ok(ApiResponse.success(null, "Password reset successful"));
+        }
+
+        // ==================== PASSWORD CHANGE ====================
+
+        @PostMapping("/change-password")
+        @Operation(summary = "Change password", description = "Change the authenticated user's password")
+        public ResponseEntity<ApiResponse<Void>> changePassword(
+                        @AuthenticationPrincipal TenantAwareUserDetails userDetails,
+                        @Valid @RequestBody ChangePasswordRequest request) {
+                authenticationService.changePassword(
+                                userDetails.getUserId(), request.getCurrentPassword(), request.getNewPassword());
+                return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
         }
 
         // ==================== TOKEN MANAGEMENT ====================

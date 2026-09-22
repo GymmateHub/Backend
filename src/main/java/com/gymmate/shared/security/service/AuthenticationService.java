@@ -15,6 +15,7 @@ import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.security.aspect.AuditLog;
 import com.gymmate.shared.security.domain.PasswordResetToken;
 import com.gymmate.shared.security.domain.TokenBlacklist;
+import com.gymmate.shared.service.CurrencyResolver;
 import com.gymmate.shared.security.dto.*;
 import com.gymmate.shared.security.repository.PasswordResetTokenRepository;
 import com.gymmate.shared.security.repository.TokenBlacklistRepository;
@@ -316,6 +317,8 @@ public class AuthenticationService {
         Gym gym = new Gym(gymName, "Main Gym", request.email(), phone, user.getId());
         gym.setOrganisationId(organisation.getId());
         gym.setTimezone(timezone);
+        // Resolve from the country the owner actually supplied, not the "United States" fallback above.
+        gym.setCurrency(CurrencyResolver.forCountry(request.country()));
         gym.updateAddress(null, null, null, country, null);
 
         gymService.saveGym(gym);
@@ -559,7 +562,9 @@ public class AuthenticationService {
 
         // Verify old password
         if (!passwordService.matches(oldPassword, user.getPasswordHash())) {
-            throw new BadCredentialsException("Current password is incorrect");
+            // DomainException (400), not BadCredentialsException (401): a wrong current password
+            // must not look like an expired session to the client.
+            throw new DomainException("INVALID_CURRENT_PASSWORD", "Current password is incorrect");
         }
 
         // Validate new password

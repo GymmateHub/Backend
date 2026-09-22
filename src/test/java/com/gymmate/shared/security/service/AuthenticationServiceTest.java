@@ -190,4 +190,102 @@ class AuthenticationServiceTest {
 
         assertEquals("INVALID_REQUEST", exception.getErrorCode());
     }
+    // ---- currency defaulting at registration ----
+
+    private Gym registerOwnerWithCountry(String country) {
+        OwnerRegistrationRequest request = new OwnerRegistrationRequest(
+                "owner@example.com", "Owner", "User", "Password123!", "1234567890", "My Org", "My Gym", "UTC", country);
+
+        when(userRepository.existsByEmail(request.email())).thenReturn(false);
+        when(passwordService.encode(anyString())).thenReturn("encodedPassword");
+        when(passwordPolicyService.validatePassword(anyString(), any()))
+                .thenReturn(new PasswordPolicyService.PasswordValidationResult(true, List.of()));
+        when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
+            User user = invocation.getArgument(0);
+            user.setId(UUID.randomUUID());
+            return user;
+        });
+        Organisation mockOrg = Organisation.builder().build();
+        mockOrg.setId(UUID.randomUUID());
+        when(organisationService.createHub(anyString(), anyString(), any(User.class))).thenReturn(mockOrg);
+
+        authenticationService.registerOwner(request);
+
+        org.mockito.ArgumentCaptor<Gym> captor = org.mockito.ArgumentCaptor.forClass(Gym.class);
+        verify(gymService).saveGym(captor.capture());
+        return captor.getValue();
+    }
+
+    @Test
+    void registerOwner_nigerianGymGetsNgnCurrency() {
+        assertEquals("NGN", registerOwnerWithCountry("Nigeria").getCurrency());
+    }
+
+    @Test
+    void registerOwner_missingCountryDefaultsToPlatformCurrency() {
+        assertEquals("NGN", registerOwnerWithCountry(null).getCurrency());
+    }
+
+    @Test
+    void registerOwner_usGymKeepsUsd() {
+        assertEquals("USD", registerOwnerWithCountry("US").getCurrency());
+    }
+
+    // ---- authenticated change password ----
+
+    private User userWithPassword(UUID id) {
+        User user = User.builder().email("owner@example.com").passwordHash("old-hash").build();
+        user.setId(id);
+        return user;
+    }
+
+    @Test
+    void changePassword_updatesHashAndHistory() {
+        UUID id = UUID.randomUUID();
+        User user = userWithPassword(id);
+        when(userRepository.findById(id)).thenReturn(java.util.Optional.of(user));
+        when(passwordService.matches("OldPassword123!", "old-hash")).thenReturn(true);
+        when(passwordPolicyService.validatePassword("NewPassword123!", id))
+                .thenReturn(new PasswordPolicyService.PasswordValidationResult(true, List.of()));
+        when(passwordService.encode("NewPassword123!")).thenReturn("new-hash");
+
+        authenticationService.changePassword(id, "OldPassword123!", "NewPassword123!");
+
+        assertEquals("new-hash", user.getPasswordHash());
+        verify(userRepository).save(user);
+        verify(passwordPolicyService).addToPasswordHistory(id, "new-hash");
+    }
+
+    @Test
+    void changePassword_wrongCurrentPasswordIsBadRequestNotUnauthorized() {
+        UUID id = UUID.randomUUID();
+        User user = userWithPassword(id);
+        when(userRepository.findById(id)).thenReturn(java.util.Optional.of(user));
+        when(passwordService.matches("wrong", "old-hash")).thenReturn(false);
+
+        DomainException ex = assertThrows(DomainException.class,
+                () -> authenticationService.changePassword(id, "wrong", "NewPassword123!"));
+
+        assertEquals("INVALID_CURRENT_PASSWORD", ex.getErrorCode());
+        assertEquals("old-hash", user.getPasswordHash());
+        verify(userRepository, never()).save(any(User.class));
+    }
+
+    @Test
+    void changePassword_rejectsPasswordThatFailsPolicy() {
+        UUID id = UUID.randomUUID();
+        User user = userWithPassword(id);
+        when(userRepository.findById(id)).thenReturn(java.util.Optional.of(user));
+        when(passwordService.matches("OldPassword123!", "old-hash")).thenReturn(true);
+        when(passwordPolicyService.validatePassword("short", id))
+                .thenReturn(new PasswordPolicyService.PasswordValidationResult(false, List.of("too short")));
+
+        DomainException ex = assertThrows(DomainException.class,
+                () -> authenticationService.changePassword(id, "OldPassword123!", "short"));
+
+        assertEquals("WEAK_PASSWORD", ex.getErrorCode());
+        assertEquals("old-hash", user.getPasswordHash());
+        verify(userRepository, never()).save(any(User.class));
+        verify(passwordPolicyService, never()).addToPasswordHistory(any(), anyString());
+    }
 }
