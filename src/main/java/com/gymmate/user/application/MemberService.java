@@ -51,6 +51,14 @@ public class MemberService {
             throw new DomainException("LAST_NAME_REQUIRED", "Last name is required to create a member");
         }
 
+        // Fall back to the gym in the caller's token / X-Gym-Id header. Without a gym the
+        // insert violates member.gym_id NOT NULL and surfaces as an opaque 500.
+        UUID targetGymId = gymId != null ? gymId : TenantContext.getCurrentGymId();
+        if (targetGymId == null) {
+            throw new DomainException("GYM_ID_REQUIRED",
+                    "A gym must be selected before adding a member");
+        }
+
         User user = userRepository.findByEmail(email.trim()).orElseGet(() -> {
             User newUser = User.builder()
                     .email(email.trim())
@@ -66,6 +74,11 @@ public class MemberService {
             return userRepository.save(newUser);
         });
 
+        if (orgId != null && user.getOrganisationId() != null && !orgId.equals(user.getOrganisationId())) {
+            throw new DomainException("EMAIL_IN_USE",
+                    "A user with this email already exists in another organisation");
+        }
+
         // Generate membership number if none provided
         String memberNo = membershipNumber;
         if (memberNo == null || memberNo.isBlank()) {
@@ -77,8 +90,6 @@ public class MemberService {
         if (existing.isPresent()) {
             return existing.get();
         }
-
-        UUID targetGymId = gymId;
 
         Member member = Member.builder()
                 .userId(user.getId())
