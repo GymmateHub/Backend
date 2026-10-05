@@ -8,7 +8,7 @@ import com.gymmate.identity.internal.application.StaffService;
 import com.gymmate.identity.internal.application.TrainerService;
 import com.gymmate.identity.internal.application.UserService;
 import com.gymmate.identity.internal.domain.User;
-import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -56,11 +56,11 @@ class AuthenticationServiceTest {
     // in the constructor and not mocked.
     // Let's add the rest just in case or rely on lenient mocks if not used.
     @Mock
-    private com.gymmate.identity.internal.infrastructure.persistence.PasswordResetTokenRepository resetTokenRepository;
+    private com.gymmate.identity.internal.application.port.PasswordResetTokenRepository resetTokenRepository;
     @Mock
     private org.springframework.security.authentication.AuthenticationManager authenticationManager;
     @Mock
-    private com.gymmate.identity.internal.infrastructure.persistence.TokenBlacklistRepository tokenBlacklistRepository;
+    private com.gymmate.identity.internal.application.port.TokenBlacklistRepository tokenBlacklistRepository;
     @Mock
     private LoginAttemptService loginAttemptService;
     @Mock

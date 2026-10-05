@@ -1,11 +1,8 @@
 package com.gymmate.billing.internal.domain;
 
 import com.gymmate.shared.constants.SubscriptionStatus;
-import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.BaseAuditEntity;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,73 +14,57 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "subscriptions")
-public class Subscription extends BaseAuditJpaEntity {
+public class Subscription extends BaseAuditEntity {
 
-    @Column(name = "organisation_id", nullable = false, unique = true)
     private UUID organisationId;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "tier_id", nullable = false)
-    private SubscriptionTier tier;
+    private 
+    SubscriptionTier tier;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
     @Builder.Default
     private SubscriptionStatus status = SubscriptionStatus.ACTIVE;
 
     // Billing Period
-    @Column(name = "current_period_start", nullable = false)
     private LocalDateTime currentPeriodStart;
 
-    @Column(name = "current_period_end", nullable = false)
     private LocalDateTime currentPeriodEnd;
 
-    @Column(name = "cancel_at_period_end")
     @Builder.Default
-    private Boolean cancelAtPeriodEnd = false;
+    private 
+    Boolean cancelAtPeriodEnd = false;
 
-    @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
     // Trial Period
-    @Column(name = "trial_start")
     private LocalDateTime trialStart;
 
-    @Column(name = "trial_end")
     private LocalDateTime trialEnd;
 
     // Payment Integration
-    @Column(name = "stripe_subscription_id", unique = true)
     private String stripeSubscriptionId;
 
-    @Column(name = "stripe_customer_id")
     private String stripeCustomerId;
 
-    @Column(name = "payment_method", length = 50)
     private String paymentMethod;
 
     // Usage Tracking
-    @Column(name = "current_member_count")
     @Builder.Default
-    private Integer currentMemberCount = 0;
+    private 
+    Integer currentMemberCount = 0;
 
-    @Column(name = "current_location_count")
     @Builder.Default
-    private Integer currentLocationCount = 1;
+    private 
+    Integer currentLocationCount = 1;
 
     // Metadata
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private String metadata;
+    private 
+    String metadata;
 
     // When this subscription first entered PAST_DUE — drives the grace-period
     // escalation in SubscriptionService.escalatePastDueSubscriptions. Null while not
     // past due.
-    @Column(name = "past_due_since")
     private LocalDateTime pastDueSince;
 
     /** Also used by SubscriptionService.escalatePastDueSubscriptions — the single source of truth for this window. */
@@ -181,4 +162,3 @@ public class Subscription extends BaseAuditJpaEntity {
         }
     }
 }
-

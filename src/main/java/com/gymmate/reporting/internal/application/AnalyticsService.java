@@ -12,9 +12,9 @@ import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.scheduling.api.ClassesFacade;
 import com.gymmate.retail.api.InventoryFacade;
 import com.gymmate.membership.internal.domain.MembershipStatus;
-import com.gymmate.membership.internal.infrastructure.persistence.MemberInvoiceRepository;
-import com.gymmate.membership.internal.infrastructure.persistence.MemberMembershipJpaRepository;
-import com.gymmate.membership.internal.infrastructure.persistence.MembershipPlanJpaRepository;
+import com.gymmate.membership.internal.application.port.MemberInvoiceRepository;
+import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
+import com.gymmate.membership.internal.application.port.MembershipPlanRepository;
 import com.gymmate.retail.api.PosFacade;
 import com.gymmate.identity.api.IdentityApi;
 import lombok.RequiredArgsConstructor;
@@ -37,8 +37,8 @@ import java.util.*;
 public class AnalyticsService {
 
     private final IdentityApi identityApi;
-    private final MemberMembershipJpaRepository membershipRepository;
-    private final MembershipPlanJpaRepository membershipPlanRepository;
+    private final MemberMembershipRepository membershipRepository;
+    private final MembershipPlanRepository membershipPlanRepository;
     private final ClassesFacade classesFacade;
     private final InventoryFacade inventoryFacade;
     private final PosFacade posFacade;

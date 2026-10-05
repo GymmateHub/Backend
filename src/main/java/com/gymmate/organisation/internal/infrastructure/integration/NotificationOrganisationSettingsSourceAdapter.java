@@ -1,6 +1,6 @@
 package com.gymmate.organisation.internal.infrastructure.integration;
 
-import com.gymmate.organisation.internal.infrastructure.persistence.OrganisationRepository;
+import com.gymmate.organisation.internal.application.port.OrganisationRepository;
 import com.gymmate.notification.api.spi.OrganisationSettingsSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

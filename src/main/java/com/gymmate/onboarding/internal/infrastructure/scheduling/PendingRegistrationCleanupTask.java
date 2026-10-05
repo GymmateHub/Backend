@@ -1,6 +1,6 @@
 package com.gymmate.onboarding.internal.infrastructure.scheduling;
 
-import com.gymmate.onboarding.internal.infrastructure.persistence.PendingRegistrationRepository;
+import com.gymmate.onboarding.internal.application.port.PendingRegistrationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

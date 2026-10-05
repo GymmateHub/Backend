@@ -2,7 +2,7 @@ package com.gymmate.unit.user.domain;
 
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
-import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
+import com.gymmate.shared.domain.TenantEntity;
 import com.gymmate.identity.internal.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -15,18 +15,18 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Unit tests for the User entity.
- * Validates that User properly extends TenantJpaEntity, inherits
+ * Validates that User properly extends TenantEntity, inherits
  * organisationId, and supports tenant validation.
  */
 @DisplayName("User Entity Tests")
 class UserEntityTest {
 
     @Nested
-    @DisplayName("TenantJpaEntity Inheritance")
+    @DisplayName("TenantEntity Inheritance")
     class TenantEntityInheritance {
 
         @Test
-        @DisplayName("User should extend TenantJpaEntity")
+        @DisplayName("User should extend TenantEntity")
         void userShouldExtendTenantEntity() {
             User user = User.builder()
                     .email("test@example.com")
@@ -34,11 +34,11 @@ class UserEntityTest {
                     .status(UserStatus.ACTIVE)
                     .build();
 
-            assertThat(user).isInstanceOf(TenantJpaEntity.class);
+            assertThat(user).isInstanceOf(TenantEntity.class);
         }
 
         @Test
-        @DisplayName("User should inherit organisationId from TenantJpaEntity")
+        @DisplayName("User should inherit organisationId from TenantEntity")
         void userShouldInheritOrganisationId() {
             UUID orgId = UUID.randomUUID();
             User user = User.builder()

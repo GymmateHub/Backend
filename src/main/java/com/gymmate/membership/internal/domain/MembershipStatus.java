@@ -10,4 +10,3 @@ public enum MembershipStatus {
     // distinct from EXPIRED (which means the membership term itself ran out).
     SUSPENDED
 }
-

@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.application;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.application.port.ChannelException;
 import com.gymmate.notification.internal.application.port.ChannelSender;
@@ -122,7 +123,10 @@ public class BroadcastService {
         }
 
         try {
-            return objectMapper.readValue(settingsJson, NotificationSettings.class);
+            // The organisation settings document holds more than notification preferences.
+            return objectMapper.readerFor(NotificationSettings.class)
+                    .without(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+                    .readValue(settingsJson);
         } catch (Exception e) {
             log.warn("Failed to parse notification settings for org {}: {}", organisationId, e.getMessage());
             return new NotificationSettings();

@@ -1,7 +1,6 @@
 package com.gymmate.billing.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.BaseAuditEntity;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -10,50 +9,40 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "api_rate_limits")
-public class ApiRateLimit extends BaseAuditJpaEntity {
+public class ApiRateLimit extends BaseAuditEntity {
 
-    @Column(name = "organisation_id", nullable = false)
     private UUID organisationId;
 
     // Rate Limit Window
-    @Column(name = "window_start", nullable = false)
     private LocalDateTime windowStart;
 
-    @Column(name = "window_end", nullable = false)
     private LocalDateTime windowEnd;
 
-    @Column(name = "window_type", nullable = false, length = 20)
     @Builder.Default
-    private String windowType = "hourly"; // hourly, daily, burst
+    private 
+    String windowType = "hourly"; // hourly, daily, burst
 
     // Request Tracking
-    @Column(name = "request_count")
     @Builder.Default
-    private Integer requestCount = 0;
+    private 
+    Integer requestCount = 0;
 
-    @Column(name = "limit_threshold", nullable = false)
     private Integer limitThreshold;
 
     // Additional Info
-    @Column(name = "endpoint_path", length = 500)
     private String endpointPath;
 
-    @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
-    @Column(name = "user_agent", columnDefinition = "TEXT")
     private String userAgent;
 
     // Status
-    @Column(name = "is_blocked")
     @Builder.Default
-    private Boolean isBlocked = false;
+    private 
+    Boolean isBlocked = false;
 
-    @Column(name = "blocked_until")
     private LocalDateTime blockedUntil;
 
     // Business Methods
@@ -108,4 +97,3 @@ public class ApiRateLimit extends BaseAuditJpaEntity {
         return (double) requestCount / limitThreshold * 100;
     }
 }
-

@@ -1,12 +1,10 @@
 package com.gymmate.organisation.internal.infrastructure.persistence;
 
-import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.shared.constants.GymStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,19 +14,18 @@ import java.util.UUID;
  * Provides multi-tenant aware queries.
  */
 @Repository
-public interface GymJpaRepository extends JpaRepository<Gym, UUID> {
+public interface GymJpaRepository extends JpaRepository<GymJpaEntity, UUID> {
 
     // ========== Organisation-based queries (preferred) ==========
-
     /**
      * Find all gyms belonging to an organisation.
      */
-    List<Gym> findByOrganisationId(UUID organisationId);
+    List<GymJpaEntity> findByOrganisationId(UUID organisationId);
 
     /**
      * Find all active gyms belonging to an organisation.
      */
-    List<Gym> findByOrganisationIdAndStatus(UUID organisationId, GymStatus status);
+    List<GymJpaEntity> findByOrganisationIdAndStatus(UUID organisationId, GymStatus status);
 
     /**
      * Count gyms in an organisation.
@@ -40,8 +37,7 @@ public interface GymJpaRepository extends JpaRepository<Gym, UUID> {
      * Count active gyms in an organisation.
      */
     @Query("SELECT COUNT(g) FROM Gym g WHERE g.organisationId = :organisationId AND g.status = :status")
-    long countByOrganisationIdAndStatus(@Param("organisationId") UUID organisationId,
-            @Param("status") GymStatus status);
+    long countByOrganisationIdAndStatus(@Param("organisationId") UUID organisationId, @Param("status") GymStatus status);
 
     /**
      * Sum of maxMembers across all gyms in an organisation.
@@ -52,7 +48,7 @@ public interface GymJpaRepository extends JpaRepository<Gym, UUID> {
     /**
      * Find gym by slug (globally unique).
      */
-    Optional<Gym> findBySlug(String slug);
+    Optional<GymJpaEntity> findBySlug(String slug);
 
     /**
      * Check if slug exists.
@@ -60,8 +56,7 @@ public interface GymJpaRepository extends JpaRepository<Gym, UUID> {
     boolean existsBySlug(String slug);
 
     // ========== General queries ==========
+    List<GymJpaEntity> findByStatus(GymStatus status);
 
-    List<Gym> findByStatus(GymStatus status);
-
-    List<Gym> findByCity(String city);
+    List<GymJpaEntity> findByCity(String city);
 }

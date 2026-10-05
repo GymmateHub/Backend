@@ -1,9 +1,6 @@
 package com.gymmate.identity.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.TenantEntity;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -13,52 +10,42 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "trainers")
-public class Trainer extends TenantJpaEntity {
+public class Trainer extends TenantEntity {
 
-  @Column(name = "user_id", nullable = false)
   private UUID userId;
 
   // Professional info
-  @JdbcTypeCode(SqlTypes.ARRAY)
-  @Column(columnDefinition = "text[]")
-  private String[] specializations;
+  private 
+  String[] specializations;
 
-  @Column(columnDefinition = "TEXT")
   private String bio;
 
-  @Column(name = "hourly_rate", precision = 10, scale = 2)
   private BigDecimal hourlyRate;
 
-  @Column(name = "commission_rate", precision = 5, scale = 2)
   @Builder.Default
-  private BigDecimal commissionRate = BigDecimal.ZERO;
+  private 
+  BigDecimal commissionRate = BigDecimal.ZERO;
 
   // Certifications
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(columnDefinition = "jsonb")
+
   @Builder.Default
   private String certifications = "[]";
 
   // Availability
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "default_availability", columnDefinition = "jsonb")
-  private String defaultAvailability;
+  private 
+  String defaultAvailability;
 
   // Employment
-  @Column(name = "hire_date")
   private LocalDate hireDate;
 
-  @Column(name = "employment_type", length = 20)
   private String employmentType; // full_time, part_time, contractor
 
   // Status
-  @Column(name = "is_accepting_clients")
   @Builder.Default
-  private boolean acceptingClients = true;
+  private 
+  boolean acceptingClients = true;
 
   public void updateRate(BigDecimal hourlyRate, BigDecimal commissionRate) {
     this.hourlyRate = hourlyRate;

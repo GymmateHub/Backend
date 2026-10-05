@@ -10,9 +10,9 @@ import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.scheduling.api.ClassesFacade;
 import com.gymmate.retail.api.InventoryFacade;
 import com.gymmate.membership.internal.domain.MembershipStatus;
-import com.gymmate.membership.internal.infrastructure.persistence.MemberInvoiceRepository;
-import com.gymmate.membership.internal.infrastructure.persistence.MemberMembershipJpaRepository;
-import com.gymmate.membership.internal.infrastructure.persistence.MembershipPlanJpaRepository;
+import com.gymmate.membership.internal.application.port.MemberInvoiceRepository;
+import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
+import com.gymmate.membership.internal.application.port.MembershipPlanRepository;
 import com.gymmate.retail.api.PosFacade;
 import com.gymmate.identity.api.IdentityApi;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,10 +40,10 @@ class AnalyticsServiceTest {
         private IdentityApi identityApi;
 
         @Mock
-        private MemberMembershipJpaRepository membershipRepository;
+        private MemberMembershipRepository membershipRepository;
 
         @Mock
-        private MembershipPlanJpaRepository membershipPlanRepository;
+        private MembershipPlanRepository membershipPlanRepository;
 
         @Mock
         private ClassesFacade classesFacade;

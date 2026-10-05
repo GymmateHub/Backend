@@ -5,7 +5,7 @@ import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.identity.internal.domain.User;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
-import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;

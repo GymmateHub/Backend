@@ -1,7 +1,6 @@
 package com.gymmate.membership.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.GymScopedEntity;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -16,56 +15,41 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "member_invoices")
-public class MemberInvoice extends GymScopedJpaEntity {
+public class MemberInvoice extends GymScopedEntity {
 
   // Note: gymId is inherited from GymScopedJpaEntity
   // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
-    @Column(name = "member_id", nullable = false)
     private UUID memberId;
 
-    @Column(name = "membership_id")
     private UUID membershipId;
 
-    @Column(name = "stripe_invoice_id")
     private String stripeInvoiceId;
 
-    @Column(name = "invoice_number", length = 50)
     private String invoiceNumber;
 
-    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
-    @Column(length = 3)
     @Builder.Default
-    private String currency = "USD";
+    private 
+    String currency = "USD";
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 30)
-    private MemberInvoiceStatus status;
+    private 
+    MemberInvoiceStatus status;
 
-    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "period_start")
     private LocalDateTime periodStart;
 
-    @Column(name = "period_end")
     private LocalDateTime periodEnd;
 
-    @Column(name = "due_date")
     private LocalDateTime dueDate;
 
-    @Column(name = "paid_at")
     private LocalDateTime paidAt;
 
-    @Column(name = "invoice_pdf_url", columnDefinition = "TEXT")
     private String invoicePdfUrl;
 
-    @Column(name = "hosted_invoice_url", columnDefinition = "TEXT")
     private String hostedInvoiceUrl;
 
     public void markPaid(LocalDateTime paidAt) {
@@ -81,4 +65,3 @@ public class MemberInvoice extends GymScopedJpaEntity {
         this.status = MemberInvoiceStatus.VOID;
     }
 }
-

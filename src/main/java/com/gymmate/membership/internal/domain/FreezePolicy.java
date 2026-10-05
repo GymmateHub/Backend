@@ -1,7 +1,6 @@
 package com.gymmate.membership.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.GymScopedEntity;
 import lombok.*;
 
 /**
@@ -11,46 +10,43 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "freeze_policies")
-public class FreezePolicy extends GymScopedJpaEntity {
+public class FreezePolicy extends GymScopedEntity {
 
-  @Column(name = "policy_name", nullable = false)
   private String policyName;
 
-  @Column(name = "max_freeze_days_per_year")
   @Builder.Default
-  private Integer maxFreezeDaysPerYear = 90; // Default: 90 days per year
+  private 
+  Integer maxFreezeDaysPerYear = 90; // Default: 90 days per year
 
-  @Column(name = "max_consecutive_freeze_days")
   @Builder.Default
-  private Integer maxConsecutiveFreezeDays = 60; // Default: max 60 days per freeze
+  private 
+  Integer maxConsecutiveFreezeDays = 60; // Default: max 60 days per freeze
 
-  @Column(name = "min_membership_days_before_freeze")
   @Builder.Default
-  private Integer minMembershipDaysBeforeFreeze = 30; // Default: must be member for 30 days
+  private 
+  Integer minMembershipDaysBeforeFreeze = 30; // Default: must be member for 30 days
 
-  @Column(name = "cooling_off_period_days")
   @Builder.Default
-  private Integer coolingOffPeriodDays = 30; // Default: 30 days between freezes
+  private 
+  Integer coolingOffPeriodDays = 30; // Default: 30 days between freezes
 
-  @Column(name = "freeze_fee_amount")
   @Builder.Default
-  private Double freezeFeeAmount = 0.0; // Default: no fee
+  private 
+  Double freezeFeeAmount = 0.0; // Default: no fee
 
-  @Column(name = "freeze_fee_frequency")
   @Builder.Default
-  private String freezeFeeFrequency = "NONE"; // NONE, ONE_TIME, MONTHLY
+  private 
+  String freezeFeeFrequency = "NONE"; // NONE, ONE_TIME, MONTHLY
 
-  @Column(name = "allow_partial_month_freeze")
   @Builder.Default
-  private Boolean allowPartialMonthFreeze = true;
+  private 
+  Boolean allowPartialMonthFreeze = true;
 
-  @Column(name = "is_default_policy")
   @Builder.Default
-  private Boolean isDefaultPolicy = false;
+  private 
+  Boolean isDefaultPolicy = false;
 
   public boolean canFreeze(MemberMembership membership) {
     // Check if membership has been active long enough

@@ -5,7 +5,7 @@ import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.identity.api.dto.RefreshTokenRequest;
 import com.gymmate.identity.api.dto.TokenResponse;
 import com.gymmate.identity.internal.domain.User;
-import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

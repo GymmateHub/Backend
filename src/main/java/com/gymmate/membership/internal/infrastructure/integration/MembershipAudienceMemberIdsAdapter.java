@@ -1,6 +1,6 @@
 package com.gymmate.membership.internal.infrastructure.integration;
 
-import com.gymmate.membership.internal.infrastructure.persistence.MemberMembershipJpaRepository;
+import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.membership.internal.domain.MembershipStatus;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class MembershipAudienceMemberIdsAdapter implements AudienceMemberIdsResolver {
 
-    private final MemberMembershipJpaRepository memberMembershipRepository;
+    private final MemberMembershipRepository memberMembershipRepository;
     private final ObjectMapper objectMapper;
 
     @Override

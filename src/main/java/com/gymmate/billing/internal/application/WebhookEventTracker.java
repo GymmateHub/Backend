@@ -1,7 +1,7 @@
 package com.gymmate.billing.internal.application;
 
 import com.gymmate.billing.internal.domain.StripeWebhookEvent;
-import com.gymmate.billing.internal.infrastructure.persistence.StripeWebhookEventRepository;
+import com.gymmate.billing.internal.application.port.StripeWebhookEventRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;

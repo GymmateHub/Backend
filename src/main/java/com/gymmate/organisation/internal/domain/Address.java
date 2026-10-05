@@ -1,36 +1,28 @@
 package com.gymmate.organisation.internal.domain;
 
 import com.gymmate.shared.exception.DomainException;
-import jakarta.persistence.Column;
-import jakarta.persistence.Embeddable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.springframework.util.StringUtils;
+import com.gymmate.shared.domain.Strings;
 
 import java.util.Objects;
 
 /**
  * Address value object for representing gym locations.
  */
-@Embeddable
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Address {
 
-    @Column(nullable = false)
     private String street;
 
-    @Column(nullable = false)
     private String city;
 
-    @Column(nullable = false)
     private String state;
 
-    @Column(nullable = false)
     private String postalCode;
 
-    @Column(nullable = false)
     private String country;
 
     public Address(String street, String city, String state, String postalCode, String country) {
@@ -48,19 +40,19 @@ public class Address {
     }
 
     private void validateInputs(String street, String city, String state, String postalCode, String country) {
-        if (!StringUtils.hasText(street)) {
+        if (!Strings.hasText(street)) {
             throw new DomainException("INVALID_STREET", "Street cannot be empty");
         }
-        if (!StringUtils.hasText(city)) {
+        if (!Strings.hasText(city)) {
             throw new DomainException("INVALID_CITY", "City cannot be empty");
         }
-        if (!StringUtils.hasText(state)) {
+        if (!Strings.hasText(state)) {
             throw new DomainException("INVALID_STATE", "State cannot be empty");
         }
-        if (!StringUtils.hasText(postalCode)) {
+        if (!Strings.hasText(postalCode)) {
             throw new DomainException("INVALID_POSTAL_CODE", "Postal code cannot be empty");
         }
-        if (!StringUtils.hasText(country)) {
+        if (!Strings.hasText(country)) {
             throw new DomainException("INVALID_COUNTRY", "Country cannot be empty");
         }
     }

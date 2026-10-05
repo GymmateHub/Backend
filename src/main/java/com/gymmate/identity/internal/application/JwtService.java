@@ -1,6 +1,6 @@
 package com.gymmate.identity.internal.application;
 
-import com.gymmate.identity.internal.infrastructure.persistence.TokenBlacklistRepository;
+import com.gymmate.identity.internal.application.port.TokenBlacklistRepository;
 import com.gymmate.identity.internal.domain.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;

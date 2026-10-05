@@ -6,6 +6,9 @@ import com.gymmate.shared.constants.GymStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Repository interface for Gym aggregate.
@@ -52,4 +55,26 @@ public interface GymRepository {
     long count();
 
     boolean existsById(UUID id);
+    
+    long countByOrganisationIdAndStatus(UUID organisationId, GymStatus status);
+    
+    Integer sumMaxMembersByOrganisationId(UUID organisationId);
+    
+    boolean existsBySlug(String slug);
+    
+    List<Gym> findByCity(String city);
+    
+    List<Gym> saveAll(Iterable<Gym> entities);
+    
+    List<Gym> findAllById(Iterable<UUID> ids);
+    
+    void delete(Gym entity);
+    
+    void deleteAll(Iterable<Gym> entities);
+    
+    Gym saveAndFlush(Gym entity);
+    
+    void flush();
+    
+    Page<Gym> findAll(Pageable pageable);
 }

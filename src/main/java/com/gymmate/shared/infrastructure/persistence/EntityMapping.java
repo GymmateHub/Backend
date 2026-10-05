@@ -45,7 +45,7 @@ public final class EntityMapping<D, J> {
         this.entityType = entityType;
         this.domainFields = instanceFields(domainType);
         this.entityFields = instanceFields(entityType);
-        this.domainIdField = domainFields.get("id");
+        this.domainIdField = domainFields.get(idFieldName(entityFields));
     }
 
     public Class<D> domainType() {
@@ -89,7 +89,7 @@ public final class EntityMapping<D, J> {
             }
         }
         if (domainIdField == null) {
-            problems.add(domainType.getSimpleName() + " has no 'id' field");
+            problems.add(domainType.getSimpleName() + " has no counterpart of the @Id field of " + entityType.getSimpleName());
         }
         this.pairs = List.copyOf(resolved);
         return problems;
@@ -220,6 +220,16 @@ public final class EntityMapping<D, J> {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Cannot instantiate " + type.getName(), e);
         }
+    }
+
+    /** Name of the entity's identifier field (@Id); defaults to "id". */
+    private static String idFieldName(Map<String, Field> entityFields) {
+        for (Field f : entityFields.values()) {
+            if (f.isAnnotationPresent(jakarta.persistence.Id.class) || f.isAnnotationPresent(jakarta.persistence.EmbeddedId.class)) {
+                return f.getName();
+            }
+        }
+        return "id";
     }
 
     private static Map<String, Field> instanceFields(Class<?> type) {

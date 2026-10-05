@@ -1,18 +1,15 @@
 package com.gymmate.organisation.internal.domain;
 
 import com.gymmate.shared.constants.GymStatus;
-import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
+import com.gymmate.shared.domain.TenantEntity;
 import com.gymmate.shared.exception.DomainException;
-import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
-import org.springframework.util.StringUtils;
+import com.gymmate.shared.domain.Strings;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -26,119 +23,96 @@ import java.util.UUID;
  */
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Entity
-@Table(name = "gyms")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Gym extends TenantJpaEntity {
+public class Gym extends TenantEntity {
 
   // Note: organisationId is inherited from TenantJpaEntity
 
-  @Column(nullable = false)
   private String name;
 
-  @Column(unique = true, nullable = false, length = 100)
   private String slug;
 
-  @Column(columnDefinition = "TEXT")
   private String description;
 
   // Address fields (flattened from Address value object)
-  @Column(columnDefinition = "TEXT")
   private String address;
 
-  @Column(length = 100)
   private String city;
 
-  @Column(length = 50)
   private String state;
 
-  @Column(length = 50)
   private String country;
 
-  @Column(name = "postal_code", length = 20)
   private String postalCode;
 
   // Contact information
-  @Column(length = 20)
   private String phone;
 
-  @Column
   private String email;
 
-  @Column(name = "contact_email")
   private String contactEmail;
 
-  @Column(name = "contact_phone", length = 20)
   private String contactPhone;
 
-  @Column
   private String website;
 
-  @Column(name = "logo_url", length = 500)
   private String logoUrl;
 
   // Business settings
-  @Column(length = 50)
   @Builder.Default
-  private String timezone = "UTC";
+  private 
+  String timezone = "UTC";
 
-  @Column(length = 3)
   @Builder.Default
-  private String currency = "USD";
+  private 
+  String currency = "USD";
 
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "business_hours", columnDefinition = "jsonb")
-  private String businessHours;
+  private 
+  String businessHours;
 
   // Note: Subscription is now at Organisation level, but gyms may have specific
   // features
-  @Column(name = "subscription_plan", length = 50)
   @Builder.Default
-  private String subscriptionPlan = "starter";
+  private 
+  String subscriptionPlan = "starter";
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "subscription_status", length = 20)
   @Builder.Default
   private GymStatus status = GymStatus.ACTIVE;
 
-  @Column(name = "subscription_expires_at")
   private LocalDateTime subscriptionExpiresAt;
 
-  @Column(name = "max_members")
   @Builder.Default
-  private Integer maxMembers = 200;
+  private 
+  Integer maxMembers = 200;
 
   // Stripe Connect fields for receiving member payments
-  @Column(name = "stripe_connect_account_id")
   private String stripeConnectAccountId;
 
-  @Column(name = "stripe_charges_enabled")
   @Builder.Default
-  private Boolean stripeChargesEnabled = false;
+  private 
+  Boolean stripeChargesEnabled = false;
 
-  @Column(name = "stripe_payouts_enabled")
   @Builder.Default
-  private Boolean stripePayoutsEnabled = false;
+  private 
+  Boolean stripePayoutsEnabled = false;
 
-  @Column(name = "stripe_details_submitted")
   @Builder.Default
-  private Boolean stripeDetailsSubmitted = false;
+  private 
+  Boolean stripeDetailsSubmitted = false;
 
-  @Column(name = "stripe_onboarding_completed_at")
   private LocalDateTime stripeOnboardingCompletedAt;
 
   // Features enabled
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "features_enabled", columnDefinition = "jsonb")
+
   @Builder.Default
   private String featuresEnabled = "[]";
 
   // Status
-  @Column(name = "onboarding_completed")
   @Builder.Default
-  private boolean onboardingCompleted = false;
+  private 
+  boolean onboardingCompleted = false;
 
   /**
    * Create a new Gym with organisation context.
@@ -241,25 +215,25 @@ public class Gym extends TenantJpaEntity {
   }
 
   private void validateInputs(String name, String email, String phone) {
-    if (!StringUtils.hasText(name)) {
+    if (!Strings.hasText(name)) {
       throw new DomainException("INVALID_GYM_NAME", "Gym name cannot be empty");
     }
-    if (!StringUtils.hasText(email)) {
+    if (!Strings.hasText(email)) {
       throw new DomainException("INVALID_EMAIL", "Email cannot be empty");
     }
-    if (!StringUtils.hasText(phone)) {
+    if (!Strings.hasText(phone)) {
       throw new DomainException("INVALID_PHONE", "Phone cannot be empty");
     }
   }
 
   private void validateUpdateInputs(String name, String email, String phone) {
-    if (!StringUtils.hasText(name)) {
+    if (!Strings.hasText(name)) {
       throw new DomainException("INVALID_GYM_NAME", "Gym name cannot be empty");
     }
-    if (!StringUtils.hasText(email)) {
+    if (!Strings.hasText(email)) {
       throw new DomainException("INVALID_EMAIL", "Email cannot be empty");
     }
-    if (!StringUtils.hasText(phone)) {
+    if (!Strings.hasText(phone)) {
       throw new DomainException("INVALID_PHONE", "Phone cannot be empty");
     }
   }

@@ -9,7 +9,7 @@ import com.gymmate.organisation.api.dto.StripeConnectState;
 import com.gymmate.organisation.internal.application.port.GymRepository;
 import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.organisation.internal.domain.Organisation;
-import com.gymmate.organisation.internal.infrastructure.persistence.OrganisationRepository;
+import com.gymmate.organisation.internal.application.port.OrganisationRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;

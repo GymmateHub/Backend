@@ -1,7 +1,7 @@
 package com.gymmate.organisation.internal.application;
 
 import com.gymmate.organisation.internal.domain.Organisation;
-import com.gymmate.organisation.internal.infrastructure.persistence.OrganisationRepository;
+import com.gymmate.organisation.internal.application.port.OrganisationRepository;
 import com.gymmate.identity.api.IdentityApi;
 import com.gymmate.identity.internal.domain.User;
 import com.gymmate.organisation.api.event.OrganisationCreatedEvent;

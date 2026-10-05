@@ -2,11 +2,11 @@ package com.gymmate.billing.internal.application;
 
 import com.gymmate.billing.internal.domain.ApiRateLimit;
 import com.gymmate.billing.internal.domain.Subscription;
-import com.gymmate.billing.internal.infrastructure.persistence.SubscriptionRepository;
+import com.gymmate.billing.internal.application.port.SubscriptionRepository;
 import com.gymmate.billing.internal.domain.SubscriptionTier;
 import com.gymmate.billing.internal.domain.SubscriptionUsage;
-import com.gymmate.billing.internal.infrastructure.persistence.ApiRateLimitRepository;
-import com.gymmate.billing.internal.infrastructure.persistence.SubscriptionUsageRepository;
+import com.gymmate.billing.internal.application.port.ApiRateLimitRepository;
+import com.gymmate.billing.internal.application.port.SubscriptionUsageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

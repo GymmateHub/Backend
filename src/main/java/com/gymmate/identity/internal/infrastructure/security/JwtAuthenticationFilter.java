@@ -4,7 +4,7 @@ import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import com.gymmate.identity.internal.application.JwtService;
 import com.gymmate.identity.internal.domain.User;
-import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

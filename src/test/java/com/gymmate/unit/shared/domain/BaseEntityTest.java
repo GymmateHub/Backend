@@ -1,7 +1,7 @@
 package com.gymmate.unit.shared.domain;
 
-import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
-import com.gymmate.shared.infrastructure.persistence.BaseJpaEntity;
+import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.domain.BaseEntity;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,14 +15,14 @@ import static org.assertj.core.api.Assertions.*;
 class BaseEntityTest {
 
     // Concrete implementation for testing
-    static class TestEntity extends BaseJpaEntity {
+    static class TestEntity extends BaseEntity {
     }
 
-    static class TestAuditEntity extends BaseAuditJpaEntity {
+    static class TestAuditEntity extends BaseAuditEntity {
     }
 
     @Nested
-    @DisplayName("BaseJpaEntity Tests")
+    @DisplayName("BaseEntity Tests")
     class BaseEntityTests {
 
         @Test
@@ -51,7 +51,7 @@ class BaseEntityTest {
     }
 
     @Nested
-    @DisplayName("BaseAuditJpaEntity Tests")
+    @DisplayName("BaseAuditEntity Tests")
     class BaseAuditEntityTests {
 
         @Test

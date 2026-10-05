@@ -3,8 +3,8 @@ package com.gymmate.membership.internal.infrastructure.messaging;
 import com.gymmate.membership.internal.domain.MemberInvoice;
 import com.gymmate.membership.internal.domain.MemberInvoiceStatus;
 import com.gymmate.membership.internal.domain.MembershipStatus;
-import com.gymmate.membership.internal.infrastructure.persistence.MemberInvoiceRepository;
-import com.gymmate.membership.internal.infrastructure.persistence.MemberMembershipJpaRepository;
+import com.gymmate.membership.internal.application.port.MemberInvoiceRepository;
+import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.gymmate.notification.api.event.PaymentFailedEvent;
 import com.gymmate.notification.api.event.PaymentSuccessEvent;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.time.LocalDateTime;
  * Reacts to Stripe Connect (member payment) outcomes by updating membership state and
  * recording invoices — this logic used to live directly in
  * {@code payment.application.StripeWebhookService}, writing straight into
- * {@code MemberMembershipJpaRepository}/{@code MemberInvoiceRepository}. That made
+ * {@code MemberMembershipRepository}/{@code MemberInvoiceRepository}. That made
  * {@code payment} depend on {@code membership} for the write, while {@code membership}
  * separately depends on {@code payment} to initiate Stripe charges (via
  * {@code MemberPaymentService} -> {@code StripeConnectService}) — a real module cycle
@@ -43,7 +43,7 @@ import java.time.LocalDateTime;
 @RequiredArgsConstructor
 public class MembershipPaymentEventListener {
 
-    private final MemberMembershipJpaRepository memberMembershipRepository;
+    private final MemberMembershipRepository memberMembershipRepository;
     private final MemberInvoiceRepository memberInvoiceRepository;
 
     @EventListener

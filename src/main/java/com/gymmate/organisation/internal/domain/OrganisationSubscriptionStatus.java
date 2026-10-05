@@ -38,4 +38,3 @@ public enum OrganisationSubscriptionStatus {
         throw new IllegalArgumentException("Unknown subscription status: " + value);
     }
 }
-

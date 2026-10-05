@@ -1,6 +1,6 @@
 package com.gymmate.identity.internal.infrastructure.scheduling;
 
-import com.gymmate.identity.internal.infrastructure.persistence.TokenBlacklistRepository;
+import com.gymmate.identity.internal.application.port.TokenBlacklistRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

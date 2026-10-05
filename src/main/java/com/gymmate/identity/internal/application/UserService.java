@@ -3,7 +3,7 @@ package com.gymmate.identity.internal.application;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantScope;
 import com.gymmate.identity.internal.domain.User;
-import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
 import lombok.RequiredArgsConstructor;

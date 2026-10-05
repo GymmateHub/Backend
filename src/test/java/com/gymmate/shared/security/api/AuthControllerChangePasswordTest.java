@@ -11,7 +11,7 @@ import com.gymmate.identity.api.dto.ChangePasswordRequest;
 import com.gymmate.identity.internal.application.AuthenticationService;
 import com.gymmate.identity.internal.application.JwtService;
 import com.gymmate.identity.internal.application.InviteService;
-import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

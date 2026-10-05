@@ -1,11 +1,11 @@
 package com.gymmate.billing.internal.application;
 
 import com.gymmate.billing.internal.domain.Subscription;
-import com.gymmate.billing.internal.infrastructure.persistence.SubscriptionRepository;
+import com.gymmate.billing.internal.application.port.SubscriptionRepository;
 import com.gymmate.billing.internal.domain.SubscriptionTier;
 import com.gymmate.billing.internal.domain.SubscriptionUsage;
-import com.gymmate.billing.internal.infrastructure.persistence.SubscriptionTierRepository;
-import com.gymmate.billing.internal.infrastructure.persistence.SubscriptionUsageRepository;
+import com.gymmate.billing.internal.application.port.SubscriptionTierRepository;
+import com.gymmate.billing.internal.application.port.SubscriptionUsageRepository;
 import com.gymmate.billing.internal.application.StripePaymentService;
 import com.gymmate.billing.internal.application.port.OrganisationBillingInfoProvider;
 import com.gymmate.shared.constants.SubscriptionStatus;

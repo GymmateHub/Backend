@@ -2,7 +2,7 @@ package com.gymmate.identity.internal.infrastructure.security;
 
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import com.gymmate.identity.internal.domain.User;
-import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UserDetails;

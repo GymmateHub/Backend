@@ -1,10 +1,7 @@
 package com.gymmate.billing.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.BaseAuditEntity;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -14,30 +11,23 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "stripe_webhook_events")
-public class StripeWebhookEvent extends BaseAuditJpaEntity {
+public class StripeWebhookEvent extends BaseAuditEntity {
 
-    @Column(name = "stripe_event_id", unique = true, nullable = false)
     private String stripeEventId;
 
-    @Column(name = "event_type", nullable = false, length = 100)
     private String eventType;
 
-    @Column
     @Builder.Default
-    private Boolean processed = false;
+    private 
+    Boolean processed = false;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(columnDefinition = "jsonb")
-    private String payload;
+    private 
+    String payload;
 
-    @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
-    @Column(name = "processed_at")
     private LocalDateTime processedAt;
 
     public void markProcessed() {
@@ -50,4 +40,3 @@ public class StripeWebhookEvent extends BaseAuditJpaEntity {
         this.errorMessage = errorMessage;
     }
 }
-

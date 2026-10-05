@@ -2,7 +2,7 @@ package com.gymmate.organisation.internal.application;
 
 import com.gymmate.organisation.internal.application.port.GymRepository;
 import com.gymmate.organisation.internal.domain.Organisation;
-import com.gymmate.organisation.internal.infrastructure.persistence.OrganisationRepository;
+import com.gymmate.organisation.internal.application.port.OrganisationRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.shared.constants.UserRole;

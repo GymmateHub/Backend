@@ -1,10 +1,7 @@
 package com.gymmate.membership.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.GymScopedEntity;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 
@@ -15,70 +12,57 @@ import java.math.BigDecimal;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "membership_plans")
-public class MembershipPlan extends GymScopedJpaEntity {
+public class MembershipPlan extends GymScopedEntity {
 
   // Note: gymId is inherited from GymScopedJpaEntity
   // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
 
-  @Column(nullable = false)
   private String name;
 
-  @Column(columnDefinition = "TEXT")
   private String description;
 
-  @Column(nullable = false, precision = 10, scale = 2)
   private BigDecimal price;
 
-  @Column(name = "billing_cycle", nullable = false, length = 20)
   private String billingCycle; // monthly, quarterly, yearly, lifetime
 
-  @Column(name = "duration_months")
   private Integer durationMonths; // NULL for lifetime
 
   // Features
-  @Column(name = "class_credits")
   private Integer classCredits; // NULL for unlimited
 
-  @Column(name = "guest_passes")
   @Builder.Default
-  private Integer guestPasses = 0;
+  private 
+  Integer guestPasses = 0;
 
-  @Column(name = "trainer_sessions")
   @Builder.Default
-  private Integer trainerSessions = 0;
+  private 
+  Integer trainerSessions = 0;
 
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(columnDefinition = "jsonb")
   @Builder.Default
   private String amenities = "[]"; // ["pool", "sauna", "parking"]
 
   // Restrictions
-  @Column(name = "peak_hours_access")
   @Builder.Default
-  private boolean peakHoursAccess = true;
+  private 
+  boolean peakHoursAccess = true;
 
-  @Column(name = "off_peak_only")
   @Builder.Default
-  private boolean offPeakOnly = false;
+  private 
+  boolean offPeakOnly = false;
 
-  @JdbcTypeCode(SqlTypes.JSON)
-  @Column(name = "specific_areas", columnDefinition = "jsonb")
-  private String specificAreas; // ["main_gym", "pool", "studio"]
+  private 
+  String specificAreas; // ["main_gym", "pool", "studio"]
 
   // Status
-  @Column(name = "is_featured")
   @Builder.Default
-  private boolean featured = false;
+  private 
+  boolean featured = false;
 
   // Stripe integration
-  @Column(name = "stripe_product_id")
   private String stripeProductId;
 
-  @Column(name = "stripe_price_id")
   private String stripePriceId;
 
   public void updatePricing(BigDecimal price, String billingCycle) {
@@ -96,4 +80,3 @@ public class MembershipPlan extends GymScopedJpaEntity {
     return classCredits == null;
   }
 }
-

@@ -7,6 +7,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.math.BigDecimal;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Repository interface for MemberMembership domain entity.
@@ -40,12 +44,44 @@ public interface MemberMembershipRepository {
 
   List<MemberMembership> findFrozenMembershipsToUnfreeze(java.time.LocalDate date);
 
-  List<MemberMembership> findExpiredActiveMemberships(java.time.LocalDateTime today);
 
-  List<MemberMembership> findAutoRenewExpiredMemberships(java.time.LocalDateTime today);
 
   List<MemberMembership> findStalePastDueMemberships(LocalDateTime cutoff);
 
   void delete(MemberMembership membership);
+  
+  Optional<MemberMembership> findActiveMembershipByMemberId(UUID memberId, LocalDateTime now);
+  
+  List<MemberMembership> findExpiredActiveMemberships(LocalDateTime today);
+  
+  List<MemberMembership> findAutoRenewExpiredMemberships(LocalDateTime today);
+  
+  long countByGymIdAndStatus(UUID gymId, MembershipStatus status);
+  
+  long countCancelledByGymIdAndDateRange(UUID gymId, LocalDateTime startDate, LocalDateTime endDate);
+  
+  List<Object[]> countActiveMembersByPlan(UUID gymId);
+  
+  BigDecimal sumProjectedRevenueByGymIdAndDateRange(UUID gymId, LocalDateTime startDate, LocalDateTime endDate);
+  
+  List<MemberMembership> saveAll(Iterable<MemberMembership> entities);
+  
+  boolean existsById(UUID id);
+  
+  List<MemberMembership> findAll();
+  
+  List<MemberMembership> findAllById(Iterable<UUID> ids);
+  
+  long count();
+  
+  void deleteById(UUID id);
+  
+  void deleteAll(Iterable<MemberMembership> entities);
+  
+  MemberMembership saveAndFlush(MemberMembership entity);
+  
+  void flush();
+  
+  Page<MemberMembership> findAll(Pageable pageable);
 }
 

@@ -1,7 +1,7 @@
 package com.gymmate.identity.internal.application;
 
-import com.gymmate.identity.internal.infrastructure.persistence.MemberRepository;
-import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.identity.internal.application.port.MemberRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.identity.api.UserQueryPort;
