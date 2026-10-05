@@ -1,6 +1,6 @@
 package com.gymmate.whitelabel.internal.application;
 
-import com.gymmate.whitelabel.internal.infrastructure.integration.DynamicMailSenderFactory;
+import com.gymmate.whitelabel.internal.application.port.TenantMailSenders;
 import com.gymmate.whitelabel.api.dto.WhitelabelSettingsRequest;
 import com.gymmate.whitelabel.api.dto.WhitelabelSettingsResponse;
 import com.gymmate.whitelabel.internal.domain.SmtpSecurity;
@@ -30,7 +30,7 @@ class WhitelabelSettingsServiceTest {
     private WhitelabelEncryptionService encryptionService;
 
     @Mock
-    private DynamicMailSenderFactory mailSenderFactory;
+    private TenantMailSenders mailSenderFactory;
 
     @InjectMocks
     private WhitelabelSettingsService settingsService;

@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.infrastructure.integration;
 
+import com.gymmate.notification.internal.application.port.InboundMessageVerifier;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -27,7 +28,7 @@ import java.util.regex.Pattern;
  */
 @Component
 @Slf4j
-public class SnsSignatureVerifier {
+public class SnsSignatureVerifier implements InboundMessageVerifier {
 
     private static final Pattern CERT_URL_PATTERN = Pattern.compile("^https://sns\\.[a-z0-9\\-]+\\.amazonaws\\.com/.*\\.pem$");
     private final Map<String, PublicKey> certificateCache = new ConcurrentHashMap<>();
@@ -38,6 +39,7 @@ public class SnsSignatureVerifier {
     /**
      * Verify whether the SNS message signature is valid.
      */
+    @Override
     public boolean verifySignature(JsonNode snsPayload) {
         try {
             String certUrl = snsPayload.path("SigningCertURL").asText(null);

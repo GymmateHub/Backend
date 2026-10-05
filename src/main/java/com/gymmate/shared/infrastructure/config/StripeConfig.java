@@ -1,5 +1,6 @@
 package com.gymmate.shared.infrastructure.config;
 
+import com.gymmate.shared.integration.StripeSettings;
 import com.stripe.Stripe;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
@@ -12,7 +13,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @Getter
-public class StripeConfig {
+public class StripeConfig implements StripeSettings {
 
     @Value("${stripe.api-key:}")
     private String apiKey;
@@ -36,6 +37,7 @@ public class StripeConfig {
     /**
      * Check if Stripe is properly configured
      */
+    @Override
     public boolean isConfigured() {
         return apiKey != null && !apiKey.isBlank() && !apiKey.equals("sk_test_your_test_key_here");
     }

@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.infrastructure.web;
 
+import com.gymmate.notification.internal.application.port.RealtimeNotifier;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.domain.Notification;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class SseEmitterRegistry {
+public class SseEmitterRegistry implements RealtimeNotifier {
 
     private final ObjectMapper objectMapper;
 
@@ -88,6 +89,7 @@ public class SseEmitterRegistry {
      *
      * @return true if at least one user received the notification
      */
+    @Override
     public boolean sendToOrganisation(UUID organisationId, Notification notification) {
         Map<UUID, ConnectionInfo> orgConnections = connections.get(organisationId);
         if (orgConnections == null || orgConnections.isEmpty()) {
@@ -119,6 +121,7 @@ public class SseEmitterRegistry {
      *
      * @return true if the notification was sent
      */
+    @Override
     public boolean sendToUser(UUID organisationId, UUID userId, Notification notification) {
         Map<UUID, ConnectionInfo> orgConnections = connections.get(organisationId);
         if (orgConnections == null) {
@@ -272,6 +275,7 @@ public class SseEmitterRegistry {
      * @param status  "SENDING", "SENT", or "FAILED"
      * @param message a human-readable message
      */
+    @Override
     public void sendEmailStatus(String userId, String status, String message) {
         SseEmitter emitter = emailStatusEmitters.get(userId);
         if (emitter == null) {

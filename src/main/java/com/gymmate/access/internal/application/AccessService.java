@@ -16,8 +16,8 @@ import com.gymmate.access.internal.application.port.AccessEventRepository;
 import com.gymmate.access.internal.application.port.AccessPointRepository;
 import com.gymmate.access.internal.application.port.AccessScheduleRepository;
 import com.gymmate.access.internal.application.port.DoorBenefitRepository;
-import com.gymmate.membership.internal.domain.MemberMembership;
-import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
+import com.gymmate.membership.api.dto.ActiveMembership;
+import com.gymmate.membership.api.MembershipApi;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.identity.api.dto.MemberProfile;
@@ -56,7 +56,7 @@ public class AccessService {
   private final DoorBenefitRepository doorBenefitRepository;
   private final AccessScheduleRepository accessScheduleRepository;
   private final IdentityApi identityApi;
-  private final MemberMembershipRepository memberMembershipRepository;
+  private final MembershipApi membershipApi;
   private final List<AccessDevicePort> devicePorts;
   private final ApplicationEventPublisher eventPublisher;
 
@@ -120,18 +120,18 @@ public class AccessService {
     if (!member.active()) {
       return DenyReason.NO_ACTIVE_MEMBERSHIP;
     }
-    Optional<MemberMembership> membershipOpt =
-        memberMembershipRepository.findActiveMembershipByMemberId(member.id());
+    Optional<ActiveMembership> membershipOpt =
+        membershipApi.findActiveMembership(member.id());
     if (membershipOpt.isEmpty()) {
       return DenyReason.NO_ACTIVE_MEMBERSHIP;
     }
-    MemberMembership membership = membershipOpt.get();
+    ActiveMembership membership = membershipOpt.get();
 
     if (!member.waiverSigned()) {
       return DenyReason.INCOMPLETE_SIGNUP;
     }
 
-    UUID planId = membership.getMembershipPlanId();
+    UUID planId = membership.membershipPlanId();
 
     // Door benefit: if any benefit is configured for this point, the member's
     // plan must be among them.

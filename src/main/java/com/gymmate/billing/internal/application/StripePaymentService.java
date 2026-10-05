@@ -12,7 +12,7 @@ import com.gymmate.billing.api.dto.RefundResponse;
 import com.gymmate.billing.internal.application.port.GymInvoiceRepository;
 import com.gymmate.billing.internal.application.port.PaymentMethodRepository;
 import com.gymmate.billing.internal.application.port.PaymentRefundRepository;
-import com.gymmate.shared.infrastructure.config.StripeConfig;
+import com.gymmate.shared.integration.StripeSettings;
 import com.gymmate.shared.constants.InvoiceStatus;
 import com.gymmate.shared.constants.PaymentMethodOwnerType;
 import com.gymmate.shared.constants.PaymentMethodType;
@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class StripePaymentService {
 
-    private final StripeConfig stripeConfig;
+    private final StripeSettings stripeConfig;
     private final GymPaymentAccountPort gymAccounts;
     private final OrganisationBillingInfoProvider organisationBillingInfoProvider;
     private final SubscriptionRepository subscriptionRepository;

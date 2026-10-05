@@ -8,8 +8,8 @@ import com.gymmate.notification.api.spi.OrganisationSettingsSource;
 import com.gymmate.notification.internal.domain.NotificationChannel;
 import com.gymmate.notification.internal.domain.NotificationSettings;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.whitelabel.internal.application.WhitelabelSettingsService;
-import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
+import com.gymmate.whitelabel.api.WhitelabelApi;
+import com.gymmate.whitelabel.api.dto.WhitelabelProfile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class BroadcastService {
 
     private final OrganisationSettingsSource organisationSettingsSource;
-    private final WhitelabelSettingsService whitelabelSettingsService;
+    private final WhitelabelApi whitelabelApi;
     private final List<ChannelSender> channelSenders;
     private final ObjectMapper objectMapper;
 
@@ -63,12 +63,12 @@ public class BroadcastService {
         NotificationSettings settings = getNotificationSettings(organisationId);
         NotificationChannel preferredChannel = settings.getPreferredChannel();
 
-        Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(organisationId, gymId);
+        Optional<WhitelabelProfile> whitelabelOpt = whitelabelApi.findProfile(organisationId, gymId);
         if (whitelabelOpt.isPresent()) {
-            WhitelabelSettings whitelabel = whitelabelOpt.get();
-            if (whitelabel.isWhatsappEnabled()) {
+            WhitelabelProfile whitelabel = whitelabelOpt.get();
+            if (whitelabel.whatsappEnabled()) {
                 preferredChannel = NotificationChannel.WHATSAPP;
-            } else if (whitelabel.isSmtpEnabled()) {
+            } else if (whitelabel.smtpEnabled()) {
                 preferredChannel = NotificationChannel.EMAIL;
             }
         }

@@ -1,7 +1,7 @@
 package com.gymmate.notification.internal.application;
 
 import com.gymmate.notification.internal.domain.Notification;
-import com.gymmate.notification.internal.infrastructure.web.SseEmitterRegistry;
+import com.gymmate.notification.internal.application.port.RealtimeNotifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class NotificationDispatcher {
 
-    private final SseEmitterRegistry sseEmitterRegistry;
+    private final RealtimeNotifier sseEmitterRegistry;
 
     /**
      * Dispatch notification to all connected admin/owner users for the organisation.

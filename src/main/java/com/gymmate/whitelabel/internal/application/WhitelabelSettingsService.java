@@ -1,6 +1,7 @@
 package com.gymmate.whitelabel.internal.application;
 
-import com.gymmate.whitelabel.internal.infrastructure.integration.DynamicMailSenderFactory;
+import com.gymmate.whitelabel.internal.application.port.TenantMailSenders;
+import com.gymmate.whitelabel.internal.application.port.WhatsAppGateway;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.whitelabel.api.dto.WhitelabelSettingsRequest;
 import com.gymmate.whitelabel.api.dto.WhitelabelSettingsResponse;
@@ -9,11 +10,9 @@ import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
 import com.gymmate.whitelabel.internal.application.port.WhitelabelSettingsRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,8 +26,8 @@ public class WhitelabelSettingsService {
 
     private final WhitelabelSettingsRepository settingsRepository;
     private final WhitelabelEncryptionService encryptionService;
-    private final DynamicMailSenderFactory mailSenderFactory;
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final TenantMailSenders mailSenderFactory;
+    private final WhatsAppGateway whatsAppGateway;
 
     /**
      * Get active whitelabel settings for tenant.
@@ -128,37 +127,7 @@ public class WhitelabelSettingsService {
             String apiKey,
             String recipientPhoneNumber,
             String messageText) {
-
-        try {
-            String cleanPhone = recipientPhoneNumber.replaceAll("[^0-9]", "");
-            String url = "https://graph.facebook.com/v18.0/" + phoneNumberId + "/messages";
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            headers.setBearerAuth(apiKey);
-
-            Map<String, Object> textObj = new HashMap<>();
-            textObj.put("body", messageText);
-
-            Map<String, Object> payload = new HashMap<>();
-            payload.put("messaging_product", "whatsapp");
-            payload.put("to", cleanPhone);
-            payload.put("type", "text");
-            payload.put("text", textObj);
-
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
-
-            if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("Successfully sent WhatsApp message to {}", cleanPhone);
-            } else {
-                log.error("WhatsApp API call failed with status: {}, body: {}", response.getStatusCode(), response.getBody());
-                throw new DomainException("WHATSAPP_SEND_FAILED", "WhatsApp API returned status " + response.getStatusCode());
-            }
-        } catch (Exception e) {
-            log.error("Failed to send WhatsApp message to {}", recipientPhoneNumber, e);
-            throw new DomainException("WHATSAPP_SEND_FAILED", "WhatsApp sending failed: " + e.getMessage());
-        }
+        whatsAppGateway.send(provider, phoneNumberId, apiKey, recipientPhoneNumber, messageText);
     }
 
     private void updateSettingsFromRequest(WhitelabelSettings settings, WhitelabelSettingsRequest request) {

@@ -10,7 +10,7 @@ import com.gymmate.identity.api.dto.ResendOtpRequest;
 import com.gymmate.identity.api.dto.TokenResponse;
 import com.gymmate.identity.api.dto.VerificationTokenResponse;
 import com.gymmate.identity.api.dto.VerifyOtpRequest;
-import com.gymmate.notification.internal.application.EmailService;
+import com.gymmate.notification.api.EmailApi;
 import com.gymmate.shared.constants.AuditEventType;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.DomainException;
@@ -62,7 +62,7 @@ public class AuthenticationService {
     private final PasswordService passwordService;
     private final JwtService jwtService;
     private final PasswordResetTokenRepository resetTokenRepository;
-    private final EmailService emailService;
+    private final EmailApi emailService;
     private final AuthenticationManager authenticationManager;
     private final TokenBlacklistRepository tokenBlacklistRepository;
     private final TotpService totpService;

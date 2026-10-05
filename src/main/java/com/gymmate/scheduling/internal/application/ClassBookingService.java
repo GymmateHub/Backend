@@ -6,7 +6,7 @@ import com.gymmate.scheduling.internal.domain.GymClass;
 import com.gymmate.scheduling.internal.application.port.ClassBookingRepository;
 import com.gymmate.scheduling.internal.application.port.ClassScheduleRepository;
 import com.gymmate.scheduling.internal.application.port.GymClassRepository;
-import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
+import com.gymmate.membership.api.MembershipApi;
 import com.gymmate.notification.api.event.WaitlistPromotedEvent;
 import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.shared.exception.DomainException;
@@ -30,7 +30,7 @@ public class ClassBookingService {
   private final ClassBookingRepository bookingRepository;
   private final ClassScheduleRepository scheduleRepository;
   private final GymClassRepository classRepository;
-  private final MemberMembershipRepository membershipRepository;
+  private final MembershipApi membershipApi;
   private final ApplicationEventPublisher eventPublisher;
 
   /**
@@ -71,14 +71,9 @@ public class ClassBookingService {
       booking.setStatus(BookingStatus.CONFIRMED);
 
       // attempt to deduct membership credit if present
-      membershipRepository.findActiveMembershipByMemberId(memberId).ifPresent(membership -> {
-        Integer credits = membership.getClassCreditsRemaining();
-        if (credits != null && credits > 0) {
-          membership.setClassCreditsRemaining(credits - 1);
-          membershipRepository.save(membership);
-          booking.setCreditsUsed(1);
-        }
-      });
+      if (membershipApi.consumeClassCredit(memberId)) {
+        booking.setCreditsUsed(1);
+      }
 
     } else {
       booking.setStatus(BookingStatus.WAITLISTED);
@@ -151,14 +146,9 @@ public class ClassBookingService {
           first.setStatus(BookingStatus.CONFIRMED);
           first.setWaitlistPosition(null); // No longer on waitlist
           // consume membership credit if any
-          membershipRepository.findActiveMembershipByMemberId(first.getMemberId()).ifPresent(membership -> {
-            Integer credits = membership.getClassCreditsRemaining();
-            if (credits != null && credits > 0) {
-              membership.setClassCreditsRemaining(credits - 1);
-              membershipRepository.save(membership);
-              first.setCreditsUsed(1);
-            }
-          });
+          if (membershipApi.consumeClassCredit(first.getMemberId())) {
+            first.setCreditsUsed(1);
+          }
           bookingRepository.save(first);
           log.info("Promoted waitlist booking {} to confirmed", first.getId());
 

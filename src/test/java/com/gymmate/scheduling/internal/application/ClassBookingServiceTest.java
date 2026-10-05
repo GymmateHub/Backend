@@ -8,6 +8,8 @@ import com.gymmate.scheduling.internal.application.port.ClassScheduleRepository;
 import com.gymmate.scheduling.internal.application.port.GymClassRepository;
 import com.gymmate.membership.internal.domain.MemberMembership;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
+import com.gymmate.membership.internal.application.port.MemberInvoiceRepository;
+import com.gymmate.membership.internal.application.MembershipApiService;
 import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.shared.exception.DomainException;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +40,8 @@ class ClassBookingServiceTest {
     classRepository = mock(GymClassRepository.class);
     membershipRepository = mock(MemberMembershipRepository.class);
     eventPublisher = mock(ApplicationEventPublisher.class);
-    bookingService = new ClassBookingService(bookingRepository, scheduleRepository, classRepository, membershipRepository, eventPublisher);
+    bookingService = new ClassBookingService(bookingRepository, scheduleRepository, classRepository,
+        new MembershipApiService(membershipRepository, mock(MemberInvoiceRepository.class)), eventPublisher);
   }
 
   @Test

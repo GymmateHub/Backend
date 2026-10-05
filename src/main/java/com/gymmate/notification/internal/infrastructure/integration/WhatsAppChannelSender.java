@@ -4,9 +4,7 @@ import com.gymmate.notification.internal.application.port.ChannelException;
 import com.gymmate.notification.internal.application.port.ChannelSender;
 import com.gymmate.notification.internal.domain.NotificationChannel;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.whitelabel.internal.application.WhitelabelEncryptionService;
-import com.gymmate.whitelabel.internal.application.WhitelabelSettingsService;
-import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
+import com.gymmate.whitelabel.api.WhitelabelApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -23,8 +21,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WhatsAppChannelSender implements ChannelSender {
 
-    private final WhitelabelSettingsService whitelabelSettingsService;
-    private final WhitelabelEncryptionService encryptionService;
+    private final WhitelabelApi whitelabelApi;
 
     @Override
     public NotificationChannel getChannel() {
@@ -35,30 +32,9 @@ public class WhatsAppChannelSender implements ChannelSender {
     public void send(String recipient, String subject, String body) throws ChannelException {
         UUID organisationId = TenantContext.getCurrentTenantId();
         UUID gymId = TenantContext.getCurrentGymId();
-
-        Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(organisationId, gymId);
-
-        if (whitelabelOpt.isEmpty() || !whitelabelOpt.get().isWhatsappEnabled()) {
-            throw new ChannelException(NotificationChannel.WHATSAPP,
-                    "WhatsApp credentials are not configured or enabled for tenant: " + organisationId);
-        }
-
-        WhitelabelSettings settings = whitelabelOpt.get();
-        String apiKey = encryptionService.decrypt(settings.getWhatsappApiKeyEncrypted());
-
-        if (!StringUtils.hasText(apiKey) || !StringUtils.hasText(settings.getWhatsappPhoneNumberId())) {
-            throw new ChannelException(NotificationChannel.WHATSAPP,
-                    "WhatsApp Phone Number ID or API Key is missing for tenant: " + organisationId);
-        }
-
         try {
-            whitelabelSettingsService.sendWhatsAppMessage(
-                    settings.getWhatsappProvider(),
-                    settings.getWhatsappPhoneNumberId(),
-                    apiKey,
-                    recipient,
-                    subject != null ? subject + "\n" + body : body
-            );
+            whitelabelApi.sendWhatsApp(organisationId, gymId, recipient,
+                    subject != null ? subject + "\n" + body : body);
         } catch (Exception e) {
             throw new ChannelException(NotificationChannel.WHATSAPP, e.getMessage());
         }

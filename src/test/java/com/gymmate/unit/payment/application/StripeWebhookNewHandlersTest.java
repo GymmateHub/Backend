@@ -1,7 +1,7 @@
 package com.gymmate.unit.payment.application;
 
 import com.gymmate.billing.internal.application.port.GymPaymentAccountPort;
-import com.gymmate.notification.internal.application.NotificationService;
+import com.gymmate.notification.api.NotificationApi;
 import com.gymmate.notification.api.event.ChargeDisputedEvent;
 import com.gymmate.notification.api.event.ChargeRefundedEvent;
 import com.gymmate.notification.api.event.SubscriptionPausedEvent;
@@ -49,7 +49,7 @@ class StripeWebhookNewHandlersTest {
     @Mock private StripeConnectService connectService;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private UtilityService utilityService;
-    @Mock private NotificationService notificationService;
+    @Mock private NotificationApi notificationService;
     @Mock private GymPaymentAccountPort gymRepository;
     @Mock private WebhookEventTracker webhookEventTracker;
     @Mock private PaymentNotificationService paymentNotificationService;

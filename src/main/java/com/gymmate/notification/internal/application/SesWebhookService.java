@@ -1,6 +1,6 @@
 package com.gymmate.notification.internal.application;
 
-import com.gymmate.notification.internal.infrastructure.integration.SnsSignatureVerifier;
+import com.gymmate.notification.internal.application.port.InboundMessageVerifier;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.domain.SnsProcessedMessage;
@@ -28,7 +28,7 @@ import java.time.Duration;
 public class SesWebhookService {
 
     private final ObjectMapper objectMapper;
-    private final SnsSignatureVerifier signatureVerifier;
+    private final InboundMessageVerifier signatureVerifier;
     private final SnsProcessedMessageRepository processedMessageRepository;
     private final EmailSuppressionService suppressionService;
 

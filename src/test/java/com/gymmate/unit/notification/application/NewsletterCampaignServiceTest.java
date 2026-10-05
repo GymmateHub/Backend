@@ -15,7 +15,7 @@ import com.gymmate.notification.internal.application.port.NewsletterCampaignRepo
 import com.gymmate.notification.internal.application.port.NewsletterTemplateRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.whitelabel.internal.application.WhitelabelSettingsService;
+import com.gymmate.whitelabel.api.WhitelabelApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -58,7 +58,7 @@ class NewsletterCampaignServiceTest {
     private BroadcastService broadcastService;
 
     @Mock
-    private WhitelabelSettingsService whitelabelSettingsService;
+    private WhitelabelApi whitelabelSettingsService;
 
     private NewsletterCampaignService campaignService;
 

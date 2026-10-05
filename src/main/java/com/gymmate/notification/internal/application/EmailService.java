@@ -1,10 +1,10 @@
 package com.gymmate.notification.internal.application;
 
-import com.gymmate.notification.internal.infrastructure.web.SseEmitterRegistry;
+import com.gymmate.notification.api.EmailApi;
+import com.gymmate.notification.internal.application.port.RealtimeNotifier;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.whitelabel.internal.infrastructure.integration.DynamicMailSenderFactory;
-import com.gymmate.whitelabel.internal.application.WhitelabelSettingsService;
-import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
+import com.gymmate.whitelabel.api.WhitelabelApi;
+import com.gymmate.whitelabel.api.dto.WhitelabelProfile;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -28,12 +28,11 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class EmailService {
+public class EmailService implements EmailApi {
 
     private final TemplateEngine templateEngine;
-    private final SseEmitterRegistry sseEmitterRegistry;
-    private final WhitelabelSettingsService whitelabelSettingsService;
-    private final DynamicMailSenderFactory mailSenderFactory;
+    private final RealtimeNotifier sseEmitterRegistry;
+    private final WhitelabelApi whitelabelApi;
     private final EmailSuppressionService suppressionService;
     private final com.gymmate.notification.internal.application.port.SesTenantResolver sesTenantResolver;
     private final com.gymmate.notification.internal.application.port.SesConfigurationSetResolver sesConfigurationSetResolver;
@@ -53,6 +52,7 @@ public class EmailService {
     private String configurationSet;
 
     @Async
+    @Override
     public void sendPasswordResetEmail(String to, String name, String resetLink) {
         try {
             Context context = new Context();
@@ -69,6 +69,7 @@ public class EmailService {
     }
 
     @Async
+    @Override
     public void sendOtpEmail(String to, String firstName, String otp, int validityMinutes, String userId) {
         sseEmitterRegistry.sendEmailStatus(userId, "SENDING", "Sending verification email...");
 
@@ -94,6 +95,7 @@ public class EmailService {
     }
 
     @Async
+    @Override
     public void sendWelcomeEmail(String to, String firstName) {
         try {
             Context context = new Context();
@@ -109,6 +111,7 @@ public class EmailService {
     }
 
     @Async
+    @Override
     public void sendHtmlEmail(String to, String subject, String htmlBody) {
         try {
             sendEmailInternal(to, subject, htmlBody);
@@ -120,6 +123,7 @@ public class EmailService {
     }
 
     @Async
+    @Override
     public void sendSubscriptionRenewalEmail(String to, String organisationName, String planName,
             LocalDate renewalDate, BigDecimal amount) {
         try {
@@ -138,6 +142,7 @@ public class EmailService {
     }
 
     @Async
+    @Override
     public void sendTrialEndingEmail(String to, String organisationName, LocalDate trialEndDate) {
         try {
             Context context = new Context();
@@ -153,6 +158,7 @@ public class EmailService {
     }
 
     @Async
+    @Override
     public void sendSubscriptionExpiredEmail(String to, String organisationName, LocalDate expiryDate) {
         try {
             Context context = new Context();
@@ -193,24 +199,23 @@ public class EmailService {
         UUID organisationId = TenantContext.getCurrentTenantId();
         UUID gymId = TenantContext.getCurrentGymId();
 
-        Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(organisationId,
-                gymId);
+        Optional<WhitelabelProfile> whitelabelOpt = whitelabelApi.findProfile(organisationId, gymId);
 
         JavaMailSender mailSender;
         String from;
 
-        if (whitelabelOpt.isPresent() && whitelabelOpt.get().isSmtpEnabled()) {
-            WhitelabelSettings settings = whitelabelOpt.get();
-            mailSender = mailSenderFactory.getMailSender(settings);
+        if (whitelabelOpt.isPresent() && whitelabelOpt.get().smtpEnabled()) {
+            WhitelabelProfile settings = whitelabelOpt.get();
+            mailSender = whitelabelApi.findTenantMailSender(organisationId, gymId).orElseThrow();
 
-            from = StringUtils.hasText(settings.getSmtpFromEmail())
-                    ? settings.getSmtpFromEmail()
-                    : (StringUtils.hasText(settings.getSmtpUsername()) ? settings.getSmtpUsername() : defaultFromEmail);
+            from = StringUtils.hasText(settings.smtpFromEmail())
+                    ? settings.smtpFromEmail()
+                    : (StringUtils.hasText(settings.smtpUsername()) ? settings.smtpUsername() : defaultFromEmail);
 
-            if (StringUtils.hasText(settings.getSmtpFromName())) {
-                from = settings.getSmtpFromName() + " <" + from + ">";
-            } else if (StringUtils.hasText(settings.getBrandName())) {
-                from = settings.getBrandName() + " <" + from + ">";
+            if (StringUtils.hasText(settings.smtpFromName())) {
+                from = settings.smtpFromName() + " <" + from + ">";
+            } else if (StringUtils.hasText(settings.brandName())) {
+                from = settings.brandName() + " <" + from + ">";
             }
         } else {
             // No tenant custom SMTP (or none applicable, e.g. unauthenticated /api/auth/**

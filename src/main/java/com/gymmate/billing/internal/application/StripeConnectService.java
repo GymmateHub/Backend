@@ -4,7 +4,7 @@ import com.gymmate.billing.internal.domain.GymPaymentAccount;
 import com.gymmate.billing.internal.application.port.GymPaymentAccountPort;
 import com.gymmate.billing.api.dto.ConnectAccountStatusResponse;
 import com.gymmate.billing.api.dto.ConnectOnboardingResponse;
-import com.gymmate.shared.infrastructure.config.StripeConfig;
+import com.gymmate.shared.integration.StripeSettings;
 import com.gymmate.shared.exception.DomainException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Account;
@@ -32,7 +32,7 @@ import java.util.UUID;
 @Slf4j
 public class StripeConnectService {
 
-    private final StripeConfig stripeConfig;
+    private final StripeSettings stripeConfig;
     private final GymPaymentAccountPort gymAccounts;
 
     @Value("${app.frontend-url:http://localhost:3000}")

@@ -7,12 +7,12 @@ import com.gymmate.notification.api.event.PaymentFailedEvent;
 import com.gymmate.notification.api.event.PaymentSuccessEvent;
 import com.gymmate.notification.api.event.SubscriptionPausedEvent;
 import com.gymmate.shared.constants.NotificationPriority;
-import com.gymmate.notification.internal.application.NotificationService;
+import com.gymmate.notification.api.NotificationApi;
 import com.gymmate.billing.internal.domain.GymPaymentAccount;
 import com.gymmate.billing.internal.application.port.GymPaymentAccountPort;
 import com.gymmate.billing.internal.application.port.GymInvoiceRepository;
 import com.gymmate.billing.internal.application.port.StripeWebhookEventRepository;
-import com.gymmate.shared.infrastructure.config.StripeConfig;
+import com.gymmate.shared.integration.StripeSettings;
 import com.gymmate.shared.constants.InvoiceStatus;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.util.UtilityService;
@@ -43,14 +43,14 @@ import java.util.UUID;
 @Slf4j
 public class StripeWebhookService {
 
-    private final StripeConfig stripeConfig;
+    private final StripeSettings stripeConfig;
     private final StripeWebhookEventRepository webhookEventRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final GymInvoiceRepository invoiceRepository;
     private final StripeConnectService connectService;
     private final ApplicationEventPublisher eventPublisher;
     private final UtilityService utilityService;
-    private final NotificationService notificationService;
+    private final NotificationApi notificationService;
     private final GymPaymentAccountPort gymAccounts;
     private final WebhookEventTracker webhookEventTracker;
     private final PaymentNotificationService paymentNotificationService;

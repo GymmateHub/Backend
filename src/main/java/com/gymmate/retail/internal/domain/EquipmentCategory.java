@@ -1,6 +1,5 @@
 package com.gymmate.retail.internal.domain;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
  * Equipment category enumeration.
@@ -18,7 +17,6 @@ public enum EquipmentCategory {
   RECOVERY,         // Foam rollers, massage guns
   OTHER;            // Miscellaneous equipment
 
-  @JsonCreator
   public static EquipmentCategory fromString(String value) {
     if (value == null || value.isBlank()) return OTHER;
     for (EquipmentCategory cat : values()) {

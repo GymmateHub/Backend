@@ -1,6 +1,6 @@
 package com.gymmate.identity.internal.application;
 
-import com.gymmate.notification.internal.application.EmailService;
+import com.gymmate.notification.api.EmailApi;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.identity.internal.application.InviteService;
 import com.gymmate.identity.internal.application.MemberService;
@@ -35,7 +35,7 @@ class AuthenticationServiceTest {
     @Mock
     private JwtService jwtService; // Needed for completeness of mock injection
     @Mock
-    private EmailService emailService;
+    private EmailApi emailService;
     @Mock
     private com.gymmate.identity.api.spi.GymDirectory gymDirectory;
     @Mock

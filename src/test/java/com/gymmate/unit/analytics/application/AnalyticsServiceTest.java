@@ -15,6 +15,7 @@ import com.gymmate.membership.internal.application.port.MemberMembershipReposito
 import com.gymmate.membership.internal.application.port.MembershipPlanRepository;
 import com.gymmate.retail.api.PosFacade;
 import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.membership.internal.application.MembershipApiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -63,14 +64,13 @@ class AnalyticsServiceTest {
 
         @BeforeEach
         void setUp() {
+                // membership facade over the mocked repositories (stubs below stay effective)
                 analyticsService = new AnalyticsService(
                                 identityApi,
-                                membershipRepository,
-                                membershipPlanRepository,
+                                new MembershipApiService(membershipRepository, memberInvoiceRepository),
                                 classesFacade,
                                 inventoryFacade,
-                                posFacade,
-                                memberInvoiceRepository);
+                                posFacade);
 
                 gymId = UUID.randomUUID();
         }

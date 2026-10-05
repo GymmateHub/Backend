@@ -1,7 +1,8 @@
 package com.gymmate.ai.internal.infrastructure.integration;
 
+import com.gymmate.ai.internal.application.port.AiPlanNotifier;
 import com.gymmate.ai.internal.domain.AiRecommendation;
-import com.gymmate.notification.internal.application.NotificationService;
+import com.gymmate.notification.api.NotificationApi;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.identity.api.IdentityApi;
 import com.gymmate.identity.api.dto.MemberProfile;
@@ -16,9 +17,9 @@ import java.util.UUID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class AiNotificationIntegration {
+public class AiNotificationIntegration implements AiPlanNotifier {
 
-    private final NotificationService notificationService;
+    private final NotificationApi notificationService;
     private final IdentityApi identityApi;
 
     /**
@@ -26,6 +27,7 @@ public class AiNotificationIntegration {
      * @param recommendation
      */
     @Transactional
+    @Override
     public void sendAiPlanNotification(UUID memberId, AiRecommendation recommendation) {
         try {
             MemberProfile member = identityApi.getMember(memberId);
@@ -39,7 +41,7 @@ public class AiNotificationIntegration {
                     "**Meal Plan**\n" + recommendation.getMealPlan();
 
             // Depending on Notification module architecture, we'll send it
-            // Assuming NotificationService has a method to create standard notifications
+            // Assuming NotificationApi has a method to create standard notifications
             // If not, we will save it manually or use EmailService
             // TODO: Implement actual notification sending
             notificationService.sendToUser(memberId, title, messageContent, NotificationPriority.HIGH, messageContent, null);

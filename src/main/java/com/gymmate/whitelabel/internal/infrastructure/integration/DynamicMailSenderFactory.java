@@ -1,5 +1,6 @@
 package com.gymmate.whitelabel.internal.infrastructure.integration;
 
+import com.gymmate.whitelabel.internal.application.port.TenantMailSenders;
 import com.gymmate.whitelabel.internal.application.WhitelabelEncryptionService;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.whitelabel.internal.domain.SmtpSecurity;
@@ -25,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 @Slf4j
 @RequiredArgsConstructor
-public class DynamicMailSenderFactory {
+public class DynamicMailSenderFactory implements TenantMailSenders {
 
     private final WhitelabelEncryptionService encryptionService;
     private final Map<String, JavaMailSender> senderCache = new ConcurrentHashMap<>();
@@ -34,6 +35,7 @@ public class DynamicMailSenderFactory {
      * Get or build a JavaMailSender for the provided WhitelabelSettings.
      * Throws DomainException if SMTP is not enabled or configured for the tenant.
      */
+    @Override
     public JavaMailSender getMailSender(WhitelabelSettings settings) {
         if (settings == null || !settings.isSmtpEnabled() || !StringUtils.hasText(settings.getSmtpHost())) {
             throw new DomainException("SMTP_NOT_CONFIGURED",
@@ -47,6 +49,7 @@ public class DynamicMailSenderFactory {
     /**
      * Clear cached sender when settings are updated.
      */
+    @Override
     public void evictCache(UUID organisationId, UUID gymId) {
         String prefix = organisationId + ":" + (gymId != null ? gymId : "org");
         senderCache.keySet().removeIf(k -> k.startsWith(prefix));

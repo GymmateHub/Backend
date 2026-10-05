@@ -9,7 +9,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import java.util.concurrent.Executor;
 
 @Configuration
-@EnableAsync
+@EnableAsync(proxyTargetClass = true) // class-based proxies: services implementing module APIs stay injectable by class
 @Slf4j
 public class AsyncConfig implements AsyncConfigurer {
 

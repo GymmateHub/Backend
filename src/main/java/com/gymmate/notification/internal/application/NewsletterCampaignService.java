@@ -13,8 +13,8 @@ import com.gymmate.notification.internal.application.port.NewsletterTemplateRepo
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.multitenancy.TenantScope;
-import com.gymmate.whitelabel.internal.application.WhitelabelSettingsService;
-import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
+import com.gymmate.whitelabel.api.WhitelabelApi;
+import com.gymmate.whitelabel.api.dto.WhitelabelProfile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
@@ -43,7 +43,7 @@ public class NewsletterCampaignService {
     private final AudienceResolver audienceResolver;
     private final NewsletterTemplateService templateService;
     private final BroadcastService broadcastService;
-    private final WhitelabelSettingsService whitelabelSettingsService;
+    private final WhitelabelApi whitelabelApi;
 
     /**
      * Create a new campaign.
@@ -186,7 +186,7 @@ public class NewsletterCampaignService {
                     campaign.getAudienceType(),
                     campaign.getAudienceFilter());
 
-            Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(
+            Optional<WhitelabelProfile> whitelabelOpt = whitelabelApi.findProfile(
                     campaign.getOrganisationId(), campaign.getGymId());
 
             int deliveredCount = 0;
@@ -240,7 +240,7 @@ public class NewsletterCampaignService {
     /**
      * Build template variables for a recipient including whitelabel branding context.
      */
-    private Map<String, Object> buildRecipientVariables(MemberRecipient recipient, Optional<WhitelabelSettings> whitelabelOpt) {
+    private Map<String, Object> buildRecipientVariables(MemberRecipient recipient, Optional<WhitelabelProfile> whitelabelOpt) {
         Map<String, Object> variables = new HashMap<>();
         String firstName = recipient.firstName() != null ? recipient.firstName() : "";
         String lastName = recipient.lastName() != null ? recipient.lastName() : "";
@@ -250,13 +250,13 @@ public class NewsletterCampaignService {
         variables.put("email", recipient.email());
 
         whitelabelOpt.ifPresent(w -> {
-            if (w.getBrandName() != null) variables.put("brand_name", w.getBrandName());
-            if (w.getLogoUrl() != null) variables.put("logo_url", w.getLogoUrl());
-            if (w.getPrimaryColor() != null) variables.put("primary_color", w.getPrimaryColor());
-            if (w.getSecondaryColor() != null) variables.put("secondary_color", w.getSecondaryColor());
-            if (w.getSupportEmail() != null) variables.put("support_email", w.getSupportEmail());
-            if (w.getSupportPhone() != null) variables.put("support_phone", w.getSupportPhone());
-            if (w.getEmailFooterText() != null) variables.put("email_footer", w.getEmailFooterText());
+            if (w.brandName() != null) variables.put("brand_name", w.brandName());
+            if (w.logoUrl() != null) variables.put("logo_url", w.logoUrl());
+            if (w.primaryColor() != null) variables.put("primary_color", w.primaryColor());
+            if (w.secondaryColor() != null) variables.put("secondary_color", w.secondaryColor());
+            if (w.supportEmail() != null) variables.put("support_email", w.supportEmail());
+            if (w.supportPhone() != null) variables.put("support_phone", w.supportPhone());
+            if (w.emailFooterText() != null) variables.put("email_footer", w.emailFooterText());
         });
 
         return variables;

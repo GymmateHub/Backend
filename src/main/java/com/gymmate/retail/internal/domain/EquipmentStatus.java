@@ -1,6 +1,5 @@
 package com.gymmate.retail.internal.domain;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
  * Equipment status enumeration.
@@ -14,7 +13,6 @@ public enum EquipmentStatus {
   ORDERED,          // Ordered but not yet received
   DAMAGED;          // Damaged, needs repair or disposal
 
-  @JsonCreator
   public static EquipmentStatus fromString(String value) {
     if (value == null || value.isBlank()) return AVAILABLE;
     for (EquipmentStatus st : values()) {

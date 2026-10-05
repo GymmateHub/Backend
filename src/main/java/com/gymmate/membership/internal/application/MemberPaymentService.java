@@ -11,7 +11,7 @@ import com.gymmate.membership.internal.application.port.MemberInvoiceRepository;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.gymmate.membership.internal.application.port.MemberPaymentMethodRepository;
 import com.gymmate.membership.internal.application.port.MembershipPlanRepository;
-import com.gymmate.shared.infrastructure.config.StripeConfig;
+import com.gymmate.shared.integration.StripeSettings;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.identity.api.IdentityApi;
 import com.gymmate.identity.api.dto.MemberProfile;
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MemberPaymentService {
 
-    private final StripeConfig stripeConfig;
+    private final StripeSettings stripeConfig;
     private final OrganisationApi organisationApi;
     private final IdentityApi identityApi;
     private final MemberPaymentMethodRepository paymentMethodRepository;

@@ -1,6 +1,5 @@
 package com.gymmate.retail.internal.domain;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 
 /**
  * Inventory item category enumeration.
@@ -15,7 +14,6 @@ public enum InventoryCategory {
   EQUIPMENT_PARTS,  // Replacement parts for equipment
   OTHER;            // Miscellaneous items
 
-  @JsonCreator
   public static InventoryCategory fromString(String value) {
     if (value == null || value.isBlank()) return OTHER;
     for (InventoryCategory cat : values()) {

@@ -19,6 +19,8 @@ import com.gymmate.access.internal.application.port.DoorBenefitRepository;
 import com.gymmate.access.internal.infrastructure.integration.SoftwareAccessAdapter;
 import com.gymmate.membership.internal.domain.MemberMembership;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
+import com.gymmate.membership.internal.application.port.MemberInvoiceRepository;
+import com.gymmate.membership.internal.application.MembershipApiService;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.identity.internal.domain.Member;
 import com.gymmate.identity.api.IdentityApi;
@@ -71,7 +73,8 @@ class AccessServiceTest {
     service = new AccessService(
         accessPointRepository, accessCredentialRepository, accessEventRepository,
         doorBenefitRepository, accessScheduleRepository, identityApi,
-        memberMembershipRepository, List.of(new SoftwareAccessAdapter()), eventPublisher);
+        new MembershipApiService(memberMembershipRepository, mock(MemberInvoiceRepository.class)),
+        List.of(new SoftwareAccessAdapter()), eventPublisher);
 
     gymId = UUID.randomUUID();
     orgId = UUID.randomUUID();

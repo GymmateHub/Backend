@@ -11,12 +11,10 @@ import com.gymmate.reporting.internal.domain.TimeSeriesDataPoint;
 import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.scheduling.api.ClassesFacade;
 import com.gymmate.retail.api.InventoryFacade;
-import com.gymmate.membership.internal.domain.MembershipStatus;
-import com.gymmate.membership.internal.application.port.MemberInvoiceRepository;
-import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
-import com.gymmate.membership.internal.application.port.MembershipPlanRepository;
 import com.gymmate.retail.api.PosFacade;
 import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.membership.api.MembershipApi;
+import com.gymmate.membership.api.dto.PlanMemberCount;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,12 +35,10 @@ import java.util.*;
 public class AnalyticsService {
 
     private final IdentityApi identityApi;
-    private final MemberMembershipRepository membershipRepository;
-    private final MembershipPlanRepository membershipPlanRepository;
+    private final MembershipApi membershipApi;
     private final ClassesFacade classesFacade;
     private final InventoryFacade inventoryFacade;
     private final PosFacade posFacade;
-    private final MemberInvoiceRepository memberInvoiceRepository;
 
     // ===== MAIN DASHBOARD =====
 
@@ -87,7 +83,7 @@ public class AnalyticsService {
         // Additional metrics
         BigDecimal churnRate = calculateChurnRate(gymId, dateRange);
         long expiringMemberships = countExpiringMemberships(gymId);
-        long overduePayments = memberInvoiceRepository.countOverdueByGymId(gymId, LocalDateTime.now());
+        long overduePayments = membershipApi.countOverdueInvoices(gymId, LocalDateTime.now());
         long lowStockItems = countLowStockItems(gymId);
 
         return new DashboardResponse(
@@ -378,7 +374,7 @@ public class AnalyticsService {
 
     private long countActiveMembers(UUID gymId) {
         try {
-            return membershipRepository.countActiveByGymId(gymId);
+            return membershipApi.countActiveMemberships(gymId);
         } catch (Exception e) {
             log.warn("Could not count active members: {}", e.getMessage());
             return 0;
@@ -391,7 +387,7 @@ public class AnalyticsService {
 
     private long countSuspendedMembers(UUID gymId) {
         try {
-            return membershipRepository.countByGymIdAndStatus(gymId, MembershipStatus.PAUSED);
+            return membershipApi.countPausedMemberships(gymId);
         } catch (Exception e) {
             log.warn("Could not count suspended members: {}", e.getMessage());
             return 0;
@@ -408,7 +404,7 @@ public class AnalyticsService {
 
     private long countCancelledMembers(UUID gymId, DateRange range) {
         try {
-            return membershipRepository.countCancelledByGymIdAndDateRange(gymId, range.start(), range.end());
+            return membershipApi.countCancelledMemberships(gymId, range.start(), range.end());
         } catch (Exception e) {
             log.warn("Could not count cancelled members: {}", e.getMessage());
             return 0;
@@ -454,7 +450,7 @@ public class AnalyticsService {
     private long countExpiringMemberships(UUID gymId, int days) {
         try {
             LocalDateTime now = LocalDateTime.now();
-            return membershipRepository.findExpiringMemberships(gymId, now, now.plusDays(days)).size();
+            return membershipApi.countExpiringMemberships(gymId, now, now.plusDays(days));
         } catch (Exception e) {
             return 0;
         }
@@ -479,7 +475,7 @@ public class AnalyticsService {
 
     private BigDecimal getMembershipRevenue(UUID gymId, DateRange range) {
         try {
-            BigDecimal revenue = membershipRepository.sumProjectedRevenueByGymIdAndDateRange(
+            BigDecimal revenue = membershipApi.sumProjectedRevenue(
                     gymId, range.start(), range.end());
             return revenue != null ? revenue : BigDecimal.ZERO;
         } catch (Exception e) {
@@ -666,12 +662,12 @@ public class AnalyticsService {
 
     private List<CategoryBreakdown> getMembersByPlanBreakdown(UUID gymId) {
         try {
-            List<Object[]> planCounts = membershipRepository.countActiveMembersByPlan(gymId);
+            List<PlanMemberCount> planCounts = membershipApi.countActiveMembersByPlan(gymId);
             if (planCounts.isEmpty())
                 return List.of();
 
             long total = planCounts.stream()
-                    .mapToLong(row -> ((Number) row[1]).longValue())
+                    .mapToLong(PlanMemberCount::activeMembers)
                     .sum();
 
             if (total == 0)
@@ -679,8 +675,8 @@ public class AnalyticsService {
 
             return planCounts.stream()
                     .map(row -> {
-                        String planName = (String) row[0];
-                        long count = ((Number) row[1]).longValue();
+                        String planName = row.planName();
+                        long count = row.activeMembers();
                         BigDecimal percentage = BigDecimal.valueOf(count * 100.0 / total)
                                 .setScale(1, RoundingMode.HALF_UP);
                         return new CategoryBreakdown(planName, count, BigDecimal.ZERO, percentage);

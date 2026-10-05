@@ -2,7 +2,7 @@ package com.gymmate.ai.internal.application;
 
 import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;
-import com.gymmate.ai.internal.infrastructure.integration.AiNotificationIntegration;
+import com.gymmate.ai.internal.application.port.AiPlanNotifier;
 import com.gymmate.ai.internal.application.port.AiRecommendationRepository;
 import com.gymmate.organisation.api.dto.GymSummary;
 import com.gymmate.organisation.api.OrganisationApi;
@@ -23,7 +23,7 @@ public class AiTrainerService {
     private final LlmClient llmClient;
     private final AiRecommendationRepository aiRecommendationRepository;
     private final OrganisationApi organisationApi;
-    private final AiNotificationIntegration aiNotificationIntegration;
+    private final AiPlanNotifier aiNotificationIntegration;
 
     @Async
     @EventListener

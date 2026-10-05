@@ -1,6 +1,6 @@
 package com.gymmate.identity.internal.application;
 
-import com.gymmate.notification.internal.application.EmailService;
+import com.gymmate.notification.api.EmailApi;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.identity.api.dto.InviteRequest;
@@ -35,7 +35,7 @@ public class InviteService {
     private final UserInviteRepository userInviteRepository;
     private final UserRepository userRepository;
     private final GymDirectory gymDirectory;
-    private final EmailService emailService;
+    private final EmailApi emailService;
 
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;

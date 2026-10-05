@@ -11,8 +11,8 @@ import com.gymmate.billing.internal.application.port.OrganisationBillingInfoProv
 import com.gymmate.shared.constants.SubscriptionStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.gymmate.notification.internal.application.EmailService;
-import com.gymmate.notification.internal.application.NotificationService;
+import com.gymmate.notification.api.EmailApi;
+import com.gymmate.notification.api.NotificationApi;
 import com.gymmate.shared.constants.NotificationPriority;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -34,8 +34,8 @@ public class SubscriptionService {
     private final SubscriptionTierRepository tierRepository;
     private final SubscriptionUsageRepository usageRepository;
     private final StripePaymentService stripePaymentService;
-    private final EmailService emailService;
-    private final NotificationService notificationService;
+    private final EmailApi emailService;
+    private final NotificationApi notificationService;
     private final OrganisationBillingInfoProvider organisationBillingInfoProvider;
 
     public Subscription createSubscription(UUID organisationId, String tierName, boolean startTrial) {
