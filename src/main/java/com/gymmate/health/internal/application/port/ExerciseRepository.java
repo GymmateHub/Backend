@@ -5,6 +5,9 @@ import com.gymmate.health.internal.domain.Exercise;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for Exercise.
@@ -66,4 +69,30 @@ public interface ExerciseRepository {
      * Check if exercise name exists for a gym.
      */
     boolean existsByNameAndGymId(String name, UUID gymId);
+    
+    List<Exercise> findByCategoryId(UUID categoryId);
+    
+    List<Exercise> findByPrimaryMuscleGroup(String muscleGroup);
+    
+    List<Exercise> findByCreatedByGymId(UUID gymId);
+    
+    List<Exercise> saveAll(Iterable<Exercise> entities);
+    
+    boolean existsById(UUID id);
+    
+    List<Exercise> findAll();
+    
+    List<Exercise> findAllById(Iterable<UUID> ids);
+    
+    long count();
+    
+    void deleteById(UUID id);
+    
+    void deleteAll(Iterable<Exercise> entities);
+    
+    Exercise saveAndFlush(Exercise entity);
+    
+    void flush();
+    
+    Page<Exercise> findAll(Pageable pageable);
 }

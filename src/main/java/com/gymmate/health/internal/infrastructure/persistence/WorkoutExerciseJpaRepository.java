@@ -1,12 +1,10 @@
 package com.gymmate.health.internal.infrastructure.persistence;
 
-import com.gymmate.health.internal.domain.WorkoutExercise;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -15,25 +13,25 @@ import java.util.UUID;
  * Provides data access operations using Spring Data JPA.
  */
 @Repository
-public interface WorkoutExerciseJpaRepository extends JpaRepository<WorkoutExercise, UUID> {
+public interface WorkoutExerciseJpaRepository extends JpaRepository<WorkoutExerciseJpaEntity, UUID> {
 
     /**
      * Find all exercises for a workout log.
      */
     @Query("SELECT we FROM WorkoutExercise we WHERE we.workoutLogId = :workoutLogId AND we.active = true")
-    List<WorkoutExercise> findByWorkoutLogId(@Param("workoutLogId") UUID workoutLogId);
+    List<WorkoutExerciseJpaEntity> findByWorkoutLogId(@Param("workoutLogId") UUID workoutLogId);
 
     /**
      * Find exercises for a workout ordered by exercise order.
      */
     @Query("SELECT we FROM WorkoutExercise we WHERE we.workoutLogId = :workoutLogId AND we.active = true ORDER BY we.exerciseOrder ASC")
-    List<WorkoutExercise> findByWorkoutLogIdOrderByExerciseOrder(@Param("workoutLogId") UUID workoutLogId);
+    List<WorkoutExerciseJpaEntity> findByWorkoutLogIdOrderByExerciseOrder(@Param("workoutLogId") UUID workoutLogId);
 
     /**
      * Find all workout exercises for a specific exercise (for exercise usage analytics).
      */
     @Query("SELECT we FROM WorkoutExercise we WHERE we.exerciseId = :exerciseId AND we.active = true ORDER BY we.createdAt DESC")
-    List<WorkoutExercise> findByExerciseId(@Param("exerciseId") UUID exerciseId);
+    List<WorkoutExerciseJpaEntity> findByExerciseId(@Param("exerciseId") UUID exerciseId);
 
     /**
      * Count exercises in a workout.

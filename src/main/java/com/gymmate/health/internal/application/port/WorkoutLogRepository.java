@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for WorkoutLog.
@@ -70,4 +71,28 @@ public interface WorkoutLogRepository {
      * Find latest workout for a member.
      */
     Optional<WorkoutLog> findLatestByMemberId(UUID memberId);
+    
+    List<WorkoutLog> findByMemberIdOrderByWorkoutDateDesc(UUID memberId);
+    
+    Page<WorkoutLog> findByMemberIdPaginated(UUID memberId, Pageable pageable);
+    
+    List<WorkoutLog> saveAll(Iterable<WorkoutLog> entities);
+    
+    boolean existsById(UUID id);
+    
+    List<WorkoutLog> findAll();
+    
+    List<WorkoutLog> findAllById(Iterable<UUID> ids);
+    
+    long count();
+    
+    void deleteById(UUID id);
+    
+    void deleteAll(Iterable<WorkoutLog> entities);
+    
+    WorkoutLog saveAndFlush(WorkoutLog entity);
+    
+    void flush();
+    
+    Page<WorkoutLog> findAll(Pageable pageable);
 }

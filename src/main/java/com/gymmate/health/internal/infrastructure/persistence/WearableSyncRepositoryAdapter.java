@@ -3,62 +3,70 @@ package com.gymmate.health.internal.infrastructure.persistence;
 import com.gymmate.health.internal.application.port.WearableSyncRepository;
 import com.gymmate.health.internal.domain.enums.WearableSource;
 import com.gymmate.health.internal.domain.WearableSync;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
+import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Adapter implementing WearableSyncRepository using JPA.
- * Bridges domain layer with infrastructure layer.
+ * Persistence adapter implementing {@link WearableSyncRepository} with Spring Data JPA.
  */
 @Component
-@RequiredArgsConstructor
-public class WearableSyncRepositoryAdapter implements WearableSyncRepository {
+@Transactional()
+public class WearableSyncRepositoryAdapter extends DomainRepositoryAdapter implements WearableSyncRepository {
 
     private final WearableSyncJpaRepository jpaRepository;
 
+    public WearableSyncRepositoryAdapter(WearableSyncJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
+        super(contexts);
+        this.jpaRepository = jpaRepository;
+    }
+
     @Override
     public WearableSync save(WearableSync wearableSync) {
-        return jpaRepository.save(wearableSync);
+        return save(jpaRepository, wearableSync);
     }
 
     @Override
     public Optional<WearableSync> findById(UUID id) {
-        return jpaRepository.findById(id);
+        return this.<Optional<WearableSync>>fromJpa(jpaRepository.findById(id));
     }
 
     @Override
     public List<WearableSync> findByMemberId(UUID memberId) {
-        return jpaRepository.findByMemberIdOrderByLastSyncDesc(memberId);
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findByMemberIdOrderByLastSyncDesc(memberId));
     }
 
     @Override
     public Optional<WearableSync> findByMemberIdAndSourceType(UUID memberId, WearableSource sourceType) {
-        return jpaRepository.findByMemberIdAndSourceType(memberId, sourceType);
+        return this.<Optional<WearableSync>>fromJpa(jpaRepository.findByMemberIdAndSourceType(memberId, sourceType));
     }
 
     @Override
     public List<WearableSync> findByGymId(UUID gymId) {
-        return jpaRepository.findByGymIdOrderByLastSyncDesc(gymId);
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findByGymIdOrderByLastSyncDesc(gymId));
     }
 
     @Override
     public List<WearableSync> findByStatus(String syncStatus) {
-        return jpaRepository.findBySyncStatus(syncStatus);
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findBySyncStatus(syncStatus));
     }
 
     @Override
     public List<WearableSync> findSyncsNeedingUpdate(LocalDateTime lastSyncBefore) {
-        return jpaRepository.findSyncsNeedingUpdate(lastSyncBefore);
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findSyncsNeedingUpdate(lastSyncBefore));
     }
 
     @Override
     public List<WearableSync> findFailedSyncsByGymId(UUID gymId) {
-        return jpaRepository.findFailedSyncsByGymId(gymId);
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findFailedSyncsByGymId(gymId));
     }
 
     @Override
@@ -69,11 +77,76 @@ public class WearableSyncRepositoryAdapter implements WearableSyncRepository {
     @Override
     public void delete(WearableSync wearableSync) {
         wearableSync.setActive(false);
-        jpaRepository.save(wearableSync);
+        save(jpaRepository, wearableSync);
     }
 
     @Override
     public boolean existsByMemberIdAndSourceType(UUID memberId, WearableSource sourceType) {
         return jpaRepository.existsByMemberIdAndSourceType(memberId, sourceType);
+    }
+
+    @Override
+    public List<WearableSync> findByMemberIdOrderByLastSyncDesc(UUID memberId) {
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findByMemberIdOrderByLastSyncDesc(memberId));
+    }
+
+    @Override
+    public List<WearableSync> findByGymIdOrderByLastSyncDesc(UUID gymId) {
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findByGymIdOrderByLastSyncDesc(gymId));
+    }
+
+    @Override
+    public List<WearableSync> findBySyncStatus(String status) {
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findBySyncStatus(status));
+    }
+
+    @Override
+    public List<WearableSync> saveAll(Iterable<WearableSync> entities) {
+        return saveAll(jpaRepository, entities);
+    }
+
+    @Override
+    public boolean existsById(UUID id) {
+        return jpaRepository.existsById(id);
+    }
+
+    @Override
+    public List<WearableSync> findAll() {
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findAll());
+    }
+
+    @Override
+    public List<WearableSync> findAllById(Iterable<UUID> ids) {
+        return this.<List<WearableSync>>fromJpa(jpaRepository.findAllById(ids));
+    }
+
+    @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public void deleteAll(Iterable<WearableSync> entities) {
+        deleteAll(jpaRepository, entities);
+    }
+
+    @Override
+    public WearableSync saveAndFlush(WearableSync entity) {
+        return saveAndFlush(jpaRepository, entity);
+    }
+
+    @Override
+    public void flush() {
+        jpaRepository.flush();
+    }
+
+    @Override
+    public Page<WearableSync> findAll(Pageable pageable) {
+        return this.<Page<WearableSync>>fromJpa(jpaRepository.findAll(pageable));
     }
 }

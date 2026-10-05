@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for HealthMetric.
@@ -68,5 +71,27 @@ public interface HealthMetricRepository {
      * Delete a health metric (soft delete).
      */
     void delete(HealthMetric healthMetric);
+    
+    List<HealthMetric> findByMemberIdOrderByDateDesc(UUID memberId);
+    
+    List<HealthMetric> saveAll(Iterable<HealthMetric> entities);
+    
+    boolean existsById(UUID id);
+    
+    List<HealthMetric> findAll();
+    
+    List<HealthMetric> findAllById(Iterable<UUID> ids);
+    
+    long count();
+    
+    void deleteById(UUID id);
+    
+    void deleteAll(Iterable<HealthMetric> entities);
+    
+    HealthMetric saveAndFlush(HealthMetric entity);
+    
+    void flush();
+    
+    Page<HealthMetric> findAll(Pageable pageable);
 }
 

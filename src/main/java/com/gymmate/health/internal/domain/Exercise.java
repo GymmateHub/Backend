@@ -1,10 +1,7 @@
 package com.gymmate.health.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.BaseAuditEntity;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.util.UUID;
 
@@ -16,48 +13,35 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "exercises")
-public class Exercise extends BaseAuditJpaEntity {
+public class Exercise extends BaseAuditEntity {
 
-    @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "category_id")
     private UUID categoryId;
 
-    @Column(name = "primary_muscle_group", length = 50)
     private String primaryMuscleGroup; // Chest, Back, Legs, Shoulders, Arms, Core, etc.
 
-    @JdbcTypeCode(SqlTypes.ARRAY)
-    @Column(name = "secondary_muscle_groups", columnDefinition = "text[]")
-    private String[] secondaryMuscleGroups;
+    private 
+    String[] secondaryMuscleGroups;
 
-    @Column(name = "equipment_required", length = 100)
     private String equipmentRequired; // Barbell, Dumbbells, None, etc.
 
-    @Column(name = "difficulty_level", length = 20)
     private String difficultyLevel; // BEGINNER, INTERMEDIATE, ADVANCED
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "instructions", columnDefinition = "jsonb")
-    private String instructions; // Step-by-step instructions as JSON array
+    private 
+    String instructions; // Step-by-step instructions as JSON array
 
-    @Column(name = "video_url", length = 500)
     private String videoUrl;
 
-    @Column(name = "thumbnail_url", length = 500)
     private String thumbnailUrl;
 
-    @Column(name = "is_public")
     @Builder.Default
-    private boolean isPublic = true; // true = public library, false = gym-specific
+    private 
+    boolean isPublic = true; // true = public library, false = gym-specific
 
-    @Column(name = "created_by_gym_id")
     private UUID createdByGymId; // Null if public exercise
 }

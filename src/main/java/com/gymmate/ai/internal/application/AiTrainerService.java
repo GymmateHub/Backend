@@ -3,7 +3,7 @@ package com.gymmate.ai.internal.application;
 import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;
 import com.gymmate.ai.internal.infrastructure.integration.AiNotificationIntegration;
-import com.gymmate.ai.internal.infrastructure.persistence.AiRecommendationRepository;
+import com.gymmate.ai.internal.application.port.AiRecommendationRepository;
 import com.gymmate.organisation.api.dto.GymSummary;
 import com.gymmate.organisation.api.OrganisationApi;
 import com.gymmate.shared.multitenancy.TenantScope;

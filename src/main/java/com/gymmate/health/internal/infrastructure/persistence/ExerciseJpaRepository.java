@@ -1,11 +1,9 @@
 package com.gymmate.health.internal.infrastructure.persistence;
 
-import com.gymmate.health.internal.domain.Exercise;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -14,49 +12,49 @@ import java.util.UUID;
  * Provides data access operations using Spring Data JPA.
  */
 @Repository
-public interface ExerciseJpaRepository extends JpaRepository<Exercise, UUID> {
+public interface ExerciseJpaRepository extends JpaRepository<ExerciseJpaEntity, UUID> {
 
     /**
      * Find all public exercises ordered by name.
      */
     @Query("SELECT e FROM Exercise e WHERE e.isPublic = true AND e.active = true ORDER BY e.name")
-    List<Exercise> findAllPublicExercises();
+    List<ExerciseJpaEntity> findAllPublicExercises();
 
     /**
      * Find exercises by category.
      */
     @Query("SELECT e FROM Exercise e WHERE e.categoryId = :categoryId AND e.active = true ORDER BY e.name")
-    List<Exercise> findByCategoryId(@Param("categoryId") UUID categoryId);
+    List<ExerciseJpaEntity> findByCategoryId(@Param("categoryId") UUID categoryId);
 
     /**
      * Find exercises by primary muscle group.
      */
     @Query("SELECT e FROM Exercise e WHERE e.primaryMuscleGroup = :muscleGroup AND e.isPublic = true AND e.active = true ORDER BY e.name")
-    List<Exercise> findByPrimaryMuscleGroup(@Param("muscleGroup") String muscleGroup);
+    List<ExerciseJpaEntity> findByPrimaryMuscleGroup(@Param("muscleGroup") String muscleGroup);
 
     /**
      * Find exercises by difficulty level.
      */
     @Query("SELECT e FROM Exercise e WHERE e.difficultyLevel = :level AND e.isPublic = true AND e.active = true ORDER BY e.name")
-    List<Exercise> findByDifficultyLevel(@Param("level") String level);
+    List<ExerciseJpaEntity> findByDifficultyLevel(@Param("level") String level);
 
     /**
      * Find custom exercises created by specific gym.
      */
     @Query("SELECT e FROM Exercise e WHERE e.createdByGymId = :gymId AND e.active = true ORDER BY e.name")
-    List<Exercise> findByCreatedByGymId(@Param("gymId") UUID gymId);
+    List<ExerciseJpaEntity> findByCreatedByGymId(@Param("gymId") UUID gymId);
 
     /**
      * Find all exercises available to a gym (public + gym-specific).
      */
     @Query("SELECT e FROM Exercise e WHERE e.active = true AND (e.isPublic = true OR e.createdByGymId = :gymId) ORDER BY e.name")
-    List<Exercise> findAvailableForGym(@Param("gymId") UUID gymId);
+    List<ExerciseJpaEntity> findAvailableForGym(@Param("gymId") UUID gymId);
 
     /**
      * Search exercises by name (case-insensitive partial match).
      */
     @Query("SELECT e FROM Exercise e WHERE LOWER(e.name) LIKE LOWER(CONCAT('%', :searchTerm, '%')) AND e.active = true ORDER BY e.name")
-    List<Exercise> searchByName(@Param("searchTerm") String searchTerm);
+    List<ExerciseJpaEntity> searchByName(@Param("searchTerm") String searchTerm);
 
     /**
      * Check if exercise name exists for a gym's custom exercises.

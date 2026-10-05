@@ -1,8 +1,7 @@
 package com.gymmate.health.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
+import com.gymmate.shared.domain.BaseAuditEntity;
 import com.gymmate.shared.exception.DomainException;
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -16,47 +15,34 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "workout_exercises", indexes = {
-    @Index(name = "idx_workout_exercise_log", columnList = "workout_log_id,exercise_order")
-})
-public class WorkoutExercise extends BaseAuditJpaEntity {
+public class WorkoutExercise extends BaseAuditEntity {
 
-    @Column(name = "workout_log_id", nullable = false)
     private UUID workoutLogId;
 
-    @Column(name = "exercise_id", nullable = false)
     private UUID exerciseId;
 
-    @Column(name = "exercise_order")
     private Integer exerciseOrder; // Order in workout sequence
 
-    @Column(nullable = false)
     @Builder.Default
-    private Integer sets = 1;
+    private 
+    Integer sets = 1;
 
-    @Column(nullable = false)
     @Builder.Default
-    private Integer reps = 1;
+    private 
+    Integer reps = 1;
 
-    @Column(precision = 10, scale = 2)
     private BigDecimal weight;
 
-    @Column(name = "weight_unit", length = 10)
     private String weightUnit; // kg, lbs
 
-    @Column(name = "rest_seconds")
     private Integer restSeconds;
 
-    @Column(name = "distance_meters", precision = 10, scale = 2)
     private BigDecimal distanceMeters; // For cardio exercises
 
-    @Column(name = "duration_seconds")
     private Integer durationSeconds; // For timed exercises
 
-    @Column(columnDefinition = "TEXT")
     private String notes;
 
     // Business validation

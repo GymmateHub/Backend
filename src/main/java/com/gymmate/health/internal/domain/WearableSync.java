@@ -1,11 +1,8 @@
 package com.gymmate.health.internal.domain;
 
 import com.gymmate.health.internal.domain.enums.WearableSource;
-import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.GymScopedEntity;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,36 +15,26 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "wearable_syncs", indexes = {
-    @Index(name = "idx_wearable_member_source", columnList = "member_id,source_type")
-})
-public class WearableSync extends GymScopedJpaEntity {
+public class WearableSync extends GymScopedEntity {
 
-    @Column(name = "member_id", nullable = false)
     private UUID memberId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "source_type", nullable = false, length = 50)
-    private WearableSource sourceType;
+    private 
+    WearableSource sourceType;
 
-    @Column(name = "last_sync_at")
     private LocalDateTime lastSyncAt;
 
-    @Column(name = "sync_status", length = 20)
     @Builder.Default
-    private String syncStatus = "PENDING"; // SUCCESS, FAILED, PENDING
+    private 
+    String syncStatus = "PENDING"; // SUCCESS, FAILED, PENDING
 
-    @Column(name = "external_user_id", length = 255)
     private String externalUserId; // ID from external service (Apple, Google, etc.)
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "sync_metadata", columnDefinition = "jsonb")
-    private String syncMetadata; // Additional sync information as JSON
+    private 
+    String syncMetadata; // Additional sync information as JSON
 
-    @Column(name = "sync_error", columnDefinition = "TEXT")
     private String syncError;
 
     // Business methods

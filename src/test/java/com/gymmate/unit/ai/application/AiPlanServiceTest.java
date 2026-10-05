@@ -4,7 +4,7 @@ import com.gymmate.ai.api.dto.AiPlanResponse;
 import com.gymmate.ai.internal.application.AiPlanService;
 import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;
-import com.gymmate.ai.internal.infrastructure.persistence.AiRecommendationRepository;
+import com.gymmate.ai.internal.application.port.AiRecommendationRepository;
 import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.identity.api.IdentityApi;
 import com.gymmate.identity.internal.application.IdentityApiTestSupport;

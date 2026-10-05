@@ -7,6 +7,10 @@ import com.gymmate.health.internal.domain.enums.GoalType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.LocalDate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for FitnessGoal.
@@ -68,4 +72,28 @@ public interface FitnessGoalRepository {
      * Delete a fitness goal (soft delete).
      */
     void delete(FitnessGoal fitnessGoal);
+    
+    List<FitnessGoal> findByMemberIdOrderByCreatedAtDesc(UUID memberId);
+    
+    List<FitnessGoal> findGoalsWithUpcomingDeadlines(UUID gymId, LocalDate deadlineDate);
+    
+    List<FitnessGoal> saveAll(Iterable<FitnessGoal> entities);
+    
+    boolean existsById(UUID id);
+    
+    List<FitnessGoal> findAll();
+    
+    List<FitnessGoal> findAllById(Iterable<UUID> ids);
+    
+    long count();
+    
+    void deleteById(UUID id);
+    
+    void deleteAll(Iterable<FitnessGoal> entities);
+    
+    FitnessGoal saveAndFlush(FitnessGoal entity);
+    
+    void flush();
+    
+    Page<FitnessGoal> findAll(Pageable pageable);
 }

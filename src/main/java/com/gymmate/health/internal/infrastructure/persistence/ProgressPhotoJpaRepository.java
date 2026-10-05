@@ -1,11 +1,9 @@
 package com.gymmate.health.internal.infrastructure.persistence;
 
-import com.gymmate.health.internal.domain.ProgressPhoto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -16,45 +14,37 @@ import java.util.UUID;
  * Provides data access operations using Spring Data JPA.
  */
 @Repository
-public interface ProgressPhotoJpaRepository extends JpaRepository<ProgressPhoto, UUID> {
+public interface ProgressPhotoJpaRepository extends JpaRepository<ProgressPhotoJpaEntity, UUID> {
 
     /**
      * Find all photos for a member ordered by date descending.
      */
     @Query("SELECT pp FROM ProgressPhoto pp WHERE pp.memberId = :memberId AND pp.active = true ORDER BY pp.photoDate DESC")
-    List<ProgressPhoto> findByMemberIdOrderByDateDesc(@Param("memberId") UUID memberId);
+    List<ProgressPhotoJpaEntity> findByMemberIdOrderByDateDesc(@Param("memberId") UUID memberId);
 
     /**
      * Find photos for a member within date range.
      */
     @Query("SELECT pp FROM ProgressPhoto pp WHERE pp.memberId = :memberId AND pp.photoDate BETWEEN :startDate AND :endDate AND pp.active = true ORDER BY pp.photoDate DESC")
-    List<ProgressPhoto> findByMemberIdAndDateRange(
-        @Param("memberId") UUID memberId,
-        @Param("startDate") LocalDateTime startDate,
-        @Param("endDate") LocalDateTime endDate
-    );
+    List<ProgressPhotoJpaEntity> findByMemberIdAndDateRange(@Param("memberId") UUID memberId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     /**
      * Find public photos for a member.
      */
     @Query("SELECT pp FROM ProgressPhoto pp WHERE pp.memberId = :memberId AND pp.isPublic = true AND pp.active = true ORDER BY pp.photoDate DESC")
-    List<ProgressPhoto> findPublicPhotosByMemberId(@Param("memberId") UUID memberId);
+    List<ProgressPhotoJpaEntity> findPublicPhotosByMemberId(@Param("memberId") UUID memberId);
 
     /**
      * Find photos by gym and date range.
      */
     @Query("SELECT pp FROM ProgressPhoto pp WHERE pp.gymId = :gymId AND pp.photoDate BETWEEN :startDate AND :endDate AND pp.active = true ORDER BY pp.photoDate DESC")
-    List<ProgressPhoto> findByGymIdAndDateRange(
-        @Param("gymId") UUID gymId,
-        @Param("startDate") LocalDateTime startDate,
-        @Param("endDate") LocalDateTime endDate
-    );
+    List<ProgressPhotoJpaEntity> findByGymIdAndDateRange(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     /**
      * Find latest photo for a member.
      */
     @Query("SELECT pp FROM ProgressPhoto pp WHERE pp.memberId = :memberId AND pp.active = true ORDER BY pp.photoDate DESC LIMIT 1")
-    Optional<ProgressPhoto> findLatestByMemberId(@Param("memberId") UUID memberId);
+    Optional<ProgressPhotoJpaEntity> findLatestByMemberId(@Param("memberId") UUID memberId);
 
     /**
      * Count photos for a member.

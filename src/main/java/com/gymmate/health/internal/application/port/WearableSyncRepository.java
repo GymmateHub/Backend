@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for WearableSync.
@@ -68,4 +71,30 @@ public interface WearableSyncRepository {
      * Check if member has specific wearable source connected.
      */
     boolean existsByMemberIdAndSourceType(UUID memberId, WearableSource sourceType);
+    
+    List<WearableSync> findByMemberIdOrderByLastSyncDesc(UUID memberId);
+    
+    List<WearableSync> findByGymIdOrderByLastSyncDesc(UUID gymId);
+    
+    List<WearableSync> findBySyncStatus(String status);
+    
+    List<WearableSync> saveAll(Iterable<WearableSync> entities);
+    
+    boolean existsById(UUID id);
+    
+    List<WearableSync> findAll();
+    
+    List<WearableSync> findAllById(Iterable<UUID> ids);
+    
+    long count();
+    
+    void deleteById(UUID id);
+    
+    void deleteAll(Iterable<WearableSync> entities);
+    
+    WearableSync saveAndFlush(WearableSync entity);
+    
+    void flush();
+    
+    Page<WearableSync> findAll(Pageable pageable);
 }
