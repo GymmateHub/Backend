@@ -2,7 +2,7 @@ package com.gymmate.billing.internal.domain;
 
 import com.gymmate.shared.constants.PaymentMethodOwnerType;
 import com.gymmate.shared.constants.PaymentMethodType;
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -34,7 +34,7 @@ import java.util.UUID;
         @Index(name = "idx_pm_provider_id", columnList = "provider_payment_method_id"),
         @Index(name = "idx_pm_default", columnList = "owner_type, owner_id, is_default")
 })
-public class PaymentMethod extends BaseAuditEntity {
+public class PaymentMethod extends BaseAuditJpaEntity {
 
     /**
      * Organisation ID - the billing entity that owns this payment method.
@@ -117,7 +117,7 @@ public class PaymentMethod extends BaseAuditEntity {
     @Builder.Default
     private Boolean isDefault = false;
 
-    // Note: isActive is inherited from BaseAuditEntity (mapped to 'is_active'
+    // Note: isActive is inherited from BaseAuditJpaEntity (mapped to 'is_active'
     // column as 'active' field)
 
     @Column(name = "is_verified")
@@ -193,7 +193,7 @@ public class PaymentMethod extends BaseAuditEntity {
 
     /**
      * Accessor for isActive - delegates to inherited 'active' field from
-     * BaseAuditEntity
+     * BaseAuditJpaEntity
      */
     public Boolean getIsActive() {
         return this.isActive();

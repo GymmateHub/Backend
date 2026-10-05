@@ -3,7 +3,7 @@ package com.gymmate.access.internal.domain;
 import com.gymmate.access.internal.domain.enums.AccessDecision;
 import com.gymmate.access.internal.domain.enums.AccessDirection;
 import com.gymmate.access.internal.domain.enums.DenyReason;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -21,7 +21,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "access_events")
-public class AccessEvent extends GymScopedEntity {
+public class AccessEvent extends GymScopedJpaEntity {
 
   @Column(name = "member_id")
   private UUID memberId;

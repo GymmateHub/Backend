@@ -1,6 +1,6 @@
 package com.gymmate.identity.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import com.gymmate.identity.internal.domain.User;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @NoArgsConstructor
-public class PasswordResetToken extends BaseAuditEntity {
+public class PasswordResetToken extends BaseAuditJpaEntity {
 
     @Column(nullable = false, unique = true)
     private String token;

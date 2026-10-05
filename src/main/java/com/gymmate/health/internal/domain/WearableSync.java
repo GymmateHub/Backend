@@ -1,7 +1,7 @@
 package com.gymmate.health.internal.domain;
 
 import com.gymmate.health.internal.domain.enums.WearableSource;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -24,7 +24,7 @@ import java.util.UUID;
 @Table(name = "wearable_syncs", indexes = {
     @Index(name = "idx_wearable_member_source", columnList = "member_id,source_type")
 })
-public class WearableSync extends GymScopedEntity {
+public class WearableSync extends GymScopedJpaEntity {
 
     @Column(name = "member_id", nullable = false)
     private UUID memberId;

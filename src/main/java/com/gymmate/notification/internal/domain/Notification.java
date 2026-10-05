@@ -1,7 +1,7 @@
 package com.gymmate.notification.internal.domain;
 
 import com.gymmate.shared.constants.NotificationPriority;
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -31,7 +31,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Notification extends TenantEntity {
+public class Notification extends TenantJpaEntity {
 
     @Column(name = "gym_id")
     private UUID gymId;

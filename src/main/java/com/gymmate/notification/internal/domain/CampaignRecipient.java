@@ -1,6 +1,6 @@
 package com.gymmate.notification.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -17,7 +17,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "campaign_recipients")
-public class CampaignRecipient extends BaseAuditEntity {
+public class CampaignRecipient extends BaseAuditJpaEntity {
 
     @Column(name = "campaign_id", nullable = false)
     private UUID campaignId;

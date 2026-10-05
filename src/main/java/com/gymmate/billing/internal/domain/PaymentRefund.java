@@ -2,7 +2,7 @@ package com.gymmate.billing.internal.domain;
 
 import com.gymmate.shared.constants.RefundStatus;
 import com.gymmate.shared.constants.RefundType;
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,7 +24,7 @@ import java.util.UUID;
     @Index(name = "idx_pr_gym", columnList = "gym_id"),
     @Index(name = "idx_pr_stripe_refund", columnList = "stripe_refund_id")
 })
-public class PaymentRefund extends BaseAuditEntity {
+public class PaymentRefund extends BaseAuditJpaEntity {
 
     /**
      * Organisation ID - the billing entity this refund belongs to.

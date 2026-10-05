@@ -1,6 +1,6 @@
 package com.gymmate.health.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -20,7 +20,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "exercises")
-public class Exercise extends BaseAuditEntity {
+public class Exercise extends BaseAuditJpaEntity {
 
     @Column(nullable = false, length = 100)
     private String name;

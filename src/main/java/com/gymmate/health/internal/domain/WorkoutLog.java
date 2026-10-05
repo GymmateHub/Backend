@@ -2,7 +2,7 @@ package com.gymmate.health.internal.domain;
 
 import com.gymmate.health.internal.domain.enums.WorkoutIntensity;
 import com.gymmate.health.internal.domain.enums.WorkoutStatus;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * WorkoutLog entity representing a member's workout session.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  * Implements FR-014: Workout Logging.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -25,7 +25,7 @@ import java.util.UUID;
     @Index(name = "idx_workout_member_date", columnList = "member_id,workout_date"),
     @Index(name = "idx_workout_gym", columnList = "gym_id,workout_date")
 })
-public class WorkoutLog extends GymScopedEntity {
+public class WorkoutLog extends GymScopedJpaEntity {
 
     @Column(name = "member_id", nullable = false)
     private UUID memberId;

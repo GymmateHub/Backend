@@ -2,7 +2,7 @@ package com.gymmate.identity.internal.domain;
 
 import com.gymmate.shared.constants.InviteStatus;
 import com.gymmate.shared.constants.UserRole;
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 @Table(name = "user_invites")
-public class UserInvite extends BaseAuditEntity {
+public class UserInvite extends BaseAuditJpaEntity {
 
     @Column(name = "gym_id", nullable = false)
     private UUID gymId;

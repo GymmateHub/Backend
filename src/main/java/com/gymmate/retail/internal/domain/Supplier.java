@@ -1,12 +1,12 @@
 package com.gymmate.retail.internal.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 /**
  * Supplier entity representing vendors/suppliers.
- * Extends TenantEntity as suppliers are typically organisation-level.
+ * Extends TenantJpaEntity as suppliers are typically organisation-level.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -15,9 +15,9 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "suppliers")
-public class Supplier extends TenantEntity {
+public class Supplier extends TenantJpaEntity {
 
-  // Note: organisationId is inherited from TenantEntity
+  // Note: organisationId is inherited from TenantJpaEntity
 
   @Column(nullable = false, length = 200)
   private String name;

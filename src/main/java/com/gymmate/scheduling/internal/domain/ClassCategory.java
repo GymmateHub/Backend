@@ -1,12 +1,12 @@
 package com.gymmate.scheduling.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
 /**
  * ClassCategory entity representing a category for classes.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -15,10 +15,10 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "class_categories")
-public class ClassCategory extends GymScopedEntity {
+public class ClassCategory extends GymScopedJpaEntity {
 
-  // Note: gymId is inherited from GymScopedEntity
-  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
+  // Note: gymId is inherited from GymScopedJpaEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
 
   @Column(nullable = false, length = 100)
   private String name;

@@ -1,6 +1,6 @@
 package com.gymmate.retail.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 /**
  * Equipment entity representing gym equipment and machines.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  * Equipment can be tracked at both organisation level (gymId = null) 
  * or gym level (gymId set).
  */
@@ -21,10 +21,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "equipment")
-public class Equipment extends GymScopedEntity {
+public class Equipment extends GymScopedJpaEntity {
 
-  // Note: gymId is inherited from GymScopedEntity
-  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
+  // Note: gymId is inherited from GymScopedJpaEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
 
   @Column(nullable = false, length = 200)
   private String name;

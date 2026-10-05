@@ -1,7 +1,7 @@
 package com.gymmate.notification.internal.domain;
 
 import com.gymmate.notification.api.dto.AudienceType;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "newsletter_campaigns")
-public class NewsletterCampaign extends GymScopedEntity {
+public class NewsletterCampaign extends GymScopedJpaEntity {
 
     @Column(name = "template_id")
     private UUID templateId;

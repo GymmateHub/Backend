@@ -1,7 +1,7 @@
 package com.gymmate.billing.internal.domain;
 
 import com.gymmate.shared.constants.SubscriptionStatus;
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -21,7 +21,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "subscriptions")
-public class Subscription extends BaseAuditEntity {
+public class Subscription extends BaseAuditJpaEntity {
 
     @Column(name = "organisation_id", nullable = false, unique = true)
     private UUID organisationId;

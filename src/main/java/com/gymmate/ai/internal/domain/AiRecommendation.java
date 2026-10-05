@@ -1,6 +1,6 @@
 package com.gymmate.ai.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -25,7 +25,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "ai_recommendations")
-public class AiRecommendation extends GymScopedEntity {
+public class AiRecommendation extends GymScopedJpaEntity {
 
     @Column(name = "member_id", nullable = false)
     private UUID memberId;

@@ -2,7 +2,7 @@ package com.gymmate.identity.internal.domain;
 
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -14,7 +14,7 @@ import java.util.UUID;
 
 /**
  * User entity with tenant isolation via Hibernate @Filter.
- * Extends TenantEntity which provides:
+ * Extends TenantJpaEntity which provides:
  * - organisationId field with automatic TenantContext population on persist
  * - @FilterDef/@Filter for automatic tenant-scoped queries
  *
@@ -29,7 +29,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "users")
-public class User extends TenantEntity {
+public class User extends TenantJpaEntity {
 
   @Column(nullable = false)
   private String email;

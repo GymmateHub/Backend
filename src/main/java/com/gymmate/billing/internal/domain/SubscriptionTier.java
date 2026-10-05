@@ -1,6 +1,6 @@
 package com.gymmate.billing.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "subscription_tiers")
-public class SubscriptionTier extends BaseAuditEntity {
+public class SubscriptionTier extends BaseAuditJpaEntity {
 
     @Column(nullable = false, unique = true, length = 100)
     private String name;

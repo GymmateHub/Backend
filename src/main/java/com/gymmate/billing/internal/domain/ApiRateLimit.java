@@ -1,6 +1,6 @@
 package com.gymmate.billing.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,7 +14,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "api_rate_limits")
-public class ApiRateLimit extends BaseAuditEntity {
+public class ApiRateLimit extends BaseAuditJpaEntity {
 
     @Column(name = "organisation_id", nullable = false)
     private UUID organisationId;

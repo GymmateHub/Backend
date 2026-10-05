@@ -1,7 +1,7 @@
 package com.gymmate.billing.internal.domain;
 
 import com.gymmate.shared.constants.InvoiceStatus;
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,7 +23,7 @@ import java.util.UUID;
         @Index(name = "idx_gi_organisation", columnList = "organisation_id"),
         @Index(name = "idx_gi_stripe_invoice", columnList = "stripe_invoice_id")
 })
-public class GymInvoice extends BaseAuditEntity {
+public class GymInvoice extends BaseAuditJpaEntity {
 
     /**
      * Organisation ID - the billing entity this invoice belongs to.

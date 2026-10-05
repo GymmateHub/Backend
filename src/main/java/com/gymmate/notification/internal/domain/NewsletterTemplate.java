@@ -1,6 +1,6 @@
 package com.gymmate.notification.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -17,7 +17,7 @@ import org.hibernate.type.SqlTypes;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "newsletter_templates")
-public class NewsletterTemplate extends GymScopedEntity {
+public class NewsletterTemplate extends GymScopedJpaEntity {
 
     @Column(nullable = false, length = 100)
     private String name;

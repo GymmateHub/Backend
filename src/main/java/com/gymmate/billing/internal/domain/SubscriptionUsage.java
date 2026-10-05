@@ -1,6 +1,6 @@
 package com.gymmate.billing.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "subscription_usage")
-public class SubscriptionUsage extends BaseAuditEntity {
+public class SubscriptionUsage extends BaseAuditJpaEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_id", nullable = false)

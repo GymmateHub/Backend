@@ -1,6 +1,6 @@
 package com.gymmate.identity.internal.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "staff")
-public class Staff extends TenantEntity {
+public class Staff extends TenantJpaEntity {
 
   @Column(name = "user_id", nullable = false)
   private UUID userId;

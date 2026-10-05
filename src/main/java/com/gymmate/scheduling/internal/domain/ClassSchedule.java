@@ -1,7 +1,7 @@
 package com.gymmate.scheduling.internal.domain;
 
 import com.gymmate.shared.constants.ClassScheduleStatus;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * ClassSchedule entity representing a scheduled class instance.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -20,10 +20,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "class_schedules")
-public class ClassSchedule extends GymScopedEntity {
+public class ClassSchedule extends GymScopedJpaEntity {
 
-  // Note: gymId is inherited from GymScopedEntity
-  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
+  // Note: gymId is inherited from GymScopedJpaEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
   @Column(name = "class_id", nullable = false)
   private UUID classId;
 

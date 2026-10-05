@@ -1,6 +1,6 @@
 package com.gymmate.organisation.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -23,7 +23,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Organisation extends BaseAuditEntity {
+public class Organisation extends BaseAuditJpaEntity {
 
     @Column(nullable = false)
     private String name;
@@ -89,7 +89,7 @@ public class Organisation extends BaseAuditEntity {
     @Column(name = "contact_phone", length = 20)
     private String contactPhone;
 
-    // Status - Note: isActive is inherited from BaseAuditEntity as 'active' field
+    // Status - Note: isActive is inherited from BaseAuditJpaEntity as 'active' field
     @Column(name = "onboarding_completed")
     @Builder.Default
     private boolean onboardingCompleted = false;

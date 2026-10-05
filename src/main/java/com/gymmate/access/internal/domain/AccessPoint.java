@@ -2,7 +2,7 @@ package com.gymmate.access.internal.domain;
 
 import com.gymmate.access.internal.domain.enums.AccessPointMode;
 import com.gymmate.access.internal.domain.enums.AccessPointType;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 /**
  * A controlled physical entry point (door / turnstile / gate) at a gym.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -19,7 +19,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "access_points")
-public class AccessPoint extends GymScopedEntity {
+public class AccessPoint extends GymScopedJpaEntity {
 
   @Column(nullable = false, length = 100)
   private String name;

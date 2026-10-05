@@ -1,7 +1,7 @@
 package com.gymmate.health.internal.domain;
 
 import com.gymmate.health.internal.domain.enums.MetricType;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -26,7 +26,7 @@ import java.util.UUID;
     @Index(name = "idx_metric_member_type_date", columnList = "member_id,metric_type,measurement_date"),
     @Index(name = "idx_metric_gym_date", columnList = "gym_id,measurement_date")
 })
-public class HealthMetric extends GymScopedEntity {
+public class HealthMetric extends GymScopedJpaEntity {
 
     @Column(name = "member_id", nullable = false)
     private UUID memberId;

@@ -1,6 +1,6 @@
 package com.gymmate.access.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,7 +18,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "door_benefits")
-public class DoorBenefit extends GymScopedEntity {
+public class DoorBenefit extends GymScopedJpaEntity {
 
   @Column(name = "access_point_id", nullable = false)
   private UUID accessPointId;

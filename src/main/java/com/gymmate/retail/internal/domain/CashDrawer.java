@@ -1,6 +1,6 @@
 package com.gymmate.retail.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -11,7 +11,7 @@ import java.util.UUID;
 
 /**
  * CashDrawer entity for tracking cash register sessions.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -20,7 +20,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "pos_cash_drawers")
-public class CashDrawer extends GymScopedEntity {
+public class CashDrawer extends GymScopedJpaEntity {
 
     @Column(name = "session_date", nullable = false)
     private LocalDate sessionDate;

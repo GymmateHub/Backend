@@ -2,7 +2,7 @@ package com.gymmate.health.internal.domain;
 
 import com.gymmate.health.internal.domain.enums.GoalStatus;
 import com.gymmate.health.internal.domain.enums.GoalType;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -27,7 +27,7 @@ import java.util.UUID;
     @Index(name = "idx_goal_member_status", columnList = "member_id,status"),
     @Index(name = "idx_goal_deadline", columnList = "deadline_date")
 })
-public class FitnessGoal extends GymScopedEntity {
+public class FitnessGoal extends GymScopedJpaEntity {
 
     @Column(name = "member_id", nullable = false)
     private UUID memberId;

@@ -1,7 +1,7 @@
 package com.gymmate.identity.internal.domain;
 
 import com.gymmate.shared.constants.MemberStatus;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 import jakarta.persistence.*;
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * Member entity representing a gym member.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  *
  * A member belongs to a specific gym but the User they reference
  * belongs to the organisation (allowing multi-gym membership if org allows).
@@ -24,13 +24,13 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "members")
-public class Member extends GymScopedEntity {
+public class Member extends GymScopedJpaEntity {
 
   @Column(name = "user_id", nullable = false)
   private UUID userId;
 
-  // Note: gymId is inherited from GymScopedEntity
-  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
+  // Note: gymId is inherited from GymScopedJpaEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
 
   @Column(name = "membership_number", unique = true, length = 50)
   private String membershipNumber;

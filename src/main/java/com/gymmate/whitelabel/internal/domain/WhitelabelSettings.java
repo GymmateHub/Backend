@@ -1,6 +1,6 @@
 package com.gymmate.whitelabel.internal.domain;
 
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -18,7 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class WhitelabelSettings extends TenantEntity {
+public class WhitelabelSettings extends TenantJpaEntity {
 
     @Column(name = "gym_id")
     private UUID gymId;

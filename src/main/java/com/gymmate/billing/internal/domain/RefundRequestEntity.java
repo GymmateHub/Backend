@@ -3,9 +3,9 @@ package com.gymmate.billing.internal.domain;
 import com.gymmate.shared.constants.RefundReasonCategory;
 import com.gymmate.shared.constants.RefundRequestStatus;
 import com.gymmate.shared.constants.RefundType;
-import com.gymmate.shared.domain.BaseAuditEntity;
-import com.gymmate.shared.domain.GymScopedEntity;
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
+import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -24,7 +24,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "refund_requests")
-public class RefundRequestEntity extends GymScopedEntity {
+public class RefundRequestEntity extends GymScopedJpaEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "refund_type", nullable = false, length = 30)

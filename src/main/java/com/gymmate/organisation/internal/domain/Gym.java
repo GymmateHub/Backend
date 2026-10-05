@@ -1,7 +1,7 @@
 package com.gymmate.organisation.internal.domain;
 
 import com.gymmate.shared.constants.GymStatus;
-import com.gymmate.shared.domain.TenantEntity;
+import com.gymmate.shared.infrastructure.persistence.TenantJpaEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -19,7 +19,7 @@ import java.util.UUID;
 
 /**
  * Gym domain entity representing a gym facility/location.
- * Extends TenantEntity for automatic organisation filtering.
+ * Extends TenantJpaEntity for automatic organisation filtering.
  *
  * A Gym belongs to an Organisation (1:N relationship).
  * Members, Classes, Schedules, etc. belong to a specific Gym.
@@ -31,9 +31,9 @@ import java.util.UUID;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Gym extends TenantEntity {
+public class Gym extends TenantJpaEntity {
 
-  // Note: organisationId is inherited from TenantEntity
+  // Note: organisationId is inherited from TenantJpaEntity
 
   @Column(nullable = false)
   private String name;
@@ -154,7 +154,7 @@ public class Gym extends TenantEntity {
     this.email = contactEmail.toLowerCase().trim();
     this.contactPhone = contactPhone.trim();
     this.phone = contactPhone.trim();
-    setOrganisationId(organisationId); // Use setter from TenantEntity
+    setOrganisationId(organisationId); // Use setter from TenantJpaEntity
 
     // Initialize defaults
     this.timezone = "UTC";

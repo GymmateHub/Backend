@@ -1,6 +1,6 @@
 package com.gymmate.billing.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "stripe_webhook_events")
-public class StripeWebhookEvent extends BaseAuditEntity {
+public class StripeWebhookEvent extends BaseAuditJpaEntity {
 
     @Column(name = "stripe_event_id", unique = true, nullable = false)
     private String stripeEventId;

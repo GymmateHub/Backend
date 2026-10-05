@@ -1,6 +1,6 @@
 package com.gymmate.retail.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 /**
  * StockMovement entity representing inventory stock movements/transactions.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -19,10 +19,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "stock_movements")
-public class StockMovement extends GymScopedEntity {
+public class StockMovement extends GymScopedJpaEntity {
 
-  // Note: gymId is inherited from GymScopedEntity
-  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
+  // Note: gymId is inherited from GymScopedJpaEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
 
   @Column(name = "inventory_item_id", nullable = false)
   private UUID inventoryItemId;

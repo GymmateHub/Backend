@@ -1,6 +1,6 @@
 package com.gymmate.notification.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,7 +16,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "email_suppressions")
-public class EmailSuppression extends BaseAuditEntity {
+public class EmailSuppression extends BaseAuditJpaEntity {
 
     @Column(nullable = false)
     private String email;

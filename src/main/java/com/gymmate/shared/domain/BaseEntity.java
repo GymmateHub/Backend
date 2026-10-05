@@ -1,27 +1,17 @@
 package com.gymmate.shared.domain;
 
-import jakarta.persistence.*;
 import lombok.Data;
-import org.hibernate.annotations.ColumnDefault;
 
 import java.util.UUID;
 
 /**
- * Base entity class with only ID field.
- * Uses PostgreSQL 18's native uuidv7() for time-ordered UUIDs generated server-side.
- * For entities that need audit fields (createdAt, updatedAt, active), extend BaseAuditEntity instead.
+ * Root of every domain entity: identity only. Pure Java (no persistence mapping) —
+ * the JPA representation lives in
+ * {@code com.gymmate.shared.infrastructure.persistence.BaseJpaEntity}; ids are assigned by
+ * the database (PostgreSQL {@code uuidv7()}) and written back on save.
  */
 @Data
-@MappedSuperclass
 public abstract class BaseEntity {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @ColumnDefault("uuidv7()")
-  @Column(
-    name = "id",
-    updatable = false,
-    nullable = false
-  )
   private UUID id;
 }

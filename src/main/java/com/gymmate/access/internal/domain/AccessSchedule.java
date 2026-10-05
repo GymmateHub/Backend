@@ -1,6 +1,6 @@
 package com.gymmate.access.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -20,7 +20,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "access_schedules")
-public class AccessSchedule extends GymScopedEntity {
+public class AccessSchedule extends GymScopedJpaEntity {
 
   @Column(name = "membership_plan_id", nullable = false)
   private UUID membershipPlanId;

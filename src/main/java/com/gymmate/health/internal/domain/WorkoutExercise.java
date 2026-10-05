@@ -1,6 +1,6 @@
 package com.gymmate.health.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
 import lombok.*;
@@ -22,7 +22,7 @@ import java.util.UUID;
 @Table(name = "workout_exercises", indexes = {
     @Index(name = "idx_workout_exercise_log", columnList = "workout_log_id,exercise_order")
 })
-public class WorkoutExercise extends BaseAuditEntity {
+public class WorkoutExercise extends BaseAuditJpaEntity {
 
     @Column(name = "workout_log_id", nullable = false)
     private UUID workoutLogId;

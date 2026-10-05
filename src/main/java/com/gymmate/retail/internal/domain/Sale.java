@@ -1,6 +1,6 @@
 package com.gymmate.retail.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * Sale entity representing a POS transaction.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
@@ -21,10 +21,10 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "pos_sales")
-public class Sale extends GymScopedEntity {
+public class Sale extends GymScopedJpaEntity {
 
-    // Note: gymId is inherited from GymScopedEntity
-    // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
+    // Note: gymId is inherited from GymScopedJpaEntity
+    // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
 
     @Column(name = "sale_number", nullable = false, unique = true, length = 50)
     private String saleNumber;

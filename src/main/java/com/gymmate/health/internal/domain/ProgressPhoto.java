@@ -1,6 +1,6 @@
 package com.gymmate.health.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,7 +22,7 @@ import java.util.UUID;
 @Table(name = "progress_photos", indexes = {
     @Index(name = "idx_photo_member_date", columnList = "member_id,photo_date")
 })
-public class ProgressPhoto extends GymScopedEntity {
+public class ProgressPhoto extends GymScopedJpaEntity {
 
     @Column(name = "member_id", nullable = false)
     private UUID memberId;

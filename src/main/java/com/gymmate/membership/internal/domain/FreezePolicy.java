@@ -1,6 +1,6 @@
 package com.gymmate.membership.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +15,7 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "freeze_policies")
-public class FreezePolicy extends GymScopedEntity {
+public class FreezePolicy extends GymScopedJpaEntity {
 
   @Column(name = "policy_name", nullable = false)
   private String policyName;

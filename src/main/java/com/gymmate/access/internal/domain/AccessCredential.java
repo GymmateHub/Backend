@@ -1,7 +1,7 @@
 package com.gymmate.access.internal.domain;
 
 import com.gymmate.access.internal.domain.enums.CredentialType;
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,7 +19,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "access_credentials")
-public class AccessCredential extends GymScopedEntity {
+public class AccessCredential extends GymScopedJpaEntity {
 
   @Column(name = "member_id", nullable = false)
   private UUID memberId;

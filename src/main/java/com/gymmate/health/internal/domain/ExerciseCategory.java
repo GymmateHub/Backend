@@ -1,6 +1,6 @@
 package com.gymmate.health.internal.domain;
 
-import com.gymmate.shared.domain.BaseAuditEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,7 +15,7 @@ import lombok.*;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "exercise_categories")
-public class ExerciseCategory extends BaseAuditEntity {
+public class ExerciseCategory extends BaseAuditJpaEntity {
 
     @Column(nullable = false, unique = true, length = 50)
     private String name; // Strength, Cardio, Flexibility, etc.

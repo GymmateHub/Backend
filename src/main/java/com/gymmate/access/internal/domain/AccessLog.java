@@ -1,6 +1,6 @@
 package com.gymmate.access.internal.domain;
 
-import com.gymmate.shared.domain.GymScopedEntity;
+import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -29,7 +29,7 @@ import java.util.UUID;
 @Table(name = "access_logs", indexes = {
     @Index(name = "idx_access_member", columnList = "member_id, access_time DESC")
 })
-public class AccessLog extends GymScopedEntity {
+public class AccessLog extends GymScopedJpaEntity {
 
     @Column(name = "member_id", nullable = false)
     private UUID memberId;

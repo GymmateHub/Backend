@@ -1,6 +1,6 @@
 package com.gymmate.notification.internal.domain;
 
-import com.gymmate.shared.domain.BaseEntity;
+import com.gymmate.shared.infrastructure.persistence.BaseJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
 @EqualsAndHashCode(callSuper = true)
 @Builder
 @Table(name = "sns_processed_messages")
-public class SnsProcessedMessage extends BaseEntity {
+public class SnsProcessedMessage extends BaseJpaEntity {
 
     @Column(name = "message_id", nullable = false, unique = true, length = 255)
     private String messageId;
