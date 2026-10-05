@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Repository interface for StockMovement domain entity.
@@ -36,4 +39,24 @@ public interface StockMovementRepository {
   void delete(StockMovement stockMovement);
 
   long countByInventoryItemId(UUID inventoryItemId);
+  
+  List<StockMovement> saveAll(Iterable<StockMovement> entities);
+  
+  boolean existsById(UUID id);
+  
+  List<StockMovement> findAll();
+  
+  List<StockMovement> findAllById(Iterable<UUID> ids);
+  
+  long count();
+  
+  void deleteById(UUID id);
+  
+  void deleteAll(Iterable<StockMovement> entities);
+  
+  StockMovement saveAndFlush(StockMovement entity);
+  
+  void flush();
+  
+  Page<StockMovement> findAll(Pageable pageable);
 }

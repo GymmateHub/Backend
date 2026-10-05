@@ -2,7 +2,7 @@ package com.gymmate.retail.internal.application;
 
 import com.gymmate.retail.api.InventoryFacade;
 import com.gymmate.retail.internal.domain.InventoryItem;
-import com.gymmate.retail.internal.infrastructure.persistence.InventoryItemJpaRepository;
+import com.gymmate.retail.internal.application.port.InventoryItemRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class InventoryFacadeImpl implements InventoryFacade {
 
-    private final InventoryItemJpaRepository inventoryItemJpaRepository;
+    private final InventoryItemRepository inventoryItemJpaRepository;
     private final InventoryService inventoryService;
 
     @Override

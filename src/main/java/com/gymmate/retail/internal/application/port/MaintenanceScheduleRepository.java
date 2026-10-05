@@ -6,6 +6,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Repository interface for MaintenanceSchedule domain entity.
@@ -35,4 +38,24 @@ public interface MaintenanceScheduleRepository {
   void delete(MaintenanceSchedule maintenanceSchedule);
 
   long countByEquipmentId(UUID equipmentId);
+  
+  List<MaintenanceSchedule> saveAll(Iterable<MaintenanceSchedule> entities);
+  
+  boolean existsById(UUID id);
+  
+  List<MaintenanceSchedule> findAll();
+  
+  List<MaintenanceSchedule> findAllById(Iterable<UUID> ids);
+  
+  long count();
+  
+  void deleteById(UUID id);
+  
+  void deleteAll(Iterable<MaintenanceSchedule> entities);
+  
+  MaintenanceSchedule saveAndFlush(MaintenanceSchedule entity);
+  
+  void flush();
+  
+  Page<MaintenanceSchedule> findAll(Pageable pageable);
 }

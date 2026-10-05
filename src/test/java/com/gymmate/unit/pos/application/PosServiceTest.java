@@ -9,9 +9,9 @@ import com.gymmate.retail.api.InventoryFacade;
 import com.gymmate.retail.api.dto.CreateSaleRequest;
 import com.gymmate.retail.api.dto.SaleItemRequest;
 import com.gymmate.retail.internal.application.PosService;
-import com.gymmate.retail.internal.infrastructure.persistence.CashDrawerJpaRepository;
-import com.gymmate.retail.internal.infrastructure.persistence.SaleItemJpaRepository;
-import com.gymmate.retail.internal.infrastructure.persistence.SaleJpaRepository;
+import com.gymmate.retail.internal.application.port.CashDrawerRepository;
+import com.gymmate.retail.internal.application.port.SaleItemRepository;
+import com.gymmate.retail.internal.application.port.SaleRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -38,13 +38,13 @@ import static org.mockito.Mockito.*;
 class PosServiceTest {
 
     @Mock
-    private SaleJpaRepository saleRepository;
+    private SaleRepository saleRepository;
 
     @Mock
-    private SaleItemJpaRepository saleItemRepository;
+    private SaleItemRepository saleItemRepository;
 
     @Mock
-    private CashDrawerJpaRepository cashDrawerRepository;
+    private CashDrawerRepository cashDrawerRepository;
 
     @Mock
     private InventoryFacade inventoryFacade;

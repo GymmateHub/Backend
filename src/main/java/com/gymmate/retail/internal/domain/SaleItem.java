@@ -1,7 +1,6 @@
 package com.gymmate.retail.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.GymScopedEntity;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -14,68 +13,67 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "pos_sale_items")
-public class SaleItem extends GymScopedJpaEntity {
+public class SaleItem extends GymScopedEntity {
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sale_id", nullable = false)
-    private Sale sale;
+    private 
+    Sale sale;
 
-    @Column(name = "inventory_item_id")
     private UUID inventoryItemId; // Reference to inventory item
 
-    @Column(name = "item_name", nullable = false, length = 200)
     private String itemName;
 
-    @Column(name = "item_sku", length = 100)
     private String itemSku;
 
-    @Column(name = "item_barcode", length = 100)
     private String itemBarcode;
 
-    @Column(nullable = false)
     private Integer quantity;
 
-    @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal unitPrice;
 
-    @Column(name = "cost_price", precision = 12, scale = 2)
     private BigDecimal costPrice; // For profit tracking
 
-    @Column(name = "discount_amount", precision = 12, scale = 2)
     @Builder.Default
-    private BigDecimal discountAmount = BigDecimal.ZERO;
+    private 
+    BigDecimal discountAmount = BigDecimal.ZERO;
 
-    @Column(name = "discount_percentage", precision = 5, scale = 2)
     private BigDecimal discountPercentage;
 
-    @Column(name = "line_total", nullable = false, precision = 12, scale = 2)
     @Builder.Default
-    private BigDecimal lineTotal = BigDecimal.ZERO;
+    private 
+    BigDecimal lineTotal = BigDecimal.ZERO;
 
-    @Column(columnDefinition = "TEXT")
     private String notes;
 
-    @Column(name = "refunded")
     @Builder.Default
-    private boolean refunded = false;
+    private 
+    boolean refunded = false;
 
-    @Column(name = "refunded_quantity")
     @Builder.Default
-    private Integer refundedQuantity = 0;
+    private 
+    Integer refundedQuantity = 0;
 
     // Business methods
     public void calculateLineTotal() {
+        LineTotals totals = lineTotals(unitPrice, quantity, discountPercentage, discountAmount);
+        this.discountAmount = totals.discountAmount();
+        this.lineTotal = totals.lineTotal();
+    }
+
+    /** Derived amounts of a sale line; applied on every write so they can never go stale. */
+    public record LineTotals(BigDecimal discountAmount, BigDecimal lineTotal) {
+    }
+
+    public static LineTotals lineTotals(BigDecimal unitPrice, Integer quantity, BigDecimal discountPercentage,
+                                        BigDecimal discountAmount) {
         BigDecimal gross = unitPrice.multiply(BigDecimal.valueOf(quantity));
 
         if (discountPercentage != null && discountPercentage.compareTo(BigDecimal.ZERO) > 0) {
-            this.discountAmount = gross.multiply(discountPercentage).divide(BigDecimal.valueOf(100));
+            discountAmount = gross.multiply(discountPercentage).divide(BigDecimal.valueOf(100));
         }
 
-        this.lineTotal = gross.subtract(discountAmount != null ? discountAmount : BigDecimal.ZERO);
+        return new LineTotals(discountAmount, gross.subtract(discountAmount != null ? discountAmount : BigDecimal.ZERO));
     }
 
     public BigDecimal getProfit() {
@@ -99,11 +97,5 @@ public class SaleItem extends GymScopedJpaEntity {
         if (this.refundedQuantity >= this.quantity) {
             this.refunded = true;
         }
-    }
-
-    @PrePersist
-    @PreUpdate
-    protected void calculateBeforeSave() {
-        calculateLineTotal();
     }
 }

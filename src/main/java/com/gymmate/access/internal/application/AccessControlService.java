@@ -1,7 +1,7 @@
 package com.gymmate.access.internal.application;
 
 import com.gymmate.access.internal.domain.AccessLog;
-import com.gymmate.access.internal.infrastructure.persistence.AccessLogRepository;
+import com.gymmate.access.internal.application.port.AccessLogRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.identity.api.IdentityApi;
 import com.gymmate.identity.api.dto.MemberProfile;

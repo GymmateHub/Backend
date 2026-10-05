@@ -6,6 +6,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 /**
  * Repository interface for MaintenanceRecord domain entity.
@@ -33,4 +36,24 @@ public interface MaintenanceRecordRepository {
   void delete(MaintenanceRecord maintenanceRecord);
 
   long countByEquipmentId(UUID equipmentId);
+  
+  List<MaintenanceRecord> saveAll(Iterable<MaintenanceRecord> entities);
+  
+  boolean existsById(UUID id);
+  
+  List<MaintenanceRecord> findAll();
+  
+  List<MaintenanceRecord> findAllById(Iterable<UUID> ids);
+  
+  long count();
+  
+  void deleteById(UUID id);
+  
+  void deleteAll(Iterable<MaintenanceRecord> entities);
+  
+  MaintenanceRecord saveAndFlush(MaintenanceRecord entity);
+  
+  void flush();
+  
+  Page<MaintenanceRecord> findAll(Pageable pageable);
 }

@@ -1,7 +1,6 @@
 package com.gymmate.access.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.GymScopedEntity;
 import lombok.*;
 
 import java.time.DayOfWeek;
@@ -16,24 +15,18 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "access_schedules")
-public class AccessSchedule extends GymScopedJpaEntity {
+public class AccessSchedule extends GymScopedEntity {
 
-  @Column(name = "membership_plan_id", nullable = false)
   private UUID membershipPlanId;
 
   /** Day this window applies to; null means every day. */
-  @Enumerated(EnumType.STRING)
-  @Column(name = "day_of_week", length = 10)
-  private DayOfWeek dayOfWeek;
+  private 
+  DayOfWeek dayOfWeek;
 
-  @Column(name = "start_time", nullable = false)
   private LocalTime startTime;
 
-  @Column(name = "end_time", nullable = false)
   private LocalTime endTime;
 
   public boolean matches(DayOfWeek day, LocalTime time) {

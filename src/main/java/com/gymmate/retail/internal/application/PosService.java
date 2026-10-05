@@ -8,9 +8,9 @@ import com.gymmate.retail.internal.domain.SaleStatus;
 import com.gymmate.retail.api.InventoryFacade;
 import com.gymmate.retail.api.dto.CreateSaleRequest;
 import com.gymmate.retail.api.dto.SaleItemRequest;
-import com.gymmate.retail.internal.infrastructure.persistence.CashDrawerJpaRepository;
-import com.gymmate.retail.internal.infrastructure.persistence.SaleItemJpaRepository;
-import com.gymmate.retail.internal.infrastructure.persistence.SaleJpaRepository;
+import com.gymmate.retail.internal.application.port.CashDrawerRepository;
+import com.gymmate.retail.internal.application.port.SaleItemRepository;
+import com.gymmate.retail.internal.application.port.SaleRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +34,9 @@ import java.util.concurrent.atomic.AtomicLong;
 @RequiredArgsConstructor
 public class PosService {
 
-    private final SaleJpaRepository saleRepository;
-    private final SaleItemJpaRepository saleItemRepository;
-    private final CashDrawerJpaRepository cashDrawerRepository;
+    private final SaleRepository saleRepository;
+    private final SaleItemRepository saleItemRepository;
+    private final CashDrawerRepository cashDrawerRepository;
     private final InventoryFacade inventoryFacade;
 
     private static final AtomicLong saleCounter = new AtomicLong(System.currentTimeMillis());

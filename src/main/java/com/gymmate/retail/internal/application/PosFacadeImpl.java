@@ -1,7 +1,7 @@
 package com.gymmate.retail.internal.application;
 
 import com.gymmate.retail.api.PosFacade;
-import com.gymmate.retail.internal.infrastructure.persistence.SaleJpaRepository;
+import com.gymmate.retail.internal.application.port.SaleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +13,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class PosFacadeImpl implements PosFacade {
 
-    private final SaleJpaRepository saleJpaRepository;
+    private final SaleRepository saleJpaRepository;
 
     @Override
     public BigDecimal sumRevenueByGymIdAndDateRange(UUID gymId, LocalDateTime start, LocalDateTime end) {

@@ -1,11 +1,9 @@
 package com.gymmate.retail.internal.infrastructure.persistence;
 
-import com.gymmate.retail.internal.domain.InventoryItem;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -14,38 +12,38 @@ import java.util.UUID;
  * JPA repository for InventoryItem entity.
  */
 @Repository
-public interface InventoryItemJpaRepository extends JpaRepository<InventoryItem, UUID> {
+public interface InventoryItemJpaRepository extends JpaRepository<InventoryItemJpaEntity, UUID> {
 
-  List<InventoryItem> findByOrganisationId(UUID organisationId);
+    List<InventoryItemJpaEntity> findByOrganisationId(UUID organisationId);
 
-  List<InventoryItem> findByGymId(UUID gymId);
+    List<InventoryItemJpaEntity> findByGymId(UUID gymId);
 
-  Optional<InventoryItem> findBySku(String sku);
+    Optional<InventoryItemJpaEntity> findBySku(String sku);
 
-  @Query("SELECT i FROM InventoryItem i WHERE i.gymId = :gymId AND i.active = true")
-  List<InventoryItem> findActiveByGymId(@Param("gymId") UUID gymId);
+    @Query("SELECT i FROM InventoryItem i WHERE i.gymId = :gymId AND i.active = true")
+    List<InventoryItemJpaEntity> findActiveByGymId(@Param("gymId") UUID gymId);
 
-  @Query("SELECT i FROM InventoryItem i WHERE i.organisationId = :organisationId AND i.active = true")
-  List<InventoryItem> findActiveByOrganisationId(@Param("organisationId") UUID organisationId);
+    @Query("SELECT i FROM InventoryItem i WHERE i.organisationId = :organisationId AND i.active = true")
+    List<InventoryItemJpaEntity> findActiveByOrganisationId(@Param("organisationId") UUID organisationId);
 
-  @Query("SELECT i FROM InventoryItem i WHERE i.gymId = :gymId AND i.currentStock <= i.minimumStock")
-  List<InventoryItem> findLowStockByGymId(@Param("gymId") UUID gymId);
+    @Query("SELECT i FROM InventoryItem i WHERE i.gymId = :gymId AND i.currentStock <= i.minimumStock")
+    List<InventoryItemJpaEntity> findLowStockByGymId(@Param("gymId") UUID gymId);
 
-  @Query("SELECT i FROM InventoryItem i WHERE i.organisationId = :organisationId AND i.currentStock <= i.minimumStock")
-  List<InventoryItem> findLowStockByOrganisationId(@Param("organisationId") UUID organisationId);
+    @Query("SELECT i FROM InventoryItem i WHERE i.organisationId = :organisationId AND i.currentStock <= i.minimumStock")
+    List<InventoryItemJpaEntity> findLowStockByOrganisationId(@Param("organisationId") UUID organisationId);
 
-  @Query("SELECT i FROM InventoryItem i WHERE i.gymId = :gymId AND i.currentStock <= i.reorderPoint")
-  List<InventoryItem> findReorderNeededByGymId(@Param("gymId") UUID gymId);
+    @Query("SELECT i FROM InventoryItem i WHERE i.gymId = :gymId AND i.currentStock <= i.reorderPoint")
+    List<InventoryItemJpaEntity> findReorderNeededByGymId(@Param("gymId") UUID gymId);
 
-  @Query("SELECT i FROM InventoryItem i WHERE i.organisationId = :organisationId AND i.currentStock <= i.reorderPoint")
-  List<InventoryItem> findReorderNeededByOrganisationId(@Param("organisationId") UUID organisationId);
+    @Query("SELECT i FROM InventoryItem i WHERE i.organisationId = :organisationId AND i.currentStock <= i.reorderPoint")
+    List<InventoryItemJpaEntity> findReorderNeededByOrganisationId(@Param("organisationId") UUID organisationId);
 
-  long countByGymId(UUID gymId);
+    long countByGymId(UUID gymId);
 
-  long countByOrganisationId(UUID organisationId);
+    long countByOrganisationId(UUID organisationId);
 
-  boolean existsBySku(String sku);
+    boolean existsBySku(String sku);
 
-  @Query("SELECT COUNT(i) FROM InventoryItem i WHERE i.gymId = :gymId AND i.currentStock < i.minimumStock")
-  long countByGymIdAndCurrentStockLessThanMinimumStock(@Param("gymId") UUID gymId);
+    @Query("SELECT COUNT(i) FROM InventoryItem i WHERE i.gymId = :gymId AND i.currentStock < i.minimumStock")
+    long countByGymIdAndCurrentStockLessThanMinimumStock(@Param("gymId") UUID gymId);
 }
