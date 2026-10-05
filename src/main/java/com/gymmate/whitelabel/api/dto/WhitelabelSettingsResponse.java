@@ -1,9 +1,9 @@
 package com.gymmate.whitelabel.api.dto;
 
-import com.gymmate.whitelabel.domain.NewsletterProvider;
-import com.gymmate.whitelabel.domain.SmtpSecurity;
-import com.gymmate.whitelabel.domain.WhatsAppProvider;
-import com.gymmate.whitelabel.domain.WhitelabelSettings;
+import com.gymmate.whitelabel.internal.domain.NewsletterProvider;
+import com.gymmate.whitelabel.internal.domain.SmtpSecurity;
+import com.gymmate.whitelabel.internal.domain.WhatsAppProvider;
+import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

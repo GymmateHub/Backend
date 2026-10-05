@@ -1,8 +1,8 @@
 package com.gymmate.notification.api.dto;
 
-import com.gymmate.notification.domain.AudienceType;
-import com.gymmate.notification.domain.CampaignStatus;
-import com.gymmate.notification.domain.NewsletterCampaign;
+import com.gymmate.notification.internal.domain.AudienceType;
+import com.gymmate.notification.internal.domain.CampaignStatus;
+import com.gymmate.notification.internal.domain.NewsletterCampaign;
 import lombok.Builder;
 import lombok.Data;
 

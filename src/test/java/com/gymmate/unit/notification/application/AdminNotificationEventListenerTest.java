@@ -1,15 +1,15 @@
 package com.gymmate.unit.notification.application;
 
-import com.gymmate.notification.events.MemberJoinedEvent;
-import com.gymmate.notification.events.PaymentFailedEvent;
-import com.gymmate.notification.events.PaymentSuccessEvent;
-import com.gymmate.notification.events.SubscriptionExpiringEvent;
+import com.gymmate.notification.api.event.MemberJoinedEvent;
+import com.gymmate.notification.api.event.PaymentFailedEvent;
+import com.gymmate.notification.api.event.PaymentSuccessEvent;
+import com.gymmate.notification.api.event.SubscriptionExpiringEvent;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.gymmate.notification.application.AdminNotificationEventListener;
-import com.gymmate.notification.application.NotificationDispatcher;
-import com.gymmate.notification.domain.Notification;
-import com.gymmate.notification.infrastructure.NotificationRepository;
+import com.gymmate.notification.internal.infrastructure.messaging.AdminNotificationEventListener;
+import com.gymmate.notification.internal.application.NotificationDispatcher;
+import com.gymmate.notification.internal.domain.Notification;
+import com.gymmate.notification.internal.application.port.NotificationRepository;
 import com.gymmate.shared.constants.NotificationPriority;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

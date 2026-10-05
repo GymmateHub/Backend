@@ -1,6 +1,6 @@
 package com.gymmate.user.application;
 
-import com.gymmate.notification.application.EmailService;
+import com.gymmate.notification.internal.application.EmailService;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.user.api.dto.InviteRequest;

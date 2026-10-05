@@ -1,6 +1,6 @@
 package com.gymmate.ai.api.dto;
 
-import com.gymmate.ai.domain.AiRecommendation;
+import com.gymmate.ai.internal.domain.AiRecommendation;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;

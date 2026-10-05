@@ -1,10 +1,10 @@
 package com.gymmate.unit.payment.application;
 
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.notification.application.NotificationService;
-import com.gymmate.notification.events.ChargeDisputedEvent;
-import com.gymmate.notification.events.ChargeRefundedEvent;
-import com.gymmate.notification.events.SubscriptionPausedEvent;
+import com.gymmate.notification.internal.application.NotificationService;
+import com.gymmate.notification.api.event.ChargeDisputedEvent;
+import com.gymmate.notification.api.event.ChargeRefundedEvent;
+import com.gymmate.notification.api.event.SubscriptionPausedEvent;
 import com.gymmate.payment.application.PaymentNotificationService;
 import com.gymmate.payment.application.StripeConnectService;
 import com.gymmate.payment.application.StripeWebhookService;

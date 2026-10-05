@@ -1,7 +1,7 @@
 package com.gymmate.membership.api.dto;
 
-import com.gymmate.membership.domain.MemberMembership;
-import com.gymmate.membership.domain.MembershipStatus;
+import com.gymmate.membership.internal.domain.MemberMembership;
+import com.gymmate.membership.internal.domain.MembershipStatus;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

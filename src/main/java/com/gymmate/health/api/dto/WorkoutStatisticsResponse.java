@@ -1,6 +1,6 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.internal.service.WorkoutTrackingService;
+import com.gymmate.health.internal.application.WorkoutTrackingService;
 import com.gymmate.health.internal.domain.enums.WorkoutIntensity;
 
 import java.util.Map;

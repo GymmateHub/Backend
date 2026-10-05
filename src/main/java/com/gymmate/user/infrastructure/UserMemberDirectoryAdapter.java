@@ -1,7 +1,7 @@
 package com.gymmate.user.infrastructure;
 
-import com.gymmate.notification.application.AudienceResolver.MemberRecipient;
-import com.gymmate.notification.application.port.MemberDirectory;
+import com.gymmate.notification.internal.application.AudienceResolver.MemberRecipient;
+import com.gymmate.notification.api.spi.MemberDirectory;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.user.domain.Member;
 import com.gymmate.user.domain.User;

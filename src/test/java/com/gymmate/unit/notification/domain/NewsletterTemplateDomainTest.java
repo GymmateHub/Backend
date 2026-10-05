@@ -1,6 +1,6 @@
 package com.gymmate.unit.notification.domain;
 
-import com.gymmate.notification.domain.NewsletterTemplate;
+import com.gymmate.notification.internal.domain.NewsletterTemplate;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

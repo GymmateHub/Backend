@@ -1,10 +1,10 @@
 package com.gymmate.unit.notification.application;
 
-import com.gymmate.notification.application.EmailService;
-import com.gymmate.notification.application.NotificationService;
-import com.gymmate.notification.domain.Notification;
+import com.gymmate.notification.internal.application.EmailService;
+import com.gymmate.notification.internal.application.NotificationService;
+import com.gymmate.notification.internal.domain.Notification;
 import com.gymmate.shared.constants.NotificationPriority;
-import com.gymmate.notification.infrastructure.NotificationRepository;
+import com.gymmate.notification.internal.application.port.NotificationRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +33,7 @@ class NotificationServiceTest {
         @Mock
         private NotificationRepository notificationRepository;
         @Mock
-        private com.gymmate.notification.infrastructure.SseEmitterRegistry sseEmitterRegistry;
+        private com.gymmate.notification.internal.infrastructure.web.SseEmitterRegistry sseEmitterRegistry;
         @Mock
         private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
         @Mock

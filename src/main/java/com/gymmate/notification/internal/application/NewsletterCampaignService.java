@@ -1,0 +1,278 @@
+package com.gymmate.notification.internal.application;
+
+import com.gymmate.notification.internal.domain.CampaignRecipient;
+import com.gymmate.notification.internal.domain.CampaignStatus;
+import com.gymmate.notification.internal.domain.NewsletterCampaign;
+import com.gymmate.notification.internal.domain.NewsletterTemplate;
+import com.gymmate.notification.api.dto.AudiencePreviewResponse;
+import com.gymmate.notification.api.dto.CreateCampaignRequest;
+import com.gymmate.notification.internal.application.port.CampaignRecipientRepository;
+import com.gymmate.notification.internal.application.port.NewsletterCampaignRepository;
+import com.gymmate.notification.internal.application.port.NewsletterTemplateRepository;
+import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.shared.multitenancy.TenantScope;
+import com.gymmate.whitelabel.internal.application.WhitelabelSettingsService;
+import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Service for managing newsletter campaigns.
+ * Sends via organisation's or gym's configured channels and incorporates whitelabel branding.
+ */
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class NewsletterCampaignService {
+
+    private final NewsletterCampaignRepository campaignRepository;
+    private final NewsletterTemplateRepository templateRepository;
+    private final CampaignRecipientRepository recipientRepository;
+    private final AudienceResolver audienceResolver;
+    private final NewsletterTemplateService templateService;
+    private final BroadcastService broadcastService;
+    private final WhitelabelSettingsService whitelabelSettingsService;
+
+    /**
+     * Create a new campaign.
+     */
+    @Transactional
+    public NewsletterCampaign create(CreateCampaignRequest request, UUID createdBy) {
+        String subject = request.getSubject();
+        String body = request.getBody();
+
+        // If using a template, copy content from template
+        if (request.getTemplateId() != null) {
+            NewsletterTemplate template = templateRepository.findById(request.getTemplateId())
+                    .orElseThrow(() -> new DomainException("TEMPLATE_NOT_FOUND",
+                            "Template not found: " + request.getTemplateId()));
+            if (subject == null || subject.isBlank()) {
+                subject = template.getSubject();
+            }
+            if (body == null || body.isBlank()) {
+                body = template.getBody();
+            }
+        }
+
+        NewsletterCampaign campaign = NewsletterCampaign.builder()
+                .templateId(request.getTemplateId())
+                .name(request.getName())
+                .subject(subject)
+                .body(body)
+                .audienceType(request.getAudienceType())
+                .audienceFilter(request.getAudienceFilter())
+                .build();
+        campaign.setCreatedBy(createdBy.toString());
+
+        campaign.setGymId(request.getGymId());
+        campaign.setOrganisationId(TenantContext.getCurrentTenantId());
+
+        // Schedule if requested
+        if (request.getScheduledAt() != null) {
+            campaign.schedule(request.getScheduledAt());
+        }
+
+        NewsletterCampaign saved = campaignRepository.save(campaign);
+        log.info("Created newsletter campaign: {} for gym: {}", saved.getId(), request.getGymId());
+        return saved;
+    }
+
+    /**
+     * Get campaign by ID.
+     */
+    @Transactional(readOnly = true)
+    public NewsletterCampaign getById(UUID id) {
+        return campaignRepository.findById(id)
+                .orElseThrow(() -> new DomainException("CAMPAIGN_NOT_FOUND",
+                        "Campaign not found: " + id));
+    }
+
+    /**
+     * Get all campaigns for a gym.
+     */
+    @Transactional(readOnly = true)
+    public List<NewsletterCampaign> getByGymId(UUID gymId) {
+        return campaignRepository.findByGymId(gymId);
+    }
+
+    /**
+     * Get all campaigns for an organisation.
+     */
+    @Transactional(readOnly = true)
+    public List<NewsletterCampaign> getByOrganisationId(UUID orgId) {
+        return campaignRepository.findByOrganisationId(orgId);
+    }
+
+    /**
+     * Schedule a campaign for future delivery.
+     */
+    @Transactional
+    public NewsletterCampaign schedule(UUID campaignId, LocalDateTime scheduledAt) {
+        NewsletterCampaign campaign = getById(campaignId);
+        campaign.schedule(scheduledAt);
+        NewsletterCampaign updated = campaignRepository.save(campaign);
+        log.info("Scheduled campaign: {} for: {}", campaignId, scheduledAt);
+        return updated;
+    }
+
+    /**
+     * Cancel a scheduled campaign.
+     */
+    @Transactional
+    public NewsletterCampaign cancel(UUID campaignId) {
+        NewsletterCampaign campaign = getById(campaignId);
+        campaign.cancel();
+        NewsletterCampaign updated = campaignRepository.save(campaign);
+        log.info("Cancelled campaign: {}", campaignId);
+        return updated;
+    }
+
+    /**
+     * Get audience preview for a campaign.
+     */
+    @Transactional(readOnly = true)
+    public AudiencePreviewResponse getAudiencePreview(UUID campaignId) {
+        NewsletterCampaign campaign = getById(campaignId);
+        return audienceResolver.getAudiencePreview(
+                campaign.getGymId(),
+                campaign.getAudienceType(),
+                campaign.getAudienceFilter());
+    }
+
+    /**
+     * Send a campaign immediately.
+     */
+    @Transactional
+    public NewsletterCampaign send(UUID campaignId, UUID sentByUserId) {
+        NewsletterCampaign campaign = getById(campaignId);
+
+        if (!campaign.canSend()) {
+            throw new DomainException("CAMPAIGN_CANNOT_SEND",
+                    "Campaign is not in a valid state to send");
+        }
+
+        campaign.startSending();
+        campaign.setSentByUserId(sentByUserId);
+        campaignRepository.save(campaign);
+
+        // Resolve audience and send asynchronously
+        sendCampaignAsync(campaign);
+
+        return campaign;
+    }
+
+    /**
+     * Asynchronously send messages to all recipients via configured channel.
+     */
+    @Async
+    public void sendCampaignAsync(NewsletterCampaign campaign) {
+        log.info("Starting async send for campaign: {}", campaign.getId());
+
+        try (TenantScope ignored = TenantScope.activate(campaign.getOrganisationId(), campaign.getGymId())) {
+            List<AudienceResolver.MemberRecipient> recipients = audienceResolver.resolveAudience(
+                    campaign.getGymId(),
+                    campaign.getAudienceType(),
+                    campaign.getAudienceFilter());
+
+            Optional<WhitelabelSettings> whitelabelOpt = whitelabelSettingsService.getWhitelabelSettings(
+                    campaign.getOrganisationId(), campaign.getGymId());
+
+            int deliveredCount = 0;
+            int failedCount = 0;
+
+            for (AudienceResolver.MemberRecipient recipient : recipients) {
+                CampaignRecipient campaignRecipient = CampaignRecipient.builder()
+                        .campaignId(campaign.getId())
+                        .memberId(recipient.memberId())
+                        .email(recipient.email())
+                        .build();
+
+                try {
+                    // Render personalized & whitelabel branded content
+                    Map<String, Object> variables = buildRecipientVariables(recipient, whitelabelOpt);
+                    String subject = templateService.renderSubject(campaign.getSubject(), variables);
+                    String body = templateService.renderTemplate(campaign.getBody(), variables);
+
+                    // Send via configured channel
+                    BroadcastService.BroadcastResult result = broadcastService.send(
+                            recipient.email(),
+                            recipient.email(),
+                            subject,
+                            body);
+
+                    if (result.success()) {
+                        campaignRecipient.markSent(result.channelUsed(), result.fallbackUsed());
+                        deliveredCount++;
+                    } else {
+                        campaignRecipient.markFailed(result.errorMessage());
+                        failedCount++;
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to send to {}: {}", recipient.email(), e.getMessage());
+                    campaignRecipient.markFailed(e.getMessage());
+                    failedCount++;
+                }
+
+                recipientRepository.save(campaignRecipient);
+            }
+
+            // Update campaign stats
+            campaign.completeSending(recipients.size(), deliveredCount, failedCount);
+            campaignRepository.save(campaign);
+
+            log.info("Completed campaign: {} - Total: {}, Delivered: {}, Failed: {}",
+                    campaign.getId(), recipients.size(), deliveredCount, failedCount);
+        }
+    }
+
+    /**
+     * Build template variables for a recipient including whitelabel branding context.
+     */
+    private Map<String, Object> buildRecipientVariables(AudienceResolver.MemberRecipient recipient, Optional<WhitelabelSettings> whitelabelOpt) {
+        Map<String, Object> variables = new HashMap<>();
+        String firstName = recipient.firstName() != null ? recipient.firstName() : "";
+        String lastName = recipient.lastName() != null ? recipient.lastName() : "";
+        variables.put("member_name", (firstName + " " + lastName).trim());
+        variables.put("first_name", firstName);
+        variables.put("last_name", lastName);
+        variables.put("email", recipient.email());
+
+        whitelabelOpt.ifPresent(w -> {
+            if (w.getBrandName() != null) variables.put("brand_name", w.getBrandName());
+            if (w.getLogoUrl() != null) variables.put("logo_url", w.getLogoUrl());
+            if (w.getPrimaryColor() != null) variables.put("primary_color", w.getPrimaryColor());
+            if (w.getSecondaryColor() != null) variables.put("secondary_color", w.getSecondaryColor());
+            if (w.getSupportEmail() != null) variables.put("support_email", w.getSupportEmail());
+            if (w.getSupportPhone() != null) variables.put("support_phone", w.getSupportPhone());
+            if (w.getEmailFooterText() != null) variables.put("email_footer", w.getEmailFooterText());
+        });
+
+        return variables;
+    }
+
+    /**
+     * Delete a campaign (soft delete).
+     */
+    @Transactional
+    public void delete(UUID campaignId) {
+        NewsletterCampaign campaign = getById(campaignId);
+        if (campaign.getStatus() == CampaignStatus.SENDING) {
+            throw new DomainException("CAMPAIGN_IN_PROGRESS",
+                    "Cannot delete a campaign that is currently sending");
+        }
+        campaign.setActive(false);
+        campaignRepository.save(campaign);
+        log.info("Soft-deleted campaign: {}", campaignId);
+    }
+}

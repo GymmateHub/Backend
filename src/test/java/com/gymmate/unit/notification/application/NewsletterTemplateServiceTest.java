@@ -2,9 +2,9 @@ package com.gymmate.unit.notification.application;
 
 import com.gymmate.notification.api.dto.CreateTemplateRequest;
 import com.gymmate.notification.api.dto.UpdateTemplateRequest;
-import com.gymmate.notification.domain.NewsletterTemplate;
-import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;
-import com.gymmate.notification.application.NewsletterTemplateService;
+import com.gymmate.notification.internal.domain.NewsletterTemplate;
+import com.gymmate.notification.internal.application.port.NewsletterTemplateRepository;
+import com.gymmate.notification.internal.application.NewsletterTemplateService;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
 import org.junit.jupiter.api.BeforeEach;

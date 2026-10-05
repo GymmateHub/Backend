@@ -1,6 +1,6 @@
 package com.gymmate.membership.api.dto;
 
-import com.gymmate.membership.domain.MembershipPlan;
+import com.gymmate.membership.internal.domain.MembershipPlan;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;

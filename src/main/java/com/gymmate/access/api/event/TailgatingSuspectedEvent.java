@@ -1,6 +1,6 @@
 package com.gymmate.access.api.event;
 
-import com.gymmate.notification.events.DomainEvent;
+import com.gymmate.shared.domain.DomainEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;

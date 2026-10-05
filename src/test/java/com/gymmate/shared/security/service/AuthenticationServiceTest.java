@@ -2,7 +2,7 @@ package com.gymmate.shared.security.service;
 
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
-import com.gymmate.notification.application.EmailService;
+import com.gymmate.notification.internal.application.EmailService;
 import com.gymmate.organisation.application.OrganisationLimitService;
 import com.gymmate.organisation.application.OrganisationService;
 import com.gymmate.organisation.domain.Organisation;

@@ -1,6 +1,6 @@
 package com.gymmate.whitelabel.api.dto;
 
-import com.gymmate.whitelabel.domain.SmtpSecurity;
+import com.gymmate.whitelabel.internal.domain.SmtpSecurity;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

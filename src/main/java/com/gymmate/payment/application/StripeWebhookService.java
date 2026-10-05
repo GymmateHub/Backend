@@ -1,13 +1,13 @@
 package com.gymmate.payment.application;
 
 import com.gymmate.payment.domain.GymInvoice;
-import com.gymmate.notification.events.ChargeDisputedEvent;
-import com.gymmate.notification.events.ChargeRefundedEvent;
-import com.gymmate.notification.events.PaymentFailedEvent;
-import com.gymmate.notification.events.PaymentSuccessEvent;
-import com.gymmate.notification.events.SubscriptionPausedEvent;
+import com.gymmate.notification.api.event.ChargeDisputedEvent;
+import com.gymmate.notification.api.event.ChargeRefundedEvent;
+import com.gymmate.notification.api.event.PaymentFailedEvent;
+import com.gymmate.notification.api.event.PaymentSuccessEvent;
+import com.gymmate.notification.api.event.SubscriptionPausedEvent;
 import com.gymmate.shared.constants.NotificationPriority;
-import com.gymmate.notification.application.NotificationService;
+import com.gymmate.notification.internal.application.NotificationService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.payment.infrastructure.GymInvoiceRepository;
@@ -289,8 +289,8 @@ public class StripeWebhookService {
                                 subscription.getTrialEnd()
                         ).toDays();
 
-                        com.gymmate.notification.events.SubscriptionExpiringEvent expiringEvent =
-                                com.gymmate.notification.events.SubscriptionExpiringEvent.builder()
+                        com.gymmate.notification.api.event.SubscriptionExpiringEvent expiringEvent =
+                                com.gymmate.notification.api.event.SubscriptionExpiringEvent.builder()
                                 .organisationId(subscription.getOrganisationId())
                                 .subscriptionId(subscription.getId())
                                 .tierName(subscription.getTier().getDisplayName())

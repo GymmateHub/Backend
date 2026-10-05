@@ -1,0 +1,58 @@
+package com.gymmate.notification.api.event;
+
+import com.gymmate.shared.domain.DomainEvent;
+import com.gymmate.shared.constants.NotificationPriority;
+import com.gymmate.shared.multitenancy.TenantAwareEvent;
+import com.gymmate.shared.multitenancy.TenantIdentity;
+import lombok.Builder;
+import lombok.Getter;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+/**
+ * Event published when a member's membership expires.
+ */
+@Getter
+@Builder
+public class MembershipExpiredEvent implements DomainEvent, TenantAwareEvent {
+
+    @Builder.Default
+    private final UUID eventId = UUID.randomUUID();
+
+    @Builder.Default
+    private final LocalDateTime occurredAt = LocalDateTime.now();
+
+    private final UUID organisationId;
+    private final UUID gymId;
+    private final UUID memberId;
+    private final UUID membershipId;
+    private final LocalDate expiredOn;
+
+    @Override
+    public TenantIdentity getTenantIdentity() {
+        return TenantIdentity.of(organisationId, gymId);
+    }
+
+    @Override
+    public String getEventType() {
+        return "MEMBERSHIP_EXPIRED";
+    }
+
+    @Override
+    public String getNotificationTitle() {
+        return "⏰ Membership Expired";
+    }
+
+    @Override
+    public String getNotificationMessage() {
+        return String.format("A membership expired on %s. Please renew to continue accessing gym services.", expiredOn);
+    }
+
+    @Override
+    public NotificationPriority getPriority() {
+        return NotificationPriority.HIGH;
+    }
+}
+

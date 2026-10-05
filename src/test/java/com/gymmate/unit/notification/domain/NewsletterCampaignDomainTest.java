@@ -1,8 +1,8 @@
 package com.gymmate.unit.notification.domain;
 
-import com.gymmate.notification.domain.AudienceType;
-import com.gymmate.notification.domain.CampaignStatus;
-import com.gymmate.notification.domain.NewsletterCampaign;
+import com.gymmate.notification.internal.domain.AudienceType;
+import com.gymmate.notification.internal.domain.CampaignStatus;
+import com.gymmate.notification.internal.domain.NewsletterCampaign;
 import com.gymmate.shared.exception.DomainException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

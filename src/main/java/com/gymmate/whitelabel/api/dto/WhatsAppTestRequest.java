@@ -1,6 +1,6 @@
 package com.gymmate.whitelabel.api.dto;
 
-import com.gymmate.whitelabel.domain.WhatsAppProvider;
+import com.gymmate.whitelabel.internal.domain.WhatsAppProvider;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

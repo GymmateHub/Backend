@@ -1,10 +1,10 @@
 package com.gymmate.unit.ai.application;
 
 import com.gymmate.ai.api.dto.AiPlanResponse;
-import com.gymmate.ai.application.AiPlanService;
-import com.gymmate.ai.application.port.LlmClient;
-import com.gymmate.ai.domain.AiRecommendation;
-import com.gymmate.ai.infrastructure.AiRecommendationRepository;
+import com.gymmate.ai.internal.application.AiPlanService;
+import com.gymmate.ai.internal.application.port.LlmClient;
+import com.gymmate.ai.internal.domain.AiRecommendation;
+import com.gymmate.ai.internal.infrastructure.persistence.AiRecommendationRepository;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
 import com.gymmate.user.application.MemberService;

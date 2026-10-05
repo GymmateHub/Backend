@@ -1,6 +1,6 @@
 /**
  * Multi-channel notifications and newsletters: in-app/SSE notifications,
- * campaigns, templates, and the shared {@link com.gymmate.notification.events.DomainEvent}
+ * campaigns, templates, and the shared {@link com.gymmate.shared.domain.DomainEvent}
  * contract other modules publish against.
  */
 @org.springframework.modulith.ApplicationModule(

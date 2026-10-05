@@ -2,7 +2,7 @@ package com.gymmate.shared.integration;
 
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.notification.application.port.GymAccessVerifier;
+import com.gymmate.notification.api.spi.GymAccessVerifier;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;

@@ -1,10 +1,10 @@
 package com.gymmate.unit.lead;
 
-import com.gymmate.lead.api.dto.LeadCreateRequest;
-import com.gymmate.lead.application.LeadService;
-import com.gymmate.lead.domain.Lead;
-import com.gymmate.lead.domain.LeadStatus;
-import com.gymmate.lead.infrastructure.LeadRepository;
+import com.gymmate.crm.api.dto.LeadCreateRequest;
+import com.gymmate.crm.internal.application.LeadService;
+import com.gymmate.crm.internal.domain.Lead;
+import com.gymmate.crm.internal.domain.LeadStatus;
+import com.gymmate.crm.internal.infrastructure.persistence.LeadRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;

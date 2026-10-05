@@ -1,6 +1,6 @@
 package com.gymmate.unit.notification.domain;
 
-import com.gymmate.notification.domain.Notification;
+import com.gymmate.notification.internal.domain.Notification;
 import com.gymmate.shared.constants.NotificationPriority;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

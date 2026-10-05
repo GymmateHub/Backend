@@ -1,6 +1,6 @@
 package com.gymmate.notification.api.dto;
 
-import com.gymmate.notification.domain.NewsletterTemplate;
+import com.gymmate.notification.internal.domain.NewsletterTemplate;
 import lombok.Builder;
 import lombok.Data;
 

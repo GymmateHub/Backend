@@ -1,6 +1,6 @@
 package com.gymmate.health.api.dto;
 
-import com.gymmate.health.internal.service.HealthMetricService;
+import com.gymmate.health.internal.application.HealthMetricService;
 import com.gymmate.health.internal.domain.enums.MetricType;
 
 import java.math.BigDecimal;

@@ -1,8 +1,8 @@
 package com.gymmate.unit.membership.domain;
 
-import com.gymmate.membership.domain.MemberMembership;
-import com.gymmate.membership.domain.MembershipPlan;
-import com.gymmate.membership.domain.MembershipStatus;
+import com.gymmate.membership.internal.domain.MemberMembership;
+import com.gymmate.membership.internal.domain.MembershipPlan;
+import com.gymmate.membership.internal.domain.MembershipStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
