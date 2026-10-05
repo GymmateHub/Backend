@@ -1,6 +1,10 @@
 package com.gymmate.health.internal.web;
 
-import com.gymmate.health.api.dto.*;
+import com.gymmate.health.api.dto.CreateGoalRequest;
+import com.gymmate.health.api.dto.FitnessGoalResponse;
+import com.gymmate.health.api.dto.GoalProgressReportResponse;
+import com.gymmate.health.api.dto.MemberHealthDashboardResponse;
+import com.gymmate.health.api.dto.UpdateGoalProgressRequest;
 import com.gymmate.health.internal.service.FitnessGoalService;
 import com.gymmate.health.internal.domain.FitnessGoal;
 import com.gymmate.health.internal.domain.enums.GoalStatus;

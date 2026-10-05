@@ -1,6 +1,9 @@
 package com.gymmate.inventory.internal.web;
 
-import com.gymmate.inventory.api.dto.*;
+import com.gymmate.inventory.api.dto.MaintenanceRecordCreateRequest;
+import com.gymmate.inventory.api.dto.MaintenanceRecordResponse;
+import com.gymmate.inventory.api.dto.MaintenanceScheduleCreateRequest;
+import com.gymmate.inventory.api.dto.MaintenanceScheduleResponse;
 import com.gymmate.inventory.internal.service.MaintenanceService;
 import com.gymmate.inventory.internal.domain.MaintenanceRecord;
 import com.gymmate.inventory.internal.domain.MaintenanceSchedule;

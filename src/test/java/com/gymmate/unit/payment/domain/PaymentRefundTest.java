@@ -1,6 +1,6 @@
 package com.gymmate.unit.payment.domain;
 
-import com.gymmate.payment.domain.*;
+import com.gymmate.payment.domain.PaymentRefund;
 import com.gymmate.shared.constants.RefundStatus;
 import com.gymmate.shared.constants.RefundType;
 import org.junit.jupiter.api.DisplayName;

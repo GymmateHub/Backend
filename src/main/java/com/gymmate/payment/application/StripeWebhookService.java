@@ -1,5 +1,6 @@
 package com.gymmate.payment.application;
 
+import com.gymmate.payment.domain.GymInvoice;
 import com.gymmate.notification.events.ChargeDisputedEvent;
 import com.gymmate.notification.events.ChargeRefundedEvent;
 import com.gymmate.notification.events.PaymentFailedEvent;
@@ -9,7 +10,6 @@ import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.notification.application.NotificationService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.payment.domain.*;
 import com.gymmate.payment.infrastructure.GymInvoiceRepository;
 import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
 import com.gymmate.shared.config.StripeConfig;

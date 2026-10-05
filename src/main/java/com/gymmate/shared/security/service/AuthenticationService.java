@@ -1,5 +1,15 @@
 package com.gymmate.shared.security.service;
 
+import com.gymmate.shared.security.dto.LoginRequest;
+import com.gymmate.shared.security.dto.LoginResponse;
+import com.gymmate.shared.security.dto.PasswordResetConfirmRequest;
+import com.gymmate.shared.security.dto.PasswordResetRequest;
+import com.gymmate.shared.security.dto.RefreshTokenRequest;
+import com.gymmate.shared.security.dto.RegistrationResponse;
+import com.gymmate.shared.security.dto.ResendOtpRequest;
+import com.gymmate.shared.security.dto.TokenResponse;
+import com.gymmate.shared.security.dto.VerificationTokenResponse;
+import com.gymmate.shared.security.dto.VerifyOtpRequest;
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.notification.application.EmailService;
@@ -16,7 +26,6 @@ import com.gymmate.shared.security.aspect.AuditLog;
 import com.gymmate.shared.security.domain.PasswordResetToken;
 import com.gymmate.shared.security.domain.TokenBlacklist;
 import com.gymmate.shared.service.CurrencyResolver;
-import com.gymmate.shared.security.dto.*;
 import com.gymmate.shared.security.repository.PasswordResetTokenRepository;
 import com.gymmate.shared.security.repository.TokenBlacklistRepository;
 import com.gymmate.user.api.dto.InviteAcceptRequest;

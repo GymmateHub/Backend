@@ -1,6 +1,6 @@
 package com.gymmate.membership.application;
 
-import com.gymmate.membership.domain.*;
+import com.gymmate.membership.domain.MembershipPlan;
 import com.gymmate.membership.infrastructure.MembershipPlanRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.exception.DomainException;

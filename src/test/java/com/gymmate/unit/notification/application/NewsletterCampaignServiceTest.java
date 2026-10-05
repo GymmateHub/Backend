@@ -1,12 +1,15 @@
 package com.gymmate.unit.notification.application;
 
+import com.gymmate.notification.domain.AudienceType;
+import com.gymmate.notification.domain.CampaignStatus;
+import com.gymmate.notification.domain.NewsletterCampaign;
+import com.gymmate.notification.domain.NewsletterTemplate;
 import com.gymmate.notification.api.dto.AudiencePreviewResponse;
 import com.gymmate.notification.api.dto.CreateCampaignRequest;
 import com.gymmate.notification.application.AudienceResolver;
 import com.gymmate.notification.application.BroadcastService;
 import com.gymmate.notification.application.NewsletterCampaignService;
 import com.gymmate.notification.application.NewsletterTemplateService;
-import com.gymmate.notification.domain.*;
 import com.gymmate.notification.infrastructure.CampaignRecipientRepository;
 import com.gymmate.notification.infrastructure.NewsletterCampaignRepository;
 import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;

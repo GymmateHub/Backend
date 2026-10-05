@@ -1,6 +1,7 @@
 package com.gymmate.health.internal.service;
 
-import com.gymmate.health.internal.domain.*;
+import com.gymmate.health.internal.domain.FitnessGoal;
+import com.gymmate.health.internal.domain.WorkoutLog;
 import com.gymmate.health.internal.domain.enums.GoalType;
 import com.gymmate.health.internal.domain.enums.MetricType;
 import com.gymmate.health.internal.domain.enums.WorkoutIntensity;

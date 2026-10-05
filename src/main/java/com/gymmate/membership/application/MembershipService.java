@@ -1,6 +1,9 @@
 package com.gymmate.membership.application;
 
-import com.gymmate.membership.domain.*;
+import com.gymmate.membership.domain.FreezePolicy;
+import com.gymmate.membership.domain.MemberMembership;
+import com.gymmate.membership.domain.MembershipPlan;
+import com.gymmate.membership.domain.MembershipStatus;
 import com.gymmate.membership.infrastructure.FreezePolicyRepository;
 import com.gymmate.membership.infrastructure.MemberMembershipRepository;
 import com.gymmate.membership.infrastructure.MembershipPlanRepository;

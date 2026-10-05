@@ -1,6 +1,12 @@
 package com.gymmate.gym.internal.web;
 
-import com.gymmate.gym.api.dto.*;
+import com.gymmate.gym.api.dto.AddressUpdateRequest;
+import com.gymmate.gym.api.dto.BusinessSettingsUpdateRequest;
+import com.gymmate.gym.api.dto.GymAnalyticsResponse;
+import com.gymmate.gym.api.dto.GymRegistrationRequest;
+import com.gymmate.gym.api.dto.GymResponse;
+import com.gymmate.gym.api.dto.GymUpdateRequest;
+import com.gymmate.gym.api.dto.SubscriptionUpdateRequest;
 import com.gymmate.gym.application.GymService;
 import com.gymmate.gym.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;

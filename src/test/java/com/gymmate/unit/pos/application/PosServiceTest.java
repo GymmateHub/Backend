@@ -1,10 +1,14 @@
 package com.gymmate.unit.pos.application;
 
+import com.gymmate.pos.internal.domain.CashDrawer;
+import com.gymmate.pos.internal.domain.PaymentType;
+import com.gymmate.pos.internal.domain.Sale;
+import com.gymmate.pos.internal.domain.SaleItem;
+import com.gymmate.pos.internal.domain.SaleStatus;
 import com.gymmate.inventory.api.InventoryFacade;
 import com.gymmate.pos.api.dto.CreateSaleRequest;
 import com.gymmate.pos.api.dto.SaleItemRequest;
 import com.gymmate.pos.internal.service.PosService;
-import com.gymmate.pos.internal.domain.*;
 import com.gymmate.pos.internal.repository.CashDrawerJpaRepository;
 import com.gymmate.pos.internal.repository.SaleItemJpaRepository;
 import com.gymmate.pos.internal.repository.SaleJpaRepository;

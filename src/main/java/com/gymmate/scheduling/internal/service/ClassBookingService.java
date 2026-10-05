@@ -1,6 +1,8 @@
 package com.gymmate.scheduling.internal.service;
 
-import com.gymmate.scheduling.internal.domain.*;
+import com.gymmate.scheduling.internal.domain.ClassBooking;
+import com.gymmate.scheduling.internal.domain.ClassSchedule;
+import com.gymmate.scheduling.internal.domain.GymClass;
 import com.gymmate.scheduling.internal.repository.ClassBookingJpaRepository;
 import com.gymmate.scheduling.internal.repository.ClassScheduleJpaRepository;
 import com.gymmate.scheduling.internal.repository.GymClassJpaRepository;

@@ -1,6 +1,10 @@
 package com.gymmate.lead.internal.web;
 
-import com.gymmate.lead.api.dto.*;
+import com.gymmate.lead.api.dto.LeadConvertRequest;
+import com.gymmate.lead.api.dto.LeadCreateRequest;
+import com.gymmate.lead.api.dto.LeadResponse;
+import com.gymmate.lead.api.dto.LeadStatusUpdateRequest;
+import com.gymmate.lead.api.dto.LeadUpdateRequest;
 import com.gymmate.lead.application.LeadService;
 import com.gymmate.lead.domain.Lead;
 import com.gymmate.lead.domain.LeadStatus;

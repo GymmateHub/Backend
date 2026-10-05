@@ -1,8 +1,11 @@
 package com.gymmate.notification.application;
 
+import com.gymmate.notification.domain.CampaignRecipient;
+import com.gymmate.notification.domain.CampaignStatus;
+import com.gymmate.notification.domain.NewsletterCampaign;
+import com.gymmate.notification.domain.NewsletterTemplate;
 import com.gymmate.notification.api.dto.AudiencePreviewResponse;
 import com.gymmate.notification.api.dto.CreateCampaignRequest;
-import com.gymmate.notification.domain.*;
 import com.gymmate.notification.infrastructure.CampaignRecipientRepository;
 import com.gymmate.notification.infrastructure.NewsletterCampaignRepository;
 import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;

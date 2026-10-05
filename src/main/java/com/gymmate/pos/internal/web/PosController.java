@@ -1,6 +1,12 @@
 package com.gymmate.pos.internal.web;
 
-import com.gymmate.pos.api.dto.*;
+import com.gymmate.pos.api.dto.CashDrawerResponse;
+import com.gymmate.pos.api.dto.CloseCashDrawerRequest;
+import com.gymmate.pos.api.dto.CompleteSaleRequest;
+import com.gymmate.pos.api.dto.CreateSaleRequest;
+import com.gymmate.pos.api.dto.OpenCashDrawerRequest;
+import com.gymmate.pos.api.dto.SaleItemRequest;
+import com.gymmate.pos.api.dto.SaleResponse;
 import com.gymmate.pos.internal.service.PosService;
 import com.gymmate.pos.internal.domain.Sale;
 import com.gymmate.pos.internal.domain.SaleStatus;

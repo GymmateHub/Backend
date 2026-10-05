@@ -1,6 +1,9 @@
 package com.gymmate.notification.internal.web;
 
-import com.gymmate.notification.api.dto.*;
+import com.gymmate.notification.api.dto.AudiencePreviewResponse;
+import com.gymmate.notification.api.dto.CampaignResponse;
+import com.gymmate.notification.api.dto.CreateCampaignRequest;
+import com.gymmate.notification.api.dto.ScheduleCampaignRequest;
 import com.gymmate.notification.application.NewsletterCampaignService;
 import com.gymmate.notification.domain.NewsletterCampaign;
 import com.gymmate.shared.dto.ApiResponse;

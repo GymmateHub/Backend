@@ -1,6 +1,9 @@
 package com.gymmate.health.internal.web;
 
-import com.gymmate.health.api.dto.*;
+import com.gymmate.health.api.dto.LogWorkoutRequest;
+import com.gymmate.health.api.dto.WorkoutExerciseResponse;
+import com.gymmate.health.api.dto.WorkoutLogResponse;
+import com.gymmate.health.api.dto.WorkoutStatisticsResponse;
 import com.gymmate.health.internal.service.WorkoutTrackingService;
 import com.gymmate.health.internal.domain.WorkoutLog;
 import com.gymmate.shared.dto.ApiResponse;

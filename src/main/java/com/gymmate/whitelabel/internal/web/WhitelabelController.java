@@ -1,10 +1,14 @@
 package com.gymmate.whitelabel.internal.web;
 
+import com.gymmate.whitelabel.api.dto.SmtpTestRequest;
+import com.gymmate.whitelabel.api.dto.TestConnectionResponse;
+import com.gymmate.whitelabel.api.dto.WhatsAppTestRequest;
+import com.gymmate.whitelabel.api.dto.WhitelabelSettingsRequest;
+import com.gymmate.whitelabel.api.dto.WhitelabelSettingsResponse;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.shared.security.TenantAwareUserDetails;
-import com.gymmate.whitelabel.api.dto.*;
 import com.gymmate.whitelabel.application.DynamicMailSenderFactory;
 import com.gymmate.whitelabel.application.WhitelabelSettingsService;
 

@@ -56,6 +56,16 @@ spring:
     baseline-version: 0
     locations: classpath:db/migration
 
+  # Spring Modulith — durable cross-module event publication (transactional outbox).
+  # Table is owned by Flyway (V18); schema-initialization is an idempotent safety net
+  # for environments running with FLYWAY_ENABLED=false.
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: true
+      republish-outstanding-events-on-restart: true
+
   # Redis Configuration
   data:
     redis:

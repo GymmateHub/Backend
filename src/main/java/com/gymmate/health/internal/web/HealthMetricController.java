@@ -1,6 +1,9 @@
 package com.gymmate.health.internal.web;
 
-import com.gymmate.health.api.dto.*;
+import com.gymmate.health.api.dto.BodyCompositionResponse;
+import com.gymmate.health.api.dto.HealthMetricResponse;
+import com.gymmate.health.api.dto.MetricTrendResponse;
+import com.gymmate.health.api.dto.RecordMetricRequest;
 import com.gymmate.health.internal.service.HealthMetricService;
 import com.gymmate.health.internal.domain.HealthMetric;
 import com.gymmate.health.internal.domain.enums.MetricType;

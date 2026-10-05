@@ -1,6 +1,7 @@
 package com.gymmate.health.internal.service;
 
-import com.gymmate.health.internal.domain.*;
+import com.gymmate.health.internal.domain.Exercise;
+import com.gymmate.health.internal.domain.ExerciseCategory;
 import com.gymmate.health.internal.repository.ExerciseCategoryRepository;
 import com.gymmate.health.internal.repository.ExerciseRepository;
 import com.gymmate.shared.exception.DomainException;

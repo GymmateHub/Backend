@@ -1,6 +1,7 @@
 package com.gymmate.membership.internal.web;
 
-import com.gymmate.membership.api.dto.*;
+import com.gymmate.membership.api.dto.CreateMembershipPlanRequest;
+import com.gymmate.membership.api.dto.MembershipPlanResponse;
 import com.gymmate.membership.application.MembershipPlanService;
 import com.gymmate.membership.domain.MembershipPlan;
 import com.gymmate.shared.dto.ApiResponse;

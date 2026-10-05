@@ -1,6 +1,9 @@
 package com.gymmate.inventory.internal.web;
 
-import com.gymmate.inventory.api.dto.*;
+import com.gymmate.inventory.api.dto.EquipmentCreateRequest;
+import com.gymmate.inventory.api.dto.EquipmentResponse;
+import com.gymmate.inventory.api.dto.EquipmentUpdateRequest;
+import com.gymmate.inventory.api.dto.MaintenanceRecordRequest;
 import com.gymmate.inventory.internal.service.EquipmentService;
 import com.gymmate.inventory.internal.domain.Equipment;
 import com.gymmate.inventory.internal.domain.EquipmentStatus;
