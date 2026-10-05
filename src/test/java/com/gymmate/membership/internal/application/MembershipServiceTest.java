@@ -120,6 +120,21 @@ class MembershipServiceTest {
   }
 
   @Test
+  void freezeMembership_rejectsEndDateNotInTheFuture() {
+    UUID membershipId = UUID.randomUUID();
+    MemberMembership mm = MemberMembership.builder()
+      .memberId(UUID.randomUUID())
+      .status(MembershipStatus.ACTIVE)
+      .frozen(false)
+      .build();
+    when(membershipRepository.findById(membershipId)).thenReturn(Optional.of(mm));
+
+    assertThrows(DomainException.class, () -> membershipService.freezeMembership(membershipId, LocalDate.now(), "x"));
+    assertThrows(DomainException.class, () -> membershipService.freezeMembership(membershipId, null, "x"));
+    verify(membershipRepository, never()).save(any());
+  }
+
+  @Test
   void unfreezeMembership_whenNotFrozen_throwsDomainException() {
     UUID membershipId = UUID.randomUUID();
     MemberMembership mm = MemberMembership.builder()

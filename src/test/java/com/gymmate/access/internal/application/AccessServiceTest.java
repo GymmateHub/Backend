@@ -131,6 +131,30 @@ class AccessServiceTest {
   }
 
   @Test
+  void scan_grantsAtSisterGymOfSameOrganisation() {
+    point.setGymId(UUID.randomUUID()); // different gym, same organisation
+    when(memberMembershipRepository.findActiveMembershipByMemberId(memberId))
+        .thenReturn(Optional.of(activeMembership()));
+
+    AccessEvent ev = service.scan("token", pointId, AccessDirection.IN);
+
+    assertEquals(AccessDecision.GRANTED, ev.getDecision());
+  }
+
+  @Test
+  void scan_deniesAtGymOfAnotherOrganisation() {
+    point.setGymId(UUID.randomUUID());
+    point.setOrganisationId(UUID.randomUUID());
+    when(memberMembershipRepository.findActiveMembershipByMemberId(memberId))
+        .thenReturn(Optional.of(activeMembership()));
+
+    AccessEvent ev = service.scan("token", pointId, AccessDirection.IN);
+
+    assertEquals(AccessDecision.DENIED, ev.getDecision());
+    assertEquals(DenyReason.FOREIGN_ORGANISATION, ev.getDenyReason());
+  }
+
+  @Test
   void scan_deniesWhenNoActiveMembership() {
     when(memberMembershipRepository.findActiveMembershipByMemberId(memberId))
         .thenReturn(Optional.empty());

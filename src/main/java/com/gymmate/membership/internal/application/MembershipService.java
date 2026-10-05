@@ -147,6 +147,9 @@ public class MembershipService {
     if (membership.getStatus() != MembershipStatus.ACTIVE) {
       throw new DomainException("CANNOT_FREEZE", "Only active memberships can be frozen");
     }
+    if (freezeUntil == null || !freezeUntil.isAfter(LocalDate.now())) {
+      throw new DomainException("FREEZE_DATE_INVALID", "Freeze end date must be in the future");
+    }
 
     // Get freeze policy for gym (or default)
     FreezePolicy policy = freezePolicyRepository.findActiveByGymId(membership.getGymId())

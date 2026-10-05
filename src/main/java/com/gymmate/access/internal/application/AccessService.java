@@ -112,8 +112,17 @@ public class AccessService {
     return record(point, credential, member, dir, AccessDecision.GRANTED, null, false, null);
   }
 
+  private static boolean isSameOrganisation(AccessPoint point, MemberProfile member) {
+    return point.getOrganisationId() != null && point.getOrganisationId().equals(member.organisationId());
+  }
+
   /** Entry-decision pipeline. Returns the first failing reason, or null if allowed. */
   private DenyReason evaluateEntitlement(AccessPoint point, MemberProfile member) {
+    // Cross-gym rule: members may enter any gym of their own organisation (sister gyms),
+    // never a gym of another organisation.
+    if (!isSameOrganisation(point, member)) {
+      return DenyReason.FOREIGN_ORGANISATION;
+    }
     if (member.status() == MemberStatus.SUSPENDED) {
       return DenyReason.SUSPENDED_OR_FROZEN;
     }

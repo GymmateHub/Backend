@@ -22,32 +22,38 @@ GymMateHub is a modular monolith built with Spring Boot, designed to provide a c
 
 ## Project Structure
 
-The project follows a modular monolithic architecture with clear separation of concerns:
+A Spring Modulith modular monolith with Clean/Hexagonal modules (see
+[ADR 0002](docs/adr/0002-clean-modular-monolith.md)):
 
 ```
 src/main/java/com/gymmate/
-├── shared/                 # Cross-cutting concerns
-│   ├── config/            # Application configuration
-│   ├── dto/               # Common DTOs
-│   ├── exception/         # Global exception handling
-│   ├── security/         # Security configuration
-│   ├── service/          # Shared services
-│   └── util/             # Utility classes
-│
-├── user/                  # User Management Module
-├── membership/           # Gym & Membership Module
-├── booking/             # Class & Session Booking
-├── payment/             # Payment Processing
-├── inventory/           # Equipment & Resource Management
-├── analytics/           # Business Analytics
-└── notification/        # Notification System
+├── shared/         # Kernel: base types, multitenancy, errors, CurrentUser, event infrastructure
+├── identity/       # Users, staff, auth, JWT, OTP, invites, security chain
+├── onboarding/     # Owner / member registration
+├── organisation/   # Organisations and gyms
+├── billing/        # Payments, Stripe, platform subscriptions
+├── membership/     # Plans, memberships, freezes, member invoices
+├── scheduling/     # Classes, bookings, waitlists
+├── access/         # Door access, credentials, check-in
+├── health/         # Workouts, health metrics, goals
+├── retail/         # Inventory, equipment, point of sale
+├── notification/   # Email, SMS, push, in-app, broadcasts
+├── whitelabel/     # Tenant branding, custom mail and WhatsApp channels
+├── crm/            # Leads
+├── ai/             # AI trainer
+└── reporting/      # Analytics and platform admin
 ```
 
-Each feature module follows a clean architecture pattern with four layers:
-- **api**: Controllers, DTOs, and API endpoints
-- **application**: Services and use cases
-- **domain**: Core business logic and entities
-- **infrastructure**: External implementations (repositories, adapters)
+Each module exposes only `api/` (facades, `dto`, `event`, `spi`); everything else is
+under `internal/`:
+
+- **domain**: pure Java aggregates and rules (no Spring/JPA)
+- **application**: use cases, outbound ports, module-local DTOs
+- **infrastructure**: `web` controllers, `persistence` JPA entities + adapters,
+  `messaging` listeners, `integration` external adapters
+
+Boundaries are enforced in the build by `ModularityTests` (Spring Modulith) and
+`CleanArchitectureTest` (ArchUnit). Integration tests need Docker (Testcontainers).
 
 ## Getting Started
 
@@ -55,7 +61,7 @@ Each feature module follows a clean architecture pattern with four layers:
 
 - JDK 21
 - Maven 3.8+
-- PostgreSQL 15+
+- PostgreSQL 18+
 
 ### Local Development Setup
 
