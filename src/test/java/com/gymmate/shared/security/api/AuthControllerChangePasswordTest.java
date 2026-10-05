@@ -7,7 +7,7 @@ import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.infrastructure.web.GlobalExceptionHandler;
 import com.gymmate.shared.security.TenantAwareUserDetails;
-import com.gymmate.identity.api.dto.ChangePasswordRequest;
+import com.gymmate.identity.internal.application.dto.ChangePasswordRequest;
 import com.gymmate.identity.internal.application.AuthenticationService;
 import com.gymmate.identity.internal.application.JwtService;
 import com.gymmate.identity.internal.application.InviteService;

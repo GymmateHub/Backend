@@ -62,21 +62,17 @@ public class Gym extends TenantEntity {
 
   // Business settings
   @Builder.Default
-  private 
-  String timezone = "UTC";
+  private String timezone = "UTC";
 
   @Builder.Default
-  private 
-  String currency = "USD";
+  private String currency = "USD";
 
-  private 
-  String businessHours;
+  private String businessHours;
 
   // Note: Subscription is now at Organisation level, but gyms may have specific
   // features
   @Builder.Default
-  private 
-  String subscriptionPlan = "starter";
+  private String subscriptionPlan = "starter";
 
   @Builder.Default
   private GymStatus status = GymStatus.ACTIVE;
@@ -84,23 +80,19 @@ public class Gym extends TenantEntity {
   private LocalDateTime subscriptionExpiresAt;
 
   @Builder.Default
-  private 
-  Integer maxMembers = 200;
+  private Integer maxMembers = 200;
 
   // Stripe Connect fields for receiving member payments
   private String stripeConnectAccountId;
 
   @Builder.Default
-  private 
-  Boolean stripeChargesEnabled = false;
+  private Boolean stripeChargesEnabled = false;
 
   @Builder.Default
-  private 
-  Boolean stripePayoutsEnabled = false;
+  private Boolean stripePayoutsEnabled = false;
 
   @Builder.Default
-  private 
-  Boolean stripeDetailsSubmitted = false;
+  private Boolean stripeDetailsSubmitted = false;
 
   private LocalDateTime stripeOnboardingCompletedAt;
 
@@ -111,8 +103,7 @@ public class Gym extends TenantEntity {
 
   // Status
   @Builder.Default
-  private 
-  boolean onboardingCompleted = false;
+  private boolean onboardingCompleted = false;
 
   /**
    * Create a new Gym with organisation context.

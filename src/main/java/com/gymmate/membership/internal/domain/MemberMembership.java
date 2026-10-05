@@ -50,8 +50,7 @@ public class MemberMembership extends GymScopedEntity {
   private MembershipStatus status = MembershipStatus.ACTIVE;
 
   @Builder.Default
-  private 
-  boolean autoRenew = true;
+  private boolean autoRenew = true;
 
   // Stripe integration
   private String stripeCustomerId;
@@ -60,8 +59,7 @@ public class MemberMembership extends GymScopedEntity {
 
   // Freezing/holding
   @Builder.Default
-  private 
-  boolean frozen = false;
+  private boolean frozen = false;
 
   private LocalDate frozenFrom;
 
@@ -70,12 +68,10 @@ public class MemberMembership extends GymScopedEntity {
   private String freezeReason;
 
   @Builder.Default
-  private 
-  Integer totalDaysFrozen = 0;
+  private Integer totalDaysFrozen = 0;
 
   @Builder.Default
-  private 
-  Integer freezeCount = 0;
+  private Integer freezeCount = 0;
 
   // When this membership first entered PAST_DUE — drives the grace-period
   // escalation in MembershipService.escalatePastDueMemberships. Null while not

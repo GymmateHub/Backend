@@ -26,8 +26,7 @@ public class CashDrawer extends GymScopedEntity {
     private UUID closedBy;
 
     @Builder.Default
-    private 
-    BigDecimal openingBalance = BigDecimal.ZERO;
+    private BigDecimal openingBalance = BigDecimal.ZERO;
 
     private BigDecimal closingBalance;
 
@@ -37,36 +36,29 @@ public class CashDrawer extends GymScopedEntity {
 
     // Transaction totals
     @Builder.Default
-    private 
-    BigDecimal totalCashSales = BigDecimal.ZERO;
+    private BigDecimal totalCashSales = BigDecimal.ZERO;
 
     @Builder.Default
-    private 
-    BigDecimal totalCardSales = BigDecimal.ZERO;
+    private BigDecimal totalCardSales = BigDecimal.ZERO;
 
     @Builder.Default
-    private 
-    BigDecimal totalOtherSales = BigDecimal.ZERO;
+    private BigDecimal totalOtherSales = BigDecimal.ZERO;
 
     @Builder.Default
-    private 
-    BigDecimal totalRefunds = BigDecimal.ZERO;
+    private BigDecimal totalRefunds = BigDecimal.ZERO;
 
     @Builder.Default
-    private 
-    Integer transactionCount = 0;
+    private Integer transactionCount = 0;
 
     // Timestamps
     @Builder.Default
-    private 
-    LocalDateTime openedAt = LocalDateTime.now();
+    private LocalDateTime openedAt = LocalDateTime.now();
 
     private LocalDateTime closedAt;
 
     // Status
     @Builder.Default
-    private 
-    boolean open = true;
+    private boolean open = true;
 
     private String notes;
 

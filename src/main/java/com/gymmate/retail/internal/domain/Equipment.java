@@ -63,17 +63,14 @@ public class Equipment extends GymScopedEntity {
   private LocalDate nextMaintenanceDate;
 
   @Builder.Default
-  private 
-  Integer maintenanceIntervalDays = 90; // Default 90 days
+  private Integer maintenanceIntervalDays = 90; // Default 90 days
 
   @Builder.Default
-  private 
-  BigDecimal totalMaintenanceCost = BigDecimal.ZERO;
+  private BigDecimal totalMaintenanceCost = BigDecimal.ZERO;
 
   // Usage tracking
   @Builder.Default
-  private 
-  Integer usageHours = 0;
+  private Integer usageHours = 0;
 
   private Integer maxCapacity; // Max users at once
 

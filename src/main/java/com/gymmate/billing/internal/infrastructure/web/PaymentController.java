@@ -1,12 +1,12 @@
 package com.gymmate.billing.internal.infrastructure.web;
 
-import com.gymmate.billing.api.dto.AttachPaymentMethodRequest;
-import com.gymmate.billing.api.dto.CreateRefundRequestDTO;
-import com.gymmate.billing.api.dto.InvoiceResponse;
-import com.gymmate.billing.api.dto.PaymentMethodResponse;
-import com.gymmate.billing.api.dto.RefundRequest;
-import com.gymmate.billing.api.dto.RefundRequestResponse;
-import com.gymmate.billing.api.dto.RefundResponse;
+import com.gymmate.billing.internal.application.dto.AttachPaymentMethodRequest;
+import com.gymmate.billing.internal.application.dto.CreateRefundRequestDTO;
+import com.gymmate.billing.internal.application.dto.InvoiceResponse;
+import com.gymmate.billing.internal.application.dto.PaymentMethodResponse;
+import com.gymmate.billing.internal.application.dto.RefundRequest;
+import com.gymmate.billing.internal.application.dto.RefundRequestResponse;
+import com.gymmate.billing.internal.application.dto.RefundResponse;
 import com.gymmate.billing.internal.application.RefundRequestService;
 import com.gymmate.billing.internal.application.StripePaymentService;
 import com.gymmate.billing.internal.domain.RefundAuditLog;

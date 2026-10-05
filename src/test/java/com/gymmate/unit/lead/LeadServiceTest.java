@@ -1,6 +1,6 @@
 package com.gymmate.unit.lead;
 
-import com.gymmate.crm.api.dto.LeadCreateRequest;
+import com.gymmate.crm.internal.application.dto.LeadCreateRequest;
 import com.gymmate.crm.internal.application.LeadService;
 import com.gymmate.crm.internal.domain.Lead;
 import com.gymmate.crm.internal.domain.LeadStatus;

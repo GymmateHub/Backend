@@ -1,7 +1,7 @@
 package com.gymmate.scheduling.internal.infrastructure.web;
 
-import com.gymmate.scheduling.api.dto.AreaResponse;
-import com.gymmate.scheduling.api.dto.CreateAreaRequest;
+import com.gymmate.scheduling.internal.application.dto.AreaResponse;
+import com.gymmate.scheduling.internal.application.dto.CreateAreaRequest;
 import com.gymmate.scheduling.internal.application.mapper.GymAreaMapper;
 import com.gymmate.scheduling.internal.application.GymAreaService;
 import com.gymmate.scheduling.internal.domain.GymArea;

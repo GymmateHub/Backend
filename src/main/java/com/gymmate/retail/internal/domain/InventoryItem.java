@@ -33,18 +33,15 @@ public class InventoryItem extends GymScopedEntity {
 
   // Stock levels
   @Builder.Default
-  private 
-  Integer currentStock = 0;
+  private Integer currentStock = 0;
 
   @Builder.Default
-  private 
-  Integer minimumStock = 0; // Alert threshold
+  private Integer minimumStock = 0; // Alert threshold
 
   private Integer maximumStock; // Maximum capacity
 
   @Builder.Default
-  private 
-  Integer reorderPoint = 0; // When to reorder
+  private Integer reorderPoint = 0; // When to reorder
 
   private Integer reorderQuantity; // How much to reorder
 
@@ -66,12 +63,10 @@ public class InventoryItem extends GymScopedEntity {
   private String location; // Storage location within gym
 
   @Builder.Default
-  private 
-  boolean expiryTracking = false; // For perishable items
+  private boolean expiryTracking = false; // For perishable items
 
   @Builder.Default
-  private 
-  boolean batchTracking = false;
+  private boolean batchTracking = false;
 
   // Additional info
   private String imageUrl;
@@ -79,8 +74,7 @@ public class InventoryItem extends GymScopedEntity {
   private String notes;
 
   @Builder.Default
-  private 
-  boolean lowStockAlertSent = false;
+  private boolean lowStockAlertSent = false;
 
   // Business methods
   public void increaseStock(int quantity) {

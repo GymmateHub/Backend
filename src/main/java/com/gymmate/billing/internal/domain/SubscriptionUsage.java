@@ -13,8 +13,7 @@ import java.time.LocalDateTime;
 @Builder
 public class SubscriptionUsage extends BaseAuditEntity {
 
-    private 
-    Subscription subscription;
+    private Subscription subscription;
 
     // Billing Period
     private LocalDateTime billingPeriodStart;
@@ -23,62 +22,50 @@ public class SubscriptionUsage extends BaseAuditEntity {
 
     // Member Usage
     @Builder.Default
-    private 
-    Integer memberCount = 0;
+    private Integer memberCount = 0;
 
     @Builder.Default
-    private 
-    Integer memberOverage = 0;
+    private Integer memberOverage = 0;
 
     // Communication Usage
     @Builder.Default
-    private 
-    Integer smsSent = 0;
+    private Integer smsSent = 0;
 
     @Builder.Default
-    private 
-    Integer smsOverage = 0;
+    private Integer smsOverage = 0;
 
     @Builder.Default
-    private 
-    Integer emailSent = 0;
+    private Integer emailSent = 0;
 
     @Builder.Default
-    private 
-    Integer emailOverage = 0;
+    private Integer emailOverage = 0;
 
     // API Usage
     @Builder.Default
-    private 
-    Integer apiRequests = 0;
+    private Integer apiRequests = 0;
 
     @Builder.Default
-    private 
-    Integer apiRateLimitHits = 0;
+    private Integer apiRateLimitHits = 0;
 
     // Classes
     @Builder.Default
-    private 
-    Integer classesCreated = 0;
+    private Integer classesCreated = 0;
 
     // Storage (in GB)
     @Builder.Default
-    private 
-    BigDecimal storageUsed = BigDecimal.ZERO;
+    private BigDecimal storageUsed = BigDecimal.ZERO;
 
     // Calculated Costs
     private BigDecimal baseCost;
 
     @Builder.Default
-    private 
-    BigDecimal overageCost = BigDecimal.ZERO;
+    private BigDecimal overageCost = BigDecimal.ZERO;
 
     private BigDecimal totalCost;
 
     // Status
     @Builder.Default
-    private 
-    Boolean isBilled = false;
+    private Boolean isBilled = false;
 
     private LocalDateTime billedAt;
 

@@ -1,7 +1,7 @@
 package com.gymmate.retail.internal.infrastructure.web;
 
-import com.gymmate.retail.api.dto.SupplierCreateRequest;
-import com.gymmate.retail.api.dto.SupplierResponse;
+import com.gymmate.retail.internal.application.dto.SupplierCreateRequest;
+import com.gymmate.retail.internal.application.dto.SupplierResponse;
 import com.gymmate.retail.internal.application.SupplierService;
 import com.gymmate.retail.internal.domain.Supplier;
 import com.gymmate.shared.dto.ApiResponse;

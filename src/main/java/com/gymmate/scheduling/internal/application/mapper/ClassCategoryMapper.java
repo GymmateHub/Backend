@@ -1,7 +1,7 @@
 package com.gymmate.scheduling.internal.application.mapper;
 
-import com.gymmate.scheduling.api.dto.CategoryResponse;
-import com.gymmate.scheduling.api.dto.CreateCategoryRequest;
+import com.gymmate.scheduling.internal.application.dto.CategoryResponse;
+import com.gymmate.scheduling.internal.application.dto.CreateCategoryRequest;
 import com.gymmate.scheduling.internal.domain.ClassCategory;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

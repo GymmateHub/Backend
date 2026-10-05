@@ -27,8 +27,7 @@ public class AiRecommendation extends GymScopedEntity {
     private String mealPlan;
 
     /** The fitness goals that were used to generate this plan. */
-    private 
-    String[] goalsUsed;
+    private String[] goalsUsed;
 
     private String experienceLevel;
 }

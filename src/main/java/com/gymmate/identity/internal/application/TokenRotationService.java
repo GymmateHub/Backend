@@ -2,8 +2,8 @@ package com.gymmate.identity.internal.application;
 
 import com.gymmate.shared.exception.InvalidTokenException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import com.gymmate.identity.api.dto.RefreshTokenRequest;
-import com.gymmate.identity.api.dto.TokenResponse;
+import com.gymmate.identity.internal.application.dto.RefreshTokenRequest;
+import com.gymmate.identity.internal.application.dto.TokenResponse;
 import com.gymmate.identity.internal.domain.User;
 import com.gymmate.identity.internal.application.port.UserRepository;
 import jakarta.transaction.Transactional;

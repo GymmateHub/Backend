@@ -17,8 +17,7 @@ import java.util.UUID;
 @Builder
 public class SaleItem extends GymScopedEntity {
 
-    private 
-    Sale sale;
+    private Sale sale;
 
     private UUID inventoryItemId; // Reference to inventory item
 
@@ -35,24 +34,20 @@ public class SaleItem extends GymScopedEntity {
     private BigDecimal costPrice; // For profit tracking
 
     @Builder.Default
-    private 
-    BigDecimal discountAmount = BigDecimal.ZERO;
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     private BigDecimal discountPercentage;
 
     @Builder.Default
-    private 
-    BigDecimal lineTotal = BigDecimal.ZERO;
+    private BigDecimal lineTotal = BigDecimal.ZERO;
 
     private String notes;
 
     @Builder.Default
-    private 
-    boolean refunded = false;
+    private boolean refunded = false;
 
     @Builder.Default
-    private 
-    Integer refundedQuantity = 0;
+    private Integer refundedQuantity = 0;
 
     // Business methods
     public void calculateLineTotal() {

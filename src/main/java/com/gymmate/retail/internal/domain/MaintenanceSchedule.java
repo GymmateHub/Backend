@@ -35,14 +35,12 @@ public class MaintenanceSchedule extends GymScopedEntity {
   private Integer estimatedDurationHours;
 
   @Builder.Default
-  private 
-  boolean recurring = false;
+  private boolean recurring = false;
 
   private Integer recurrenceIntervalDays; // For recurring schedules
 
   @Builder.Default
-  private 
-  boolean completed = false;
+  private boolean completed = false;
 
   private LocalDate completedDate;
 
@@ -51,8 +49,7 @@ public class MaintenanceSchedule extends GymScopedEntity {
   private String notes;
 
   @Builder.Default
-  private 
-  boolean reminderSent = false;
+  private boolean reminderSent = false;
 
   private LocalDate reminderDate;
 

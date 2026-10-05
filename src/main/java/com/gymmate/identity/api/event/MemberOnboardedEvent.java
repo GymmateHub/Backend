@@ -1,20 +1,31 @@
 package com.gymmate.identity.api.event;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;
-import org.springframework.context.ApplicationEvent;
 
 import java.util.UUID;
 
-public class MemberOnboardedEvent extends ApplicationEvent implements TenantAwareEvent {
+/**
+ * Published when a member profile gets fitness goals (onboarding); the AI trainer generates a
+ * personalised plan from it. A plain, JSON-serialisable payload (no Spring event source) so it
+ * can be stored in the event publication registry.
+ */
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MemberOnboardedEvent implements TenantAwareEvent {
 
     private final UUID organisationId;
     private final UUID memberId;
     private final UUID gymId;
     private final String[] fitnessGoals;
 
-    public MemberOnboardedEvent(Object source, UUID organisationId, UUID memberId, UUID gymId, String[] fitnessGoals) {
-        super(source);
+    @JsonCreator
+    public MemberOnboardedEvent(@JsonProperty("organisationId") UUID organisationId,
+                                @JsonProperty("memberId") UUID memberId,
+                                @JsonProperty("gymId") UUID gymId,
+                                @JsonProperty("fitnessGoals") String[] fitnessGoals) {
         this.organisationId = organisationId;
         this.memberId = memberId;
         this.gymId = gymId;

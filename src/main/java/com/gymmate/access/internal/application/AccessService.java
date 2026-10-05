@@ -189,7 +189,7 @@ public class AccessService {
         .organisationId(point.getOrganisationId()).gymId(point.getGymId())
         .memberId(member != null ? member.id() : null)
         .accessPointId(point.getId()).accessPointName(point.getName())
-        .denyReason(reason).build());
+        .denyReason(reason != null ? reason.name() : null).build());
     return ev;
   }
 

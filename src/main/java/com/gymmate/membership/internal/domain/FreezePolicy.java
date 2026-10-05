@@ -17,36 +17,28 @@ public class FreezePolicy extends GymScopedEntity {
   private String policyName;
 
   @Builder.Default
-  private 
-  Integer maxFreezeDaysPerYear = 90; // Default: 90 days per year
+  private Integer maxFreezeDaysPerYear = 90; // Default: 90 days per year
 
   @Builder.Default
-  private 
-  Integer maxConsecutiveFreezeDays = 60; // Default: max 60 days per freeze
+  private Integer maxConsecutiveFreezeDays = 60; // Default: max 60 days per freeze
 
   @Builder.Default
-  private 
-  Integer minMembershipDaysBeforeFreeze = 30; // Default: must be member for 30 days
+  private Integer minMembershipDaysBeforeFreeze = 30; // Default: must be member for 30 days
 
   @Builder.Default
-  private 
-  Integer coolingOffPeriodDays = 30; // Default: 30 days between freezes
+  private Integer coolingOffPeriodDays = 30; // Default: 30 days between freezes
 
   @Builder.Default
-  private 
-  Double freezeFeeAmount = 0.0; // Default: no fee
+  private Double freezeFeeAmount = 0.0; // Default: no fee
 
   @Builder.Default
-  private 
-  String freezeFeeFrequency = "NONE"; // NONE, ONE_TIME, MONTHLY
+  private String freezeFeeFrequency = "NONE"; // NONE, ONE_TIME, MONTHLY
 
   @Builder.Default
-  private 
-  Boolean allowPartialMonthFreeze = true;
+  private Boolean allowPartialMonthFreeze = true;
 
   @Builder.Default
-  private 
-  Boolean isDefaultPolicy = false;
+  private Boolean isDefaultPolicy = false;
 
   public boolean canFreeze(MemberMembership membership) {
     // Check if membership has been active long enough

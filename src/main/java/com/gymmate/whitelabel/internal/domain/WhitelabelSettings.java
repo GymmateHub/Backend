@@ -42,8 +42,7 @@ public class WhitelabelSettings extends TenantEntity {
 
     // Custom SMTP Configuration
     @Builder.Default
-    private 
-    boolean smtpEnabled = false;
+    private boolean smtpEnabled = false;
 
     private String smtpHost;
 
@@ -62,8 +61,7 @@ public class WhitelabelSettings extends TenantEntity {
 
     // WhatsApp Configuration
     @Builder.Default
-    private 
-    boolean whatsappEnabled = false;
+    private boolean whatsappEnabled = false;
 
     @Builder.Default
     private WhatsAppProvider whatsappProvider = WhatsAppProvider.META_CLOUD_API;
@@ -78,8 +76,7 @@ public class WhitelabelSettings extends TenantEntity {
 
     // Newsletter Configuration
     @Builder.Default
-    private 
-    boolean newsletterEnabled = false;
+    private boolean newsletterEnabled = false;
 
     @Builder.Default
     private NewsletterProvider newsletterProvider = NewsletterProvider.CUSTOM_SMTP;

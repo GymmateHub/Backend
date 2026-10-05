@@ -1,8 +1,8 @@
 package com.gymmate.onboarding.internal.infrastructure.web;
 
 import com.gymmate.identity.api.IdentityApi;
-import com.gymmate.identity.api.dto.MemberRegistrationRequest;
-import com.gymmate.identity.api.dto.OwnerRegistrationRequest;
+import com.gymmate.onboarding.internal.application.dto.MemberRegistrationRequest;
+import com.gymmate.onboarding.internal.application.dto.OwnerRegistrationRequest;
 import com.gymmate.identity.api.dto.UserResponse;
 import com.gymmate.onboarding.internal.application.OnboardingService;
 import com.gymmate.shared.dto.ApiResponse;

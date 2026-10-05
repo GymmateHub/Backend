@@ -1,7 +1,7 @@
 package com.gymmate.billing.internal.infrastructure.web;
 
-import com.gymmate.billing.api.dto.ConnectAccountStatusResponse;
-import com.gymmate.billing.api.dto.ConnectOnboardingResponse;
+import com.gymmate.billing.internal.application.dto.ConnectAccountStatusResponse;
+import com.gymmate.billing.internal.application.dto.ConnectOnboardingResponse;
 import com.gymmate.billing.internal.application.StripeConnectService;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;

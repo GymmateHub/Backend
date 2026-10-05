@@ -39,8 +39,7 @@ public class ClassSchedule extends GymScopedEntity {
   // ClassBookingService (see enforce_class_schedule_capacity trigger, V13 migration).
   // Do not set directly outside that path.
   @Builder.Default
-  private 
-  Integer bookedCount = 0;
+  private Integer bookedCount = 0;
 
   private BigDecimal priceOverride;
 

@@ -1,6 +1,6 @@
 package com.gymmate.notification.internal.infrastructure.web;
 
-import com.gymmate.notification.api.dto.NotificationResponse;
+import com.gymmate.notification.internal.application.dto.NotificationResponse;
 import com.gymmate.notification.internal.application.NotificationService;
 import com.gymmate.notification.api.spi.GymAccessVerifier;
 import com.gymmate.notification.internal.domain.Notification;

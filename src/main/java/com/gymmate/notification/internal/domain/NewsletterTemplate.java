@@ -20,8 +20,7 @@ public class NewsletterTemplate extends GymScopedEntity {
     private String body;
 
     @Builder.Default
-    private 
-    String templateType = "EMAIL";
+    private String templateType = "EMAIL";
 
     @Builder.Default
     private String placeholders = "[]";

@@ -17,19 +17,16 @@ import java.util.UUID;
 @AllArgsConstructor
 public class TokenBlacklist {
 
-    private 
-    UUID id;
+    private UUID id;
 
     private String token;
 
     private UUID userId;
 
     @Builder.Default
-    private 
-    LocalDateTime blacklistedAt = LocalDateTime.now();
+    private LocalDateTime blacklistedAt = LocalDateTime.now();
 
-    private 
-    Date expiresAt;
+    private Date expiresAt;
 
     private String reason;
 

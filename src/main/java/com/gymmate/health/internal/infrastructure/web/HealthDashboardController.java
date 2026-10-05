@@ -1,10 +1,10 @@
 package com.gymmate.health.internal.infrastructure.web;
 
-import com.gymmate.health.api.dto.HealthInsightsResponse;
-import com.gymmate.health.api.dto.MemberHealthDashboardResponse;
-import com.gymmate.health.api.dto.WorkoutExerciseResponse;
-import com.gymmate.health.api.dto.WorkoutInsightsResponse;
-import com.gymmate.health.api.dto.WorkoutLogResponse;
+import com.gymmate.health.internal.application.dto.HealthInsightsResponse;
+import com.gymmate.health.internal.application.dto.MemberHealthDashboardResponse;
+import com.gymmate.health.internal.application.dto.WorkoutExerciseResponse;
+import com.gymmate.health.internal.application.dto.WorkoutInsightsResponse;
+import com.gymmate.health.internal.application.dto.WorkoutLogResponse;
 import com.gymmate.health.internal.application.HealthAnalyticsService;
 import com.gymmate.health.internal.application.WorkoutTrackingService;
 import com.gymmate.shared.dto.ApiResponse;

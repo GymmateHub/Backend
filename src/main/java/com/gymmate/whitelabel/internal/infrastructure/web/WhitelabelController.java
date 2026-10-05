@@ -1,10 +1,10 @@
 package com.gymmate.whitelabel.internal.infrastructure.web;
 
-import com.gymmate.whitelabel.api.dto.SmtpTestRequest;
-import com.gymmate.whitelabel.api.dto.TestConnectionResponse;
-import com.gymmate.whitelabel.api.dto.WhatsAppTestRequest;
-import com.gymmate.whitelabel.api.dto.WhitelabelSettingsRequest;
-import com.gymmate.whitelabel.api.dto.WhitelabelSettingsResponse;
+import com.gymmate.whitelabel.internal.application.dto.SmtpTestRequest;
+import com.gymmate.whitelabel.internal.application.dto.TestConnectionResponse;
+import com.gymmate.whitelabel.internal.application.dto.WhatsAppTestRequest;
+import com.gymmate.whitelabel.internal.application.dto.WhitelabelSettingsRequest;
+import com.gymmate.whitelabel.internal.application.dto.WhitelabelSettingsResponse;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;

@@ -1,7 +1,7 @@
 package com.gymmate.unit.notification.application;
 
-import com.gymmate.notification.api.dto.CreateTemplateRequest;
-import com.gymmate.notification.api.dto.UpdateTemplateRequest;
+import com.gymmate.notification.internal.application.dto.CreateTemplateRequest;
+import com.gymmate.notification.internal.application.dto.UpdateTemplateRequest;
 import com.gymmate.notification.internal.domain.NewsletterTemplate;
 import com.gymmate.notification.internal.application.port.NewsletterTemplateRepository;
 import com.gymmate.notification.internal.application.NewsletterTemplateService;

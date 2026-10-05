@@ -21,19 +21,16 @@ public class WearableSync extends GymScopedEntity {
 
     private UUID memberId;
 
-    private 
-    WearableSource sourceType;
+    private WearableSource sourceType;
 
     private LocalDateTime lastSyncAt;
 
     @Builder.Default
-    private 
-    String syncStatus = "PENDING"; // SUCCESS, FAILED, PENDING
+    private String syncStatus = "PENDING"; // SUCCESS, FAILED, PENDING
 
     private String externalUserId; // ID from external service (Apple, Google, etc.)
 
-    private 
-    String syncMetadata; // Additional sync information as JSON
+    private String syncMetadata; // Additional sync information as JSON
 
     private String syncError;
 

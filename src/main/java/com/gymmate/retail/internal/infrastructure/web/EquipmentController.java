@@ -1,9 +1,9 @@
 package com.gymmate.retail.internal.infrastructure.web;
 
-import com.gymmate.retail.api.dto.EquipmentCreateRequest;
-import com.gymmate.retail.api.dto.EquipmentResponse;
-import com.gymmate.retail.api.dto.EquipmentUpdateRequest;
-import com.gymmate.retail.api.dto.MaintenanceRecordRequest;
+import com.gymmate.retail.internal.application.dto.EquipmentCreateRequest;
+import com.gymmate.retail.internal.application.dto.EquipmentResponse;
+import com.gymmate.retail.internal.application.dto.EquipmentUpdateRequest;
+import com.gymmate.retail.internal.application.dto.MaintenanceRecordRequest;
 import com.gymmate.retail.internal.application.EquipmentService;
 import com.gymmate.retail.internal.domain.Equipment;
 import com.gymmate.retail.internal.domain.EquipmentStatus;

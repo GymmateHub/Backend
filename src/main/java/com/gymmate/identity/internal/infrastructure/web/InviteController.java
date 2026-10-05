@@ -2,8 +2,8 @@ package com.gymmate.identity.internal.infrastructure.web;
 
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.identity.internal.application.JwtService;
-import com.gymmate.identity.api.dto.InviteRequest;
-import com.gymmate.identity.api.dto.InviteResponse;
+import com.gymmate.identity.internal.application.dto.InviteRequest;
+import com.gymmate.identity.internal.application.dto.InviteResponse;
 import com.gymmate.identity.internal.application.InviteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

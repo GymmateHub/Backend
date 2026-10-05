@@ -12,8 +12,7 @@ import java.util.UUID;
 @Builder
 public class PendingRegistration {
 
-  private 
-  String registrationId;
+  private String registrationId;
 
   private String email;
 
@@ -24,14 +23,12 @@ public class PendingRegistration {
   private String phoneNumber;
 
   @Builder.Default
-  private 
-  boolean emailVerified = false;
+  private boolean emailVerified = false;
 
   private Instant lastOtpSentAt;
 
   @Builder.Default
-  private 
-  int otpAttempts = 0;
+  private int otpAttempts = 0;
 
   private Instant createdAt;
 

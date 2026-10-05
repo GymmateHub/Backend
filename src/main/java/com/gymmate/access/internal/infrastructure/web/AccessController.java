@@ -1,14 +1,14 @@
 package com.gymmate.access.internal.infrastructure.web;
 
-import com.gymmate.access.api.dto.AccessCredentialResponse;
-import com.gymmate.access.api.dto.AccessEventResponse;
-import com.gymmate.access.api.dto.AccessPointCreateRequest;
-import com.gymmate.access.api.dto.AccessPointResponse;
-import com.gymmate.access.api.dto.CredentialIssuedResponse;
-import com.gymmate.access.api.dto.DeviceEventRequest;
-import com.gymmate.access.api.dto.IssueCredentialRequest;
-import com.gymmate.access.api.dto.ScanRequest;
-import com.gymmate.access.api.dto.ScanResponse;
+import com.gymmate.access.internal.application.dto.AccessCredentialResponse;
+import com.gymmate.access.internal.application.dto.AccessEventResponse;
+import com.gymmate.access.internal.application.dto.AccessPointCreateRequest;
+import com.gymmate.access.internal.application.dto.AccessPointResponse;
+import com.gymmate.access.internal.application.dto.CredentialIssuedResponse;
+import com.gymmate.access.internal.application.dto.DeviceEventRequest;
+import com.gymmate.access.internal.application.dto.IssueCredentialRequest;
+import com.gymmate.access.internal.application.dto.ScanRequest;
+import com.gymmate.access.internal.application.dto.ScanResponse;
 import com.gymmate.access.internal.application.AccessService;
 import com.gymmate.access.internal.application.IssuedCredential;
 import com.gymmate.access.internal.domain.AccessEvent;

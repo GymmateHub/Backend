@@ -32,11 +32,9 @@ public class MemberInvoice extends GymScopedEntity {
     private BigDecimal amount;
 
     @Builder.Default
-    private 
-    String currency = "USD";
+    private String currency = "USD";
 
-    private 
-    MemberInvoiceStatus status;
+    private MemberInvoiceStatus status;
 
     private String description;
 

@@ -1,6 +1,5 @@
 package com.gymmate.identity.api.dto;
 
-import com.gymmate.identity.internal.domain.User;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
 
@@ -25,22 +24,6 @@ public record UserResponse(
     LocalDateTime lastLoginAt
 ) {
 
-    public static UserResponse fromEntity(User user) {
-        return new UserResponse(
-                user.getId(),
-                user.getOrganisationId(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getPhone(),
-                user.getRole(),
-                user.getStatus(),
-                user.isActive(),
-                user.getCreatedAt(),
-                user.getUpdatedAt(),
-                user.getLastLoginAt()
-        );
-    }
 
     public String getFullName() {
         return firstName + " " + lastName;

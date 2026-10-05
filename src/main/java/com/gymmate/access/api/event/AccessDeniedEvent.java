@@ -1,7 +1,8 @@
 package com.gymmate.access.api.event;
 
-import com.gymmate.access.internal.domain.enums.DenyReason;
-import com.gymmate.shared.domain.DomainEvent;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.extern.jackson.Jacksonized;
+import com.gymmate.shared.events.DomainEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;
@@ -16,6 +17,8 @@ import java.util.UUID;
  */
 @Getter
 @Builder
+@Jacksonized
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AccessDeniedEvent implements DomainEvent, TenantAwareEvent {
 
   @Builder.Default
@@ -29,7 +32,8 @@ public class AccessDeniedEvent implements DomainEvent, TenantAwareEvent {
   private final UUID memberId;
   private final UUID accessPointId;
   private final String accessPointName;
-  private final DenyReason denyReason;
+  /** {@code DenyReason} name, e.g. NO_ACTIVE_MEMBERSHIP. */
+  private final String denyReason;
 
   @Override
   public TenantIdentity getTenantIdentity() {

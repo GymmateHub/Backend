@@ -28,8 +28,7 @@ public class UserInvite extends BaseAuditEntity {
 
     private String email;
 
-    private 
-    UserRole role;
+    private UserRole role;
 
     private String firstName;
 

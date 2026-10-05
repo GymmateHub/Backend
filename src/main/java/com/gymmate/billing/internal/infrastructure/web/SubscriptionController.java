@@ -1,10 +1,10 @@
 package com.gymmate.billing.internal.infrastructure.web;
 
 import com.gymmate.billing.internal.application.mapper.SubscriptionMapper;
-import com.gymmate.billing.api.dto.ChangeTierRequest;
-import com.gymmate.billing.api.dto.CreateSubscriptionRequest;
-import com.gymmate.billing.api.dto.SubscriptionResponse;
-import com.gymmate.billing.api.dto.SubscriptionTierResponse;
+import com.gymmate.billing.internal.application.dto.ChangeTierRequest;
+import com.gymmate.billing.internal.application.dto.CreateSubscriptionRequest;
+import com.gymmate.billing.internal.application.dto.SubscriptionResponse;
+import com.gymmate.billing.internal.application.dto.SubscriptionTierResponse;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.billing.internal.application.RateLimitService;

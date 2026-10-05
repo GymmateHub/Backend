@@ -28,25 +28,21 @@ public class GymClass extends GymScopedEntity {
   private Integer durationMinutes;
 
   @Builder.Default
-  private 
-  Integer capacity = 20;
+  private Integer capacity = 20;
 
   // Pricing
   @Builder.Default
-  private 
-  BigDecimal price = BigDecimal.ZERO;
+  private BigDecimal price = BigDecimal.ZERO;
 
   @Builder.Default
-  private 
-  Integer creditsRequired = 1;
+  private Integer creditsRequired = 1;
 
   // Requirements
   private String skillLevel; // beginner, intermediate, advanced, all_levels
 
   private String ageRestriction; // "18+", "16+", "all_ages"
 
-  private 
-  String[] equipmentNeeded;
+  private String[] equipmentNeeded;
 
   // Content
   private String imageUrl;

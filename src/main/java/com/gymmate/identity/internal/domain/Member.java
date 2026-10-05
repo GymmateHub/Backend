@@ -29,8 +29,7 @@ public class Member extends GymScopedEntity {
   private String membershipNumber;
 
   @Builder.Default
-  private 
-  LocalDate joinDate = LocalDate.now();
+  private LocalDate joinDate = LocalDate.now();
 
   @Builder.Default
   private MemberStatus status = MemberStatus.ACTIVE;
@@ -43,37 +42,29 @@ public class Member extends GymScopedEntity {
   private String emergencyContactRelationship;
 
   // Health information
-  private 
-  String[] medicalConditions;
+  private String[] medicalConditions;
 
-  private 
-  String[] allergies;
+  private String[] allergies;
 
-  private 
-  String[] medications;
+  private String[] medications;
 
-  private 
-  String[] fitnessGoals;
+  private String[] fitnessGoals;
 
   private String experienceLevel; // beginner, intermediate, advanced
 
   // Preferences
-  private 
-  String preferredWorkoutTimes;
+  private String preferredWorkoutTimes;
 
-  private 
-  String communicationPreferences;
+  private String communicationPreferences;
 
   // Waiver & agreements
   @Builder.Default
-  private 
-  boolean waiverSigned = false;
+  private boolean waiverSigned = false;
 
   private LocalDate waiverSignedDate;
 
   @Builder.Default
-  private 
-  boolean photoConsent = false;
+  private boolean photoConsent = false;
 
   public void signWaiver() {
     this.waiverSigned = true;

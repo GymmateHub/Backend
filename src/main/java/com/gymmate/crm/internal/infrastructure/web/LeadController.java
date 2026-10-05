@@ -1,10 +1,10 @@
 package com.gymmate.crm.internal.infrastructure.web;
 
-import com.gymmate.crm.api.dto.LeadConvertRequest;
-import com.gymmate.crm.api.dto.LeadCreateRequest;
-import com.gymmate.crm.api.dto.LeadResponse;
-import com.gymmate.crm.api.dto.LeadStatusUpdateRequest;
-import com.gymmate.crm.api.dto.LeadUpdateRequest;
+import com.gymmate.crm.internal.application.dto.LeadConvertRequest;
+import com.gymmate.crm.internal.application.dto.LeadCreateRequest;
+import com.gymmate.crm.internal.application.dto.LeadResponse;
+import com.gymmate.crm.internal.application.dto.LeadStatusUpdateRequest;
+import com.gymmate.crm.internal.application.dto.LeadUpdateRequest;
 import com.gymmate.crm.internal.application.LeadService;
 import com.gymmate.crm.internal.domain.Lead;
 import com.gymmate.crm.internal.domain.LeadStatus;

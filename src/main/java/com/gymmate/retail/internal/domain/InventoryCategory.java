@@ -1,6 +1,5 @@
 package com.gymmate.retail.internal.domain;
 
-
 /**
  * Inventory item category enumeration.
  * Categorizes retail and supply inventory items.

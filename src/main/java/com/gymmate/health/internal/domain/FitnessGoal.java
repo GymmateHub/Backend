@@ -25,8 +25,7 @@ public class FitnessGoal extends GymScopedEntity {
 
     private UUID memberId;
 
-    private 
-    GoalType goalType;
+    private GoalType goalType;
 
     private String title;
 

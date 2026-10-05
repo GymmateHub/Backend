@@ -1,8 +1,9 @@
 package com.gymmate.identity.internal.infrastructure.web;
 
+import com.gymmate.identity.internal.application.mapper.UserResponses;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.security.TenantAwareUserDetails;
-import com.gymmate.identity.api.dto.UserProfileUpdateRequest;
+import com.gymmate.identity.internal.application.dto.UserProfileUpdateRequest;
 import com.gymmate.identity.api.dto.UserResponse;
 import com.gymmate.identity.internal.application.UserService;
 import com.gymmate.identity.internal.domain.User;
@@ -47,7 +48,7 @@ public class UserController {
                     .body(ApiResponse.error("You do not have permission to access this user"));
         }
 
-        UserResponse response = UserResponse.fromEntity(user);
+        UserResponse response = UserResponses.from(user);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -58,7 +59,7 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
         User user = userService.findById(userDetails.getUserId());
-        UserResponse response = UserResponse.fromEntity(user);
+        UserResponse response = UserResponses.from(user);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
@@ -71,7 +72,7 @@ public class UserController {
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
         List<User> users = userService.findByOrganisationId(userDetails.getOrganisationId());
         List<UserResponse> responses = users.stream()
-                .map(UserResponse::fromEntity)
+                .map(UserResponses::from)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
@@ -111,7 +112,7 @@ public class UserController {
 
         User user = userService.updateProfile(id, request.firstName(),
                 request.lastName(), request.phone());
-        UserResponse response = UserResponse.fromEntity(user);
+        UserResponse response = UserResponses.from(user);
         return ResponseEntity.ok(ApiResponse.success(response, "Profile updated successfully"));
     }
 
@@ -127,7 +128,7 @@ public class UserController {
         UUID organisationId = userDetails.getOrganisationId();
         List<User> users = userService.findByRoleAndOrganisation(role, organisationId);
         List<UserResponse> responses = users.stream()
-                .map(UserResponse::fromEntity)
+                .map(UserResponses::from)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
@@ -143,7 +144,7 @@ public class UserController {
         UUID organisationId = userDetails.getOrganisationId();
         List<User> gymAdmins = userService.findActiveGymAdmins(organisationId);
         List<UserResponse> responses = gymAdmins.stream()
-                .map(UserResponse::fromEntity)
+                .map(UserResponses::from)
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
@@ -164,7 +165,7 @@ public class UserController {
                     .body(ApiResponse.error("You do not have permission to deactivate this user"));
         }
         User user = userService.deactivateUser(id);
-        UserResponse response = UserResponse.fromEntity(user);
+        UserResponse response = UserResponses.from(user);
         return ResponseEntity.ok(ApiResponse.success(response, "User deactivated successfully"));
     }
 
@@ -184,7 +185,7 @@ public class UserController {
                     .body(ApiResponse.error("You do not have permission to activate this user"));
         }
         User user = userService.activateUser(id);
-        UserResponse response = UserResponse.fromEntity(user);
+        UserResponse response = UserResponses.from(user);
         return ResponseEntity.ok(ApiResponse.success(response, "User activated successfully"));
     }
 }

@@ -2,7 +2,7 @@ package com.gymmate.organisation.internal.infrastructure.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.organisation.internal.application.GymService;
-import com.gymmate.organisation.api.dto.CreateHubRequest;
+import com.gymmate.organisation.internal.application.dto.CreateHubRequest;
 import com.gymmate.organisation.internal.application.OrganisationLimitService;
 import com.gymmate.organisation.internal.application.OrganisationService;
 import com.gymmate.organisation.internal.domain.Organisation;

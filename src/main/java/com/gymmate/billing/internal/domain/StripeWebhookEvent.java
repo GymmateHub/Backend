@@ -20,11 +20,9 @@ public class StripeWebhookEvent extends BaseAuditEntity {
     private String eventType;
 
     @Builder.Default
-    private 
-    Boolean processed = false;
+    private Boolean processed = false;
 
-    private 
-    String payload;
+    private String payload;
 
     private String errorMessage;
 

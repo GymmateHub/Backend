@@ -1,10 +1,11 @@
 package com.gymmate.identity.internal.application;
 
+import com.gymmate.identity.internal.application.mapper.UserResponses;
 import com.gymmate.identity.api.IdentityApi;
 import com.gymmate.identity.api.dto.AccessTokenClaims;
 import com.gymmate.identity.api.dto.MemberProfile;
 import com.gymmate.identity.api.dto.NewUserRegistration;
-import com.gymmate.identity.api.dto.RegistrationResponse;
+import com.gymmate.identity.internal.application.dto.RegistrationResponse;
 import com.gymmate.identity.api.dto.UserResponse;
 import com.gymmate.identity.api.dto.TokenPair;
 import com.gymmate.identity.api.dto.UserSummary;
@@ -164,17 +165,17 @@ public class IdentityApiService implements IdentityApi {
 
     @Override
     @Transactional
-    public RegistrationResponse sendRegistrationOtp(UUID userId) {
+    public void sendRegistrationOtp(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
-        return authenticationService.sendOtpForUser(user);
+        authenticationService.sendOtpForUser(user);
     }
 
     @Override
     public UserResponse describeUser(UUID userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
-        return UserResponse.fromEntity(user);
+        return UserResponses.from(user);
     }
 
     // ---- tokens ----

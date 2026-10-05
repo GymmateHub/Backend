@@ -23,17 +23,14 @@ public class GymArea extends GymScopedEntity {
 
   private Integer capacity;
 
-  private 
-  String[] amenities;
+  private String[] amenities;
 
   // Booking rules
   @Builder.Default
-  private 
-  boolean requiresBooking = false;
+  private boolean requiresBooking = false;
 
   @Builder.Default
-  private 
-  Integer advanceBookingHours = 24;
+  private Integer advanceBookingHours = 24;
 
   public void updateDetails(String name, String areaType, Integer capacity) {
     this.name = name;

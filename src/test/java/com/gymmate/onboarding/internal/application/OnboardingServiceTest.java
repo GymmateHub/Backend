@@ -1,9 +1,9 @@
 package com.gymmate.onboarding.internal.application;
 
 import com.gymmate.identity.api.IdentityApi;
-import com.gymmate.identity.api.dto.MemberRegistrationRequest;
+import com.gymmate.onboarding.internal.application.dto.MemberRegistrationRequest;
 import com.gymmate.identity.api.dto.NewUserRegistration;
-import com.gymmate.identity.api.dto.OwnerRegistrationRequest;
+import com.gymmate.onboarding.internal.application.dto.OwnerRegistrationRequest;
 import com.gymmate.organisation.api.OrganisationApi;
 import com.gymmate.organisation.api.dto.GymSummary;
 import com.gymmate.organisation.api.dto.InitialGymCommand;

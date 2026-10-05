@@ -1,7 +1,7 @@
 package com.gymmate.ai.internal.infrastructure.web;
 
-import com.gymmate.ai.api.dto.AiPlanRequest;
-import com.gymmate.ai.api.dto.AiPlanResponse;
+import com.gymmate.ai.internal.application.dto.AiPlanRequest;
+import com.gymmate.ai.internal.application.dto.AiPlanResponse;
 import com.gymmate.ai.internal.application.AiPlanService;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.ResourceNotFoundException;

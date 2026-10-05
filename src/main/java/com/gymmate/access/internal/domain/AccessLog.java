@@ -25,11 +25,9 @@ public class AccessLog extends GymScopedEntity {
 
     private LocalDateTime accessTime;
 
-    private 
-    AccessDirection direction;
+    private AccessDirection direction;
 
-    private 
-    AccessStatus status;
+    private AccessStatus status;
 
     private String accessMethod;
 

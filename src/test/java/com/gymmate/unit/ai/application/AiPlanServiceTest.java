@@ -1,6 +1,6 @@
 package com.gymmate.unit.ai.application;
 
-import com.gymmate.ai.api.dto.AiPlanResponse;
+import com.gymmate.ai.internal.application.dto.AiPlanResponse;
 import com.gymmate.ai.internal.application.AiPlanService;
 import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;

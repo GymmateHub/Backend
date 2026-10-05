@@ -1,7 +1,7 @@
 package com.gymmate.scheduling.internal.infrastructure.web;
 
-import com.gymmate.scheduling.api.dto.BookingResponse;
-import com.gymmate.scheduling.api.dto.CreateBookingRequest;
+import com.gymmate.scheduling.internal.application.dto.BookingResponse;
+import com.gymmate.scheduling.internal.application.dto.CreateBookingRequest;
 import com.gymmate.scheduling.internal.application.ClassBookingCoordinator;
 import com.gymmate.scheduling.internal.application.ClassBookingService;
 import com.gymmate.scheduling.internal.domain.ClassBooking;

@@ -33,23 +33,20 @@ public class Notification extends TenantEntity {
 
     private String eventType;
 
-    private 
-    String metadata;
+    private String metadata;
 
     private UUID relatedEntityId;
 
     private String relatedEntityType;
 
-    private 
-    RecipientRole recipientRole;
+    private RecipientRole recipientRole;
 
     @Builder.Default
     private NotificationScope scope = NotificationScope.ORGANISATION;
 
     private LocalDateTime readAt;
 
-    private 
-    DeliveryChannel deliveredVia;
+    private DeliveryChannel deliveredVia;
 
     private LocalDateTime deliveredAt;
 

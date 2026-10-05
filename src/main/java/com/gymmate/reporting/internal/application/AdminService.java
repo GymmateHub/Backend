@@ -1,8 +1,8 @@
 package com.gymmate.reporting.internal.application;
 
-import com.gymmate.reporting.api.dto.OrganisationSummary;
-import com.gymmate.reporting.api.dto.PlatformOverview;
-import com.gymmate.reporting.api.dto.TenantSummary;
+import com.gymmate.reporting.internal.application.dto.OrganisationSummary;
+import com.gymmate.reporting.internal.application.dto.PlatformOverview;
+import com.gymmate.reporting.internal.application.dto.TenantSummary;
 import com.gymmate.organisation.api.OrganisationApi;
 import com.gymmate.organisation.api.dto.OrganisationInfo;
 import com.gymmate.shared.constants.UserRole;

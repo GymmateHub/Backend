@@ -17,16 +17,14 @@ public class Trainer extends TenantEntity {
   private UUID userId;
 
   // Professional info
-  private 
-  String[] specializations;
+  private String[] specializations;
 
   private String bio;
 
   private BigDecimal hourlyRate;
 
   @Builder.Default
-  private 
-  BigDecimal commissionRate = BigDecimal.ZERO;
+  private BigDecimal commissionRate = BigDecimal.ZERO;
 
   // Certifications
 
@@ -34,8 +32,7 @@ public class Trainer extends TenantEntity {
   private String certifications = "[]";
 
   // Availability
-  private 
-  String defaultAvailability;
+  private String defaultAvailability;
 
   // Employment
   private LocalDate hireDate;
@@ -44,8 +41,7 @@ public class Trainer extends TenantEntity {
 
   // Status
   @Builder.Default
-  private 
-  boolean acceptingClients = true;
+  private boolean acceptingClients = true;
 
   public void updateRate(BigDecimal hourlyRate, BigDecimal commissionRate) {
     this.hourlyRate = hourlyRate;

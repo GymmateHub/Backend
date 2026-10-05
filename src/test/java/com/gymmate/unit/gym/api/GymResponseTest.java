@@ -1,6 +1,6 @@
 package com.gymmate.unit.gym.api;
 
-import com.gymmate.organisation.api.dto.GymResponse;
+import com.gymmate.organisation.internal.application.dto.GymResponse;
 import com.gymmate.organisation.internal.domain.Gym;
 import org.junit.jupiter.api.Test;
 

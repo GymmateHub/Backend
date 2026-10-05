@@ -33,32 +33,26 @@ public class MembershipPlan extends GymScopedEntity {
   private Integer classCredits; // NULL for unlimited
 
   @Builder.Default
-  private 
-  Integer guestPasses = 0;
+  private Integer guestPasses = 0;
 
   @Builder.Default
-  private 
-  Integer trainerSessions = 0;
+  private Integer trainerSessions = 0;
 
   @Builder.Default
   private String amenities = "[]"; // ["pool", "sauna", "parking"]
 
   // Restrictions
   @Builder.Default
-  private 
-  boolean peakHoursAccess = true;
+  private boolean peakHoursAccess = true;
 
   @Builder.Default
-  private 
-  boolean offPeakOnly = false;
+  private boolean offPeakOnly = false;
 
-  private 
-  String specificAreas; // ["main_gym", "pool", "studio"]
+  private String specificAreas; // ["main_gym", "pool", "studio"]
 
   // Status
   @Builder.Default
-  private 
-  boolean featured = false;
+  private boolean featured = false;
 
   // Stripe integration
   private String stripeProductId;

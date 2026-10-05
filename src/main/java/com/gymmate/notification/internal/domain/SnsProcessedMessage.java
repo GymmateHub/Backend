@@ -24,6 +24,5 @@ public class SnsProcessedMessage extends BaseEntity {
     private String eventType;
 
     @Builder.Default
-    private 
-    LocalDateTime processedAt = LocalDateTime.now();
+    private LocalDateTime processedAt = LocalDateTime.now();
 }

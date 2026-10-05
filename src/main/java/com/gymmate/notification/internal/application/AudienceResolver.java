@@ -3,7 +3,7 @@ package com.gymmate.notification.internal.application;
 import com.gymmate.notification.api.spi.MemberRecipient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gymmate.notification.api.dto.AudiencePreviewResponse;
+import com.gymmate.notification.internal.application.dto.AudiencePreviewResponse;
 import com.gymmate.notification.api.spi.AudienceMemberIdsResolver;
 import com.gymmate.notification.api.spi.MemberDirectory;
 import com.gymmate.notification.api.dto.AudienceType;

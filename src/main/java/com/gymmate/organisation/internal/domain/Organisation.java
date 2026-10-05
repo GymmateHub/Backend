@@ -28,12 +28,10 @@ public class Organisation extends BaseAuditEntity {
 
     // Subscription & Billing
     @Builder.Default
-    private 
-    String subscriptionPlan = "starter";
+    private String subscriptionPlan = "starter";
 
     @Builder.Default
-    private 
-    String subscriptionStatus = "trial";
+    private String subscriptionStatus = "trial";
 
     private LocalDateTime subscriptionStartedAt;
 
@@ -43,22 +41,18 @@ public class Organisation extends BaseAuditEntity {
 
     // Plan Limits
     @Builder.Default
-    private 
-    Integer maxGyms = 1;
+    private Integer maxGyms = 1;
 
     @Builder.Default
-    private 
-    Integer maxMembers = 200;
+    private Integer maxMembers = 200;
 
     @Builder.Default
-    private 
-    Integer maxStaff = 10;
+    private Integer maxStaff = 10;
 
     // Billing
     private String billingEmail;
 
-    private 
-    String billingAddress;
+    private String billingAddress;
 
     private String paymentMethodId;
 
@@ -74,8 +68,7 @@ public class Organisation extends BaseAuditEntity {
 
     // Status - Note: isActive is inherited from BaseAuditJpaEntity as 'active' field
     @Builder.Default
-    private 
-    boolean onboardingCompleted = false;
+    private boolean onboardingCompleted = false;
 
     // Settings
 

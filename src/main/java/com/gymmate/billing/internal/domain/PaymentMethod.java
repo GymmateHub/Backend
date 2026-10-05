@@ -36,8 +36,7 @@ public class PaymentMethod extends BaseAuditEntity {
     /**
      * Type of owner: GYM, ORGANISATION, or MEMBER
      */
-    private 
-    PaymentMethodOwnerType ownerType;
+    private PaymentMethodOwnerType ownerType;
 
     /**
      * ID of the owner (organisation_id for ORGANISATION type, gym_id for GYM type,
@@ -57,16 +56,14 @@ public class PaymentMethod extends BaseAuditEntity {
 
     // Payment provider details
     @Builder.Default
-    private 
-    String provider = "stripe";
+    private String provider = "stripe";
 
     private String providerPaymentMethodId;
 
     private String providerCustomerId;
 
     // Payment method type
-    private 
-    PaymentMethodType methodType;
+    private PaymentMethodType methodType;
 
     // Card details (when method_type = CARD)
     private String cardBrand;
@@ -89,15 +86,13 @@ public class PaymentMethod extends BaseAuditEntity {
 
     // Status flags
     @Builder.Default
-    private 
-    Boolean isDefault = false;
+    private Boolean isDefault = false;
 
     // Note: isActive is inherited from BaseAuditJpaEntity (mapped to 'is_active'
     // column as 'active' field)
 
     @Builder.Default
-    private 
-    Boolean isVerified = false;
+    private Boolean isVerified = false;
 
     private LocalDateTime verifiedAt;
 

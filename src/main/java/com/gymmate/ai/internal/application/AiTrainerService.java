@@ -1,5 +1,6 @@
 package com.gymmate.ai.internal.application;
 
+import com.gymmate.shared.events.AsyncModuleListener;
 import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;
 import com.gymmate.ai.internal.application.port.AiPlanNotifier;
@@ -25,9 +26,7 @@ public class AiTrainerService {
     private final OrganisationApi organisationApi;
     private final AiPlanNotifier aiNotificationIntegration;
 
-    @Async
-    @EventListener
-    @Transactional
+    @AsyncModuleListener
     public void handleMemberOnboardedEvent(MemberOnboardedEvent event) {
         log.info("Generating AI plan for member {} at gym {}", event.getMemberId(), event.getGymId());
 

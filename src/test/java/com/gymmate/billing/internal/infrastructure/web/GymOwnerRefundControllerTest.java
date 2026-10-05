@@ -1,7 +1,7 @@
 package com.gymmate.billing.internal.infrastructure.web;
 
 import com.gymmate.billing.internal.domain.RefundAuditLog;
-import com.gymmate.billing.api.dto.RefundRequestResponse;
+import com.gymmate.billing.internal.application.dto.RefundRequestResponse;
 import com.gymmate.billing.internal.application.RefundRequestService;
 import com.gymmate.shared.constants.RefundReasonCategory;
 import com.gymmate.shared.constants.RefundRequestStatus;

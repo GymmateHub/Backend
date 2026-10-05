@@ -55,7 +55,7 @@ class AiTrainerServiceTest {
         when(aiRecommendationRepository.save(any(AiRecommendation.class))).thenAnswer(inv -> inv.getArgument(0));
 
         MemberOnboardedEvent event = new MemberOnboardedEvent(
-                this, organisationId, memberId, gymId, new String[] { "strength", "endurance" });
+                organisationId, memberId, gymId, new String[] { "strength", "endurance" });
 
         service.handleMemberOnboardedEvent(event);
 

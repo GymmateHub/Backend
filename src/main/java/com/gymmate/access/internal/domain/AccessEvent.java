@@ -29,19 +29,15 @@ public class AccessEvent extends GymScopedEntity {
   @Builder.Default
   private AccessDirection direction = AccessDirection.IN;
 
-  private 
-  AccessDecision decision;
+  private AccessDecision decision;
 
-  private 
-  DenyReason denyReason;
+  private DenyReason denyReason;
 
   @Builder.Default
-  private 
-  boolean tailgatingSuspected = false;
+  private boolean tailgatingSuspected = false;
 
   @Builder.Default
-  private 
-  LocalDateTime occurredAt = LocalDateTime.now();
+  private LocalDateTime occurredAt = LocalDateTime.now();
 
   /** Valid scans counted for the entry window (hardware reconciliation). */
   private Integer validScanCount;

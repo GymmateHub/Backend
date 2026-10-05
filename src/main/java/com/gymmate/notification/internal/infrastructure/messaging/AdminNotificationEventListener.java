@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.infrastructure.messaging;
 
+import com.gymmate.shared.events.AsyncModuleListener;
 import com.gymmate.notification.internal.application.NotificationDispatcher;
 import com.gymmate.notification.api.event.MemberJoinedEvent;
 import com.gymmate.notification.api.event.PaymentFailedEvent;
@@ -35,9 +36,7 @@ public class AdminNotificationEventListener {
     /**
      * Handle payment failed events.
      */
-    @EventListener
-    @Async
-    @Transactional
+    @AsyncModuleListener
     public void handlePaymentFailedEvent(PaymentFailedEvent event) {
         log.info("Handling PaymentFailedEvent for organisation: {}", event.getOrganisationId());
 
@@ -86,9 +85,7 @@ public class AdminNotificationEventListener {
     /**
      * Handle payment success events.
      */
-    @EventListener
-    @Async
-    @Transactional
+    @AsyncModuleListener
     public void handlePaymentSuccessEvent(PaymentSuccessEvent event) {
         log.info("Handling PaymentSuccessEvent for organisation: {}", event.getOrganisationId());
 
@@ -127,9 +124,7 @@ public class AdminNotificationEventListener {
     /**
      * Handle subscription expiring events.
      */
-    @EventListener
-    @Async
-    @Transactional
+    @AsyncModuleListener
     public void handleSubscriptionExpiringEvent(SubscriptionExpiringEvent event) {
         log.info("Handling SubscriptionExpiringEvent for organisation: {}", event.getOrganisationId());
 
@@ -167,9 +162,7 @@ public class AdminNotificationEventListener {
     /**
      * Handle member joined events.
      */
-    @EventListener
-    @Async
-    @Transactional
+    @AsyncModuleListener
     public void handleMemberJoinedEvent(MemberJoinedEvent event) {
         log.info("Handling MemberJoinedEvent for organisation: {}", event.getOrganisationId());
 

@@ -20,8 +20,7 @@ public class Subscription extends BaseAuditEntity {
 
     private UUID organisationId;
 
-    private 
-    SubscriptionTier tier;
+    private SubscriptionTier tier;
 
     @Builder.Default
     private SubscriptionStatus status = SubscriptionStatus.ACTIVE;
@@ -32,8 +31,7 @@ public class Subscription extends BaseAuditEntity {
     private LocalDateTime currentPeriodEnd;
 
     @Builder.Default
-    private 
-    Boolean cancelAtPeriodEnd = false;
+    private Boolean cancelAtPeriodEnd = false;
 
     private LocalDateTime cancelledAt;
 
@@ -51,16 +49,13 @@ public class Subscription extends BaseAuditEntity {
 
     // Usage Tracking
     @Builder.Default
-    private 
-    Integer currentMemberCount = 0;
+    private Integer currentMemberCount = 0;
 
     @Builder.Default
-    private 
-    Integer currentLocationCount = 1;
+    private Integer currentLocationCount = 1;
 
     // Metadata
-    private 
-    String metadata;
+    private String metadata;
 
     // When this subscription first entered PAST_DUE — drives the grace-period
     // escalation in SubscriptionService.escalatePastDueSubscriptions. Null while not

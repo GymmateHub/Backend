@@ -22,8 +22,7 @@ public class AccessSchedule extends GymScopedEntity {
   private UUID membershipPlanId;
 
   /** Day this window applies to; null means every day. */
-  private 
-  DayOfWeek dayOfWeek;
+  private DayOfWeek dayOfWeek;
 
   private LocalTime startTime;
 

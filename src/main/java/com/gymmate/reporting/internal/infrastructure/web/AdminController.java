@@ -1,6 +1,6 @@
 package com.gymmate.reporting.internal.infrastructure.web;
 
-import com.gymmate.reporting.api.dto.PlatformOverview;
+import com.gymmate.reporting.internal.application.dto.PlatformOverview;
 import com.gymmate.reporting.internal.application.AdminService;
 import com.gymmate.shared.dto.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.gymmate.reporting.api.dto.TenantSummary;
+import com.gymmate.reporting.internal.application.dto.TenantSummary;
 import java.util.List;
 
 @RestController

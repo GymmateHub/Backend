@@ -1,6 +1,5 @@
 package com.gymmate.retail.internal.domain;
 
-
 /**
  * Equipment category enumeration.
  * Categorizes gym equipment by type.

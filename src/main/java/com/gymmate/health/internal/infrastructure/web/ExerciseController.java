@@ -1,8 +1,8 @@
 package com.gymmate.health.internal.infrastructure.web;
 
-import com.gymmate.health.api.dto.CreateExerciseRequest;
-import com.gymmate.health.api.dto.ExerciseCategoryResponse;
-import com.gymmate.health.api.dto.ExerciseResponse;
+import com.gymmate.health.internal.application.dto.CreateExerciseRequest;
+import com.gymmate.health.internal.application.dto.ExerciseCategoryResponse;
+import com.gymmate.health.internal.application.dto.ExerciseResponse;
 import com.gymmate.health.internal.application.ExerciseService;
 import com.gymmate.health.internal.domain.Exercise;
 import com.gymmate.health.internal.domain.ExerciseCategory;

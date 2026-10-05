@@ -32,8 +32,7 @@ public class ProgressPhoto extends GymScopedEntity {
     private String notes;
 
     @Builder.Default
-    private 
-    boolean isPublic = false; // Privacy control - default private
+    private boolean isPublic = false; // Privacy control - default private
 
     // Business methods
 

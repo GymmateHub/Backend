@@ -1,9 +1,9 @@
 package com.gymmate.retail.internal.infrastructure.web;
 
-import com.gymmate.retail.api.dto.MaintenanceRecordCreateRequest;
-import com.gymmate.retail.api.dto.MaintenanceRecordResponse;
-import com.gymmate.retail.api.dto.MaintenanceScheduleCreateRequest;
-import com.gymmate.retail.api.dto.MaintenanceScheduleResponse;
+import com.gymmate.retail.internal.application.dto.MaintenanceRecordCreateRequest;
+import com.gymmate.retail.internal.application.dto.MaintenanceRecordResponse;
+import com.gymmate.retail.internal.application.dto.MaintenanceScheduleCreateRequest;
+import com.gymmate.retail.internal.application.dto.MaintenanceScheduleResponse;
 import com.gymmate.retail.internal.application.MaintenanceService;
 import com.gymmate.retail.internal.domain.MaintenanceRecord;
 import com.gymmate.retail.internal.domain.MaintenanceSchedule;

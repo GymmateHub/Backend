@@ -1,11 +1,11 @@
 package com.gymmate.organisation.internal.infrastructure.web;
 
-import com.gymmate.organisation.api.dto.CreateGymRequest;
-import com.gymmate.organisation.api.dto.CreateHubRequest;
-import com.gymmate.organisation.api.dto.OrganisationResponse;
-import com.gymmate.organisation.api.dto.OrganisationUpdateRequest;
-import com.gymmate.organisation.api.dto.OrganisationUsageResponse;
-import com.gymmate.organisation.api.dto.GymResponse;
+import com.gymmate.organisation.internal.application.dto.CreateGymRequest;
+import com.gymmate.organisation.internal.application.dto.CreateHubRequest;
+import com.gymmate.organisation.internal.application.dto.OrganisationResponse;
+import com.gymmate.organisation.internal.application.dto.OrganisationUpdateRequest;
+import com.gymmate.organisation.internal.application.dto.OrganisationUsageResponse;
+import com.gymmate.organisation.internal.application.dto.GymResponse;
 import com.gymmate.organisation.internal.application.GymService;
 import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.identity.api.dto.UserSummary;

@@ -3,7 +3,6 @@ package com.gymmate.identity.api;
 import com.gymmate.identity.api.dto.AccessTokenClaims;
 import com.gymmate.identity.api.dto.MemberProfile;
 import com.gymmate.identity.api.dto.NewUserRegistration;
-import com.gymmate.identity.api.dto.RegistrationResponse;
 import com.gymmate.identity.api.dto.UserResponse;
 import com.gymmate.identity.api.dto.TokenPair;
 import com.gymmate.identity.api.dto.UserSummary;
@@ -80,7 +79,7 @@ public interface IdentityApi {
     void createMemberProfile(UUID userId, UUID gymId);
 
     /** Sends the e-mail verification OTP to a newly registered user. */
-    RegistrationResponse sendRegistrationOtp(UUID userId);
+    void sendRegistrationOtp(UUID userId);
 
     /** The user as rendered by the identity REST API. */
     UserResponse describeUser(UUID userId);

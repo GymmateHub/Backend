@@ -23,8 +23,7 @@ public class StockMovement extends GymScopedEntity {
 
   private UUID inventoryItemId;
 
-  private 
-  MovementType movementType;
+  private MovementType movementType;
 
   private Integer quantity;
 
@@ -37,8 +36,7 @@ public class StockMovement extends GymScopedEntity {
   private Integer stockAfter;
 
   @Builder.Default
-  private 
-  LocalDateTime movementDate = LocalDateTime.now();
+  private LocalDateTime movementDate = LocalDateTime.now();
 
   private String referenceNumber; // Invoice, PO number, etc.
 

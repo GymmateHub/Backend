@@ -32,11 +32,9 @@ public class GymInvoice extends BaseAuditEntity {
     private BigDecimal amount;
 
     @Builder.Default
-    private 
-    String currency = "USD";
+    private String currency = "USD";
 
-    private 
-    InvoiceStatus status;
+    private InvoiceStatus status;
 
     private String description;
 

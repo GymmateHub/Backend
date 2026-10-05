@@ -39,38 +39,31 @@ public class Sale extends GymScopedEntity {
 
     // Amounts
     @Builder.Default
-    private 
-    BigDecimal subtotal = BigDecimal.ZERO;
+    private BigDecimal subtotal = BigDecimal.ZERO;
 
     @Builder.Default
-    private 
-    BigDecimal discountAmount = BigDecimal.ZERO;
+    private BigDecimal discountAmount = BigDecimal.ZERO;
 
     private BigDecimal discountPercentage;
 
     private String discountCode;
 
     @Builder.Default
-    private 
-    BigDecimal taxAmount = BigDecimal.ZERO;
+    private BigDecimal taxAmount = BigDecimal.ZERO;
 
     private BigDecimal taxRate;
 
     @Builder.Default
-    private 
-    BigDecimal totalAmount = BigDecimal.ZERO;
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Builder.Default
-    private 
-    BigDecimal amountPaid = BigDecimal.ZERO;
+    private BigDecimal amountPaid = BigDecimal.ZERO;
 
     @Builder.Default
-    private 
-    BigDecimal changeGiven = BigDecimal.ZERO;
+    private BigDecimal changeGiven = BigDecimal.ZERO;
 
     @Builder.Default
-    private 
-    BigDecimal refundedAmount = BigDecimal.ZERO;
+    private BigDecimal refundedAmount = BigDecimal.ZERO;
 
     // Payment reference
     private String stripePaymentIntentId;
@@ -79,8 +72,7 @@ public class Sale extends GymScopedEntity {
 
     // Timestamps
     @Builder.Default
-    private 
-    LocalDateTime saleDate = LocalDateTime.now();
+    private LocalDateTime saleDate = LocalDateTime.now();
 
     private LocalDateTime completedAt;
 
@@ -90,16 +82,13 @@ public class Sale extends GymScopedEntity {
     private String notes;
 
     @Builder.Default
-    private 
-    boolean receiptPrinted = false;
+    private boolean receiptPrinted = false;
 
     @Builder.Default
-    private 
-    boolean receiptEmailed = false;
+    private boolean receiptEmailed = false;
 
     @Builder.Default
-    private 
-    List<SaleItem> items = new ArrayList<>();
+    private List<SaleItem> items = new ArrayList<>();
 
     // Business methods
     public void addItem(SaleItem item) {

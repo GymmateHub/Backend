@@ -3,7 +3,7 @@ package com.gymmate.organisation.internal.infrastructure.web;
 import com.gymmate.identity.api.IdentityApi;
 import com.gymmate.identity.api.dto.AccessTokenClaims;
 import com.gymmate.identity.api.dto.TokenPair;
-import com.gymmate.organisation.api.dto.GymSwitchResponse;
+import com.gymmate.organisation.internal.application.dto.GymSwitchResponse;
 import com.gymmate.organisation.internal.application.GymService;
 import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;

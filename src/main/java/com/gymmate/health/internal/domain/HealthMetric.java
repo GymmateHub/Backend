@@ -26,8 +26,7 @@ public class HealthMetric extends GymScopedEntity {
 
     private LocalDateTime measurementDate;
 
-    private 
-    MetricType metricType;
+    private MetricType metricType;
 
     private BigDecimal value;
 

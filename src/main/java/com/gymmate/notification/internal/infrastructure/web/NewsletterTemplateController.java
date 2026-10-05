@@ -1,8 +1,8 @@
 package com.gymmate.notification.internal.infrastructure.web;
 
-import com.gymmate.notification.api.dto.CreateTemplateRequest;
-import com.gymmate.notification.api.dto.TemplateResponse;
-import com.gymmate.notification.api.dto.UpdateTemplateRequest;
+import com.gymmate.notification.internal.application.dto.CreateTemplateRequest;
+import com.gymmate.notification.internal.application.dto.TemplateResponse;
+import com.gymmate.notification.internal.application.dto.UpdateTemplateRequest;
 import com.gymmate.notification.internal.application.NewsletterTemplateService;
 import com.gymmate.notification.internal.domain.NewsletterTemplate;
 import com.gymmate.shared.dto.ApiResponse;

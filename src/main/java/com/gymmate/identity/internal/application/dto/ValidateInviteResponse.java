@@ -1,0 +1,19 @@
+package com.gymmate.identity.internal.application.dto;
+
+import com.gymmate.shared.constants.UserRole;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+public record ValidateInviteResponse(
+                String inviteToken,
+                String email,
+                String firstName,
+                String lastName,
+                UserRole role,
+                String gymName,
+                String invitedBy,
+                UUID organisationId,
+                UUID gymId,
+                LocalDateTime expiresAt,
+                boolean expired) {
+}

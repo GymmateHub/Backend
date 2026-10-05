@@ -47,8 +47,7 @@ public class MaintenanceRecord extends GymScopedEntity {
 
   // Completion status
   @Builder.Default
-  private 
-  boolean completed = true;
+  private boolean completed = true;
 
   private String completionNotes;
 

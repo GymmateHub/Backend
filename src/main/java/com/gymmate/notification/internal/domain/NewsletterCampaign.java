@@ -27,27 +27,22 @@ public class NewsletterCampaign extends GymScopedEntity {
 
     private String body;
 
-    private 
-    AudienceType audienceType;
+    private AudienceType audienceType;
 
-    private 
-    String audienceFilter;
+    private String audienceFilter;
 
     private LocalDateTime scheduledAt;
 
     private LocalDateTime sentAt;
 
     @Builder.Default
-    private 
-    Integer totalRecipients = 0;
+    private Integer totalRecipients = 0;
 
     @Builder.Default
-    private 
-    Integer deliveredCount = 0;
+    private Integer deliveredCount = 0;
 
     @Builder.Default
-    private 
-    Integer failedCount = 0;
+    private Integer failedCount = 0;
 
     @Builder.Default
     private CampaignStatus status = CampaignStatus.DRAFT;

@@ -33,11 +33,9 @@ public class AccessPoint extends GymScopedEntity {
   private String deviceId;
 
   @Builder.Default
-  private 
-  boolean online = true;
+  private boolean online = true;
 
   /** Cooldown before the same credential may grant entry again (pass-back defence). */
   @Builder.Default
-  private 
-  Integer reentryLockoutSeconds = 300;
+  private Integer reentryLockoutSeconds = 300;
 }

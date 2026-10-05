@@ -1,7 +1,5 @@
 package com.gymmate.notification.api.spi;
 
-import com.gymmate.notification.internal.application.AudienceResolver;
-
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;

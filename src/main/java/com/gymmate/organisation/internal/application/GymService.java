@@ -1,6 +1,6 @@
 package com.gymmate.organisation.internal.application;
 
-import com.gymmate.organisation.api.dto.GymAnalyticsResponse;
+import com.gymmate.organisation.internal.application.dto.GymAnalyticsResponse;
 import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.organisation.internal.application.port.GymRepository;
 import com.gymmate.shared.constants.GymStatus;
@@ -39,7 +39,7 @@ public class GymService {
      * Register a new gym with the system.
      */
     @Transactional
-    public Gym registerGym(com.gymmate.organisation.api.dto.GymRegistrationRequest request) {
+    public Gym registerGym(com.gymmate.organisation.internal.application.dto.GymRegistrationRequest request) {
         // Validate that the owner exists and has the correct role
         UserQueryPort.UserOwnerSummary owner = userQueryPort.findOwnerSummaryById(request.ownerId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.ownerId().toString()));
@@ -118,7 +118,7 @@ public class GymService {
      * Update gym details with all fields including address.
      */
     @Transactional
-    public Gym updateGymDetails(UUID id, com.gymmate.organisation.api.dto.GymUpdateRequest request) {
+    public Gym updateGymDetails(UUID id, com.gymmate.organisation.internal.application.dto.GymUpdateRequest request) {
         Gym gym = getGymById(id);
 
         // Update basic details

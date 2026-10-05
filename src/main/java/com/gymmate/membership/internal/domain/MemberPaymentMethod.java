@@ -34,8 +34,7 @@ public class MemberPaymentMethod extends GymScopedEntity {
     private Integer expiryYear;
 
     @Builder.Default
-    private 
-    Boolean isDefault = false;
+    private Boolean isDefault = false;
 
     public void setAsDefault() {
         this.isDefault = true;

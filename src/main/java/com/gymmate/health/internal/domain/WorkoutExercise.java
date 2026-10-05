@@ -26,12 +26,10 @@ public class WorkoutExercise extends BaseAuditEntity {
     private Integer exerciseOrder; // Order in workout sequence
 
     @Builder.Default
-    private 
-    Integer sets = 1;
+    private Integer sets = 1;
 
     @Builder.Default
-    private 
-    Integer reps = 1;
+    private Integer reps = 1;
 
     private BigDecimal weight;
 

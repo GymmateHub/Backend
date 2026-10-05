@@ -21,23 +21,19 @@ public class SubscriptionTier extends BaseAuditEntity {
     private BigDecimal price;
 
     @Builder.Default
-    private 
-    String billingCycle = "monthly"; // monthly, annual
+    private String billingCycle = "monthly"; // monthly, annual
 
     @Builder.Default
-    private 
-    Boolean active = true;
+    private Boolean active = true;
 
     @Builder.Default
-    private 
-    Boolean featured = false;
+    private Boolean featured = false;
 
     // Limits
     private Integer maxMembers;
 
     @Builder.Default
-    private 
-    Integer maxLocations = 1;
+    private Integer maxLocations = 1;
 
     private Integer maxStaff;
 
@@ -45,25 +41,20 @@ public class SubscriptionTier extends BaseAuditEntity {
 
     // API Rate Limits
     @Builder.Default
-    private 
-    Integer apiRequestsPerHour = 1000;
+    private Integer apiRequestsPerHour = 1000;
 
     @Builder.Default
-    private 
-    Integer apiBurstLimit = 100;
+    private Integer apiBurstLimit = 100;
 
     @Builder.Default
-    private 
-    Integer concurrentConnections = 10;
+    private Integer concurrentConnections = 10;
 
     // Communication Limits
     @Builder.Default
-    private 
-    Integer smsCreditsPerMonth = 0;
+    private Integer smsCreditsPerMonth = 0;
 
     @Builder.Default
-    private 
-    Integer emailCreditsPerMonth = 0;
+    private Integer emailCreditsPerMonth = 0;
 
     // Feature Flags
 
@@ -72,24 +63,19 @@ public class SubscriptionTier extends BaseAuditEntity {
 
     // Overage Pricing
     @Builder.Default
-    private 
-    BigDecimal overageMemberPrice = new BigDecimal("2.00");
+    private BigDecimal overageMemberPrice = new BigDecimal("2.00");
 
     @Builder.Default
-    private 
-    BigDecimal overageSmsPrice = new BigDecimal("0.05");
+    private BigDecimal overageSmsPrice = new BigDecimal("0.05");
 
     @Builder.Default
-    private 
-    BigDecimal overageEmailPrice = new BigDecimal("0.02");
+    private BigDecimal overageEmailPrice = new BigDecimal("0.02");
 
     // Metadata
     @Builder.Default
-    private 
-    Integer sortOrder = 0;
+    private Integer sortOrder = 0;
 
-    private 
-    String metadata;
+    private String metadata;
 
     // Stripe Integration
     private String stripeProductId;
@@ -97,8 +83,7 @@ public class SubscriptionTier extends BaseAuditEntity {
     private String stripePriceId;
 
     @Builder.Default
-    private 
-    Integer trialDays = 14;
+    private Integer trialDays = 14;
 
     // Business methods
     public boolean hasFeature(String feature) {

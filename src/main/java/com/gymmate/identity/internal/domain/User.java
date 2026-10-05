@@ -31,8 +31,7 @@ public class User extends TenantEntity {
   private String passwordHash;
 
   @Builder.Default
-  private 
-  boolean emailVerified = false;
+  private boolean emailVerified = false;
 
   private String emailVerificationToken;
 
@@ -68,16 +67,14 @@ public class User extends TenantEntity {
 
   // Security
   @Builder.Default
-  private 
-  boolean twoFactorEnabled = false;
+  private boolean twoFactorEnabled = false;
 
   private String twoFactorSecret;
 
   private LocalDateTime lastLoginAt;
 
   @Builder.Default
-  private 
-  Integer loginAttempts = 0;
+  private Integer loginAttempts = 0;
 
   private LocalDateTime lockedUntil;
 

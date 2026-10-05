@@ -4,7 +4,7 @@ import com.gymmate.organisation.internal.application.OrganisationLimitService;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.identity.internal.infrastructure.web.MemberController;
-import com.gymmate.identity.api.dto.MemberResponse;
+import com.gymmate.identity.internal.application.dto.MemberResponse;
 import com.gymmate.identity.internal.application.MemberService;
 import com.gymmate.identity.internal.domain.Member;
 import com.gymmate.shared.constants.MemberStatus;

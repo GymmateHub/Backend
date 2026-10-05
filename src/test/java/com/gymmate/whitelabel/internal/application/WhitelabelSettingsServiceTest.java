@@ -1,8 +1,8 @@
 package com.gymmate.whitelabel.internal.application;
 
 import com.gymmate.whitelabel.internal.application.port.TenantMailSenders;
-import com.gymmate.whitelabel.api.dto.WhitelabelSettingsRequest;
-import com.gymmate.whitelabel.api.dto.WhitelabelSettingsResponse;
+import com.gymmate.whitelabel.internal.application.dto.WhitelabelSettingsRequest;
+import com.gymmate.whitelabel.internal.application.dto.WhitelabelSettingsResponse;
 import com.gymmate.whitelabel.internal.domain.SmtpSecurity;
 import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
 import com.gymmate.whitelabel.internal.application.port.WhitelabelSettingsRepository;

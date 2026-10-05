@@ -2,9 +2,9 @@ package com.gymmate.identity.internal.infrastructure.web;
 
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.identity.api.dto.MemberCreateRequest;
-import com.gymmate.identity.api.dto.MemberResponse;
-import com.gymmate.identity.api.dto.MemberUpdateRequest;
+import com.gymmate.identity.internal.application.dto.MemberCreateRequest;
+import com.gymmate.identity.internal.application.dto.MemberResponse;
+import com.gymmate.identity.internal.application.dto.MemberUpdateRequest;
 import com.gymmate.identity.internal.application.MemberService;
 import com.gymmate.identity.api.spi.MemberLimitGuard;
 import com.gymmate.identity.internal.domain.Member;

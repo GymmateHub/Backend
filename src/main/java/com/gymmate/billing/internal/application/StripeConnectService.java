@@ -2,8 +2,8 @@ package com.gymmate.billing.internal.application;
 
 import com.gymmate.billing.internal.domain.GymPaymentAccount;
 import com.gymmate.billing.internal.application.port.GymPaymentAccountPort;
-import com.gymmate.billing.api.dto.ConnectAccountStatusResponse;
-import com.gymmate.billing.api.dto.ConnectOnboardingResponse;
+import com.gymmate.billing.internal.application.dto.ConnectAccountStatusResponse;
+import com.gymmate.billing.internal.application.dto.ConnectOnboardingResponse;
 import com.gymmate.shared.integration.StripeSettings;
 import com.gymmate.shared.exception.DomainException;
 import com.stripe.exception.StripeException;

@@ -31,8 +31,7 @@ public class WorkoutLog extends GymScopedEntity {
 
     private Integer totalCaloriesBurned;
 
-    private 
-    WorkoutIntensity intensityLevel;
+    private WorkoutIntensity intensityLevel;
 
     private String notes;
 

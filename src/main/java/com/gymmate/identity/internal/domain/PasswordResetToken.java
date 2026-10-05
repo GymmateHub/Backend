@@ -18,8 +18,7 @@ public class PasswordResetToken extends BaseAuditEntity {
 
     private String token;
 
-    private 
-    User user;
+    private User user;
 
     private LocalDateTime expiryDate;
 

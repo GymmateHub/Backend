@@ -50,8 +50,7 @@ public class Supplier extends TenantEntity {
   private String paymentTerms; // Net 30, Net 60, etc.
 
   @Builder.Default
-  private 
-  String currency = "USD";
+  private String currency = "USD";
 
   private java.math.BigDecimal creditLimit;
 
@@ -60,14 +59,12 @@ public class Supplier extends TenantEntity {
 
   // Rating and notes
   @Builder.Default
-  private 
-  Integer rating = 0; // 0-5 stars
+  private Integer rating = 0; // 0-5 stars
 
   private String notes;
 
   @Builder.Default
-  private 
-  boolean preferred = false;
+  private boolean preferred = false;
 
   // Business methods
   public void updateContactInfo(String contactPerson, String email, String phone) {

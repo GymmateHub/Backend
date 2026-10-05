@@ -1,6 +1,8 @@
 package com.gymmate.notification.api.event;
 
-import com.gymmate.shared.domain.DomainEvent;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.extern.jackson.Jacksonized;
+import com.gymmate.shared.events.DomainEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;
@@ -17,6 +19,8 @@ import java.util.UUID;
  */
 @Getter
 @Builder
+@Jacksonized
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ChargeDisputedEvent implements DomainEvent, TenantAwareEvent {
 
     @Builder.Default

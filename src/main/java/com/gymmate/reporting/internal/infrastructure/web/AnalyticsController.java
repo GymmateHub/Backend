@@ -1,10 +1,10 @@
 package com.gymmate.reporting.internal.infrastructure.web;
 
-import com.gymmate.reporting.api.dto.ClassAnalyticsResponse;
-import com.gymmate.reporting.api.dto.DashboardResponse;
-import com.gymmate.reporting.api.dto.KpiCardResponse;
-import com.gymmate.reporting.api.dto.MemberAnalyticsResponse;
-import com.gymmate.reporting.api.dto.RevenueAnalyticsResponse;
+import com.gymmate.reporting.internal.application.dto.ClassAnalyticsResponse;
+import com.gymmate.reporting.internal.application.dto.DashboardResponse;
+import com.gymmate.reporting.internal.application.dto.KpiCardResponse;
+import com.gymmate.reporting.internal.application.dto.MemberAnalyticsResponse;
+import com.gymmate.reporting.internal.application.dto.RevenueAnalyticsResponse;
 import com.gymmate.reporting.internal.application.AnalyticsService;
 import com.gymmate.reporting.internal.domain.AnalyticsPeriod;
 import com.gymmate.shared.dto.ApiResponse;

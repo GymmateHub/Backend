@@ -21,13 +21,11 @@ public class ApiRateLimit extends BaseAuditEntity {
     private LocalDateTime windowEnd;
 
     @Builder.Default
-    private 
-    String windowType = "hourly"; // hourly, daily, burst
+    private String windowType = "hourly"; // hourly, daily, burst
 
     // Request Tracking
     @Builder.Default
-    private 
-    Integer requestCount = 0;
+    private Integer requestCount = 0;
 
     private Integer limitThreshold;
 
@@ -40,8 +38,7 @@ public class ApiRateLimit extends BaseAuditEntity {
 
     // Status
     @Builder.Default
-    private 
-    Boolean isBlocked = false;
+    private Boolean isBlocked = false;
 
     private LocalDateTime blockedUntil;
 

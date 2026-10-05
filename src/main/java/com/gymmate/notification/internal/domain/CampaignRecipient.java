@@ -31,12 +31,10 @@ public class CampaignRecipient extends BaseAuditEntity {
 
     private String errorMessage;
 
-    private 
-    NotificationChannel channelUsed;
+    private NotificationChannel channelUsed;
 
     @Builder.Default
-    private 
-    boolean fallbackUsed = false;
+    private boolean fallbackUsed = false;
 
     /**
      * Mark as sent successfully via a specific channel.

@@ -29,8 +29,7 @@ public class Staff extends TenantEntity {
   private String employmentType; // full_time, part_time, contractor
 
   // Schedule
-  private 
-  String defaultSchedule;
+  private String defaultSchedule;
 
   // Permissions
 

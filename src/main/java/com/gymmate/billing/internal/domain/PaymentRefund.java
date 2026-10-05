@@ -36,11 +36,9 @@ public class PaymentRefund extends BaseAuditEntity {
     private BigDecimal amount;
 
     @Builder.Default
-    private 
-    String currency = "USD";
+    private String currency = "USD";
 
-    private 
-    RefundStatus status;
+    private RefundStatus status;
 
     private String reason;
 
@@ -64,8 +62,7 @@ public class PaymentRefund extends BaseAuditEntity {
     private UUID requestedBy;
 
     @Builder.Default
-    private 
-    String requestedByType = "user";
+    private String requestedByType = "user";
 
     // Who processed/approved the refund
     private UUID processedByUserId;

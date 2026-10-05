@@ -26,20 +26,17 @@ public class ClassBooking extends GymScopedEntity {
   private UUID classScheduleId;
 
   @Builder.Default
-  private 
-  LocalDateTime bookingDate = LocalDateTime.now();
+  private LocalDateTime bookingDate = LocalDateTime.now();
 
   @Builder.Default
   private BookingStatus status = BookingStatus.CONFIRMED;
 
   // Payment
   @Builder.Default
-  private 
-  Integer creditsUsed = 1;
+  private Integer creditsUsed = 1;
 
   @Builder.Default
-  private 
-  BigDecimal amountPaid = BigDecimal.ZERO;
+  private BigDecimal amountPaid = BigDecimal.ZERO;
 
   // Attendance
   private LocalDateTime checkedInAt;

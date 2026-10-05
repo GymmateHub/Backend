@@ -1,9 +1,9 @@
 package com.gymmate.retail.internal.infrastructure.web;
 
-import com.gymmate.retail.api.dto.InventoryItemCreateRequest;
-import com.gymmate.retail.api.dto.InventoryItemResponse;
-import com.gymmate.retail.api.dto.StockMovementRequest;
-import com.gymmate.retail.api.dto.StockMovementResponse;
+import com.gymmate.retail.internal.application.dto.InventoryItemCreateRequest;
+import com.gymmate.retail.internal.application.dto.InventoryItemResponse;
+import com.gymmate.retail.internal.application.dto.StockMovementRequest;
+import com.gymmate.retail.internal.application.dto.StockMovementResponse;
 import com.gymmate.retail.internal.application.InventoryService;
 import com.gymmate.retail.internal.domain.InventoryItem;
 import com.gymmate.retail.internal.domain.StockMovement;

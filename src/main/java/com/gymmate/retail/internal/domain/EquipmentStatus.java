@@ -1,6 +1,5 @@
 package com.gymmate.retail.internal.domain;
 
-
 /**
  * Equipment status enumeration.
  * Tracks the current state of gym equipment.

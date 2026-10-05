@@ -23,8 +23,7 @@ import java.util.UUID;
 @Builder
 public class RefundRequestEntity extends GymScopedEntity {
 
-    private 
-    RefundType refundType;
+    private RefundType refundType;
 
     // Payment Reference
     private String stripePaymentIntentId;
@@ -36,8 +35,7 @@ public class RefundRequestEntity extends GymScopedEntity {
     private BigDecimal requestedRefundAmount;
 
     @Builder.Default
-    private 
-    String currency = "USD";
+    private String currency = "USD";
 
     // Related Entities
     private UUID membershipId;
@@ -57,8 +55,7 @@ public class RefundRequestEntity extends GymScopedEntity {
     private String refundToType; // MEMBER, GYM_OWNER
 
     // Request Details
-    private 
-    RefundReasonCategory reasonCategory;
+    private RefundReasonCategory reasonCategory;
 
     private String reasonDescription;
 

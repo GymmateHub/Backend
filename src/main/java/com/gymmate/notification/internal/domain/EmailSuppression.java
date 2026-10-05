@@ -17,8 +17,7 @@ public class EmailSuppression extends BaseAuditEntity {
 
     private String email;
 
-    private 
-    SuppressionReason reason;
+    private SuppressionReason reason;
 
     private String bounceType;
 
@@ -27,8 +26,7 @@ public class EmailSuppression extends BaseAuditEntity {
     private String diagnosticCode;
 
     @Builder.Default
-    private 
-    int transientBounceCount = 1;
+    private int transientBounceCount = 1;
 
     private UUID organisationId;
 

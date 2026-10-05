@@ -2,8 +2,8 @@ package com.gymmate.billing.internal.application.mapper;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gymmate.billing.api.dto.SubscriptionResponse;
-import com.gymmate.billing.api.dto.SubscriptionTierResponse;
+import com.gymmate.billing.internal.application.dto.SubscriptionResponse;
+import com.gymmate.billing.internal.application.dto.SubscriptionTierResponse;
 import com.gymmate.billing.internal.domain.Subscription;
 import com.gymmate.billing.internal.domain.SubscriptionTier;
 import org.springframework.stereotype.Component;

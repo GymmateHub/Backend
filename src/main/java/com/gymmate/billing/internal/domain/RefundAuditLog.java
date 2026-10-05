@@ -16,8 +16,7 @@ import java.util.UUID;
 @Builder
 public class RefundAuditLog {
 
-    private 
-    UUID id;
+    private UUID id;
 
     private UUID refundRequestId;
 
@@ -42,8 +41,7 @@ public class RefundAuditLog {
     private String metadata;
 
     @Builder.Default
-    private 
-    LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt = LocalDateTime.now();
 
     // ===== Factory Methods =====
 

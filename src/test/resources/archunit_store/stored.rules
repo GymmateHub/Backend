@@ -1,9 +1,0 @@
-#
-#Mon Oct 05 16:23:11 WAT 2026
-JPA\ entities\ live\ in\ infrastructure.persistence=26d75287-8103-4ef6-ad4e-50d65663a082
-Layered\ architecture\ considering\ only\ dependencies\ in\ layers,\ consisting\ of\ (optional)\nlayer\ 'Domain'\ ('com.gymmate..internal.domain..')\nlayer\ 'Application'\ ('com.gymmate..internal.application..')\nlayer\ 'Infrastructure'\ ('com.gymmate..internal.infrastructure..')\nwhere\ layer\ 'Infrastructure'\ may\ not\ be\ accessed\ by\ any\ layer\nwhere\ layer\ 'Application'\ may\ only\ be\ accessed\ by\ layers\ ['Infrastructure']\nwhere\ layer\ 'Domain'\ may\ only\ be\ accessed\ by\ layers\ ['Application',\ 'Infrastructure']=bde74920-1847-4435-a11a-a63ee6e56387
-Spring\ Data\ repositories\ live\ in\ infrastructure.persistence=7d1f2912-f185-4209-90aa-525eb94588b8
-application\ layer\ does\ not\ use\ web\ or\ persistence\ technology=4ba38267-510c-4003-9bbf-efd8aba56357
-controllers\ live\ in\ infrastructure.web=3bb7acf1-6cac-4592-ba96-cf892b271d04
-domain\ layer\ is\ free\ of\ frameworks\ and\ outer\ layers=5280fd80-76bb-4109-849e-89b1a6300325
-shared\ kernel\ depends\ on\ no\ business\ module=f16819a9-2c4a-4949-bf2f-d2dd8e448987

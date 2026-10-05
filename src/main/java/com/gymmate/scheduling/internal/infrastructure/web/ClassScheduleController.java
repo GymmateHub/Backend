@@ -1,8 +1,8 @@
 package com.gymmate.scheduling.internal.infrastructure.web;
 
 import com.gymmate.scheduling.internal.application.mapper.ClassScheduleMapper;
-import com.gymmate.scheduling.api.dto.CreateScheduleRequest;
-import com.gymmate.scheduling.api.dto.ScheduleResponse;
+import com.gymmate.scheduling.internal.application.dto.CreateScheduleRequest;
+import com.gymmate.scheduling.internal.application.dto.ScheduleResponse;
 import com.gymmate.scheduling.internal.application.ClassScheduleService;
 import com.gymmate.scheduling.internal.domain.ClassSchedule;
 import com.gymmate.shared.dto.ApiResponse;

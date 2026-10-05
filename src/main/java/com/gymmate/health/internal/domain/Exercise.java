@@ -25,23 +25,20 @@ public class Exercise extends BaseAuditEntity {
 
     private String primaryMuscleGroup; // Chest, Back, Legs, Shoulders, Arms, Core, etc.
 
-    private 
-    String[] secondaryMuscleGroups;
+    private String[] secondaryMuscleGroups;
 
     private String equipmentRequired; // Barbell, Dumbbells, None, etc.
 
     private String difficultyLevel; // BEGINNER, INTERMEDIATE, ADVANCED
 
-    private 
-    String instructions; // Step-by-step instructions as JSON array
+    private String instructions; // Step-by-step instructions as JSON array
 
     private String videoUrl;
 
     private String thumbnailUrl;
 
     @Builder.Default
-    private 
-    boolean isPublic = true; // true = public library, false = gym-specific
+    private boolean isPublic = true; // true = public library, false = gym-specific
 
     private UUID createdByGymId; // Null if public exercise
 }

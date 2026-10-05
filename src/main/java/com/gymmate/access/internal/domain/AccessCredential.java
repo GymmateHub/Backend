@@ -27,8 +27,7 @@ public class AccessCredential extends GymScopedEntity {
   private String tokenHash;
 
   @Builder.Default
-  private 
-  LocalDateTime issuedAt = LocalDateTime.now();
+  private LocalDateTime issuedAt = LocalDateTime.now();
 
   private LocalDateTime expiresAt;
 
