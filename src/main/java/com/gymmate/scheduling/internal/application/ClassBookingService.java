@@ -3,9 +3,9 @@ package com.gymmate.scheduling.internal.application;
 import com.gymmate.scheduling.internal.domain.ClassBooking;
 import com.gymmate.scheduling.internal.domain.ClassSchedule;
 import com.gymmate.scheduling.internal.domain.GymClass;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassBookingJpaRepository;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassScheduleJpaRepository;
-import com.gymmate.scheduling.internal.infrastructure.persistence.GymClassJpaRepository;
+import com.gymmate.scheduling.internal.application.port.ClassBookingRepository;
+import com.gymmate.scheduling.internal.application.port.ClassScheduleRepository;
+import com.gymmate.scheduling.internal.application.port.GymClassRepository;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.gymmate.notification.api.event.WaitlistPromotedEvent;
 import com.gymmate.shared.constants.BookingStatus;
@@ -27,9 +27,9 @@ import java.util.UUID;
 @Transactional
 public class ClassBookingService {
 
-  private final ClassBookingJpaRepository bookingRepository;
-  private final ClassScheduleJpaRepository scheduleRepository;
-  private final GymClassJpaRepository classRepository;
+  private final ClassBookingRepository bookingRepository;
+  private final ClassScheduleRepository scheduleRepository;
+  private final GymClassRepository classRepository;
   private final MemberMembershipRepository membershipRepository;
   private final ApplicationEventPublisher eventPublisher;
 

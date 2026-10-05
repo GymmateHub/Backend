@@ -2,7 +2,7 @@ package com.gymmate.scheduling.internal.infrastructure.integration;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassBookingJpaRepository;
+import com.gymmate.scheduling.internal.application.port.ClassBookingRepository;
 import com.gymmate.notification.api.spi.AudienceMemberIdsResolver;
 import com.gymmate.notification.api.dto.AudienceType;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ClassAudienceMemberIdsAdapter implements AudienceMemberIdsResolver {
 
-    private final ClassBookingJpaRepository classBookingRepository;
+    private final ClassBookingRepository classBookingRepository;
     private final ObjectMapper objectMapper;
 
     @Override

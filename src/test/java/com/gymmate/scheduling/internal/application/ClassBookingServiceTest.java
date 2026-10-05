@@ -3,9 +3,9 @@ package com.gymmate.scheduling.internal.application;
 import com.gymmate.scheduling.internal.domain.ClassBooking;
 import com.gymmate.scheduling.internal.domain.ClassSchedule;
 import com.gymmate.scheduling.internal.domain.GymClass;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassBookingJpaRepository;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassScheduleJpaRepository;
-import com.gymmate.scheduling.internal.infrastructure.persistence.GymClassJpaRepository;
+import com.gymmate.scheduling.internal.application.port.ClassBookingRepository;
+import com.gymmate.scheduling.internal.application.port.ClassScheduleRepository;
+import com.gymmate.scheduling.internal.application.port.GymClassRepository;
 import com.gymmate.membership.internal.domain.MemberMembership;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.gymmate.shared.constants.BookingStatus;
@@ -24,18 +24,18 @@ import static org.mockito.Mockito.*;
 
 class ClassBookingServiceTest {
 
-  private ClassBookingJpaRepository bookingRepository;
-  private ClassScheduleJpaRepository scheduleRepository;
-  private GymClassJpaRepository classRepository;
+  private ClassBookingRepository bookingRepository;
+  private ClassScheduleRepository scheduleRepository;
+  private GymClassRepository classRepository;
   private MemberMembershipRepository membershipRepository;
   private ApplicationEventPublisher eventPublisher;
   private ClassBookingService bookingService;
 
   @BeforeEach
   void setUp() {
-    bookingRepository = mock(ClassBookingJpaRepository.class);
-    scheduleRepository = mock(ClassScheduleJpaRepository.class);
-    classRepository = mock(GymClassJpaRepository.class);
+    bookingRepository = mock(ClassBookingRepository.class);
+    scheduleRepository = mock(ClassScheduleRepository.class);
+    classRepository = mock(GymClassRepository.class);
     membershipRepository = mock(MemberMembershipRepository.class);
     eventPublisher = mock(ApplicationEventPublisher.class);
     bookingService = new ClassBookingService(bookingRepository, scheduleRepository, classRepository, membershipRepository, eventPublisher);

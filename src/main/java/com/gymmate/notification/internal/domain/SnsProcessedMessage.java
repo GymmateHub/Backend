@@ -1,7 +1,6 @@
 package com.gymmate.notification.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.BaseJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.BaseEntity;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -12,25 +11,19 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "sns_processed_messages")
-public class SnsProcessedMessage extends BaseJpaEntity {
+public class SnsProcessedMessage extends BaseEntity {
 
-    @Column(name = "message_id", nullable = false, unique = true, length = 255)
     private String messageId;
 
-    @Column(name = "topic_arn", length = 500)
     private String topicArn;
 
-    @Column(name = "message_type", length = 100)
     private String messageType;
 
-    @Column(name = "event_type", length = 100)
     private String eventType;
 
-    @Column(name = "processed_at", nullable = false)
     @Builder.Default
-    private LocalDateTime processedAt = LocalDateTime.now();
+    private 
+    LocalDateTime processedAt = LocalDateTime.now();
 }

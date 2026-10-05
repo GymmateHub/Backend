@@ -1,12 +1,9 @@
 package com.gymmate.notification.internal.domain;
 
 import com.gymmate.notification.api.dto.AudienceType;
-import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
+import com.gymmate.shared.domain.GymScopedEntity;
 import com.gymmate.shared.exception.DomainException;
-import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,56 +15,43 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "newsletter_campaigns")
-public class NewsletterCampaign extends GymScopedJpaEntity {
+public class NewsletterCampaign extends GymScopedEntity {
 
-    @Column(name = "template_id")
     private UUID templateId;
 
-    @Column(length = 100)
     private String name;
 
-    @Column(nullable = false)
     private String subject;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
     private String body;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "audience_type", nullable = false, length = 30)
-    private AudienceType audienceType;
+    private 
+    AudienceType audienceType;
 
-    @JdbcTypeCode(SqlTypes.JSON)
-    @Column(name = "audience_filter", columnDefinition = "jsonb")
-    private String audienceFilter;
+    private 
+    String audienceFilter;
 
-    @Column(name = "scheduled_at")
     private LocalDateTime scheduledAt;
 
-    @Column(name = "sent_at")
     private LocalDateTime sentAt;
 
-    @Column(name = "total_recipients")
     @Builder.Default
-    private Integer totalRecipients = 0;
+    private 
+    Integer totalRecipients = 0;
 
-    @Column(name = "delivered_count")
     @Builder.Default
-    private Integer deliveredCount = 0;
+    private 
+    Integer deliveredCount = 0;
 
-    @Column(name = "failed_count")
     @Builder.Default
-    private Integer failedCount = 0;
+    private 
+    Integer failedCount = 0;
 
-    @Enumerated(EnumType.STRING)
-    @Column(length = 20)
     @Builder.Default
     private CampaignStatus status = CampaignStatus.DRAFT;
 
-    @Column(name = "sent_by_user_id")
     private UUID sentByUserId;
 
     /**

@@ -1,7 +1,7 @@
 package com.gymmate.scheduling.internal.application;
 
 import com.gymmate.scheduling.internal.domain.GymArea;
-import com.gymmate.scheduling.internal.infrastructure.persistence.GymAreaJpaRepository;
+import com.gymmate.scheduling.internal.application.port.GymAreaRepository;
 import com.gymmate.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional
 public class GymAreaService {
-  private final GymAreaJpaRepository areaRepository;
+  private final GymAreaRepository areaRepository;
 
   public GymArea createArea(GymArea area) {
     if (area.getGymId() == null) throw new DomainException("MISSING_GYM", "Gym id is required");

@@ -6,7 +6,7 @@ import com.gymmate.notification.internal.application.SesWebhookService;
 import com.gymmate.notification.internal.infrastructure.integration.SnsSignatureVerifier;
 import com.gymmate.notification.internal.domain.SnsProcessedMessage;
 import com.gymmate.notification.internal.domain.SuppressionReason;
-import com.gymmate.notification.internal.infrastructure.persistence.SnsProcessedMessageRepository;
+import com.gymmate.notification.internal.application.port.SnsProcessedMessageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

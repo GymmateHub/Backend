@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.domain.SnsProcessedMessage;
 import com.gymmate.notification.internal.domain.SuppressionReason;
-import com.gymmate.notification.internal.infrastructure.persistence.SnsProcessedMessageRepository;
+import com.gymmate.notification.internal.application.port.SnsProcessedMessageRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

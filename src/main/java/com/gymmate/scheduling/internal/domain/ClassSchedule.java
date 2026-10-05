@@ -1,8 +1,7 @@
 package com.gymmate.scheduling.internal.domain;
 
 import com.gymmate.shared.constants.ClassScheduleStatus;
-import com.gymmate.shared.infrastructure.persistence.GymScopedJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.GymScopedEntity;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -16,58 +15,45 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "class_schedules")
-public class ClassSchedule extends GymScopedJpaEntity {
+public class ClassSchedule extends GymScopedEntity {
 
   // Note: gymId is inherited from GymScopedJpaEntity
   // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
-  @Column(name = "class_id", nullable = false)
   private UUID classId;
 
-  @Column(name = "trainer_id")
   private UUID trainerId;
 
-  @Column(name = "area_id")
   private UUID areaId;
 
   // Timing
-  @Column(name = "start_time", nullable = false)
   private LocalDateTime startTime;
 
-  @Column(name = "end_time", nullable = false)
   private LocalDateTime endTime;
 
   // Overrides for this specific instance
-  @Column(name = "capacity_override")
   private Integer capacityOverride;
 
   // Confirmed booking count, kept in sync by an atomic conditional UPDATE in
   // ClassBookingService (see enforce_class_schedule_capacity trigger, V13 migration).
   // Do not set directly outside that path.
-  @Column(name = "booked_count", nullable = false)
   @Builder.Default
-  private Integer bookedCount = 0;
+  private 
+  Integer bookedCount = 0;
 
-  @Column(name = "price_override", precision = 10, scale = 2)
   private BigDecimal priceOverride;
 
   // Status
-  @Enumerated(EnumType.STRING)
-  @Column(length = 20)
+
   @Builder.Default
   private ClassScheduleStatus status = ClassScheduleStatus.SCHEDULED;
 
-  @Column(name = "cancellation_reason", columnDefinition = "TEXT")
   private String cancellationReason;
 
   // Notes
-  @Column(name = "instructor_notes", columnDefinition = "TEXT")
   private String instructorNotes;
 
-  @Column(name = "admin_notes", columnDefinition = "TEXT")
   private String adminNotes;
 
   public void cancel(String reason) {
@@ -91,4 +77,3 @@ public class ClassSchedule extends GymScopedJpaEntity {
     return status == ClassScheduleStatus.CANCELLED;
   }
 }
-

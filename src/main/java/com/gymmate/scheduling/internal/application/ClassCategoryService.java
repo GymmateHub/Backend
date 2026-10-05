@@ -1,7 +1,7 @@
 package com.gymmate.scheduling.internal.application;
 
 import com.gymmate.scheduling.internal.domain.ClassCategory;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassCategoryJpaRepository;
+import com.gymmate.scheduling.internal.application.port.ClassCategoryRepository;
 import com.gymmate.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -15,7 +15,7 @@ import java.util.UUID;
 @Transactional
 public class ClassCategoryService {
 
-  private final ClassCategoryJpaRepository categoryRepository;
+  private final ClassCategoryRepository categoryRepository;
 
   public ClassCategory createCategory(ClassCategory category) {
     if (category.getGymId() == null) throw new DomainException("MISSING_GYM", "Gym id is required");

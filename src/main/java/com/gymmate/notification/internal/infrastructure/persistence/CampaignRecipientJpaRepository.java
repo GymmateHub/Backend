@@ -1,10 +1,8 @@
 package com.gymmate.notification.internal.infrastructure.persistence;
 
-import com.gymmate.notification.internal.domain.CampaignRecipient;
 import com.gymmate.notification.internal.domain.RecipientStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -12,11 +10,11 @@ import java.util.UUID;
  * Spring Data JPA repository for CampaignRecipient.
  */
 @Repository
-public interface CampaignRecipientJpaRepository extends JpaRepository<CampaignRecipient, UUID> {
+public interface CampaignRecipientJpaRepository extends JpaRepository<CampaignRecipientJpaEntity, UUID> {
 
-    List<CampaignRecipient> findByCampaignId(UUID campaignId);
+    List<CampaignRecipientJpaEntity> findByCampaignId(UUID campaignId);
 
-    List<CampaignRecipient> findByCampaignIdAndStatus(UUID campaignId, RecipientStatus status);
+    List<CampaignRecipientJpaEntity> findByCampaignIdAndStatus(UUID campaignId, RecipientStatus status);
 
     int countByCampaignId(UUID campaignId);
 

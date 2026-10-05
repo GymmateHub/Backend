@@ -2,8 +2,8 @@ package com.gymmate.scheduling.internal.application;
 
 import com.gymmate.scheduling.internal.domain.ClassSchedule;
 import com.gymmate.shared.constants.ClassScheduleStatus;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassScheduleJpaRepository;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassBookingJpaRepository;
+import com.gymmate.scheduling.internal.application.port.ClassScheduleRepository;
+import com.gymmate.scheduling.internal.application.port.ClassBookingRepository;
 import com.gymmate.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -17,8 +17,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional
 public class ClassScheduleService {
-  private final ClassScheduleJpaRepository scheduleRepository;
-  private final ClassBookingJpaRepository bookingRepository;
+  private final ClassScheduleRepository scheduleRepository;
+  private final ClassBookingRepository bookingRepository;
 
   public ClassSchedule createSchedule(ClassSchedule schedule) {
     if (schedule.getClassId() == null) throw new DomainException("MISSING_CLASS", "Class id is required");

@@ -1,9 +1,9 @@
 package com.gymmate.scheduling.internal.application;
 
 import com.gymmate.scheduling.api.ClassesFacade;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassBookingJpaRepository;
-import com.gymmate.scheduling.internal.infrastructure.persistence.ClassScheduleJpaRepository;
-import com.gymmate.scheduling.internal.infrastructure.persistence.GymClassJpaRepository;
+import com.gymmate.scheduling.internal.application.port.ClassBookingRepository;
+import com.gymmate.scheduling.internal.application.port.ClassScheduleRepository;
+import com.gymmate.scheduling.internal.application.port.GymClassRepository;
 import com.gymmate.shared.constants.BookingStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,9 +16,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ClassesFacadeImpl implements ClassesFacade {
 
-    private final GymClassJpaRepository gymClassRepository;
-    private final ClassScheduleJpaRepository classScheduleRepository;
-    private final ClassBookingJpaRepository classBookingRepository;
+    private final GymClassRepository gymClassRepository;
+    private final ClassScheduleRepository classScheduleRepository;
+    private final ClassBookingRepository classBookingRepository;
 
     @Override
     public long countByGymId(UUID gymId) {

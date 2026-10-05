@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.gymmate.shared.constants.NotificationPriority;
+import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for Notification.
@@ -42,4 +44,40 @@ public interface NotificationRepository {
     List<Notification> findRecentByGymId(UUID gymId, LocalDateTime since);
 
     List<Notification> findByGymIdAndEventType(UUID gymId, String eventType);
+    
+    Page<Notification> findByOrganisationIdOrderByCreatedAtDesc(UUID organisationId, Pageable pageable);
+    
+    List<Notification> findByOrganisationIdAndPriorityOrderByCreatedAtDesc(UUID organisationId, NotificationPriority priority);
+    
+    List<Notification> findByOrganisationIdAndEventTypeOrderByCreatedAtDesc(UUID organisationId, String eventType);
+    
+    List<Notification> findByOrganisationIdAndRelatedEntityIdOrderByCreatedAtDesc(UUID organisationId, UUID relatedEntityId);
+    
+    Page<Notification> findByGymIdOrderByCreatedAtDesc(UUID gymId, Pageable pageable);
+    
+    List<Notification> findByGymIdAndPriorityOrderByCreatedAtDesc(UUID gymId, NotificationPriority priority);
+    
+    List<Notification> findByGymIdAndEventTypeOrderByCreatedAtDesc(UUID gymId, String eventType);
+    
+    List<Notification> findByGymIdAndRelatedEntityIdOrderByCreatedAtDesc(UUID gymId, UUID relatedEntityId);
+    
+    List<Notification> saveAll(Iterable<Notification> entities);
+    
+    boolean existsById(UUID id);
+    
+    List<Notification> findAll();
+    
+    List<Notification> findAllById(Iterable<UUID> ids);
+    
+    long count();
+    
+    void deleteById(UUID id);
+    
+    void deleteAll(Iterable<Notification> entities);
+    
+    Notification saveAndFlush(Notification entity);
+    
+    void flush();
+    
+    Page<Notification> findAll(Pageable pageable);
 }

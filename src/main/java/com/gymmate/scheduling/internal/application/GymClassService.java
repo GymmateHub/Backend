@@ -1,7 +1,7 @@
 package com.gymmate.scheduling.internal.application;
 
 import com.gymmate.scheduling.internal.domain.GymClass;
-import com.gymmate.scheduling.internal.infrastructure.persistence.GymClassJpaRepository;
+import com.gymmate.scheduling.internal.application.port.GymClassRepository;
 import com.gymmate.shared.exception.DomainException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,7 +14,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional
 public class GymClassService {
-  private final GymClassJpaRepository classRepository;
+  private final GymClassRepository classRepository;
 
   public GymClass createClass(GymClass gymClass, UUID gymId) {
     if (gymClass.getCategoryId() == null) {

@@ -1,7 +1,6 @@
 package com.gymmate.notification.internal.domain;
 
-import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
-import jakarta.persistence.*;
+import com.gymmate.shared.domain.BaseAuditEntity;
 import lombok.*;
 
 import java.util.UUID;
@@ -12,36 +11,27 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "email_suppressions")
-public class EmailSuppression extends BaseAuditJpaEntity {
+public class EmailSuppression extends BaseAuditEntity {
 
-    @Column(nullable = false)
     private String email;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
-    private SuppressionReason reason;
+    private 
+    SuppressionReason reason;
 
-    @Column(name = "bounce_type", length = 50)
     private String bounceType;
 
-    @Column(name = "bounce_sub_type", length = 100)
     private String bounceSubType;
 
-    @Column(name = "diagnostic_code", columnDefinition = "TEXT")
     private String diagnosticCode;
 
-    @Column(name = "transient_bounce_count", nullable = false)
     @Builder.Default
-    private int transientBounceCount = 1;
+    private 
+    int transientBounceCount = 1;
 
-    @Column(name = "organisation_id")
     private UUID organisationId;
 
-    @Column(name = "gym_id")
     private UUID gymId;
 
     /**
