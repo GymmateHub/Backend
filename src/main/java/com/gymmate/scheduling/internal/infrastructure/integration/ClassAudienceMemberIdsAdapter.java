@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.scheduling.internal.infrastructure.persistence.ClassBookingJpaRepository;
 import com.gymmate.notification.api.spi.AudienceMemberIdsResolver;
-import com.gymmate.notification.internal.domain.AudienceType;
+import com.gymmate.notification.api.dto.AudienceType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

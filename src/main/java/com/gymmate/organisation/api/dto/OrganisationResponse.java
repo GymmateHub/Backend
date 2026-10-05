@@ -1,6 +1,6 @@
 package com.gymmate.organisation.api.dto;
 
-import com.gymmate.organisation.domain.Organisation;
+import com.gymmate.organisation.internal.domain.Organisation;
 import lombok.Builder;
 import lombok.Data;
 

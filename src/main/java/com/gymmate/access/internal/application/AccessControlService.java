@@ -3,8 +3,8 @@ package com.gymmate.access.internal.application;
 import com.gymmate.access.internal.domain.AccessLog;
 import com.gymmate.access.internal.infrastructure.persistence.AccessLogRepository;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.user.application.MemberService;
-import com.gymmate.user.domain.Member;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.identity.api.dto.MemberProfile;
 import com.gymmate.shared.constants.MemberStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -19,7 +19,7 @@ import java.util.UUID;
 public class AccessControlService {
 
     private final AccessLogRepository accessLogRepository;
-    private final MemberService memberService;
+    private final IdentityApi identityApi;
 
     // Time window for time-based lockout (in minutes)
     private static final int LOCKOUT_MINUTES = 15;
@@ -29,10 +29,10 @@ public class AccessControlService {
      */
     @Transactional
     public AccessLog processAccessRequest(UUID memberId, UUID gymId, AccessLog.AccessDirection requestedDirection, String accessMethod) {
-        Member member = memberService.findById(memberId);
+        MemberProfile member = identityApi.getMember(memberId);
 
         // 1. Verify membership status
-        if (member.getStatus() != MemberStatus.ACTIVE) {
+        if (member.status() != MemberStatus.ACTIVE) {
             return recordAccessLog(memberId, gymId, requestedDirection, AccessLog.AccessStatus.DENIED_MEMBERSHIP, accessMethod, "Membership is not active");
         }
 

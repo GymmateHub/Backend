@@ -16,7 +16,7 @@ import com.gymmate.membership.internal.infrastructure.persistence.MemberInvoiceR
 import com.gymmate.membership.internal.infrastructure.persistence.MemberMembershipJpaRepository;
 import com.gymmate.membership.internal.infrastructure.persistence.MembershipPlanJpaRepository;
 import com.gymmate.retail.api.PosFacade;
-import com.gymmate.user.infrastructure.MemberRepository;
+import com.gymmate.identity.api.IdentityApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AnalyticsService {
 
-    private final MemberRepository memberRepository;
+    private final IdentityApi identityApi;
     private final MemberMembershipJpaRepository membershipRepository;
     private final MembershipPlanJpaRepository membershipPlanRepository;
     private final ClassesFacade classesFacade;
@@ -364,7 +364,7 @@ public class AnalyticsService {
 
     private long countTotalMembers(UUID gymId) {
         try {
-            return memberRepository.countByGymId(gymId);
+            return identityApi.countMembersByGym(gymId);
         } catch (Exception e) {
             log.warn("Could not count members: {}", e.getMessage());
             return 0;
@@ -400,7 +400,7 @@ public class AnalyticsService {
 
     private long countNewMembers(UUID gymId, DateRange range) {
         try {
-            return memberRepository.countByGymIdAndCreatedAtBetween(gymId, range.start(), range.end());
+            return identityApi.countMembersByGymCreatedBetween(gymId, range.start(), range.end());
         } catch (Exception e) {
             return 0;
         }

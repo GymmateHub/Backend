@@ -5,8 +5,8 @@ import com.gymmate.ai.api.dto.AiPlanResponse;
 import com.gymmate.ai.internal.application.AiPlanService;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import com.gymmate.user.application.MemberService;
-import com.gymmate.user.domain.Member;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.identity.api.dto.MemberProfile;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -41,7 +41,7 @@ import java.util.UUID;
 public class AiTrainerController {
 
     private final AiPlanService aiPlanService;
-    private final MemberService memberService;
+    private final IdentityApi identityApi;
 
     // -------------------------------------------------------------------------
     // Member-facing endpoints
@@ -170,8 +170,8 @@ public class AiTrainerController {
      * Throws {@link ResourceNotFoundException} when the user has no member profile.
      */
     private UUID resolveMemberId(UUID userId) {
-        Member member = memberService.findByUserId(userId);
-        return member.getId();
+        MemberProfile member = identityApi.getMemberByUserId(userId);
+        return member.id();
     }
 }
 

@@ -1,6 +1,6 @@
 package com.gymmate.unit.notification.application;
 
-import com.gymmate.notification.internal.domain.AudienceType;
+import com.gymmate.notification.api.dto.AudienceType;
 import com.gymmate.notification.internal.domain.CampaignStatus;
 import com.gymmate.notification.internal.domain.NewsletterCampaign;
 import com.gymmate.notification.internal.domain.NewsletterTemplate;

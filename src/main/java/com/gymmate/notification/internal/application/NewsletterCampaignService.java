@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.application;
 
+import com.gymmate.notification.api.spi.MemberRecipient;
 import com.gymmate.notification.internal.domain.CampaignRecipient;
 import com.gymmate.notification.internal.domain.CampaignStatus;
 import com.gymmate.notification.internal.domain.NewsletterCampaign;
@@ -180,7 +181,7 @@ public class NewsletterCampaignService {
         log.info("Starting async send for campaign: {}", campaign.getId());
 
         try (TenantScope ignored = TenantScope.activate(campaign.getOrganisationId(), campaign.getGymId())) {
-            List<AudienceResolver.MemberRecipient> recipients = audienceResolver.resolveAudience(
+            List<MemberRecipient> recipients = audienceResolver.resolveAudience(
                     campaign.getGymId(),
                     campaign.getAudienceType(),
                     campaign.getAudienceFilter());
@@ -191,7 +192,7 @@ public class NewsletterCampaignService {
             int deliveredCount = 0;
             int failedCount = 0;
 
-            for (AudienceResolver.MemberRecipient recipient : recipients) {
+            for (MemberRecipient recipient : recipients) {
                 CampaignRecipient campaignRecipient = CampaignRecipient.builder()
                         .campaignId(campaign.getId())
                         .memberId(recipient.memberId())
@@ -239,7 +240,7 @@ public class NewsletterCampaignService {
     /**
      * Build template variables for a recipient including whitelabel branding context.
      */
-    private Map<String, Object> buildRecipientVariables(AudienceResolver.MemberRecipient recipient, Optional<WhitelabelSettings> whitelabelOpt) {
+    private Map<String, Object> buildRecipientVariables(MemberRecipient recipient, Optional<WhitelabelSettings> whitelabelOpt) {
         Map<String, Object> variables = new HashMap<>();
         String firstName = recipient.firstName() != null ? recipient.firstName() : "";
         String lastName = recipient.lastName() != null ? recipient.lastName() : "";

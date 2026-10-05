@@ -1,0 +1,50 @@
+package com.gymmate.identity.internal.infrastructure.persistence;
+
+import com.gymmate.identity.internal.domain.Staff;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Spring Data JPA repository for Staff entity.
+ */
+@Repository
+public interface StaffRepository extends JpaRepository<Staff, UUID> {
+
+    // User lookup
+    Optional<Staff> findByUserId(UUID userId);
+    boolean existsByUserId(UUID userId);
+
+    // ========== Organisation-scoped queries (preferred) ==========
+
+    List<Staff> findByOrganisationId(UUID organisationId);
+
+    @Query("SELECT s FROM Staff s WHERE s.organisationId = :organisationId AND s.active = true")
+    List<Staff> findAllActiveByOrganisationId(@Param("organisationId") UUID organisationId);
+
+    List<Staff> findByOrganisationIdAndDepartment(UUID organisationId, String department);
+
+    List<Staff> findByOrganisationIdAndPosition(UUID organisationId, String position);
+
+    List<Staff> findByOrganisationIdAndEmploymentType(UUID organisationId, String employmentType);
+
+    // ========== Legacy unscoped queries (use org-scoped variants instead) ==========
+
+    // Department queries
+    List<Staff> findByDepartment(String department);
+
+    // Position queries
+    List<Staff> findByPosition(String position);
+
+    // Employment type
+    List<Staff> findByEmploymentType(String employmentType);
+
+    // Active staff
+    @Query("SELECT s FROM Staff s WHERE s.active = true")
+    List<Staff> findAllActive();
+}

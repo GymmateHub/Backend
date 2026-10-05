@@ -1,5 +1,5 @@
 /**
- * Tier-1 named interface — see {@link com.gymmate.organisation.application}.
+ * Public DTOs of the organisation module.
  */
 @org.springframework.modulith.NamedInterface("api.dto")
 package com.gymmate.organisation.api.dto;

@@ -1,7 +1,7 @@
 package com.gymmate.unit.gym.api;
 
-import com.gymmate.gym.api.dto.GymResponse;
-import com.gymmate.gym.domain.Gym;
+import com.gymmate.organisation.api.dto.GymResponse;
+import com.gymmate.organisation.internal.domain.Gym;
 import org.junit.jupiter.api.Test;
 
 import java.util.UUID;

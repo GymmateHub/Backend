@@ -1,9 +1,9 @@
 package com.gymmate.unit.subscription.domain;
 
-import com.gymmate.subscription.domain.ApiRateLimit;
-import com.gymmate.subscription.domain.Subscription;
-import com.gymmate.subscription.domain.SubscriptionTier;
-import com.gymmate.subscription.domain.SubscriptionUsage;
+import com.gymmate.billing.internal.domain.ApiRateLimit;
+import com.gymmate.billing.internal.domain.Subscription;
+import com.gymmate.billing.internal.domain.SubscriptionTier;
+import com.gymmate.billing.internal.domain.SubscriptionUsage;
 import com.gymmate.shared.constants.SubscriptionStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

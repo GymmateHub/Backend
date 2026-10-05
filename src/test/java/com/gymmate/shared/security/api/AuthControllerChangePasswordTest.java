@@ -1,16 +1,17 @@
 package com.gymmate.shared.security.api;
 
-import com.gymmate.gym.application.GymService;
+import com.gymmate.identity.internal.infrastructure.web.AuthController;
+import com.gymmate.organisation.internal.application.GymService;
 import com.gymmate.notification.internal.infrastructure.web.SseEmitterRegistry;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.shared.exception.GlobalExceptionHandler;
+import com.gymmate.shared.infrastructure.web.GlobalExceptionHandler;
 import com.gymmate.shared.security.TenantAwareUserDetails;
-import com.gymmate.shared.security.dto.ChangePasswordRequest;
-import com.gymmate.shared.security.service.AuthenticationService;
-import com.gymmate.shared.security.service.JwtService;
-import com.gymmate.user.application.InviteService;
-import com.gymmate.user.infrastructure.UserRepository;
+import com.gymmate.identity.api.dto.ChangePasswordRequest;
+import com.gymmate.identity.internal.application.AuthenticationService;
+import com.gymmate.identity.internal.application.JwtService;
+import com.gymmate.identity.internal.application.InviteService;
+import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

@@ -3,10 +3,9 @@ package com.gymmate.ai.internal.infrastructure.integration;
 import com.gymmate.ai.internal.domain.AiRecommendation;
 import com.gymmate.notification.internal.application.NotificationService;
 import com.gymmate.shared.constants.NotificationPriority;
-import com.gymmate.user.application.MemberService;
-import com.gymmate.user.domain.Member;
-import com.gymmate.user.domain.User;
-import com.gymmate.user.infrastructure.UserRepository;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.identity.api.dto.MemberProfile;
+import com.gymmate.identity.api.dto.UserSummary;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -20,8 +19,7 @@ import java.util.UUID;
 public class AiNotificationIntegration {
 
     private final NotificationService notificationService;
-    private final MemberService memberService;
-    private final UserRepository userRepository;
+    private final IdentityApi identityApi;
 
     /**
      * @param memberId
@@ -30,11 +28,11 @@ public class AiNotificationIntegration {
     @Transactional
     public void sendAiPlanNotification(UUID memberId, AiRecommendation recommendation) {
         try {
-            Member member = memberService.findById(memberId);
-            User user = userRepository.findById(member.getUserId()).orElseThrow();
+            MemberProfile member = identityApi.getMember(memberId);
+            UserSummary user = identityApi.findUser(member.userId()).orElseThrow();
 
             String title = "Your Personalized AI Gym Plan is Ready!";
-            String messageContent = "Hello " + user.getFirstName() + ",\n\n" +
+            String messageContent = "Hello " + user.firstName() + ",\n\n" +
                     "Based on your location and fitness goals, our AI Gym Trainer has crafted a personalized plan for you:\n\n"
                     +
                     "**Workout Plan**\n" + recommendation.getWorkoutPlan() + "\n\n" +
@@ -47,7 +45,7 @@ public class AiNotificationIntegration {
             notificationService.sendToUser(memberId, title, messageContent, NotificationPriority.HIGH, messageContent, null);
 
             // As a fallback, we log it
-            log.info("AI Plan generated for user: {}. Content: {}", user.getEmail(), messageContent);
+            log.info("AI Plan generated for user: {}. Content: {}", user.email(), messageContent);
 
             // If the notification service requires more structure, we will adapt here
         } catch (Exception e) {

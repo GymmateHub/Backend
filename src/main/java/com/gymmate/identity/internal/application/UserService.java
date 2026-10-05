@@ -1,0 +1,150 @@
+package com.gymmate.identity.internal.application;
+
+import com.gymmate.shared.exception.ResourceNotFoundException;
+import com.gymmate.shared.multitenancy.TenantScope;
+import com.gymmate.identity.internal.domain.User;
+import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
+import com.gymmate.shared.constants.UserRole;
+import com.gymmate.shared.constants.UserStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.scheduling.annotation.Async;
+
+/**
+ * Application service for user management use cases.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class UserService {
+
+    private final UserRepository userRepository;
+
+    /**
+     * Find a user by ID.
+     */
+    public User findById(UUID id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id.toString()));
+    }
+
+    /**
+     * Find a user by email.
+     */
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email);
+    }
+
+    /**
+     * Update user profile.
+     */
+    @Transactional
+    public User updateProfile(UUID userId, String firstName, String lastName, String phone) {
+        User user = findById(userId);
+        user.updateProfile(firstName, lastName, phone);
+        return userRepository.save(user);
+    }
+
+    /**
+     * Record user login.
+     */
+    @Transactional
+    @Async
+    public void recordLogin(UUID userId) {
+        User user = findById(userId);
+        try (TenantScope ignored = TenantScope.activate(user.getOrganisationId(), null)) {
+            user.updateLastLogin();
+            userRepository.save(user);
+        }
+    }
+
+    /**
+     * Deactivate a user account.
+     */
+    @Transactional
+    public User deactivateUser(UUID userId) {
+        User user = findById(userId);
+        user.deactivate();
+        return userRepository.save(user);
+    }
+
+    /**
+     * Activate a user account.
+     */
+    @Transactional
+    public User activateUser(UUID userId) {
+        User user = findById(userId);
+        user.activate();
+        return userRepository.save(user);
+    }
+
+    /**
+     * Find all users by role within an organisation.
+     */
+    public List<User> findByRoleAndOrganisation(UserRole role, UUID organisationId) {
+        return userRepository.findByRoleAndOrganisationId(role, organisationId);
+    }
+
+    /**
+     * Find all users by status within an organisation.
+     */
+    public List<User> findByStatusAndOrganisation(UserStatus status, UUID organisationId) {
+        return userRepository.findByStatusAndOrganisationId(status, organisationId);
+    }
+
+    /**
+     * Find all active gym admins within an organisation.
+     */
+    public List<User> findActiveGymAdmins(UUID organisationId) {
+        return userRepository.findByRoleAndOrganisationId(UserRole.ADMIN, organisationId)
+                .stream()
+                .filter(User::isActive)
+                .toList();
+    }
+
+    /**
+     * @deprecated Use {@link #findByRoleAndOrganisation(UserRole, UUID)} instead.
+     */
+    @Deprecated
+    public List<User> findByRole(UserRole role) {
+        return userRepository.findByRole(role);
+    }
+
+    /**
+     * @deprecated Use {@link #findByStatusAndOrganisation(UserStatus, UUID)} instead.
+     */
+    @Deprecated
+    public List<User> findByStatus(UserStatus status) {
+        return userRepository.findByStatus(status);
+    }
+
+    /**
+     * @deprecated Use {@link #findActiveGymAdmins(UUID)} instead.
+     */
+    @Deprecated
+    public List<User> findActiveGymAdmins() {
+        return userRepository.findByRole(UserRole.ADMIN)
+                .stream()
+                .filter(User::isActive)
+                .toList();
+    }
+
+    /**
+     * Find all users.
+     */
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
+    /**
+     * Find all users belonging to an organisation.
+     */
+    public List<User> findByOrganisationId(UUID organisationId) {
+        return userRepository.findByOrganisationId(organisationId);
+    }
+}

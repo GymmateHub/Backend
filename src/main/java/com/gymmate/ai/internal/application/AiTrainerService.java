@@ -4,10 +4,10 @@ import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;
 import com.gymmate.ai.internal.infrastructure.integration.AiNotificationIntegration;
 import com.gymmate.ai.internal.infrastructure.persistence.AiRecommendationRepository;
-import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.organisation.api.dto.GymSummary;
+import com.gymmate.organisation.api.OrganisationApi;
 import com.gymmate.shared.multitenancy.TenantScope;
-import com.gymmate.user.domain.events.MemberOnboardedEvent;
+import com.gymmate.identity.api.event.MemberOnboardedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -22,7 +22,7 @@ public class AiTrainerService {
 
     private final LlmClient llmClient;
     private final AiRecommendationRepository aiRecommendationRepository;
-    private final GymRepository gymRepository;
+    private final OrganisationApi organisationApi;
     private final AiNotificationIntegration aiNotificationIntegration;
 
     @Async
@@ -32,12 +32,12 @@ public class AiTrainerService {
         log.info("Generating AI plan for member {} at gym {}", event.getMemberId(), event.getGymId());
 
         try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.getGymId())) {
-            Gym gym = gymRepository.findById(event.getGymId())
+            GymSummary gym = organisationApi.findGym(event.getGymId())
                 .orElseThrow(() -> new IllegalStateException("Gym not found"));
 
             String goals = String.join(", ", event.getFitnessGoals());
-            String location = (gym.getCity() != null ? gym.getCity() : "") +
-                              (gym.getCountry() != null ? ", " + gym.getCountry() : "");
+            String location = (gym.city() != null ? gym.city() : "") +
+                              (gym.country() != null ? ", " + gym.country() : "");
 
             if (location.trim().isEmpty() || location.equals(",")) {
                 location = "your local area";

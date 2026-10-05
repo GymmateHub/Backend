@@ -5,11 +5,11 @@ import com.gymmate.ai.api.dto.AiPlanResponse;
 import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;
 import com.gymmate.ai.internal.infrastructure.persistence.AiRecommendationRepository;
-import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.organisation.api.dto.GymSummary;
+import com.gymmate.organisation.api.OrganisationApi;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import com.gymmate.user.application.MemberService;
-import com.gymmate.user.domain.Member;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.identity.api.dto.MemberProfile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,8 +50,8 @@ public class AiPlanService {
 
     private final LlmClient llmClient;
     private final AiRecommendationRepository recommendationRepository;
-    private final MemberService memberService;
-    private final GymRepository gymRepository;
+    private final IdentityApi identityApi;
+    private final OrganisationApi organisationApi;
     private final RedisTemplate<String, Object> redisTemplate;
 
     @Value("${ai.plan.cache.ttl-hours:24}")
@@ -124,10 +124,10 @@ public class AiPlanService {
     // -------------------------------------------------------------------------
 
     private AiPlanResponse generateAndPersist(UUID memberId, AiPlanRequest request) {
-        Member member = memberService.findById(memberId);
+        MemberProfile member = identityApi.getMember(memberId);
 
-        Gym gym = gymRepository.findById(member.getGymId())
-            .orElseThrow(() -> new ResourceNotFoundException("Gym", member.getGymId().toString()));
+        GymSummary gym = organisationApi.findGym(member.gymId())
+            .orElseThrow(() -> new ResourceNotFoundException("Gym", member.gymId().toString()));
 
         // Resolve goals: request override → stored member goals → sensible default
         List<String> goals = resolveGoals(member, request);
@@ -155,8 +155,8 @@ public class AiPlanService {
             .goalsUsed(goals.toArray(String[]::new))
             .experienceLevel(experienceLevel)
             .build();
-        recommendation.setGymId(member.getGymId());
-        recommendation.setOrganisationId(member.getOrganisationId());
+        recommendation.setGymId(member.gymId());
+        recommendation.setOrganisationId(member.organisationId());
 
         AiRecommendation saved = recommendationRepository.save(recommendation);
         AiPlanResponse response = AiPlanResponse.fromEntity(saved, false);
@@ -167,36 +167,36 @@ public class AiPlanService {
 
     private void applyGoalUpdates(UUID memberId, AiPlanRequest request) {
         if (request.fitnessGoals() != null && !request.fitnessGoals().isEmpty()) {
-            memberService.updateFitnessGoals(
+            identityApi.updateMemberFitnessGoals(
                 memberId,
                 request.fitnessGoals().toArray(String[]::new),
                 request.experienceLevel()
             );
         } else if (request.experienceLevel() != null) {
-            memberService.updateFitnessGoals(memberId, null, request.experienceLevel());
+            identityApi.updateMemberFitnessGoals(memberId, null, request.experienceLevel());
         }
     }
 
-    private List<String> resolveGoals(Member member, AiPlanRequest request) {
+    private List<String> resolveGoals(MemberProfile member, AiPlanRequest request) {
         if (request != null && request.fitnessGoals() != null && !request.fitnessGoals().isEmpty()) {
             return request.fitnessGoals();
         }
-        if (member.getFitnessGoals() != null && member.getFitnessGoals().length > 0) {
-            return Arrays.asList(member.getFitnessGoals());
+        if (member.fitnessGoals() != null && member.fitnessGoals().length > 0) {
+            return Arrays.asList(member.fitnessGoals());
         }
         return List.of("General fitness and well-being");
     }
 
-    private String resolveExperienceLevel(Member member, AiPlanRequest request) {
+    private String resolveExperienceLevel(MemberProfile member, AiPlanRequest request) {
         if (request != null && request.experienceLevel() != null) {
             return request.experienceLevel();
         }
-        return member.getExperienceLevel() != null ? member.getExperienceLevel() : "beginner";
+        return member.experienceLevel() != null ? member.experienceLevel() : "beginner";
     }
 
-    private String buildLocation(Gym gym) {
-        String city    = gym.getCity()    != null ? gym.getCity()    : "";
-        String country = gym.getCountry() != null ? gym.getCountry() : "";
+    private String buildLocation(GymSummary gym) {
+        String city    = gym.city()    != null ? gym.city()    : "";
+        String country = gym.country() != null ? gym.country() : "";
         String location = (city + (city.isBlank() ? "" : ", ") + country).trim();
         return location.isBlank() || location.equals(",") ? "your local area" : location;
     }

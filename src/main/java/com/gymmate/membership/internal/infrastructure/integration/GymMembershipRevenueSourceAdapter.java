@@ -1,7 +1,7 @@
 package com.gymmate.membership.internal.infrastructure.integration;
 
 import com.gymmate.membership.internal.infrastructure.persistence.MemberInvoiceRepository;
-import com.gymmate.gym.application.port.MembershipRevenueSource;
+import com.gymmate.organisation.api.spi.MembershipRevenueSource;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

@@ -8,7 +8,7 @@ import com.gymmate.notification.api.spi.GymAccessVerifier;
 import com.gymmate.notification.internal.domain.Notification;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.shared.exception.GlobalExceptionHandler;
+import com.gymmate.shared.infrastructure.web.GlobalExceptionHandler;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import org.junit.jupiter.api.BeforeEach;

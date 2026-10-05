@@ -2,7 +2,6 @@ package com.gymmate.shared.multitenancy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.shared.dto.ApiResponse;
-import com.gymmate.shared.security.service.JwtService;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,7 +26,6 @@ import java.util.UUID;
 public class TenantFilter extends OncePerRequestFilter {
 
     private final ObjectMapper objectMapper;
-    private final JwtService jwtService;
 
     // Endpoints that don't require tenant context
     // BUG-033: "/api/users/register", "/api/users/verify-otp", "/api/users/resend-otp" were
@@ -79,13 +77,9 @@ public class TenantFilter extends OncePerRequestFilter {
                     log.debug("Setting tenant context for organisation: {}", organisationId);
                     TenantContext.setCurrentTenantId(organisationId);
 
-                    // Try to extract gym context from JWT or X-Gym-Id header
-                    String authHeader = request.getHeader("Authorization");
-                    UUID gymId = null;
-                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                        String token = authHeader.substring(7);
-                        gymId = jwtService.extractGymId(token);
-                    }
+                    // Gym context: the gym claim of the validated access token (carried on the
+                    // principal by the JWT filter), else the X-Gym-Id header
+                    UUID gymId = userDetails.getGymId();
                     if (gymId == null) {
                         String gymHeader = request.getHeader("X-Gym-Id");
                         if (org.springframework.util.StringUtils.hasText(gymHeader)) {

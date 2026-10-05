@@ -1,6 +1,5 @@
 package com.gymmate.shared.security;
 
-import com.gymmate.user.domain.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,21 +19,16 @@ public class TenantAwareUserDetails implements UserDetails {
     private final boolean emailVerified;
     private final Collection<? extends GrantedAuthority> authorities;
     private final boolean active;
+    /** Gym context carried by the access token (null when none was selected). */
+    private final UUID gymId;
 
-    public TenantAwareUserDetails(User user) {
-        this.userId = user.getId();
-        this.email = user.getEmail();
-        this.password = user.getPasswordHash();
-        this.organisationId = user.getOrganisationId();
-        this.role = user.getRole().name();
-        this.emailVerified = user.isEmailVerified();
-        this.authorities = buildAuthorities(user.getRole().name());
-        this.active = user.isActive();
+    public TenantAwareUserDetails(UUID userId, UUID organisationId, String email, String password, String role, boolean active, boolean emailVerified) {
+        this(userId, organisationId, null, email, password, role, active, emailVerified);
     }
 
-    // Alternate constructor used by TenantAwareUserDetailsService
-    public TenantAwareUserDetails(UUID userId, UUID organisationId, String email, String password, String role, boolean active, boolean emailVerified) {
+    public TenantAwareUserDetails(UUID userId, UUID organisationId, UUID gymId, String email, String password, String role, boolean active, boolean emailVerified) {
         this.userId = userId;
+        this.gymId = gymId;
         this.email = email;
         this.password = password;
         this.organisationId = organisationId;

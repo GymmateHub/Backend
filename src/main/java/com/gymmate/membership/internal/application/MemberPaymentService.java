@@ -5,17 +5,16 @@ import com.gymmate.membership.internal.domain.MemberMembership;
 import com.gymmate.membership.internal.domain.MemberPaymentMethod;
 import com.gymmate.membership.internal.domain.MembershipPlan;
 import com.gymmate.membership.internal.domain.MembershipStatus;
-import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.organisation.api.OrganisationApi;
+import com.gymmate.organisation.api.dto.GymSummary;
 import com.gymmate.membership.internal.infrastructure.persistence.MemberInvoiceRepository;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.gymmate.membership.internal.infrastructure.persistence.MemberPaymentMethodRepository;
 import com.gymmate.membership.internal.application.port.MembershipPlanRepository;
-import com.gymmate.payment.application.StripeConnectService;
-import com.gymmate.shared.config.StripeConfig;
+import com.gymmate.shared.infrastructure.config.StripeConfig;
 import com.gymmate.shared.exception.DomainException;
-import com.gymmate.user.domain.Member;
-import com.gymmate.user.infrastructure.MemberRepository;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.identity.api.dto.MemberProfile;
 import com.stripe.exception.StripeException;
 import com.stripe.model.Customer;
 import com.stripe.model.PaymentMethod;
@@ -45,9 +44,8 @@ import java.util.stream.Collectors;
 public class MemberPaymentService {
 
     private final StripeConfig stripeConfig;
-    private final StripeConnectService connectService;
-    private final GymRepository gymRepository;
-    private final MemberRepository memberRepository;
+    private final OrganisationApi organisationApi;
+    private final IdentityApi identityApi;
     private final MemberPaymentMethodRepository paymentMethodRepository;
     private final MemberMembershipRepository membershipRepository;
     private final MemberInvoiceRepository invoiceRepository;
@@ -58,7 +56,7 @@ public class MemberPaymentService {
      */
     @Transactional
     public String createOrGetMemberCustomer(UUID gymId, UUID memberId, String email, String name) {
-        Gym gym = getGym(gymId);
+        GymSummary gym = getGym(gymId);
         validateGymCanAcceptPayments(gym);
 
         // Check if member already has a customer ID for this gym
@@ -71,7 +69,7 @@ public class MemberPaymentService {
         }
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.stripeConnectAccountId());
 
             CustomerCreateParams params = CustomerCreateParams.builder()
                     .setEmail(email)
@@ -101,13 +99,13 @@ public class MemberPaymentService {
     @Transactional
     public MemberPaymentMethodResponse attachPaymentMethod(UUID gymId, UUID memberId, String email, String name,
                                                            String stripePaymentMethodId, boolean setAsDefault) {
-        Gym gym = getGym(gymId);
+        GymSummary gym = getGym(gymId);
         validateGymCanAcceptPayments(gym);
 
         String customerId = createOrGetMemberCustomer(gymId, memberId, email, name);
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.stripeConnectAccountId());
 
             // Attach payment method to customer
             PaymentMethod paymentMethod = PaymentMethod.retrieve(stripePaymentMethodId, connectOptions);
@@ -157,7 +155,7 @@ public class MemberPaymentService {
     @Transactional
     public MemberMembership createMemberSubscription(UUID gymId, UUID memberId, UUID planId,
                                                      String customerId, String paymentMethodId) {
-        Gym gym = getGym(gymId);
+        GymSummary gym = getGym(gymId);
         validateGymCanAcceptPayments(gym);
 
         MembershipPlan plan = planRepository.findById(planId)
@@ -170,7 +168,7 @@ public class MemberPaymentService {
         }
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.stripeConnectAccountId());
 
             SubscriptionCreateParams.Builder paramsBuilder = SubscriptionCreateParams.builder()
                     .setCustomer(customerId)
@@ -248,14 +246,14 @@ public class MemberPaymentService {
         }
 
         // Get gymId from Member since MemberMembership no longer has direct gymId reference
-        Member member = memberRepository.findById(membership.getMemberId())
+        MemberProfile member = identityApi.findMember(membership.getMemberId())
                 .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
 
-        Gym gym = getGym(member.getGymId());
+        GymSummary gym = getGym(member.gymId());
         validateStripeConfigured();
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.stripeConnectAccountId());
             Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
 
             if (immediate) {
@@ -292,14 +290,14 @@ public class MemberPaymentService {
             return;
         }
 
-        Member member = memberRepository.findById(membership.getMemberId())
+        MemberProfile member = identityApi.findMember(membership.getMemberId())
                 .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
 
-        Gym gym = getGym(member.getGymId());
+        GymSummary gym = getGym(member.gymId());
         validateStripeConfigured();
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.stripeConnectAccountId());
             Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
 
             // Pause the subscription by setting pause_collection
@@ -333,14 +331,14 @@ public class MemberPaymentService {
             return;
         }
 
-        Member member = memberRepository.findById(membership.getMemberId())
+        MemberProfile member = identityApi.findMember(membership.getMemberId())
                 .orElseThrow(() -> new DomainException("MEMBER_NOT_FOUND", "Member not found"));
 
-        Gym gym = getGym(member.getGymId());
+        GymSummary gym = getGym(member.gymId());
         validateStripeConfigured();
 
         try {
-            RequestOptions connectOptions = getConnectRequestOptions(gym.getStripeConnectAccountId());
+            RequestOptions connectOptions = getConnectRequestOptions(gym.stripeConnectAccountId());
             Subscription subscription = Subscription.retrieve(membership.getStripeSubscriptionId(), connectOptions);
 
             // Resume the subscription by clearing pause_collection using EmptyParam
@@ -370,13 +368,13 @@ public class MemberPaymentService {
 
     // Helper methods
 
-    private Gym getGym(UUID gymId) {
-        return gymRepository.findById(gymId)
+    private GymSummary getGym(UUID gymId) {
+        return organisationApi.findGym(gymId)
                 .orElseThrow(() -> new DomainException("GYM_NOT_FOUND", "Gym not found"));
     }
 
-    private void validateGymCanAcceptPayments(Gym gym) {
-        if (gym.getStripeConnectAccountId() == null || !Boolean.TRUE.equals(gym.getStripeChargesEnabled())) {
+    private void validateGymCanAcceptPayments(GymSummary gym) {
+        if (gym.stripeConnectAccountId() == null || !Boolean.TRUE.equals(gym.stripeChargesEnabled())) {
             throw new DomainException("GYM_CANNOT_ACCEPT_PAYMENTS",
                     "This gym cannot accept payments yet. Please contact the gym to complete their payment setup.");
         }

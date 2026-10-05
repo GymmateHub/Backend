@@ -1,11 +1,12 @@
 package com.gymmate.notification.internal.application;
 
+import com.gymmate.notification.api.spi.MemberRecipient;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gymmate.notification.api.dto.AudiencePreviewResponse;
 import com.gymmate.notification.api.spi.AudienceMemberIdsResolver;
 import com.gymmate.notification.api.spi.MemberDirectory;
-import com.gymmate.notification.internal.domain.AudienceType;
+import com.gymmate.notification.api.dto.AudienceType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,16 +37,6 @@ public class AudienceResolver {
     private final ObjectMapper objectMapper;
     private final EmailSuppressionService suppressionService;
 
-    /**
-     * DTO to hold combined member and user info for newsletters.
-     */
-    public record MemberRecipient(
-            UUID memberId,
-            UUID userId,
-            String firstName,
-            String lastName,
-            String email) {
-    }
 
     /**
      * Resolve the target members based on audience type and filter.

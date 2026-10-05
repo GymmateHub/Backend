@@ -20,8 +20,8 @@ import com.gymmate.membership.internal.domain.MemberMembership;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import com.gymmate.user.domain.Member;
-import com.gymmate.user.infrastructure.MemberRepository;
+import com.gymmate.identity.api.dto.MemberProfile;
+import com.gymmate.identity.api.IdentityApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -55,7 +55,7 @@ public class AccessService {
   private final AccessEventRepository accessEventRepository;
   private final DoorBenefitRepository doorBenefitRepository;
   private final AccessScheduleRepository accessScheduleRepository;
-  private final MemberRepository memberRepository;
+  private final IdentityApi identityApi;
   private final MemberMembershipRepository memberMembershipRepository;
   private final List<AccessDevicePort> devicePorts;
   private final ApplicationEventPublisher eventPublisher;
@@ -78,9 +78,9 @@ public class AccessService {
     AccessCredential credential = (rawToken == null) ? null
         : accessCredentialRepository.findByTokenHashAndActiveTrue(sha256(rawToken)).orElse(null);
 
-    Member member = null;
+    MemberProfile member = null;
     if (credential != null && !credential.isExpired()) {
-      member = memberRepository.findById(credential.getMemberId()).orElse(null);
+      member = identityApi.findMember(credential.getMemberId()).orElse(null);
     }
 
     // Exit is always recorded (no entitlement checks) to keep occupancy accurate.
@@ -103,7 +103,7 @@ public class AccessService {
           AccessDecision.DENIED, DenyReason.TAILGATING_BLOCKED, true, tailgating);
       eventPublisher.publishEvent(TailgatingSuspectedEvent.builder()
           .organisationId(point.getOrganisationId()).gymId(point.getGymId())
-          .memberId(member.getId()).accessPointId(point.getId())
+          .memberId(member.id()).accessPointId(point.getId())
           .accessPointName(point.getName()).reason(tailgating).build());
       return ev;
     }
@@ -113,21 +113,21 @@ public class AccessService {
   }
 
   /** Entry-decision pipeline. Returns the first failing reason, or null if allowed. */
-  private DenyReason evaluateEntitlement(AccessPoint point, Member member) {
-    if (member.getStatus() == MemberStatus.SUSPENDED) {
+  private DenyReason evaluateEntitlement(AccessPoint point, MemberProfile member) {
+    if (member.status() == MemberStatus.SUSPENDED) {
       return DenyReason.SUSPENDED_OR_FROZEN;
     }
-    if (!member.isActive()) {
+    if (!member.active()) {
       return DenyReason.NO_ACTIVE_MEMBERSHIP;
     }
     Optional<MemberMembership> membershipOpt =
-        memberMembershipRepository.findActiveMembershipByMemberId(member.getId());
+        memberMembershipRepository.findActiveMembershipByMemberId(member.id());
     if (membershipOpt.isEmpty()) {
       return DenyReason.NO_ACTIVE_MEMBERSHIP;
     }
     MemberMembership membership = membershipOpt.get();
 
-    if (!member.isWaiverSigned()) {
+    if (!member.waiverSigned()) {
       return DenyReason.INCOMPLETE_SIGNUP;
     }
 
@@ -160,10 +160,10 @@ public class AccessService {
   }
 
   /** Anti-tailgating checks (run after a grant). Returns a reason string when blocked. */
-  private String evaluateTailgating(AccessPoint point, AccessCredential credential, Member member) {
+  private String evaluateTailgating(AccessPoint point, AccessCredential credential, MemberProfile member) {
     // One-open-session / pass-back: member already inside with no exit recorded.
     Optional<AccessEvent> lastGranted = accessEventRepository
-        .findTopByMemberIdAndDecisionOrderByOccurredAtDesc(member.getId(), AccessDecision.GRANTED);
+        .findTopByMemberIdAndDecisionOrderByOccurredAtDesc(member.id(), AccessDecision.GRANTED);
     if (lastGranted.isPresent() && lastGranted.get().getDirection() == AccessDirection.IN) {
       return "member already inside (no exit recorded)";
     }
@@ -182,24 +182,24 @@ public class AccessService {
     return null;
   }
 
-  private AccessEvent deny(AccessPoint point, AccessCredential credential, Member member,
+  private AccessEvent deny(AccessPoint point, AccessCredential credential, MemberProfile member,
                            AccessDirection dir, DenyReason reason) {
     AccessEvent ev = record(point, credential, member, dir, AccessDecision.DENIED, reason, false, null);
     eventPublisher.publishEvent(AccessDeniedEvent.builder()
         .organisationId(point.getOrganisationId()).gymId(point.getGymId())
-        .memberId(member != null ? member.getId() : null)
+        .memberId(member != null ? member.id() : null)
         .accessPointId(point.getId()).accessPointName(point.getName())
         .denyReason(reason).build());
     return ev;
   }
 
-  private AccessEvent record(AccessPoint point, AccessCredential credential, Member member,
+  private AccessEvent record(AccessPoint point, AccessCredential credential, MemberProfile member,
                              AccessDirection dir, AccessDecision decision, DenyReason reason,
                              boolean tailgating, String note) {
     AccessEvent ev = AccessEvent.builder()
         .accessPointId(point.getId())
         .credentialId(credential != null ? credential.getId() : null)
-        .memberId(member != null ? member.getId() : null)
+        .memberId(member != null ? member.id() : null)
         .direction(dir)
         .decision(decision)
         .denyReason(reason)
@@ -267,7 +267,7 @@ public class AccessService {
 
   @Transactional
   public IssuedCredential issueCredential(UUID memberId, CredentialType type, LocalDateTime expiresAt) {
-    Member member = memberRepository.findById(memberId)
+    MemberProfile member = identityApi.findMember(memberId)
         .orElseThrow(() -> new ResourceNotFoundException("Member", memberId.toString()));
 
     CredentialType credType = type == null ? CredentialType.QR : type;
@@ -280,8 +280,8 @@ public class AccessService {
         .issuedAt(LocalDateTime.now())
         .expiresAt(expiresAt)
         .build();
-    credential.setGymId(member.getGymId());
-    credential.setOrganisationId(member.getOrganisationId());
+    credential.setGymId(member.gymId());
+    credential.setOrganisationId(member.organisationId());
 
     AccessCredential saved = accessCredentialRepository.save(credential);
     log.info("Issued {} credential {} for member {}", credType, saved.getId(), memberId);

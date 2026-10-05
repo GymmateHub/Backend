@@ -8,7 +8,7 @@ import com.gymmate.notification.internal.application.NewsletterCampaignService;
 import com.gymmate.notification.internal.domain.NewsletterCampaign;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.shared.security.service.JwtService;
+import com.gymmate.shared.security.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -33,7 +33,6 @@ import java.util.UUID;
 public class NewsletterCampaignController {
 
     private final NewsletterCampaignService campaignService;
-    private final JwtService jwtService;
 
     /**
      * Create a new campaign.
@@ -159,8 +158,8 @@ public class NewsletterCampaignController {
         return ResponseEntity.ok(ApiResponse.success(null, "Campaign deleted successfully"));
     }
 
+    /** The authenticated caller (the header is still required by the endpoint contract). */
     private UUID extractUserId(String authHeader) {
-        String token = authHeader.substring(7);
-        return jwtService.extractUserId(token);
+        return CurrentUser.requireUserId();
     }
 }

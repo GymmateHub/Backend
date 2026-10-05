@@ -1,15 +1,15 @@
 package com.gymmate.unit.user.api;
 
-import com.gymmate.organisation.application.OrganisationLimitService;
+import com.gymmate.organisation.internal.application.OrganisationLimitService;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.user.internal.web.MemberController;
-import com.gymmate.user.api.dto.MemberResponse;
-import com.gymmate.user.application.MemberService;
-import com.gymmate.user.domain.Member;
+import com.gymmate.identity.internal.infrastructure.web.MemberController;
+import com.gymmate.identity.api.dto.MemberResponse;
+import com.gymmate.identity.internal.application.MemberService;
+import com.gymmate.identity.internal.domain.Member;
 import com.gymmate.shared.constants.MemberStatus;
-import com.gymmate.user.infrastructure.MemberRepository;
-import com.gymmate.user.infrastructure.UserRepository;
+import com.gymmate.identity.internal.infrastructure.persistence.MemberRepository;
+import com.gymmate.identity.internal.infrastructure.persistence.UserRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

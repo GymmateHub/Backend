@@ -3,12 +3,10 @@ package com.gymmate.reporting.internal.application;
 import com.gymmate.reporting.api.dto.OrganisationSummary;
 import com.gymmate.reporting.api.dto.PlatformOverview;
 import com.gymmate.reporting.api.dto.TenantSummary;
-import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.organisation.domain.Organisation;
-import com.gymmate.organisation.infrastructure.OrganisationRepository;
+import com.gymmate.organisation.api.OrganisationApi;
+import com.gymmate.organisation.api.dto.OrganisationInfo;
 import com.gymmate.shared.constants.UserRole;
-import com.gymmate.user.domain.User;
-import com.gymmate.user.infrastructure.UserRepository;
+import com.gymmate.identity.api.IdentityApi;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -24,22 +22,17 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AdminService {
 
-    private final OrganisationRepository organisationRepository;
-    private final GymRepository gymRepository;
-    private final UserRepository userRepository;
+    private final OrganisationApi organisationApi;
+    private final IdentityApi identityApi;
 
     public PlatformOverview getPlatformOverview() {
-        long totalOrganisations = organisationRepository.count();
-        long totalGyms = gymRepository.count();
-        long totalUsers = userRepository.count();
-        long totalOwners = userRepository.countByRole(UserRole.GYM_OWNER);
-        long totalMembers = userRepository.countByRole(UserRole.MEMBER);
+        long totalOrganisations = organisationApi.countOrganisations();
+        long totalGyms = organisationApi.countGyms();
+        long totalUsers = identityApi.countUsers();
+        long totalOwners = identityApi.countUsersByRole(UserRole.GYM_OWNER);
+        long totalMembers = identityApi.countUsersByRole(UserRole.MEMBER);
 
-        Page<Organisation> recentOrgPage = organisationRepository.findAll(
-                PageRequest.of(0, 5, Sort.by(Sort.Direction.DESC, "createdAt"))
-        );
-
-        List<OrganisationSummary> recentOrganisations = recentOrgPage.getContent().stream()
+        List<OrganisationSummary> recentOrganisations = organisationApi.listRecentOrganisations(5).stream()
                 .map(this::mapToSummary)
                 .collect(Collectors.toList());
 
@@ -53,55 +46,55 @@ public class AdminService {
                 .build();
     }
 
-    private OrganisationSummary mapToSummary(Organisation org) {
-        long gymCount = gymRepository.countByOrganisationId(org.getId());
+    private OrganisationSummary mapToSummary(OrganisationInfo org) {
+        long gymCount = organisationApi.countGymsByOrganisation(org.id());
         return OrganisationSummary.builder()
-                .id(org.getId())
-                .name(org.getName())
-                .slug(org.getSlug())
-                .contactEmail(org.getContactEmail())
-                .subscriptionPlan(org.getSubscriptionPlan())
-                .subscriptionStatus(org.getSubscriptionStatus())
+                .id(org.id())
+                .name(org.name())
+                .slug(org.slug())
+                .contactEmail(org.contactEmail())
+                .subscriptionPlan(org.subscriptionPlan())
+                .subscriptionStatus(org.subscriptionStatus())
                 .gymCount(gymCount)
-                .createdAt(org.getCreatedAt())
+                .createdAt(org.createdAt())
                 .build();
     }
 
     public List<TenantSummary> getOrganisations() {
-        return organisationRepository.findAll().stream()
+        return organisationApi.listOrganisations().stream()
                 .map(this::mapToTenantSummary)
                 .collect(Collectors.toList());
     }
 
-    private TenantSummary mapToTenantSummary(Organisation org) {
-        long gymCount = gymRepository.countByOrganisationId(org.getId());
-        long memberCount = userRepository.countByOrganisationIdAndRole(org.getId(), UserRole.MEMBER);
+    private TenantSummary mapToTenantSummary(OrganisationInfo org) {
+        long gymCount = organisationApi.countGymsByOrganisation(org.id());
+        long memberCount = identityApi.countUsersByOrganisationAndRole(org.id(), UserRole.MEMBER);
         
         String ownerName = null;
-        if (org.getOwnerUserId() != null) {
-            ownerName = userRepository.findById(org.getOwnerUserId())
-                .map(u -> u.getFirstName() + " " + u.getLastName())
+        if (org.ownerUserId() != null) {
+            ownerName = identityApi.findUser(org.ownerUserId())
+                .map(u -> u.firstName() + " " + u.lastName())
                 .orElse(null);
         }
 
         String status = "pending";
-        if (Boolean.TRUE.equals(org.isActive())) {
+        if (Boolean.TRUE.equals(org.active())) {
             status = "active";
-        } else if (org.getSubscriptionStatus() != null && org.getSubscriptionStatus().equals("suspended")) {
+        } else if (org.subscriptionStatus() != null && org.subscriptionStatus().equals("suspended")) {
             status = "suspended";
         }
 
         return TenantSummary.builder()
-                .id(org.getId())
-                .name(org.getName())
-                .slug(org.getSlug())
+                .id(org.id())
+                .name(org.name())
+                .slug(org.slug())
                 .ownerName(ownerName)
-                .contactEmail(org.getContactEmail())
+                .contactEmail(org.contactEmail())
                 .gymCount(gymCount)
                 .memberCount(memberCount)
-                .plan(org.getSubscriptionPlan())
+                .plan(org.subscriptionPlan())
                 .status(status)
-                .createdAt(org.getCreatedAt())
+                .createdAt(org.createdAt())
                 .build();
     }
 }

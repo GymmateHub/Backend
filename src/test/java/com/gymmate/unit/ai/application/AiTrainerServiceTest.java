@@ -5,9 +5,10 @@ import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;
 import com.gymmate.ai.internal.infrastructure.integration.AiNotificationIntegration;
 import com.gymmate.ai.internal.infrastructure.persistence.AiRecommendationRepository;
-import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.user.domain.events.MemberOnboardedEvent;
+import com.gymmate.organisation.internal.domain.Gym;
+import com.gymmate.organisation.api.OrganisationApi;
+import com.gymmate.organisation.internal.application.OrganisationApiTestSupport;
+import com.gymmate.identity.api.event.MemberOnboardedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,13 +35,13 @@ class AiTrainerServiceTest {
 
     @Mock private LlmClient llmClient;
     @Mock private AiRecommendationRepository aiRecommendationRepository;
-    @Mock private GymRepository gymRepository;
+    @Mock private OrganisationApi organisationApi;
     @Mock private AiNotificationIntegration aiNotificationIntegration;
 
     @Test
     @DisplayName("handleMemberOnboardedEvent calls LlmClient.complete, not a ChatClient directly")
     void handleMemberOnboardedEvent_callsLlmClientComplete() {
-        AiTrainerService service = new AiTrainerService(llmClient, aiRecommendationRepository, gymRepository, aiNotificationIntegration);
+        AiTrainerService service = new AiTrainerService(llmClient, aiRecommendationRepository, organisationApi, aiNotificationIntegration);
 
         UUID organisationId = UUID.randomUUID();
         UUID memberId = UUID.randomUUID();
@@ -48,7 +49,7 @@ class AiTrainerServiceTest {
 
         Gym gym = Gym.builder().city("Austin").country("USA").build();
         gym.setId(gymId);
-        when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
+        when(organisationApi.findGym(gymId)).thenReturn(Optional.of(OrganisationApiTestSupport.summary(gym)));
         when(llmClient.complete(isNull(), anyString()))
                 .thenReturn("WORKOUT PLAN: squats and rows\nMEAL PLAN: chicken and rice");
         when(aiRecommendationRepository.save(any(AiRecommendation.class))).thenAnswer(inv -> inv.getArgument(0));

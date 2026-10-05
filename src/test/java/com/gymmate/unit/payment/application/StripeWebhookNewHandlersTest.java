@@ -1,21 +1,21 @@
 package com.gymmate.unit.payment.application;
 
-import com.gymmate.gym.infrastructure.GymRepository;
+import com.gymmate.billing.internal.application.port.GymPaymentAccountPort;
 import com.gymmate.notification.internal.application.NotificationService;
 import com.gymmate.notification.api.event.ChargeDisputedEvent;
 import com.gymmate.notification.api.event.ChargeRefundedEvent;
 import com.gymmate.notification.api.event.SubscriptionPausedEvent;
-import com.gymmate.payment.application.PaymentNotificationService;
-import com.gymmate.payment.application.StripeConnectService;
-import com.gymmate.payment.application.StripeWebhookService;
-import com.gymmate.payment.application.WebhookEventTracker;
-import com.gymmate.payment.infrastructure.GymInvoiceRepository;
-import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
-import com.gymmate.shared.config.StripeConfig;
+import com.gymmate.billing.internal.application.PaymentNotificationService;
+import com.gymmate.billing.internal.application.StripeConnectService;
+import com.gymmate.billing.internal.application.StripeWebhookService;
+import com.gymmate.billing.internal.application.WebhookEventTracker;
+import com.gymmate.billing.internal.infrastructure.persistence.GymInvoiceRepository;
+import com.gymmate.billing.internal.infrastructure.persistence.StripeWebhookEventRepository;
+import com.gymmate.shared.infrastructure.config.StripeConfig;
 import com.gymmate.shared.constants.InvoiceStatus;
 import com.gymmate.shared.constants.SubscriptionStatus;
-import com.gymmate.shared.service.UtilityService;
-import com.gymmate.subscription.domain.SubscriptionRepository;
+import com.gymmate.shared.util.UtilityService;
+import com.gymmate.billing.internal.infrastructure.persistence.SubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -50,7 +50,7 @@ class StripeWebhookNewHandlersTest {
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private UtilityService utilityService;
     @Mock private NotificationService notificationService;
-    @Mock private GymRepository gymRepository;
+    @Mock private GymPaymentAccountPort gymRepository;
     @Mock private WebhookEventTracker webhookEventTracker;
     @Mock private PaymentNotificationService paymentNotificationService;
 

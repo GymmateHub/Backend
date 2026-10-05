@@ -1,0 +1,86 @@
+package com.gymmate.organisation.internal.infrastructure.persistence;
+
+import com.gymmate.organisation.internal.application.port.GymRepository;
+import com.gymmate.organisation.internal.domain.Gym;
+import com.gymmate.shared.constants.GymStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Repository adapter that implements the domain GymRepository interface
+ * using Spring Data JPA.
+ */
+@Component
+@RequiredArgsConstructor
+public class GymRepositoryAdapter implements GymRepository {
+
+    private final GymJpaRepository jpaRepository;
+
+    @Override
+    public Gym save(Gym gym) {
+        return jpaRepository.save(gym);
+    }
+
+    @Override
+    public Optional<Gym> findById(UUID id) {
+        return jpaRepository.findById(id);
+    }
+
+    // ========== Organisation-based queries ==========
+
+    @Override
+    public List<Gym> findByOrganisationId(UUID organisationId) {
+        return jpaRepository.findByOrganisationId(organisationId);
+    }
+
+    @Override
+    public List<Gym> findByOrganisationIdAndStatus(UUID organisationId, GymStatus status) {
+        return jpaRepository.findByOrganisationIdAndStatus(organisationId, status);
+    }
+
+    @Override
+    public long countByOrganisationId(UUID organisationId) {
+        return jpaRepository.countByOrganisationId(organisationId);
+    }
+
+    @Override
+    public Optional<Gym> findBySlug(String slug) {
+        return jpaRepository.findBySlug(slug);
+    }
+
+    // ========== General queries ==========
+
+    @Override
+    public List<Gym> findByStatus(GymStatus status) {
+        return jpaRepository.findByStatus(status);
+    }
+
+    @Override
+    public List<Gym> findByAddressCity(String city) {
+        return jpaRepository.findByCity(city);
+    }
+
+    @Override
+    public List<Gym> findAll() {
+        return jpaRepository.findAll();
+    }
+
+    @Override
+    public void deleteById(UUID id) {
+        jpaRepository.deleteById(id);
+    }
+
+    @Override
+    public long count() {
+        return jpaRepository.count();
+    }
+
+    @Override
+    public boolean existsById(UUID id) {
+        return jpaRepository.existsById(id);
+    }
+}

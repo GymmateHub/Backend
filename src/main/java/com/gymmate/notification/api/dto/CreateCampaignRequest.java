@@ -1,6 +1,6 @@
 package com.gymmate.notification.api.dto;
 
-import com.gymmate.notification.internal.domain.AudienceType;
+import com.gymmate.notification.api.dto.AudienceType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

@@ -7,7 +7,7 @@ import com.gymmate.notification.internal.application.NewsletterTemplateService;
 import com.gymmate.notification.internal.domain.NewsletterTemplate;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.shared.security.service.JwtService;
+import com.gymmate.shared.security.CurrentUser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,7 +32,6 @@ import java.util.UUID;
 public class NewsletterTemplateController {
 
     private final NewsletterTemplateService templateService;
-    private final JwtService jwtService;
 
     /**
      * Create a new newsletter template.
@@ -115,8 +114,8 @@ public class NewsletterTemplateController {
         return ResponseEntity.ok(ApiResponse.success(null, "Template deleted successfully"));
     }
 
+    /** The authenticated caller (the header is still required by the endpoint contract). */
     private UUID extractUserId(String authHeader) {
-        String token = authHeader.substring(7);
-        return jwtService.extractUserId(token);
+        return CurrentUser.requireUserId();
     }
 }

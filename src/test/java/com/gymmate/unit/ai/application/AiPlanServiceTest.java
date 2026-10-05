@@ -5,10 +5,12 @@ import com.gymmate.ai.internal.application.AiPlanService;
 import com.gymmate.ai.internal.application.port.LlmClient;
 import com.gymmate.ai.internal.domain.AiRecommendation;
 import com.gymmate.ai.internal.infrastructure.persistence.AiRecommendationRepository;
-import com.gymmate.gym.domain.Gym;
-import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.user.application.MemberService;
-import com.gymmate.user.domain.Member;
+import com.gymmate.organisation.internal.domain.Gym;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.identity.internal.application.IdentityApiTestSupport;
+import com.gymmate.organisation.api.OrganisationApi;
+import com.gymmate.organisation.internal.application.OrganisationApiTestSupport;
+import com.gymmate.identity.internal.domain.Member;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -39,15 +41,15 @@ class AiPlanServiceTest {
 
     @Mock private LlmClient llmClient;
     @Mock private AiRecommendationRepository recommendationRepository;
-    @Mock private MemberService memberService;
-    @Mock private GymRepository gymRepository;
+    @Mock private IdentityApi identityApi;
+    @Mock private OrganisationApi organisationApi;
     @Mock private RedisTemplate<String, Object> redisTemplate;
 
     private AiPlanService service;
 
     @BeforeEach
     void setUp() {
-        service = new AiPlanService(llmClient, recommendationRepository, memberService, gymRepository, redisTemplate);
+        service = new AiPlanService(llmClient, recommendationRepository, identityApi, organisationApi, redisTemplate);
         ReflectionTestUtils.setField(service, "cacheTtlHours", 24L);
     }
 
@@ -64,8 +66,8 @@ class AiPlanServiceTest {
         Gym gym = Gym.builder().city("Austin").country("USA").build();
         gym.setId(gymId);
 
-        when(memberService.findById(memberId)).thenReturn(member);
-        when(gymRepository.findById(gymId)).thenReturn(Optional.of(gym));
+        when(identityApi.getMember(memberId)).thenAnswer(inv -> IdentityApiTestSupport.profile(member));
+        when(organisationApi.findGym(gymId)).thenReturn(Optional.of(OrganisationApiTestSupport.summary(gym)));
         when(llmClient.complete(isNull(), anyString()))
                 .thenReturn("WORKOUT PLAN: squats and rows\nMEAL PLAN: chicken and rice");
         when(recommendationRepository.save(any(AiRecommendation.class))).thenAnswer(inv -> {

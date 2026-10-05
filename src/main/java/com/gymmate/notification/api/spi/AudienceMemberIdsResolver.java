@@ -1,6 +1,6 @@
 package com.gymmate.notification.api.spi;
 
-import com.gymmate.notification.internal.domain.AudienceType;
+import com.gymmate.notification.api.dto.AudienceType;
 
 import java.util.Set;
 import java.util.UUID;

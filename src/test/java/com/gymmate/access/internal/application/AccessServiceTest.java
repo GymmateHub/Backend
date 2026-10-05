@@ -20,8 +20,9 @@ import com.gymmate.access.internal.infrastructure.integration.SoftwareAccessAdap
 import com.gymmate.membership.internal.domain.MemberMembership;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.gymmate.shared.constants.MemberStatus;
-import com.gymmate.user.domain.Member;
-import com.gymmate.user.infrastructure.MemberRepository;
+import com.gymmate.identity.internal.domain.Member;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.identity.internal.application.IdentityApiTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
@@ -43,7 +44,7 @@ class AccessServiceTest {
   private AccessEventRepository accessEventRepository;
   private DoorBenefitRepository doorBenefitRepository;
   private AccessScheduleRepository accessScheduleRepository;
-  private MemberRepository memberRepository;
+  private IdentityApi identityApi;
   private MemberMembershipRepository memberMembershipRepository;
   private ApplicationEventPublisher eventPublisher;
   private AccessService service;
@@ -63,13 +64,13 @@ class AccessServiceTest {
     accessEventRepository = mock(AccessEventRepository.class);
     doorBenefitRepository = mock(DoorBenefitRepository.class);
     accessScheduleRepository = mock(AccessScheduleRepository.class);
-    memberRepository = mock(MemberRepository.class);
+    identityApi = mock(IdentityApi.class);
     memberMembershipRepository = mock(MemberMembershipRepository.class);
     eventPublisher = mock(ApplicationEventPublisher.class);
 
     service = new AccessService(
         accessPointRepository, accessCredentialRepository, accessEventRepository,
-        doorBenefitRepository, accessScheduleRepository, memberRepository,
+        doorBenefitRepository, accessScheduleRepository, identityApi,
         memberMembershipRepository, List.of(new SoftwareAccessAdapter()), eventPublisher);
 
     gymId = UUID.randomUUID();
@@ -98,7 +99,7 @@ class AccessServiceTest {
     when(accessPointRepository.findById(pointId)).thenReturn(Optional.of(point));
     when(accessCredentialRepository.findByTokenHashAndActiveTrue(anyString()))
         .thenReturn(Optional.of(credential));
-    when(memberRepository.findById(memberId)).thenReturn(Optional.of(member));
+    when(identityApi.findMember(memberId)).thenAnswer(inv -> Optional.of(IdentityApiTestSupport.profile(member)));
     when(accessEventRepository.save(any(AccessEvent.class)))
         .thenAnswer(inv -> inv.getArgument(0));
     // No benefits/schedules configured by default

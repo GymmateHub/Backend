@@ -1,6 +1,6 @@
 package com.gymmate.unit.payment.domain;
 
-import com.gymmate.payment.domain.PaymentMethod;
+import com.gymmate.billing.internal.domain.PaymentMethod;
 import com.gymmate.shared.constants.PaymentMethodOwnerType;
 import com.gymmate.shared.constants.PaymentMethodType;
 import org.junit.jupiter.api.DisplayName;

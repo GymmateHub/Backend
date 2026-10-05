@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.domain;
 
+import com.gymmate.notification.api.dto.AudienceType;
 import com.gymmate.shared.domain.GymScopedEntity;
 import com.gymmate.shared.exception.DomainException;
 import jakarta.persistence.*;
