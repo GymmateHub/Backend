@@ -34,6 +34,8 @@
     <spring-modulith.version>1.4.12</spring-modulith.version>
     <rest-assured.version>5.4.0</rest-assured.version>
     <java-faker.version>1.0.2</java-faker.version>
+    <!-- Aligned with the archunit core version Spring Modulith already pulls in -->
+    <archunit.version>1.4.2</archunit.version>
   </properties>
 
   <!-- Dependency Management for BOMs -->
@@ -231,6 +233,13 @@
     <dependency>
       <groupId>org.testcontainers</groupId>
       <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- ArchUnit: Clean Architecture layer rules (src/test/.../architecture) -->
+    <dependency>
+      <groupId>com.tngtech.archunit</groupId>
+      <artifactId>archunit-junit5</artifactId>
+      <version>${archunit.version}</version>
       <scope>test</scope>
     </dependency>
 
