@@ -1,19 +1,19 @@
 package com.gymmate.unit.analytics.application;
 
-import com.gymmate.analytics.api.dto.ClassAnalyticsResponse;
-import com.gymmate.analytics.api.dto.DashboardResponse;
-import com.gymmate.analytics.api.dto.MemberAnalyticsResponse;
-import com.gymmate.analytics.api.dto.RevenueAnalyticsResponse;
-import com.gymmate.analytics.internal.service.AnalyticsService;
-import com.gymmate.analytics.internal.domain.AnalyticsPeriod;
+import com.gymmate.reporting.api.dto.ClassAnalyticsResponse;
+import com.gymmate.reporting.api.dto.DashboardResponse;
+import com.gymmate.reporting.api.dto.MemberAnalyticsResponse;
+import com.gymmate.reporting.api.dto.RevenueAnalyticsResponse;
+import com.gymmate.reporting.internal.application.AnalyticsService;
+import com.gymmate.reporting.internal.domain.AnalyticsPeriod;
 import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.scheduling.api.ClassesFacade;
-import com.gymmate.inventory.api.InventoryFacade;
+import com.gymmate.retail.api.InventoryFacade;
 import com.gymmate.membership.internal.domain.MembershipStatus;
 import com.gymmate.membership.internal.infrastructure.persistence.MemberInvoiceRepository;
 import com.gymmate.membership.internal.infrastructure.persistence.MemberMembershipJpaRepository;
 import com.gymmate.membership.internal.infrastructure.persistence.MembershipPlanJpaRepository;
-import com.gymmate.pos.api.PosFacade;
+import com.gymmate.retail.api.PosFacade;
 import com.gymmate.user.infrastructure.MemberRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
