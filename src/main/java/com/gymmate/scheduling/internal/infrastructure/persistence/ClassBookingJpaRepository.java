@@ -17,10 +17,10 @@ public interface ClassBookingJpaRepository extends JpaRepository<ClassBookingJpa
 
     List<ClassBookingJpaEntity> findByClassScheduleId(UUID classScheduleId);
 
-    @Query("SELECT cb FROM ClassBooking cb JOIN Member m ON cb.memberId = m.userId WHERE m.gymId = :gymId")
+    @Query("SELECT cb FROM ClassBooking cb WHERE cb.gymId = :gymId")
     List<ClassBookingJpaEntity> findByGymId(@Param("gymId") UUID gymId);
 
-    @Query("SELECT cb FROM ClassBooking cb JOIN Member m ON cb.memberId = m.userId WHERE m.gymId = :gymId AND cb.status = :status ORDER BY cb.bookingDate DESC")
+    @Query("SELECT cb FROM ClassBooking cb WHERE cb.gymId = :gymId AND cb.status = :status ORDER BY cb.bookingDate DESC")
     List<ClassBookingJpaEntity> findByGymIdAndStatus(@Param("gymId") UUID gymId, @Param("status") BookingStatus status);
 
     Optional<ClassBookingJpaEntity> findByClassScheduleIdAndMemberId(UUID classScheduleId, UUID memberId);
@@ -39,16 +39,16 @@ public interface ClassBookingJpaRepository extends JpaRepository<ClassBookingJpa
     boolean existsByClassScheduleIdAndMemberId(UUID classScheduleId, UUID memberId);
 
     // ===== Analytics Queries =====
-    @Query("SELECT COUNT(cb) FROM ClassBooking cb JOIN Member m ON cb.memberId = m.userId WHERE m.gymId = :gymId AND cb.bookingDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT COUNT(cb) FROM ClassBooking cb WHERE cb.gymId = :gymId AND cb.bookingDate BETWEEN :startDate AND :endDate")
     long countByGymIdAndDateRange(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT COUNT(cb) FROM ClassBooking cb JOIN Member m ON cb.memberId = m.userId WHERE m.gymId = :gymId AND cb.status = :status AND cb.bookingDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT COUNT(cb) FROM ClassBooking cb WHERE cb.gymId = :gymId AND cb.status = :status AND cb.bookingDate BETWEEN :startDate AND :endDate")
     long countByGymIdAndStatusAndDateRange(@Param("gymId") UUID gymId, @Param("status") BookingStatus status, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     @Query("SELECT gc.name, COUNT(cb) FROM ClassBooking cb JOIN ClassSchedule cs ON cb.classScheduleId = cs.id JOIN GymClass gc ON cs.classId = gc.id JOIN ClassCategory cc ON gc.categoryId = cc.id WHERE cc.gymId = :gymId AND cb.bookingDate BETWEEN :startDate AND :endDate GROUP BY gc.name ORDER BY COUNT(cb) DESC")
     List<Object[]> countBookingsByClassForGym(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT FUNCTION('DAYOFWEEK', cb.bookingDate), COUNT(cb) FROM ClassBooking cb JOIN Member m ON cb.memberId = m.userId WHERE m.gymId = :gymId AND cb.bookingDate BETWEEN :startDate AND :endDate GROUP BY FUNCTION('DAYOFWEEK', cb.bookingDate)")
+    @Query("SELECT FUNCTION('DAYOFWEEK', cb.bookingDate), COUNT(cb) FROM ClassBooking cb WHERE cb.gymId = :gymId AND cb.bookingDate BETWEEN :startDate AND :endDate GROUP BY FUNCTION('DAYOFWEEK', cb.bookingDate)")
     List<Object[]> countBookingsByDayOfWeek(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     @Query("SELECT FUNCTION('HOUR', cs.startTime), COUNT(cb) FROM ClassBooking cb JOIN ClassSchedule cs ON cb.classScheduleId = cs.id JOIN GymClass gc ON cs.classId = gc.id JOIN ClassCategory cc ON gc.categoryId = cc.id WHERE cc.gymId = :gymId AND cb.bookingDate BETWEEN :startDate AND :endDate GROUP BY FUNCTION('HOUR', cs.startTime)")

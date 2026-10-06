@@ -12,18 +12,18 @@ import java.util.UUID;
 @Repository
 public interface MemberPaymentMethodJpaRepository extends JpaRepository<MemberPaymentMethodJpaEntity, UUID> {
 
-    @Query("SELECT p FROM MemberPaymentMethod p JOIN Member m ON p.memberId = m.userId WHERE p.memberId = :memberId AND m.gymId = :gymId ORDER BY p.isDefault DESC, p.createdAt DESC")
+    @Query("SELECT p FROM MemberPaymentMethod p WHERE p.memberId = :memberId AND p.gymId = :gymId ORDER BY p.isDefault DESC, p.createdAt DESC")
     List<MemberPaymentMethodJpaEntity> findByMemberIdAndGymIdOrderByIsDefaultDescCreatedAtDesc(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId);
 
-    @Query("SELECT p FROM MemberPaymentMethod p JOIN Member m ON p.memberId = m.userId WHERE p.memberId = :memberId AND m.gymId = :gymId AND p.isDefault = true")
+    @Query("SELECT p FROM MemberPaymentMethod p WHERE p.memberId = :memberId AND p.gymId = :gymId AND p.isDefault = true")
     Optional<MemberPaymentMethodJpaEntity> findByMemberIdAndGymIdAndIsDefaultTrue(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId);
 
     Optional<MemberPaymentMethodJpaEntity> findByStripePaymentMethodId(String stripePaymentMethodId);
 
     @Modifying
-    @Query("UPDATE MemberPaymentMethod p SET p.isDefault = false WHERE p.memberId = :memberId AND p.id IN (SELECT pm.id FROM MemberPaymentMethod pm JOIN Member m ON pm.memberId = m.userId WHERE m.gymId = :gymId)")
+    @Query("UPDATE MemberPaymentMethod p SET p.isDefault = false WHERE p.memberId = :memberId AND p.id IN (SELECT pm.id FROM MemberPaymentMethod pm WHERE pm.gymId = :gymId)")
     void clearDefaultForMember(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId);
 
-    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM MemberPaymentMethod p JOIN Member m ON p.memberId = m.userId WHERE p.memberId = :memberId AND m.gymId = :gymId")
+    @Query("SELECT CASE WHEN COUNT(p) > 0 THEN true ELSE false END FROM MemberPaymentMethod p WHERE p.memberId = :memberId AND p.gymId = :gymId")
     boolean existsByMemberIdAndGymId(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId);
 }

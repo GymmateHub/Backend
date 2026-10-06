@@ -45,11 +45,7 @@ public class UtilityService {
 
   private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-  private final PasswordEncoder passwordEncoder;
-
-  public UtilityService(PasswordEncoder passwordEncoder) {
-    this.passwordEncoder = new BCryptPasswordEncoder();
-  }
+  private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
   // ==================== Date/Time Formatting ====================
 
   public static String formatDate(Date date) {

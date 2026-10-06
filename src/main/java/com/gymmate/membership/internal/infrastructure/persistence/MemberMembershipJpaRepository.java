@@ -22,24 +22,24 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
     @Query("SELECT mm FROM MemberMembership mm WHERE mm.memberId = :memberId AND mm.status = 'ACTIVE' AND mm.endDate > :now")
     Optional<MemberMembershipJpaEntity> findActiveMembershipByMemberId(@Param("memberId") UUID memberId, @Param("now") LocalDateTime now);
 
-    @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId")
+    @Query("SELECT mm FROM MemberMembership mm WHERE mm.gymId = :gymId")
     List<MemberMembershipJpaEntity> findByGymId(@Param("gymId") UUID gymId);
 
-    @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = :status")
+    @Query("SELECT mm FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = :status")
     List<MemberMembershipJpaEntity> findByGymIdAndStatus(@Param("gymId") UUID gymId, @Param("status") MembershipStatus status);
 
-    @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE mm.memberId = :memberId AND m.gymId = :gymId AND mm.status IN :statuses")
+    @Query("SELECT mm FROM MemberMembership mm WHERE mm.memberId = :memberId AND mm.gymId = :gymId AND mm.status IN :statuses")
     List<MemberMembershipJpaEntity> findByMemberIdAndGymIdAndStatusIn(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId, @Param("statuses") List<MembershipStatus> statuses);
 
     Optional<MemberMembershipJpaEntity> findByStripeSubscriptionId(String stripeSubscriptionId);
 
-    @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.endDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT mm FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.endDate BETWEEN :startDate AND :endDate")
     List<MemberMembershipJpaEntity> findExpiringMemberships(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     @Query(value = "SELECT * FROM member_memberships mm WHERE mm.membership_plan_id = :planId", nativeQuery = true)
     List<MemberMembershipJpaEntity> findByPlanId(@Param("planId") UUID planId);
 
-    @Query("SELECT COUNT(mm) FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE'")
+    @Query("SELECT COUNT(mm) FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE'")
     long countActiveByGymId(@Param("gymId") UUID gymId);
 
     // Use native query to avoid Spring Data property resolution issues with
@@ -73,15 +73,15 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
     List<MemberMembershipJpaEntity> findStalePastDueMemberships(@Param("cutoff") LocalDateTime cutoff);
 
     // ===== Analytics Queries =====
-    @Query("SELECT COUNT(mm) FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = :status")
+    @Query("SELECT COUNT(mm) FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = :status")
     long countByGymIdAndStatus(@Param("gymId") UUID gymId, @Param("status") MembershipStatus status);
 
-    @Query("SELECT COUNT(mm) FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'CANCELLED' AND mm.createdAt BETWEEN :startDate AND :endDate")
+    @Query("SELECT COUNT(mm) FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'CANCELLED' AND mm.createdAt BETWEEN :startDate AND :endDate")
     long countCancelledByGymIdAndDateRange(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query("SELECT mp.name, COUNT(mm) FROM MemberMembership mm JOIN MembershipPlan mp ON mm.membershipPlanId = mp.id JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE' GROUP BY mp.name")
+    @Query("SELECT mp.name, COUNT(mm) FROM MemberMembership mm JOIN MembershipPlan mp ON mm.membershipPlanId = mp.id WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE' GROUP BY mp.name")
     List<Object[]> countActiveMembersByPlan(@Param("gymId") UUID gymId);
 
-    @Query("SELECT SUM(mm.monthlyAmount) FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.nextBillingDate BETWEEN :startDate AND :endDate")
+    @Query("SELECT SUM(mm.monthlyAmount) FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.nextBillingDate BETWEEN :startDate AND :endDate")
     BigDecimal sumProjectedRevenueByGymIdAndDateRange(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

@@ -21,7 +21,7 @@ public interface MemberInvoiceJpaRepository extends JpaRepository<MemberInvoiceJ
     @Query("SELECT COUNT(mi) FROM MemberInvoice mi WHERE mi.gymId = :gymId AND mi.status IN ('OPEN', 'PAYMENT_FAILED') AND mi.dueDate < :now")
     long countOverdueByGymId(@Param("gymId") UUID gymId, @Param("now") LocalDateTime now);
 
-    @Query("SELECT mi FROM MemberInvoice mi JOIN Member m ON mi.memberId = m.userId WHERE mi.memberId = :memberId AND m.gymId = :gymId ORDER BY mi.createdAt DESC")
+    @Query("SELECT mi FROM MemberInvoice mi WHERE mi.memberId = :memberId AND mi.gymId = :gymId ORDER BY mi.createdAt DESC")
     List<MemberInvoiceJpaEntity> findByMemberIdAndGymIdOrderByCreatedAtDesc(@Param("memberId") UUID memberId, @Param("gymId") UUID gymId);
 
     List<MemberInvoiceJpaEntity> findByMembershipIdOrderByCreatedAtDesc(UUID membershipId);

@@ -97,6 +97,13 @@ restart.
   - the kernel depends on no module;
   - `api` never depends on `internal`;
   - every `@Entity` declares its `@DomainModel`.
+- `<Module>ModuleTest` (one per module, `@ApplicationModuleTest`): boots the module on its own
+  against PostgreSQL. Other modules are not started; the test mocks only the public APIs the
+  module uses and the SPIs it declares. A hidden dependency, such as a bean, a JPQL join on
+  another module's entity, or a kernel bean that needs a module, makes the test fail to boot.
+  Scenario tests cover the key cross-module contracts:
+  - organisation publishes `OrganisationCreatedEvent`;
+  - billing provisions the starter trial when it receives that event.
 
 The frozen ArchUnit store was burnt down from 2,228 to 0 and deleted, so any new violation fails the build.
 
@@ -114,13 +121,23 @@ Ported from V2:
 Considered and not ported:
 
 - **V2 onboarding status machine.** It is covered by the existing user-status / OTP flow in `onboarding` + `identity`.
-- **`@Version` optimistic locking.** This is deferred to its own change, because it needs:
-  - a migration on every table;
-  - mapper rules for a null version on detached domain objects, which Spring Data would otherwise treat as new;
-  - a client-facing 409 contract.
+- **`@Version` optimistic locking.** This landed as its own change (see §8).
 - **Boot 4 / Modulith 2 / JJWT 0.13.** This is a separate upgrade track.
 
 `Backend_v2/` has been deleted.
+
+### 8. Optimistic locking
+
+`BaseJpaEntity` carries a JPA `@Version`, and `V20` adds the `version` column to every
+aggregate table (existing rows start at 0). Three rules follow:
+
+- Concurrent transactions that update the same row: the second one fails at commit.
+- The data mapper never copies a version onto a managed entity. Saving a domain copy whose
+  version is older than the stored row is rejected.
+- Hand-built copies with no version are not checked.
+
+Failures map to HTTP 409. The domain `BaseEntity` exposes the version, so clients can see it
+(for example, to add `If-Match` later).
 
 ## Consequences
 

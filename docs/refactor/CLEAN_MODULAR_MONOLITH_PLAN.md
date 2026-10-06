@@ -13,8 +13,16 @@
 > definition of done (§6) is met. The exceptions are `@Version` (deferred) and per-module
 > `@ApplicationModuleTest`, which is replaced by Testcontainers integration tests.
 >
-> **Follow-up (2026-10-06):** the schema-drift finding was resolved: `V19` reconciles Flyway with the mappings and ITs
-> now run with `validate`. The app boots via `docker compose` against PostgreSQL 18 + Redis.
+> **Follow-ups (2026-10-06):**
+>
+> - **Schema drift resolved.** `V19` reconciles Flyway with the mappings, and the
+>   integration tests now run with `validate`.
+> - **Docker Compose boot.** The app boots via `docker compose` against PostgreSQL 18 + Redis.
+> - **Optimistic locking landed.** `@Version` is on `BaseJpaEntity`, backed by `V20`.
+> - **Per-module tests added.** Every module has an `@ApplicationModuleTest` that boots it in
+>   isolation. Writing them exposed and removed two hidden couplings:
+>   - JPQL joins from membership and scheduling onto identity's `Member`;
+>   - a kernel bean that required identity's `PasswordEncoder`.
 
 **Scope:** Bring `Backend/` (branch `restructure`) to a Clean Architecture + Spring Modulith modular monolith, salvage what is worth keeping from `Backend_v2/`, then delete `Backend_v2/`.
 **Assessed:** 2026-10-05, against `restructure` @ `cf89a84` (Phase 0 safety net).
