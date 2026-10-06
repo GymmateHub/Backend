@@ -7,7 +7,9 @@ import com.gymmate.shared.exception.InvalidTokenException;
 import com.gymmate.shared.exception.NotFoundException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.dto.ApiResponse;
+import jakarta.persistence.OptimisticLockException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -54,6 +56,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler({OptimisticLockingFailureException.class, OptimisticLockException.class})
+    public ResponseEntity<ApiResponse<Object>> handleOptimisticLockingFailure(Exception ex) {
+        log.warn("Concurrent modification: {}", ex.getMessage());
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error("This record was changed by someone else. Reload it and try again."));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

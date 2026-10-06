@@ -2,6 +2,7 @@ package com.gymmate.shared.infrastructure.persistence;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.ColumnDefault;
 
 import java.util.UUID;
@@ -24,4 +25,9 @@ public abstract class BaseJpaEntity {
     nullable = false
   )
   private UUID id;
+
+  @Version
+  @Column(name = "version", nullable = false)
+  @EqualsAndHashCode.Exclude
+  private Long version;
 }

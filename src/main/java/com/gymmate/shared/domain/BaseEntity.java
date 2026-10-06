@@ -1,6 +1,7 @@
 package com.gymmate.shared.domain;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.UUID;
 
@@ -14,4 +15,12 @@ import java.util.UUID;
 public abstract class BaseEntity {
 
   private UUID id;
+
+  /**
+   * Optimistic-locking version of the persisted row; {@code null} until first saved. Saving a
+   * copy whose version is older than the stored row fails with an optimistic-locking error
+   * instead of silently overwriting a concurrent change.
+   */
+  @EqualsAndHashCode.Exclude
+  private Long version;
 }

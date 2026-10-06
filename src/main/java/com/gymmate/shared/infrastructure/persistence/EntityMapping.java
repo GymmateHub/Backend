@@ -39,6 +39,8 @@ public final class EntityMapping<D, J> {
     private final Map<String, Field> entityFields;
     private List<FieldPair> pairs;
     private final Field domainIdField;
+    private final Field entityVersionField;
+    private final Field domainVersionField;
 
     EntityMapping(Class<D> domainType, Class<J> entityType) {
         this.domainType = domainType;
@@ -46,6 +48,8 @@ public final class EntityMapping<D, J> {
         this.domainFields = instanceFields(domainType);
         this.entityFields = instanceFields(entityType);
         this.domainIdField = domainFields.get(idFieldName(entityFields));
+        this.entityVersionField = versionField(entityFields);
+        this.domainVersionField = entityVersionField == null ? null : domainFields.get(entityVersionField.getName());
     }
 
     public Class<D> domainType() {
@@ -125,6 +129,16 @@ public final class EntityMapping<D, J> {
         return ReflectionUtils.getField(domainIdField, domain);
     }
 
+    /** Optimistic-locking version carried by the domain object, or null (unversioned / never saved). */
+    Object domainVersion(Object domain) {
+        return domainVersionField == null ? null : ReflectionUtils.getField(domainVersionField, domain);
+    }
+
+    /** Optimistic-locking version of the managed entity, or null when the entity is unversioned. */
+    Object entityVersion(Object entity) {
+        return entityVersionField == null ? null : ReflectionUtils.getField(entityVersionField, entity);
+    }
+
     D newDomain() {
         return instantiate(domainType);
     }
@@ -136,6 +150,9 @@ public final class EntityMapping<D, J> {
     /** Copies the domain state onto the entity (associations resolved through the context). */
     void copyToEntity(Object domain, Object entity, MappingContext ctx) {
         for (FieldPair p : pairs) {
+            if (p.entityField() == entityVersionField) {
+                continue; // the version is owned by Hibernate; stale copies are rejected by MappingContext
+            }
             Object value = ReflectionUtils.getField(p.domainField(), domain);
             switch (p.kind()) {
                 case VALUE -> ReflectionUtils.setField(p.entityField(), entity, value);
@@ -220,6 +237,15 @@ public final class EntityMapping<D, J> {
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("Cannot instantiate " + type.getName(), e);
         }
+    }
+
+    private static Field versionField(Map<String, Field> entityFields) {
+        for (Field f : entityFields.values()) {
+            if (f.isAnnotationPresent(jakarta.persistence.Version.class)) {
+                return f;
+            }
+        }
+        return null;
     }
 
     /** Name of the entity's identifier field (@Id); defaults to "id". */

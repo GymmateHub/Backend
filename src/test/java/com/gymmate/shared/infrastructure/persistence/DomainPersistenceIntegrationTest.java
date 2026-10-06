@@ -7,14 +7,22 @@ import com.gymmate.support.PostgresIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * JPA semantics of the domain/JPA data-mapper layer, against PostgreSQL: id and audit write-back,
@@ -152,5 +160,95 @@ class DomainPersistenceIntegrationTest extends PostgresIntegrationTest {
 
         assertThat(lead.getId()).isNotNull();
         assertThat(leads.findById(lead.getId())).get().extracting(Lead::getFirstName).isEqualTo("Tony");
+    }
+
+    // ------------------------------------------------------------------ optimistic locking
+
+    @Test
+    void versionStartsAtZeroAndIncrementsOnEveryUpdate() {
+        Lead lead = persisted("Linus");
+        assertThat(lead.getVersion()).isZero();
+
+        tx.executeWithoutResult(s -> leads.findById(lead.getId()).orElseThrow().updateStatus(LeadStatus.CONTACTED));
+
+        Long version = tx.execute(s -> leads.findById(lead.getId()).orElseThrow().getVersion());
+        assertThat(version).isEqualTo(1L);
+    }
+
+    @Test
+    void savingAStaleCopyIsRejected() {
+        UUID id = persisted("Barbara").getId();
+        Lead stale = tx.execute(s -> leads.findById(id).orElseThrow());
+        tx.executeWithoutResult(s -> leads.findById(id).orElseThrow().updateStatus(LeadStatus.CONTACTED));
+
+        stale.setFirstName("Overwrite");
+
+        assertThatThrownBy(() -> tx.execute(s -> leads.save(stale)))
+                .isInstanceOf(ObjectOptimisticLockingFailureException.class);
+        String firstName = tx.execute(s -> leads.findById(id).orElseThrow().getFirstName());
+        assertThat(firstName).isEqualTo("Barbara");
+    }
+
+    @Test
+    void concurrentWritersOfTheSameRowDoNotOverwriteEachOther() throws Exception {
+        UUID id = persisted("Edsger").getId();
+        CountDownLatch bothLoaded = new CountDownLatch(2);
+        CountDownLatch firstCommitted = new CountDownLatch(1);
+
+        Callable<String> writer = () -> {
+            try {
+                tx.executeWithoutResult(s -> {
+                    Lead lead = leads.findById(id).orElseThrow();
+                    bothLoaded.countDown();
+                    await(bothLoaded);
+                    lead.setFirstName(Thread.currentThread().getName());
+                    if (!Thread.currentThread().getName().equals("first")) {
+                        await(firstCommitted);
+                    }
+                });
+                return "committed";
+            } catch (ObjectOptimisticLockingFailureException e) {
+                return "conflict";
+            } finally {
+                if (Thread.currentThread().getName().equals("first")) {
+                    firstCommitted.countDown();
+                }
+            }
+        };
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            Future<String> first = pool.submit(named("first", writer));
+            Future<String> second = pool.submit(named("second", writer));
+
+            assertThat(List.of(first.get(30, TimeUnit.SECONDS), second.get(30, TimeUnit.SECONDS)))
+                    .containsExactly("committed", "conflict");
+        } finally {
+            pool.shutdownNow();
+        }
+        String firstName = tx.execute(s -> leads.findById(id).orElseThrow().getFirstName());
+        assertThat(firstName).isEqualTo("first");
+    }
+
+    private static <T> Callable<T> named(String name, Callable<T> task) {
+        return () -> {
+            String previous = Thread.currentThread().getName();
+            Thread.currentThread().setName(name);
+            try {
+                return task.call();
+            } finally {
+                Thread.currentThread().setName(previous);
+            }
+        };
+    }
+
+    private static void await(CountDownLatch latch) {
+        try {
+            if (!latch.await(20, TimeUnit.SECONDS)) {
+                throw new IllegalStateException("timed out");
+            }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
     }
 }

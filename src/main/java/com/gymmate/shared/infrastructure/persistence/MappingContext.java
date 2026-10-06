@@ -2,6 +2,7 @@ package com.gymmate.shared.infrastructure.persistence;
 
 import org.hibernate.Hibernate;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
@@ -84,6 +85,9 @@ public final class MappingContext {
             Object id = mapping.domainId(domain);
             if (id != null) {
                 entity = session.find(mapping.entityType(), id);
+                if (entity != null) {
+                    checkNotStale(mapping, domain, entity, id);
+                }
             }
             if (entity == null) {
                 entity = mapping.newEntity();
@@ -175,6 +179,18 @@ public final class MappingContext {
     }
 
     // ------------------------------------------------------------------ internals
+
+    /**
+     * An untracked domain copy (e.g. loaded in an earlier transaction) may only be written back
+     * when nobody changed the row since it was read. Copies without a version (built by hand)
+     * are not checked.
+     */
+    private static void checkNotStale(EntityMapping<?, ?> mapping, Object domain, Object entity, Object id) {
+        Object expected = mapping.domainVersion(domain);
+        if (expected != null && !expected.equals(mapping.entityVersion(entity))) {
+            throw new ObjectOptimisticLockingFailureException(mapping.entityType(), id);
+        }
+    }
 
     private void bind(Object domain, Object entity) {
         // A row is represented by exactly one domain object: the latest one bound wins
