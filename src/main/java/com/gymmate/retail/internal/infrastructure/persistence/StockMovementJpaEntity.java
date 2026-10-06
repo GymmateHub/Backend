@@ -49,24 +49,19 @@ public class StockMovementJpaEntity extends GymScopedJpaEntity {
     private LocalDateTime movementDate = LocalDateTime.now();
 
     @Column(name = "reference_number", length = 100)
-    private String // Invoice, PO number, etc.
-    referenceNumber;
+    private String referenceNumber; // Invoice, PO number, etc.
 
     @Column(name = "supplier_id")
-    private UUID // For purchases
-    supplierId;
+    private UUID supplierId; // For purchases
 
     @Column(name = "customer_id")
-    private UUID // For sales (member)
-    customerId;
+    private UUID customerId; // For sales (member)
 
     @Column(name = "from_gym_id")
-    private UUID // For transfers
-    fromGymId;
+    private UUID fromGymId; // For transfers
 
     @Column(name = "to_gym_id")
-    private UUID // For transfers
-    toGymId;
+    private UUID toGymId; // For transfers
 
     @Column(name = "batch_number", length = 100)
     private String batchNumber;
@@ -75,6 +70,5 @@ public class StockMovementJpaEntity extends GymScopedJpaEntity {
     private String notes;
 
     @Column(name = "performed_by")
-    private String // User who made the movement
-    performedBy;
+    private String performedBy; // User who made the movement
 }

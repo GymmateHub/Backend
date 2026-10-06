@@ -38,8 +38,7 @@ HealthMetricJpaEntity extends GymScopedJpaEntity {
     private BigDecimal value;
 
     @Column(nullable = false, length = 10)
-    private String // kg, lbs, %, cm, bpm, etc.
-    unit;
+    private String unit; // kg, lbs, %, cm, bpm, etc.
 
     @Column(columnDefinition = "TEXT")
     private String notes;

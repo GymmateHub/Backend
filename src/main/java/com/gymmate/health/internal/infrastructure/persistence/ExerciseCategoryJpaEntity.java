@@ -18,8 +18,7 @@ import com.gymmate.shared.infrastructure.persistence.DomainModel;
 public class ExerciseCategoryJpaEntity extends BaseAuditJpaEntity {
 
     @Column(nullable = false, unique = true, length = 50)
-    private String // Strength, Cardio, Flexibility, etc.
-    name;
+    private String name; // Strength, Cardio, Flexibility, etc.
 
     @Column(columnDefinition = "TEXT")
     private String description;

@@ -30,16 +30,13 @@ public class SaleJpaEntity extends GymScopedJpaEntity {
     private String saleNumber;
 
     @Column(name = "member_id")
-    private UUID // Optional - can be a walk-in customer
-    memberId;
+    private UUID memberId; // Optional - can be a walk-in customer
 
     @Column(name = "customer_name", length = 200)
-    private String // For walk-in customers
-    customerName;
+    private String customerName; // For walk-in customers
 
     @Column(name = "staff_id")
-    private UUID // The staff member processing the sale
-    staffId;
+    private UUID staffId; // The staff member processing the sale
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

@@ -1,5 +1,6 @@
 package com.gymmate.membership.internal.application;
 
+import java.math.BigDecimal;
 import com.gymmate.membership.internal.domain.FreezePolicy;
 import com.gymmate.membership.internal.domain.MemberMembership;
 import com.gymmate.membership.internal.domain.MembershipPlan;
@@ -215,7 +216,7 @@ public class MembershipService {
       .maxConsecutiveFreezeDays(60)
       .minMembershipDaysBeforeFreeze(30)
       .coolingOffPeriodDays(30)
-      .freezeFeeAmount(0.0)
+      .freezeFeeAmount(BigDecimal.ZERO)
       .freezeFeeFrequency("NONE")
       .allowPartialMonthFreeze(true)
       .isDefaultPolicy(true)

@@ -34,17 +34,14 @@ WearableSyncJpaEntity extends GymScopedJpaEntity {
     private LocalDateTime lastSyncAt;
 
     @Column(name = "sync_status", length = 20)
-    private String // SUCCESS, FAILED, PENDING
-    syncStatus = "PENDING";
+    private String syncStatus = "PENDING"; // SUCCESS, FAILED, PENDING
 
     @Column(name = "external_user_id", length = 255)
-    private String // ID from external service (Apple, Google, etc.)
-    externalUserId;
+    private String externalUserId; // ID from external service (Apple, Google, etc.)
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "sync_metadata", columnDefinition = "jsonb")
-    private String // Additional sync information as JSON
-    syncMetadata;
+    private String syncMetadata; // Additional sync information as JSON
 
     @Column(name = "sync_error", columnDefinition = "TEXT")
     private String syncError;

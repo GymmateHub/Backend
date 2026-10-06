@@ -18,6 +18,11 @@ spring:
             required: true
           ssl:
             trust: ${MAIL_HOST:live.smtp.mailtrap.io}
+          # Without timeouts an unreachable SMTP host blocks callers (and the mail health
+          # indicator) indefinitely.
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
         transport:
           protocol: smtp
         debug: false

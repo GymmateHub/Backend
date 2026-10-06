@@ -27,7 +27,7 @@ public class MemberMembershipJpaEntity extends GymScopedJpaEntity {
     @Column(name = "member_id", nullable = false)
     private UUID memberId;
 
-    @Column(name = "plan_id")
+    @Column(name = "membership_plan_id")
     private UUID membershipPlanId;
 
     // Subscription period

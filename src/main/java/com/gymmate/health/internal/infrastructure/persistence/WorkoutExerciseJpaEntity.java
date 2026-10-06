@@ -27,8 +27,7 @@ public class WorkoutExerciseJpaEntity extends BaseAuditJpaEntity {
     private UUID exerciseId;
 
     @Column(name = "exercise_order")
-    private Integer // Order in workout sequence
-    exerciseOrder;
+    private Integer exerciseOrder; // Order in workout sequence
 
     @Column(nullable = false)
     private Integer sets = 1;
@@ -40,19 +39,16 @@ public class WorkoutExerciseJpaEntity extends BaseAuditJpaEntity {
     private BigDecimal weight;
 
     @Column(name = "weight_unit", length = 10)
-    private String // kg, lbs
-    weightUnit;
+    private String weightUnit; // kg, lbs
 
     @Column(name = "rest_seconds")
     private Integer restSeconds;
 
     @Column(name = "distance_meters", precision = 10, scale = 2)
-    private BigDecimal // For cardio exercises
-    distanceMeters;
+    private BigDecimal distanceMeters; // For cardio exercises
 
     @Column(name = "duration_seconds")
-    private Integer // For timed exercises
-    durationSeconds;
+    private Integer durationSeconds; // For timed exercises
 
     @Column(columnDefinition = "TEXT")
     private String notes;

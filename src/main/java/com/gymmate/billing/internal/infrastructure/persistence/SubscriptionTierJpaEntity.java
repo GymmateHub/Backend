@@ -33,8 +33,7 @@ public class SubscriptionTierJpaEntity extends BaseAuditJpaEntity {
     private BigDecimal price;
 
     @Column(name = "billing_cycle", nullable = false, length = 20)
-    private String // monthly, annual
-    billingCycle = "monthly";
+    private String billingCycle = "monthly"; // monthly, annual
 
     @Column(name = "is_active")
     private Boolean active = true;

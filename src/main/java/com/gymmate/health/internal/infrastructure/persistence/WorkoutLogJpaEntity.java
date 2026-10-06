@@ -29,8 +29,7 @@ public class WorkoutLogJpaEntity extends GymScopedJpaEntity {
     private LocalDateTime workoutDate;
 
     @Column(name = "workout_name", length = 100)
-    private String // Optional name (e.g., "Chest Day", "Leg Day")
-    workoutName;
+    private String workoutName; // Optional name (e.g., "Chest Day", "Leg Day")
 
     @Column(name = "duration_minutes")
     private Integer durationMinutes;

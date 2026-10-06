@@ -26,8 +26,7 @@ public class InventoryItemJpaEntity extends GymScopedJpaEntity {
     private String name;
 
     @Column(length = 100, unique = true)
-    private String // Stock Keeping Unit
-    sku;
+    private String sku; // Stock Keeping Unit
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
@@ -41,33 +40,26 @@ public class InventoryItemJpaEntity extends GymScopedJpaEntity {
     private Integer currentStock = 0;
 
     @Column(name = "minimum_stock")
-    private Integer // Alert threshold
-    minimumStock = 0;
+    private Integer minimumStock = 0; // Alert threshold
 
     @Column(name = "maximum_stock")
-    private Integer // Maximum capacity
-    maximumStock;
+    private Integer maximumStock; // Maximum capacity
 
     @Column(name = "reorder_point")
-    private Integer // When to reorder
-    reorderPoint = 0;
+    private Integer reorderPoint = 0; // When to reorder
 
     @Column(name = "reorder_quantity")
-    private Integer // How much to reorder
-    reorderQuantity;
+    private Integer reorderQuantity; // How much to reorder
 
     // Pricing
     @Column(name = "unit_cost", precision = 10, scale = 2)
-    private BigDecimal // Cost per unit from supplier
-    unitCost;
+    private BigDecimal unitCost; // Cost per unit from supplier
 
     @Column(name = "unit_price", precision = 10, scale = 2)
-    private BigDecimal // Selling price per unit
-    unitPrice;
+    private BigDecimal unitPrice; // Selling price per unit
 
     @Column(length = 20)
-    private String // piece, box, kg, liter, etc.
-    unit;
+    private String unit; // piece, box, kg, liter, etc.
 
     // Supplier information
     @Column(name = "supplier_id")
@@ -81,12 +73,10 @@ public class InventoryItemJpaEntity extends GymScopedJpaEntity {
     private String barcode;
 
     @Column(name = "location", length = 200)
-    private String // Storage location within gym
-    location;
+    private String location; // Storage location within gym
 
     @Column(name = "expiry_tracking")
-    private boolean // For perishable items
-    expiryTracking = false;
+    private boolean expiryTracking = false; // For perishable items
 
     @Column(name = "batch_tracking")
     private boolean batchTracking = false;

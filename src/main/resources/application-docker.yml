@@ -1,14 +1,15 @@
 spring:
-  profiles:
-    active: docker
-
   # Docker-specific configuration
   datasource:
-    # Example for PostgreSQL - adjust as needed
-    url: jdbc:postgresql://postgres:5432/gymmate
-    username: gymmate
-    password: gymmate_password
+    url: ${PG_URI:jdbc:postgresql://postgres:5432/gymmate}
+    username: ${PG_USER:gymmate}
+    password: ${PG_PASSWORD:gymmate_password}
     driver-class-name: org.postgresql.Driver
+
+  # Flyway owns the schema; Hibernate only validates it.
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    locations: classpath:db/migration
 
   jpa:
     hibernate:
@@ -21,6 +22,10 @@ spring:
 
 # Actuator endpoints for health checks
 management:
+  health:
+    # Container liveness must not depend on reaching an external SMTP relay.
+    mail:
+      enabled: false
   endpoints:
     web:
       exposure:

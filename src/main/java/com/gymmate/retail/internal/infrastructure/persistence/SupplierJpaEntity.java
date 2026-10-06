@@ -22,8 +22,7 @@ public class SupplierJpaEntity extends TenantJpaEntity {
     private String name;
 
     @Column(length = 100)
-    private String // Internal supplier code
-    code;
+    private String code; // Internal supplier code
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -65,8 +64,7 @@ public class SupplierJpaEntity extends TenantJpaEntity {
     private String taxId;
 
     @Column(name = "payment_terms", length = 100)
-    private String // Net 30, Net 60, etc.
-    paymentTerms;
+    private String paymentTerms; // Net 30, Net 60, etc.
 
     @Column(name = "currency", length = 3)
     private String currency = "USD";
@@ -76,13 +74,11 @@ public class SupplierJpaEntity extends TenantJpaEntity {
 
     // Category
     @Column(name = "supplier_category", length = 100)
-    private String // equipment, supplements, apparel, etc.
-    supplierCategory;
+    private String supplierCategory; // equipment, supplements, apparel, etc.
 
     // Rating and notes
     @Column(name = "rating")
-    private Integer // 0-5 stars
-    rating = 0;
+    private Integer rating = 0; // 0-5 stars
 
     @Column(columnDefinition = "TEXT")
     private String notes;

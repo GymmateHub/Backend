@@ -54,8 +54,7 @@ public class TrainerJpaEntity extends TenantJpaEntity {
     private LocalDate hireDate;
 
     @Column(name = "employment_type", length = 20)
-    private String // full_time, part_time, contractor
-    employmentType;
+    private String employmentType; // full_time, part_time, contractor
 
     // Status
     @Column(name = "is_accepting_clients")

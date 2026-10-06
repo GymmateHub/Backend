@@ -34,10 +34,9 @@ public abstract class PostgresIntegrationTest {
         registry.add("spring.datasource.driver-class-name", () -> "org.postgresql.Driver");
         registry.add("spring.jpa.properties.hibernate.dialect", () -> "org.hibernate.dialect.PostgreSQLDialect");
         registry.add("spring.jpa.database-platform", () -> "org.hibernate.dialect.PostgreSQLDialect");
-        // Flyway builds the schema; Hibernate reconciles known pre-existing drift between the
-        // migrations and the entity mappings (e.g. api_rate_limits.is_active) — same as the
-        // application default (ddl-auto=update).
-        registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
+        // Flyway owns the schema; Hibernate only validates it against the entity mappings, so
+        // any drift between a migration and an entity fails the integration tests.
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("spring.flyway.enabled", () -> "true");
         registry.add("spring.flyway.locations", () -> "classpath:db/migration");
         registry.add("spring.ai.openai.api-key", () -> "test-openai-key");

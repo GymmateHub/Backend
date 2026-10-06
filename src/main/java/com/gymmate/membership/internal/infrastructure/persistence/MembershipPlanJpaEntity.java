@@ -32,17 +32,14 @@ public class MembershipPlanJpaEntity extends GymScopedJpaEntity {
     private BigDecimal price;
 
     @Column(name = "billing_cycle", nullable = false, length = 20)
-    private String // monthly, quarterly, yearly, lifetime
-    billingCycle;
+    private String billingCycle; // monthly, quarterly, yearly, lifetime
 
     @Column(name = "duration_months")
-    private Integer // NULL for lifetime
-    durationMonths;
+    private Integer durationMonths; // NULL for lifetime
 
     // Features
     @Column(name = "class_credits")
-    private Integer // NULL for unlimited
-    classCredits;
+    private Integer classCredits; // NULL for unlimited
 
     @Column(name = "guest_passes")
     private Integer guestPasses = 0;
@@ -52,8 +49,7 @@ public class MembershipPlanJpaEntity extends GymScopedJpaEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private String // ["pool", "sauna", "parking"]
-    amenities = "[]";
+    private String amenities = "[]"; // ["pool", "sauna", "parking"]
 
     // Restrictions
     @Column(name = "peak_hours_access")
@@ -64,8 +60,7 @@ public class MembershipPlanJpaEntity extends GymScopedJpaEntity {
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "specific_areas", columnDefinition = "jsonb")
-    private String // ["main_gym", "pool", "studio"]
-    specificAreas;
+    private String specificAreas; // ["main_gym", "pool", "studio"]
 
     // Status
     @Column(name = "is_featured")

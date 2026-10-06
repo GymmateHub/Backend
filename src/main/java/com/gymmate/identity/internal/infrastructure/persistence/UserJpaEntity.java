@@ -56,8 +56,7 @@ public class UserJpaEntity extends TenantJpaEntity {
     private LocalDate dateOfBirth;
 
     @Column(length = 10)
-    private String // male, female, other, prefer_not_to_say
-    gender;
+    private String gender; // male, female, other, prefer_not_to_say
 
     @Column(name = "profile_photo_url", length = 500)
     private String profilePhotoUrl;

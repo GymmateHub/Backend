@@ -66,8 +66,7 @@ public class EquipmentJpaEntity extends GymScopedJpaEntity {
 
     // Location and assignment
     @Column(name = "area_id")
-    private UUID // Reference to GymArea if applicable
-    areaId;
+    private UUID areaId; // Reference to GymArea if applicable
 
     @Column(name = "location_notes", columnDefinition = "TEXT")
     private String locationNotes;
@@ -80,8 +79,7 @@ public class EquipmentJpaEntity extends GymScopedJpaEntity {
     private LocalDate nextMaintenanceDate;
 
     @Column(name = "maintenance_interval_days")
-    private Integer // Default 90 days
-    maintenanceIntervalDays = 90;
+    private Integer maintenanceIntervalDays = 90; // Default 90 days
 
     @Column(name = "total_maintenance_cost", precision = 10, scale = 2)
     private BigDecimal totalMaintenanceCost = BigDecimal.ZERO;
@@ -91,8 +89,7 @@ public class EquipmentJpaEntity extends GymScopedJpaEntity {
     private Integer usageHours = 0;
 
     @Column(name = "max_capacity")
-    private Integer // Max users at once
-    maxCapacity;
+    private Integer maxCapacity; // Max users at once
 
     // Supplier reference
     @Column(name = "supplier_id")

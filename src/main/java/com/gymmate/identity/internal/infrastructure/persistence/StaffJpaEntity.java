@@ -30,8 +30,7 @@ public class StaffJpaEntity extends TenantJpaEntity {
     private String position;
 
     @Column(length = 50)
-    private String // front_desk, maintenance, management, cleaning
-    department;
+    private String department; // front_desk, maintenance, management, cleaning
 
     @Column(name = "hourly_wage", precision = 10, scale = 2)
     private BigDecimal hourlyWage;
@@ -41,8 +40,7 @@ public class StaffJpaEntity extends TenantJpaEntity {
     private LocalDate hireDate;
 
     @Column(name = "employment_type", length = 20)
-    private String // full_time, part_time, contractor
-    employmentType;
+    private String employmentType; // full_time, part_time, contractor
 
     // Schedule
     @JdbcTypeCode(SqlTypes.JSON)
@@ -52,6 +50,5 @@ public class StaffJpaEntity extends TenantJpaEntity {
     // Permissions
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(columnDefinition = "jsonb")
-    private String // ["access_control", "pos", "member_management"]
-    permissions = "[]";
+    private String permissions = "[]"; // ["access_control", "pos", "member_management"]
 }

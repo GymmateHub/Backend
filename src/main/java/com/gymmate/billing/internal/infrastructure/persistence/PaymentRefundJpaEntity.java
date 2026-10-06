@@ -73,8 +73,7 @@ public class PaymentRefundJpaEntity extends BaseAuditJpaEntity {
     private UUID refundToUserId;
 
     @Column(name = "refund_to_type", length = 30)
-    private String // MEMBER, GYM_OWNER
-    refundToType;
+    private String refundToType; // MEMBER, GYM_OWNER
 
     // Who requested the refund
     @Column(name = "requested_by")
@@ -88,14 +87,13 @@ public class PaymentRefundJpaEntity extends BaseAuditJpaEntity {
     private UUID processedByUserId;
 
     @Column(name = "processed_by_type", length = 30)
-    private String // GYM_OWNER, SUPER_ADMIN, SYSTEM
-    processedByType;
+    private String processedByType; // GYM_OWNER, SUPER_ADMIN, SYSTEM
 
     // Link to refund request (if workflow was used)
     @Column(name = "refund_request_id")
     private UUID refundRequestId;
 
-    @Column(name = "failure_reason")
+    @Column(name = "failure_reason", columnDefinition = "TEXT")
     private String failureReason;
 
     @Column(name = "receipt_number")

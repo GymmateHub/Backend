@@ -36,7 +36,7 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
     @Query("SELECT mm FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.endDate BETWEEN :startDate AND :endDate")
     List<MemberMembershipJpaEntity> findExpiringMemberships(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query(value = "SELECT * FROM member_memberships mm WHERE mm.plan_id = :planId", nativeQuery = true)
+    @Query(value = "SELECT * FROM member_memberships mm WHERE mm.membership_plan_id = :planId", nativeQuery = true)
     List<MemberMembershipJpaEntity> findByPlanId(@Param("planId") UUID planId);
 
     @Query("SELECT COUNT(mm) FROM MemberMembership mm JOIN Member m ON mm.memberId = m.userId WHERE m.gymId = :gymId AND mm.status = 'ACTIVE'")
@@ -44,7 +44,7 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
 
     // Use native query to avoid Spring Data property resolution issues with
     // generated method names
-    @Query(value = "SELECT COUNT(*) FROM member_memberships mm WHERE mm.plan_id = :planId", nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) FROM member_memberships mm WHERE mm.membership_plan_id = :planId", nativeQuery = true)
     long countByPlanId(@Param("planId") UUID planId);
 
     @Query("SELECT mm FROM MemberMembership mm WHERE mm.frozen = true AND mm.frozenUntil < :date")

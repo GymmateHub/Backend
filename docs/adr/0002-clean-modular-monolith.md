@@ -126,4 +126,16 @@ Considered and not ported:
 
 - New code has one template, and the build enforces it.
 - Integration tests use Testcontainers (PostgreSQL 18) and therefore need Docker.
-- **Known finding:** the Flyway schema has drifted from the entities, so Hibernate `ddl-auto=validate` fails (e.g. `api_rate_limits.is_active`). The integration tests use `update` until a reconciliation migration lands. This drift predates the refactor.
+- **Schema is owned by Flyway.** The migrations and the entity mappings had drifted before
+  this refactor:
+  - the audit columns `is_active` and `updated_by` were missing;
+  - `created_by` was a UUID column instead of text;
+  - `member_memberships` mapped `plan_id` while the schema had `membership_plan_id`;
+  - some columns and indexes were missing.
+
+  Only `ddl-auto=update` kept the app running, and the `dev` and `docker` profiles (which use
+  `validate`) could not start. `V19__Reconcile_Schema_With_Entity_Mappings` fixes this. It is
+  idempotent, so it is safe on databases Hibernate already patched. Integration tests now run
+  with `ddl-auto=validate`, so new drift fails the build.
+- `docker compose up --build` runs the full stack (PostgreSQL 18, Redis, backend with
+  Flyway + validate).

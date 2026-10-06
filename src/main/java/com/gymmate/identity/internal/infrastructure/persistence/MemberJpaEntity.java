@@ -65,8 +65,7 @@ public class MemberJpaEntity extends GymScopedJpaEntity {
     private String[] fitnessGoals;
 
     @Column(name = "experience_level", length = 20)
-    private String // beginner, intermediate, advanced
-    experienceLevel;
+    private String experienceLevel; // beginner, intermediate, advanced
 
     // Preferences
     @JdbcTypeCode(SqlTypes.JSON)

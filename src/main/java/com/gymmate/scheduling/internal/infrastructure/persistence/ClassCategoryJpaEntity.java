@@ -26,8 +26,7 @@ public class ClassCategoryJpaEntity extends GymScopedJpaEntity {
     private String description;
 
     @Column(length = 7)
-    private String // Hex color for UI
-    color;
+    private String color; // Hex color for UI
 
     @Column(length = 50)
     private String icon;

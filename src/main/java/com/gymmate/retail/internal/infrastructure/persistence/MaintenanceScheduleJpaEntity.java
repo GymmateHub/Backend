@@ -34,12 +34,10 @@ public class MaintenanceScheduleJpaEntity extends GymScopedJpaEntity {
     private LocalDate scheduledDate;
 
     @Column(name = "maintenance_type", nullable = false, length = 50)
-    private String // routine, inspection, deep_clean, calibration
-    maintenanceType;
+    private String maintenanceType; // routine, inspection, deep_clean, calibration
 
     @Column(name = "assigned_to", length = 200)
-    private String // Staff member or company
-    assignedTo;
+    private String assignedTo; // Staff member or company
 
     @Column(name = "estimated_duration_hours")
     private Integer estimatedDurationHours;
@@ -48,8 +46,7 @@ public class MaintenanceScheduleJpaEntity extends GymScopedJpaEntity {
     private boolean recurring = false;
 
     @Column(name = "recurrence_interval_days")
-    private Integer // For recurring schedules
-    recurrenceIntervalDays;
+    private Integer recurrenceIntervalDays; // For recurring schedules
 
     @Column(name = "is_completed")
     private boolean completed = false;
@@ -58,8 +55,7 @@ public class MaintenanceScheduleJpaEntity extends GymScopedJpaEntity {
     private LocalDate completedDate;
 
     @Column(name = "maintenance_record_id")
-    private UUID // Link to actual maintenance record once completed
-    maintenanceRecordId;
+    private UUID maintenanceRecordId; // Link to actual maintenance record once completed
 
     @Column(columnDefinition = "TEXT")
     private String notes;

@@ -25,8 +25,7 @@ public class GymAreaJpaEntity extends GymScopedJpaEntity {
     private String name;
 
     @Column(name = "area_type", length = 50)
-    private String // studio, pool, main_floor, outdoor, virtual
-    areaType;
+    private String areaType; // studio, pool, main_floor, outdoor, virtual
 
     @Column
     private Integer capacity;

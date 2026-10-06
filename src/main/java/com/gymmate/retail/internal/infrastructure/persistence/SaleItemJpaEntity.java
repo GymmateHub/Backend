@@ -24,8 +24,7 @@ public class SaleItemJpaEntity extends GymScopedJpaEntity {
     private SaleJpaEntity sale;
 
     @Column(name = "inventory_item_id")
-    private UUID // Reference to inventory item
-    inventoryItemId;
+    private UUID inventoryItemId; // Reference to inventory item
 
     @Column(name = "item_name", nullable = false, length = 200)
     private String itemName;
@@ -43,8 +42,7 @@ public class SaleItemJpaEntity extends GymScopedJpaEntity {
     private BigDecimal unitPrice;
 
     @Column(name = "cost_price", precision = 12, scale = 2)
-    private BigDecimal // For profit tracking
-    costPrice;
+    private BigDecimal costPrice; // For profit tracking
 
     @Column(name = "discount_amount", precision = 12, scale = 2)
     private BigDecimal discountAmount = BigDecimal.ZERO;

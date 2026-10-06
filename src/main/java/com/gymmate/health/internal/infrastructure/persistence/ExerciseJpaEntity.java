@@ -30,25 +30,21 @@ public class ExerciseJpaEntity extends BaseAuditJpaEntity {
     private UUID categoryId;
 
     @Column(name = "primary_muscle_group", length = 50)
-    private String // Chest, Back, Legs, Shoulders, Arms, Core, etc.
-    primaryMuscleGroup;
+    private String primaryMuscleGroup; // Chest, Back, Legs, Shoulders, Arms, Core, etc.
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "secondary_muscle_groups", columnDefinition = "text[]")
     private String[] secondaryMuscleGroups;
 
     @Column(name = "equipment_required", length = 100)
-    private String // Barbell, Dumbbells, None, etc.
-    equipmentRequired;
+    private String equipmentRequired; // Barbell, Dumbbells, None, etc.
 
     @Column(name = "difficulty_level", length = 20)
-    private String // BEGINNER, INTERMEDIATE, ADVANCED
-    difficultyLevel;
+    private String difficultyLevel; // BEGINNER, INTERMEDIATE, ADVANCED
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "instructions", columnDefinition = "jsonb")
-    private String // Step-by-step instructions as JSON array
-    instructions;
+    private String instructions; // Step-by-step instructions as JSON array
 
     @Column(name = "video_url", length = 500)
     private String videoUrl;
@@ -57,10 +53,8 @@ public class ExerciseJpaEntity extends BaseAuditJpaEntity {
     private String thumbnailUrl;
 
     @Column(name = "is_public")
-    private boolean // true = public library, false = gym-specific
-    isPublic = true;
+    private boolean isPublic = true; // true = public library, false = gym-specific
 
     @Column(name = "created_by_gym_id")
-    private UUID // Null if public exercise
-    createdByGymId;
+    private UUID createdByGymId; // Null if public exercise
 }

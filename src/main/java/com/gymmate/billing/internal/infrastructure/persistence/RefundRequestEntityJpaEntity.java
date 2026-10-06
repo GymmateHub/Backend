@@ -61,16 +61,14 @@ RefundRequestEntityJpaEntity extends GymScopedJpaEntity {
     private UUID requestedByUserId;
 
     @Column(name = "requested_by_type", nullable = false, length = 30)
-    private String // MEMBER, GYM_OWNER, STAFF, SUPER_ADMIN
-    requestedByType;
+    private String requestedByType; // MEMBER, GYM_OWNER, STAFF, SUPER_ADMIN
 
     // Recipient Information
     @Column(name = "refund_to_user_id", nullable = false)
     private UUID refundToUserId;
 
     @Column(name = "refund_to_type", nullable = false, length = 30)
-    private String // MEMBER, GYM_OWNER
-    refundToType;
+    private String refundToType; // MEMBER, GYM_OWNER
 
     // Request Details
     @Enumerated(EnumType.STRING)

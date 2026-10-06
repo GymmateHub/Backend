@@ -28,20 +28,17 @@ ProgressPhotoJpaEntity extends GymScopedJpaEntity {
     private LocalDateTime photoDate;
 
     @Column(name = "photo_url", length = 500)
-    private String // Will be populated when file upload is implemented
-    photoUrl;
+    private String photoUrl; // Will be populated when file upload is implemented
 
     @Column(name = "thumbnail_url", length = 500)
     private String thumbnailUrl;
 
     @Column(name = "weight_at_time", precision = 10, scale = 2)
-    private BigDecimal // Record weight when photo was taken
-    weightAtTime;
+    private BigDecimal weightAtTime; // Record weight when photo was taken
 
     @Column(columnDefinition = "TEXT")
     private String notes;
 
     @Column(name = "is_public")
-    private boolean // Privacy control - default private
-    isPublic = false;
+    private boolean isPublic = false; // Privacy control - default private
 }

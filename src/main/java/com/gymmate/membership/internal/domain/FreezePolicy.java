@@ -1,5 +1,6 @@
 package com.gymmate.membership.internal.domain;
 
+import java.math.BigDecimal;
 import com.gymmate.shared.domain.GymScopedEntity;
 import lombok.*;
 
@@ -29,7 +30,7 @@ public class FreezePolicy extends GymScopedEntity {
   private Integer coolingOffPeriodDays = 30; // Default: 30 days between freezes
 
   @Builder.Default
-  private Double freezeFeeAmount = 0.0; // Default: no fee
+  private BigDecimal freezeFeeAmount = BigDecimal.ZERO; // Default: no fee
 
   @Builder.Default
   private String freezeFeeFrequency = "NONE"; // NONE, ONE_TIME, MONTHLY

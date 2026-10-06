@@ -29,15 +29,13 @@ public class MaintenanceRecordJpaEntity extends GymScopedJpaEntity {
     private LocalDate maintenanceDate;
 
     @Column(name = "maintenance_type", nullable = false, length = 50)
-    private String // routine, repair, inspection, replacement
-    maintenanceType;
+    private String maintenanceType; // routine, repair, inspection, replacement
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "performed_by", length = 200)
-    private String // Technician or staff name
-    performedBy;
+    private String performedBy; // Technician or staff name
 
     @Column(name = "technician_company", length = 200)
     private String technicianCompany;

@@ -30,8 +30,7 @@ public class ApiRateLimitJpaEntity extends BaseAuditJpaEntity {
     private LocalDateTime windowEnd;
 
     @Column(name = "window_type", nullable = false, length = 20)
-    private String // hourly, daily, burst
-    windowType = "hourly";
+    private String windowType = "hourly"; // hourly, daily, burst
 
     // Request Tracking
     @Column(name = "request_count")

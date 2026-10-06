@@ -47,12 +47,10 @@ public class GymClassJpaEntity extends GymScopedJpaEntity {
 
     // Requirements
     @Column(name = "skill_level", length = 20)
-    private String // beginner, intermediate, advanced, all_levels
-    skillLevel;
+    private String skillLevel; // beginner, intermediate, advanced, all_levels
 
     @Column(name = "age_restriction", length = 50)
-    private String // "18+", "16+", "all_ages"
-    ageRestriction;
+    private String ageRestriction; // "18+", "16+", "all_ages"
 
     @JdbcTypeCode(SqlTypes.ARRAY)
     @Column(name = "equipment_needed", columnDefinition = "text[]")
