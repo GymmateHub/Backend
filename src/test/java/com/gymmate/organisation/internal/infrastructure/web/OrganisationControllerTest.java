@@ -1,6 +1,9 @@
 package com.gymmate.organisation.internal.infrastructure.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.gymmate.organisation.internal.application.GymService;
 import com.gymmate.organisation.internal.application.dto.CreateHubRequest;
 import com.gymmate.organisation.internal.application.OrganisationLimitService;
@@ -27,7 +30,6 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -54,11 +56,17 @@ class OrganisationControllerTest {
     @InjectMocks
     private OrganisationController organisationController;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new JsonMapper();
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(organisationController).build();
+        // Same creator visibility as the application's JSON mapper (shared JacksonConfig).
+        JsonMapper appMapper = JsonMapper.builder()
+                .changeDefaultVisibility(vc -> vc.withCreatorVisibility(JsonAutoDetect.Visibility.ANY))
+                .build();
+        mockMvc = MockMvcBuilders.standaloneSetup(organisationController)
+                .setMessageConverters(new JacksonJsonHttpMessageConverter(appMapper))
+                .build();
     }
 
     @Test

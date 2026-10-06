@@ -1,7 +1,7 @@
 package com.gymmate.notification.internal.infrastructure.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 import com.gymmate.notification.internal.application.NotificationService;
 import com.gymmate.notification.api.spi.GymAccessVerifier;
@@ -68,8 +68,7 @@ class NotificationControllerTest {
 
     @BeforeEach
     void setUp() {
-        objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper = new JsonMapper();
 
         mockMvc = MockMvcBuilders.standaloneSetup(notificationController)
                 .setControllerAdvice(new GlobalExceptionHandler())

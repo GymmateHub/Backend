@@ -1,8 +1,8 @@
 package com.gymmate.membership.internal.infrastructure.integration;
 
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.membership.internal.domain.MembershipStatus;
 import com.gymmate.notification.api.spi.AudienceMemberIdsResolver;
 import com.gymmate.notification.api.dto.AudienceType;
@@ -70,7 +70,7 @@ public class MembershipAudienceMemberIdsAdapter implements AudienceMemberIdsReso
             }
             Set<UUID> ids = new HashSet<>();
             for (JsonNode element : arrayNode) {
-                ids.add(UUID.fromString(element.asText()));
+                ids.add(UUID.fromString(element.asString()));
             }
             return ids;
         } catch (Exception e) {

@@ -1,6 +1,7 @@
 package com.gymmate.unit.notification.application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.gymmate.notification.internal.application.EmailSuppressionService;
 import com.gymmate.notification.internal.application.SesWebhookService;
 import com.gymmate.notification.internal.infrastructure.integration.SnsSignatureVerifier;
@@ -33,7 +34,7 @@ class SesWebhookServiceTest {
     private EmailSuppressionService suppressionService;
 
     private SesWebhookService webhookService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new JsonMapper();
 
     @BeforeEach
     void setUp() {

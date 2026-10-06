@@ -3,6 +3,7 @@ package com.gymmate.shared.infrastructure.persistence;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import org.hibernate.engine.spi.SessionImplementor;
+import org.hibernate.engine.spi.SharedSessionContractImplementor;
 import org.springframework.orm.jpa.EntityManagerFactoryUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -60,7 +61,7 @@ public class DomainPersistenceContexts {
     }
 
     /** The context bound for this session on the current thread, or null (used by Hibernate listeners). */
-    static MappingContext lookup(SessionImplementor session) {
+    static MappingContext lookup(SharedSessionContractImplementor session) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
             return null;
         }
@@ -68,7 +69,7 @@ public class DomainPersistenceContexts {
     }
 
     /** Identity-based resource key for a session. */
-    private record Key(SessionImplementor session) {
+    private record Key(SharedSessionContractImplementor session) {
         @Override
         public boolean equals(Object o) {
             return o instanceof Key k && k.session == session;

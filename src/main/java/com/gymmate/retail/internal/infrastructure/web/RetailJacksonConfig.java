@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.gymmate.retail.internal.domain.EquipmentCategory;
 import com.gymmate.retail.internal.domain.EquipmentStatus;
 import com.gymmate.retail.internal.domain.InventoryCategory;
-import org.springframework.boot.autoconfigure.jackson.Jackson2ObjectMapperBuilderCustomizer;
+import org.springframework.boot.jackson.autoconfigure.JsonMapperBuilderCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -17,11 +17,11 @@ import org.springframework.context.annotation.Configuration;
 class RetailJacksonConfig {
 
     @Bean
-    Jackson2ObjectMapperBuilderCustomizer retailEnumBinding() {
+    JsonMapperBuilderCustomizer retailEnumBinding() {
         return builder -> builder
-                .mixIn(InventoryCategory.class, InventoryCategoryJson.class)
-                .mixIn(EquipmentCategory.class, EquipmentCategoryJson.class)
-                .mixIn(EquipmentStatus.class, EquipmentStatusJson.class);
+                .addMixIn(InventoryCategory.class, InventoryCategoryJson.class)
+                .addMixIn(EquipmentCategory.class, EquipmentCategoryJson.class)
+                .addMixIn(EquipmentStatus.class, EquipmentStatusJson.class);
     }
 
     abstract static class InventoryCategoryJson {

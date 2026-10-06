@@ -2,6 +2,7 @@ package com.gymmate.retail.internal.infrastructure.persistence;
 
 import com.gymmate.retail.internal.domain.SaleStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -50,7 +51,7 @@ public interface SaleJpaRepository extends JpaRepository<SaleJpaEntity, UUID> {
     @Query("SELECT COALESCE(SUM(s.totalAmount), 0) FROM Sale s WHERE s.gymId = :gymId AND s.status = 'COMPLETED' AND s.saleDate BETWEEN :startDate AND :endDate")
     BigDecimal sumTotalByGymIdAndDateRange(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query(value = "SELECT COALESCE(SUM(total_amount), 0) FROM pos_sales WHERE gym_id = :gymId AND status = 'COMPLETED' AND DATE(sale_date) = CURRENT_DATE", nativeQuery = true)
+    @NativeQuery("SELECT COALESCE(SUM(total_amount), 0) FROM pos_sales WHERE gym_id = :gymId AND status = 'COMPLETED' AND DATE(sale_date) = CURRENT_DATE")
     BigDecimal sumTodaysTotalByGymId(@Param("gymId") UUID gymId);
 
     @Query("SELECT s.paymentType, COALESCE(SUM(s.totalAmount), 0) FROM Sale s WHERE s.gymId = :gymId AND s.status = 'COMPLETED' AND s.saleDate BETWEEN :startDate AND :endDate GROUP BY s.paymentType")

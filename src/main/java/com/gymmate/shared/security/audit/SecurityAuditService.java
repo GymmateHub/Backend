@@ -1,6 +1,6 @@
 package com.gymmate.shared.security.audit;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.shared.constants.AuditEventType;
 import com.gymmate.shared.dto.SecurityAuditEvent;
 import lombok.RequiredArgsConstructor;

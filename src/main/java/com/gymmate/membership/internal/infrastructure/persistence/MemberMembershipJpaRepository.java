@@ -2,6 +2,7 @@ package com.gymmate.membership.internal.infrastructure.persistence;
 
 import com.gymmate.membership.internal.domain.MembershipStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -36,7 +37,7 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
     @Query("SELECT mm FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE' AND mm.endDate BETWEEN :startDate AND :endDate")
     List<MemberMembershipJpaEntity> findExpiringMemberships(@Param("gymId") UUID gymId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    @Query(value = "SELECT * FROM member_memberships mm WHERE mm.membership_plan_id = :planId", nativeQuery = true)
+    @NativeQuery("SELECT * FROM member_memberships mm WHERE mm.membership_plan_id = :planId")
     List<MemberMembershipJpaEntity> findByPlanId(@Param("planId") UUID planId);
 
     @Query("SELECT COUNT(mm) FROM MemberMembership mm WHERE mm.gymId = :gymId AND mm.status = 'ACTIVE'")
@@ -44,7 +45,7 @@ public interface MemberMembershipJpaRepository extends JpaRepository<MemberMembe
 
     // Use native query to avoid Spring Data property resolution issues with
     // generated method names
-    @Query(value = "SELECT COUNT(*) FROM member_memberships mm WHERE mm.membership_plan_id = :planId", nativeQuery = true)
+    @NativeQuery("SELECT COUNT(*) FROM member_memberships mm WHERE mm.membership_plan_id = :planId")
     long countByPlanId(@Param("planId") UUID planId);
 
     @Query("SELECT mm FROM MemberMembership mm WHERE mm.frozen = true AND mm.frozenUntil < :date")

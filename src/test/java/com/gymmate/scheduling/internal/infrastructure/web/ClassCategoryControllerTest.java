@@ -1,6 +1,7 @@
 package com.gymmate.scheduling.internal.infrastructure.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.gymmate.scheduling.internal.application.dto.CategoryResponse;
 import com.gymmate.scheduling.internal.application.dto.CreateCategoryRequest;
 import com.gymmate.scheduling.internal.application.mapper.ClassCategoryMapper;
@@ -23,7 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class ClassCategoryControllerTest {
 
   private MockMvc mvc;
-  private ObjectMapper objectMapper = new ObjectMapper();
+  private ObjectMapper objectMapper = new JsonMapper();
 
   private ClassCategoryService categoryService;
   private ClassCategoryMapper mapper;

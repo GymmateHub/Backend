@@ -35,7 +35,7 @@ class NotificationServiceTest {
         @Mock
         private com.gymmate.notification.internal.infrastructure.web.SseEmitterRegistry sseEmitterRegistry;
         @Mock
-        private com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+        private tools.jackson.databind.ObjectMapper objectMapper;
         @Mock
         private EmailService emailService;
 

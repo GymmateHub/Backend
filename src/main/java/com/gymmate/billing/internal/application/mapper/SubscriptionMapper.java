@@ -1,7 +1,8 @@
 package com.gymmate.billing.internal.application.mapper;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.gymmate.billing.internal.application.dto.SubscriptionResponse;
 import com.gymmate.billing.internal.application.dto.SubscriptionTierResponse;
 import com.gymmate.billing.internal.domain.Subscription;
@@ -16,7 +17,7 @@ import java.util.List;
 @Component
 public class SubscriptionMapper {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new JsonMapper();
 
     public SubscriptionResponse toResponse(Subscription subscription) {
         LocalDateTime now = LocalDateTime.now();

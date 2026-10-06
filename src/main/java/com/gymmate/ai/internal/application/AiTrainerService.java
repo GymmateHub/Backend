@@ -43,10 +43,11 @@ public class AiTrainerService {
             }
 
             String prompt = String.format(
-                "You are an expert AI Gym Trainer. The user lives in %s and wants to achieve the following fitness goals: %s. " +
-                "Please provide a response in exactly two sections:\n" +
-                "1. WORKOUT PLAN: A weekly workout plan tailored to these goals.\n" +
-                "2. MEAL PLAN: A meal plan that MUST heavily feature healthy versions of local cuisine and easily accessible local ingredients from %s.",
+                """
+                You are an expert AI Gym Trainer. The user lives in %s and wants to achieve the following fitness goals: %s. \
+                Please provide a response in exactly two sections:
+                1. WORKOUT PLAN: A weekly workout plan tailored to these goals.
+                2. MEAL PLAN: A meal plan that MUST heavily feature healthy versions of local cuisine and easily accessible local ingredients from %s.""",
                 location, goals, location
             );
 

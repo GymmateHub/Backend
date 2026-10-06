@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Test fixtures factory for creating test data objects.
@@ -181,6 +182,6 @@ public class TestFixtures {
     }
 
     public static String generateUniquePhone() {
-        return "+1" + (1000000000L + (long) (Math.random() * 9000000000L));
+        return "+1" + (1000000000L + (long) (ThreadLocalRandom.current().nextDouble() * 9000000000L));
     }
 }

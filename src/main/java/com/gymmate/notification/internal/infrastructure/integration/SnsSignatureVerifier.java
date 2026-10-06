@@ -1,7 +1,7 @@
 package com.gymmate.notification.internal.infrastructure.integration;
 
 import com.gymmate.notification.internal.application.port.InboundMessageVerifier;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -42,20 +42,20 @@ public class SnsSignatureVerifier implements InboundMessageVerifier {
     @Override
     public boolean verifySignature(JsonNode snsPayload) {
         try {
-            String certUrl = snsPayload.path("SigningCertURL").asText(null);
+            String certUrl = snsPayload.path("SigningCertURL").asString(null);
             if (certUrl == null || !CERT_URL_PATTERN.matcher(certUrl).matches()) {
                 log.error("Rejected invalid SNS SigningCertURL: {}", certUrl);
                 return false;
             }
 
-            String signature = snsPayload.path("Signature").asText(null);
+            String signature = snsPayload.path("Signature").asString(null);
             if (signature == null || signature.isBlank()) {
                 log.error("Missing Signature in SNS payload");
                 return false;
             }
 
-            String signatureVersion = snsPayload.path("SignatureVersion").asText("1");
-            String type = snsPayload.path("Type").asText("");
+            String signatureVersion = snsPayload.path("SignatureVersion").asString("1");
+            String type = snsPayload.path("Type").asString("");
 
             String canonicalString = buildCanonicalString(snsPayload, type);
             if (canonicalString == null) {
@@ -76,7 +76,7 @@ public class SnsSignatureVerifier implements InboundMessageVerifier {
             byte[] decodedSignature = Base64.getDecoder().decode(signature);
             boolean verified = sig.verify(decodedSignature);
             if (!verified) {
-                log.warn("SNS signature verification failed for message: {}", snsPayload.path("MessageId").asText());
+                log.warn("SNS signature verification failed for message: {}", snsPayload.path("MessageId").asString());
             }
             return verified;
         } catch (Exception e) {
@@ -116,22 +116,22 @@ public class SnsSignatureVerifier implements InboundMessageVerifier {
         StringBuilder sb = new StringBuilder();
 
         if ("Notification".equals(type)) {
-            appendField(sb, "Message", payload.path("Message").asText(null));
-            appendField(sb, "MessageId", payload.path("MessageId").asText(null));
+            appendField(sb, "Message", payload.path("Message").asString(null));
+            appendField(sb, "MessageId", payload.path("MessageId").asString(null));
             if (payload.hasNonNull("Subject")) {
-                appendField(sb, "Subject", payload.path("Subject").asText());
+                appendField(sb, "Subject", payload.path("Subject").asString());
             }
-            appendField(sb, "Timestamp", payload.path("Timestamp").asText(null));
-            appendField(sb, "TopicArn", payload.path("TopicArn").asText(null));
+            appendField(sb, "Timestamp", payload.path("Timestamp").asString(null));
+            appendField(sb, "TopicArn", payload.path("TopicArn").asString(null));
             appendField(sb, "Type", type);
             return sb.toString();
         } else if ("SubscriptionConfirmation".equals(type) || "UnsubscribeConfirmation".equals(type)) {
-            appendField(sb, "Message", payload.path("Message").asText(null));
-            appendField(sb, "MessageId", payload.path("MessageId").asText(null));
-            appendField(sb, "SubscribeURL", payload.path("SubscribeURL").asText(null));
-            appendField(sb, "Timestamp", payload.path("Timestamp").asText(null));
-            appendField(sb, "Token", payload.path("Token").asText(null));
-            appendField(sb, "TopicArn", payload.path("TopicArn").asText(null));
+            appendField(sb, "Message", payload.path("Message").asString(null));
+            appendField(sb, "MessageId", payload.path("MessageId").asString(null));
+            appendField(sb, "SubscribeURL", payload.path("SubscribeURL").asString(null));
+            appendField(sb, "Timestamp", payload.path("Timestamp").asString(null));
+            appendField(sb, "Token", payload.path("Token").asString(null));
+            appendField(sb, "TopicArn", payload.path("TopicArn").asString(null));
             appendField(sb, "Type", type);
             return sb.toString();
         }

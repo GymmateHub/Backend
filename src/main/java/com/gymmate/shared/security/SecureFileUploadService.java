@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
@@ -194,7 +193,7 @@ public class SecureFileUploadService {
       String secureFilename = UUID.randomUUID().toString() + fileExtension;
 
       // Create upload directory with proper permissions
-      Path uploadDir = Paths.get("./uploads", context.name().toLowerCase());
+      Path uploadDir = Path.of("./uploads", context.name().toLowerCase());
       Files.createDirectories(uploadDir);
 
       // Save file with restricted permissions

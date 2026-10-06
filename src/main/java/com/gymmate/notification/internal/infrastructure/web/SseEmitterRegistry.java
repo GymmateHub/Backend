@@ -1,13 +1,14 @@
 package com.gymmate.notification.internal.infrastructure.web;
 
 import com.gymmate.notification.internal.application.port.RealtimeNotifier;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.domain.Notification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import tools.jackson.core.JacksonException;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -297,7 +298,7 @@ public class SseEmitterRegistry implements RealtimeNotifier {
                 emitter.complete();
                 emailStatusEmitters.remove(userId);
             }
-        } catch (IOException e) {
+        } catch (JacksonException | IOException e) {
             log.warn("Failed to send email status SSE to userId: {} — client likely disconnected", userId);
             emailStatusEmitters.remove(userId);
         }

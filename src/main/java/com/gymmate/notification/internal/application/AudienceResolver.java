@@ -1,8 +1,8 @@
 package com.gymmate.notification.internal.application;
 
 import com.gymmate.notification.api.spi.MemberRecipient;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.application.dto.AudiencePreviewResponse;
 import com.gymmate.notification.api.spi.AudienceMemberIdsResolver;
 import com.gymmate.notification.api.spi.MemberDirectory;
@@ -118,7 +118,7 @@ public class AudienceResolver {
             }
             Set<UUID> ids = new HashSet<>();
             for (JsonNode element : arrayNode) {
-                ids.add(UUID.fromString(element.asText()));
+                ids.add(UUID.fromString(element.asString()));
             }
             return ids;
         } catch (Exception e) {

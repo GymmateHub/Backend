@@ -82,8 +82,8 @@ public class SecurityAuditAspect {
 
   private HttpServletRequest getCurrentRequest() {
     RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-    return attributes instanceof ServletRequestAttributes ?
-      ((ServletRequestAttributes) attributes).getRequest() : null;
+    return attributes instanceof ServletRequestAttributes sra ?
+      sra.getRequest() : null;
   }
 
   private UUID extractUserId(Authentication auth) {

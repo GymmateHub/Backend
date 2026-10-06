@@ -33,7 +33,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final com.gymmate.notification.internal.application.port.RealtimeNotifier sseEmitterRegistry;
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final tools.jackson.databind.ObjectMapper objectMapper;
 
     private final EmailService emailService;
 

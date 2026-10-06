@@ -6,7 +6,7 @@ import com.gymmate.notification.api.event.MemberJoinedEvent;
 import com.gymmate.notification.api.event.PaymentFailedEvent;
 import com.gymmate.notification.api.event.PaymentSuccessEvent;
 import com.gymmate.notification.api.event.SubscriptionExpiringEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.domain.Notification;
 import com.gymmate.notification.internal.application.port.NotificationRepository;
 import com.gymmate.shared.multitenancy.TenantScope;

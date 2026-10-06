@@ -1,8 +1,8 @@
 package com.gymmate.notification.internal.application;
 
 import com.gymmate.notification.internal.application.port.InboundMessageVerifier;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.domain.SnsProcessedMessage;
 import com.gymmate.notification.internal.domain.SuppressionReason;
 import com.gymmate.notification.internal.application.port.SnsProcessedMessageRepository;
@@ -42,7 +42,7 @@ public class SesWebhookService {
     public void processSnsPayload(String rawPayload) {
         try {
             JsonNode root = objectMapper.readTree(rawPayload);
-            String messageType = root.path("Type").asText("");
+            String messageType = root.path("Type").asString("");
 
             if ("SubscriptionConfirmation".equalsIgnoreCase(messageType)) {
                 handleSubscriptionConfirmation(root);
@@ -69,8 +69,8 @@ public class SesWebhookService {
      * Handle the SNS Subscription confirmation handshake by executing a GET on SubscribeURL.
      */
     private void handleSubscriptionConfirmation(JsonNode root) {
-        String subscribeUrl = root.path("SubscribeURL").asText(null);
-        String topicArn = root.path("TopicArn").asText("");
+        String subscribeUrl = root.path("SubscribeURL").asString(null);
+        String topicArn = root.path("TopicArn").asString("");
         log.info("Received SNS SubscriptionConfirmation for topic: {}", topicArn);
 
         if (subscribeUrl == null || subscribeUrl.isBlank()) {
@@ -107,8 +107,8 @@ public class SesWebhookService {
      */
     @Transactional
     public void handleNotification(JsonNode root) {
-        String messageId = root.path("MessageId").asText(null);
-        String topicArn = root.path("TopicArn").asText("");
+        String messageId = root.path("MessageId").asString(null);
+        String topicArn = root.path("TopicArn").asString("");
 
         if (messageId == null || messageId.isBlank()) {
             log.error("SNS Notification missing MessageId");
@@ -128,7 +128,7 @@ public class SesWebhookService {
         }
 
         // 3. Parse SES Event from Message content
-        String messageContent = root.path("Message").asText("");
+        String messageContent = root.path("Message").asString("");
         String eventType = "UNKNOWN";
 
         try {
@@ -154,10 +154,10 @@ public class SesWebhookService {
 
     private String resolveEventType(JsonNode sesEvent) {
         if (sesEvent.hasNonNull("eventType")) {
-            return sesEvent.path("eventType").asText();
+            return sesEvent.path("eventType").asString();
         }
         if (sesEvent.hasNonNull("notificationType")) {
-            return sesEvent.path("notificationType").asText();
+            return sesEvent.path("notificationType").asString();
         }
         return "UNKNOWN";
     }
@@ -175,14 +175,14 @@ public class SesWebhookService {
 
     private void handleBounce(JsonNode sesEvent) {
         JsonNode bounceNode = sesEvent.path("bounce");
-        String bounceType = bounceNode.path("bounceType").asText("Permanent");
-        String bounceSubType = bounceNode.path("bounceSubType").asText("General");
+        String bounceType = bounceNode.path("bounceType").asString("Permanent");
+        String bounceSubType = bounceNode.path("bounceSubType").asString("General");
 
         JsonNode recipients = bounceNode.path("bouncedRecipients");
         if (recipients.isArray()) {
             for (JsonNode recipient : recipients) {
-                String email = recipient.path("emailAddress").asText();
-                String diagnostic = recipient.path("diagnosticCode").asText(null);
+                String email = recipient.path("emailAddress").asString();
+                String diagnostic = recipient.path("diagnosticCode").asString(null);
 
                 if ("Permanent".equalsIgnoreCase(bounceType)) {
                     suppressionService.suppressPermanent(email, SuppressionReason.PERMANENT_BOUNCE, bounceType, bounceSubType, diagnostic, null, null);
@@ -197,12 +197,12 @@ public class SesWebhookService {
 
     private void handleComplaint(JsonNode sesEvent) {
         JsonNode complaintNode = sesEvent.path("complaint");
-        String feedbackType = complaintNode.path("complaintFeedbackType").asText("abuse");
+        String feedbackType = complaintNode.path("complaintFeedbackType").asString("abuse");
 
         JsonNode recipients = complaintNode.path("complainedRecipients");
         if (recipients.isArray()) {
             for (JsonNode recipient : recipients) {
-                String email = recipient.path("emailAddress").asText();
+                String email = recipient.path("emailAddress").asString();
                 suppressionService.suppressPermanent(email, SuppressionReason.COMPLAINT, "Complaint", feedbackType, "FeedbackType: " + feedbackType, null, null);
                 log.error("SES Spam Complaint: Permanently suppressed {} (feedback: {})", email, feedbackType);
             }
@@ -211,20 +211,20 @@ public class SesWebhookService {
 
     private void handleDelivery(JsonNode sesEvent) {
         JsonNode mail = sesEvent.path("mail");
-        String messageId = mail.path("messageId").asText();
+        String messageId = mail.path("messageId").asString();
         log.debug("SES Delivery confirmed for messageId: {}", messageId);
     }
 
     private void handleReject(JsonNode sesEvent) {
         JsonNode mail = sesEvent.path("mail");
-        String reason = sesEvent.path("reject").path("reason").asText("Unknown");
-        log.error("SES Pre-send Reject for messageId: {}. Reason: {}", mail.path("messageId").asText(), reason);
+        String reason = sesEvent.path("reject").path("reason").asString("Unknown");
+        log.error("SES Pre-send Reject for messageId: {}. Reason: {}", mail.path("messageId").asString(), reason);
     }
 
     private void handleRenderingFailure(JsonNode sesEvent) {
         JsonNode failure = sesEvent.path("failure");
-        String errorMessage = failure.path("errorMessage").asText();
-        String templateName = failure.path("templateName").asText();
+        String errorMessage = failure.path("errorMessage").asString();
+        String templateName = failure.path("templateName").asString();
         log.error("SES Rendering Failure for template: {}. Error: {}", templateName, errorMessage);
     }
 }

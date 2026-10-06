@@ -1,7 +1,7 @@
 package com.gymmate.scheduling.internal.infrastructure.integration;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.scheduling.internal.application.port.ClassBookingRepository;
 import com.gymmate.notification.api.spi.AudienceMemberIdsResolver;
 import com.gymmate.notification.api.dto.AudienceType;
@@ -75,10 +75,10 @@ public class ClassAudienceMemberIdsAdapter implements AudienceMemberIdsResolver 
             if (audienceFilter != null && !audienceFilter.isBlank()) {
                 JsonNode node = objectMapper.readTree(audienceFilter);
                 if (node.has("dateFrom")) {
-                    dateFrom = LocalDateTime.parse(node.get("dateFrom").asText() + "T00:00:00");
+                    dateFrom = LocalDateTime.parse(node.get("dateFrom").asString() + "T00:00:00");
                 }
                 if (node.has("dateTo")) {
-                    dateTo = LocalDateTime.parse(node.get("dateTo").asText() + "T23:59:59");
+                    dateTo = LocalDateTime.parse(node.get("dateTo").asString() + "T23:59:59");
                 }
             }
 
@@ -108,7 +108,7 @@ public class ClassAudienceMemberIdsAdapter implements AudienceMemberIdsResolver 
             }
             Set<UUID> ids = new HashSet<>();
             for (JsonNode element : arrayNode) {
-                ids.add(UUID.fromString(element.asText()));
+                ids.add(UUID.fromString(element.asString()));
             }
             return ids;
         } catch (Exception e) {

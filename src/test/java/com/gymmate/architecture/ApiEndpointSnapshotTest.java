@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -45,10 +44,10 @@ class ApiEndpointSnapshotTest {
 
         if (Boolean.getBoolean("updateApiSnapshot") || Files.notExists(snapshot)) {
             Files.createDirectories(snapshot.getParent());
-            Files.write(snapshot, actual, StandardCharsets.UTF_8);
+            Files.write(snapshot, actual);
         }
 
-        List<String> expected = Files.readAllLines(snapshot, StandardCharsets.UTF_8);
+        List<String> expected = Files.readAllLines(snapshot);
         assertThat(actual)
                 .as("HTTP routes changed. If intentional, regenerate with -DupdateApiSnapshot=true")
                 .containsExactlyElementsOf(expected);

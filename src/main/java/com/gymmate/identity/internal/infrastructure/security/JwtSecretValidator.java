@@ -35,25 +35,27 @@ public class JwtSecretValidator {
 
         // Check if default secret is being used
         if (jwtSecret.equals(DEFAULT_SECRET)) {
-            String error = "\n" +
-                    "╔════════════════════════════════════════════════════════════════╗\n" +
-                    "║  CRITICAL SECURITY ERROR: Default JWT Secret Detected!        ║\n" +
-                    "╠════════════════════════════════════════════════════════════════╣\n" +
-                    "║                                                                ║\n" +
-                    "║  The application is using the DEFAULT JWT secret!             ║\n" +
-                    "║  This is EXTREMELY DANGEROUS in production environments.      ║\n" +
-                    "║                                                                ║\n" +
-                    "║  ACTION REQUIRED:                                              ║\n" +
-                    "║  Set JWT_SECRET environment variable with a cryptographically ║\n" +
-                    "║  secure random value.                                          ║\n" +
-                    "║                                                                ║\n" +
-                    "║  Generate a secure secret:                                     ║\n" +
-                    "║    openssl rand -base64 32                                     ║\n" +
-                    "║                                                                ║\n" +
-                    "║  Then set it as an environment variable:                       ║\n" +
-                    "║    export JWT_SECRET=\"<generated-secret-here>\"                 ║\n" +
-                    "║                                                                ║\n" +
-                    "╚════════════════════════════════════════════════════════════════╝\n";
+            String error = """
+                    
+                    ╔════════════════════════════════════════════════════════════════╗
+                    ║  CRITICAL SECURITY ERROR: Default JWT Secret Detected!        ║
+                    ╠════════════════════════════════════════════════════════════════╣
+                    ║                                                                ║
+                    ║  The application is using the DEFAULT JWT secret!             ║
+                    ║  This is EXTREMELY DANGEROUS in production environments.      ║
+                    ║                                                                ║
+                    ║  ACTION REQUIRED:                                              ║
+                    ║  Set JWT_SECRET environment variable with a cryptographically ║
+                    ║  secure random value.                                          ║
+                    ║                                                                ║
+                    ║  Generate a secure secret:                                     ║
+                    ║    openssl rand -base64 32                                     ║
+                    ║                                                                ║
+                    ║  Then set it as an environment variable:                       ║
+                    ║    export JWT_SECRET="<generated-secret-here>"                 ║
+                    ║                                                                ║
+                    ╚════════════════════════════════════════════════════════════════╝
+                    """;
 
             log.error(error);
             throw new IllegalStateException(
@@ -74,20 +76,22 @@ public class JwtSecretValidator {
         }
 
         if (secretBytes.length < MIN_SECRET_LENGTH) {
-            String error = String.format("\n" +
-                    "╔════════════════════════════════════════════════════════════════╗\n" +
-                    "║  CRITICAL SECURITY ERROR: JWT Secret Too Short!               ║\n" +
-                    "╠════════════════════════════════════════════════════════════════╣\n" +
-                    "║                                                                ║\n" +
-                    "║  Current secret length: %d bytes                              ║\n" +
-                    "║  Minimum required: %d bytes (256 bits)                        ║\n" +
-                    "║                                                                ║\n" +
-                    "║  A short secret is vulnerable to brute-force attacks.         ║\n" +
-                    "║                                                                ║\n" +
-                    "║  Generate a secure secret (256 bits):                          ║\n" +
-                    "║    openssl rand -base64 32                                     ║\n" +
-                    "║                                                                ║\n" +
-                    "╚════════════════════════════════════════════════════════════════╝\n",
+            String error = String.format("""
+                    
+                    ╔════════════════════════════════════════════════════════════════╗
+                    ║  CRITICAL SECURITY ERROR: JWT Secret Too Short!               ║
+                    ╠════════════════════════════════════════════════════════════════╣
+                    ║                                                                ║
+                    ║  Current secret length: %d bytes                              ║
+                    ║  Minimum required: %d bytes (256 bits)                        ║
+                    ║                                                                ║
+                    ║  A short secret is vulnerable to brute-force attacks.         ║
+                    ║                                                                ║
+                    ║  Generate a secure secret (256 bits):                          ║
+                    ║    openssl rand -base64 32                                     ║
+                    ║                                                                ║
+                    ╚════════════════════════════════════════════════════════════════╝
+                    """,
                     secretBytes.length, MIN_SECRET_LENGTH);
 
             log.error(error);
@@ -107,19 +111,21 @@ public class JwtSecretValidator {
             lowerSecret.contains("demo") ||
             lowerSecret.matches(".*[a-z]{10,}.*")) { // Long sequences of lowercase letters
 
-            log.warn("\n" +
-                    "╔════════════════════════════════════════════════════════════════╗\n" +
-                    "║  WARNING: JWT Secret Appears Weak!                             ║\n" +
-                    "╠════════════════════════════════════════════════════════════════╣\n" +
-                    "║                                                                ║\n" +
-                    "║  The JWT secret contains common words or patterns.             ║\n" +
-                    "║  This may indicate a non-random secret.                        ║\n" +
-                    "║                                                                ║\n" +
-                    "║  RECOMMENDATION:                                               ║\n" +
-                    "║  Use a cryptographically random secret generated by:           ║\n" +
-                    "║    openssl rand -base64 32                                     ║\n" +
-                    "║                                                                ║\n" +
-                    "╚════════════════════════════════════════════════════════════════╝\n");
+            log.warn("""
+                    
+                    ╔════════════════════════════════════════════════════════════════╗
+                    ║  WARNING: JWT Secret Appears Weak!                             ║
+                    ╠════════════════════════════════════════════════════════════════╣
+                    ║                                                                ║
+                    ║  The JWT secret contains common words or patterns.             ║
+                    ║  This may indicate a non-random secret.                        ║
+                    ║                                                                ║
+                    ║  RECOMMENDATION:                                               ║
+                    ║  Use a cryptographically random secret generated by:           ║
+                    ║    openssl rand -base64 32                                     ║
+                    ║                                                                ║
+                    ╚════════════════════════════════════════════════════════════════╝
+                    """);
         }
 
         log.info("✓ JWT secret validation passed ({} bytes)", secretBytes.length);

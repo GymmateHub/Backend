@@ -1,6 +1,6 @@
 package com.gymmate.identity.internal.infrastructure.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.identity.internal.application.JwtService;
 import com.gymmate.identity.internal.application.RateLimitingService;

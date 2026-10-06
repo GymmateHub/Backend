@@ -1,7 +1,7 @@
 package com.gymmate.notification.internal.application;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.application.port.ChannelException;
 import com.gymmate.notification.internal.application.port.ChannelSender;
 import com.gymmate.notification.api.spi.OrganisationSettingsSource;

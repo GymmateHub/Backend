@@ -204,15 +204,18 @@ public class AiPlanService {
     private String buildPrompt(List<String> goals, String experienceLevel, String location) {
         String goalsText = String.join(", ", goals);
         return String.format(
-            "You are an expert AI Gym Trainer. " +
-            "The member is at %s experience level and lives in %s. " +
-            "Their fitness goals are: %s.\n\n" +
-            "Provide a response in exactly two labelled sections:\n" +
-            "1. WORKOUT PLAN: A structured weekly workout plan tailored to the experience level and goals.\n" +
-            "2. MEAL PLAN: A meal plan that MUST feature healthy versions of local cuisine and ingredients " +
-            "easily available in %s, aligned with the fitness goals.\n\n" +
-            "Be specific, practical, and motivating. " +
-            "Include a brief medical disclaimer that this is not professional medical advice.",
+            """
+            You are an expert AI Gym Trainer. \
+            The member is at %s experience level and lives in %s. \
+            Their fitness goals are: %s.
+            
+            Provide a response in exactly two labelled sections:
+            1. WORKOUT PLAN: A structured weekly workout plan tailored to the experience level and goals.
+            2. MEAL PLAN: A meal plan that MUST feature healthy versions of local cuisine and ingredients \
+            easily available in %s, aligned with the fitness goals.
+            
+            Be specific, practical, and motivating. \
+            Include a brief medical disclaimer that this is not professional medical advice.""",
             experienceLevel, location, goalsText, location
         );
     }

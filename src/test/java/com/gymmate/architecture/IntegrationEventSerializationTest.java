@@ -1,7 +1,7 @@
 package com.gymmate.architecture;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.gymmate.identity.api.event.MemberOnboardedEvent;
 import com.gymmate.notification.api.event.PaymentFailedEvent;
 import org.junit.jupiter.api.Test;

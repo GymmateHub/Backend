@@ -1,6 +1,6 @@
 package com.gymmate.shared.multitenancy;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import jakarta.servlet.FilterChain;

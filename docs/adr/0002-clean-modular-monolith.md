@@ -122,7 +122,7 @@ Considered and not ported:
 
 - **V2 onboarding status machine.** It is covered by the existing user-status / OTP flow in `onboarding` + `identity`.
 - **`@Version` optimistic locking.** This landed as its own change (see §8).
-- **Boot 4 / Modulith 2 / JJWT 0.13.** This is a separate upgrade track.
+- **Boot 4 / Modulith 2 / JJWT 0.13.** This was done as a separate upgrade (see §9).
 
 `Backend_v2/` has been deleted.
 
@@ -138,6 +138,45 @@ aggregate table (existing rows start at 0). Three rules follow:
 
 Failures map to HTTP 409. The domain `BaseEntity` exposes the version, so clients can see it
 (for example, to add `If-Match` later).
+
+### 9. Platform upgrade: Spring Boot 4.1
+
+The upgrade moved these components:
+
+| Component | From | To |
+|---|---|---|
+| Spring Boot | 3.5 | 4.1.1 |
+| Spring Framework | 6 | 7 |
+| Spring Security | 6 | 7 |
+| Hibernate | 6.6 | 7 |
+| Jackson | 2 | 3 (`tools.jackson`) |
+| Spring Modulith | 1.4 | 2.1.1 |
+| Spring AI | 1.0.0-M1 | 2.0.1 GA |
+| Testcontainers | 1.21 | 2.0 |
+| springdoc | 2.8 | 3.0 |
+| JJWT | 0.12 | 0.13 |
+| Redisson | 3.35 | 4.8 |
+| ArchUnit | 1.4 | 1.5 |
+
+The Stripe SDK is deliberately unchanged; a Stripe major version bump is its own change.
+
+Notable decisions:
+
+- **Starters.** Boot 4's modular starters are used (`webmvc`, `flyway`, `restclient`, and the
+  matching test starters).
+- **Jackson 2 compatibility.** The shared `JacksonConfig` restores Jackson 2's creator
+  visibility, so request DTOs built with Lombok `@Data @Builder` keep binding.
+- **Retail enum binding.** Retail's enum mix-ins moved to `JsonMapperBuilderCustomizer`.
+- **Security headers filter.** It is anchored before `DisableEncodeUrlFilter`, the first
+  filter in the chain, because Security 7 removed `ChannelProcessingFilter`.
+- **Persistence listeners.** They key the mapping context by
+  `SharedSessionContractImplementor`, which is what Hibernate 7 post-events expose.
+- **Event registry migration.** `V21` adds Modulith 2's registry columns (`status`,
+  `completion_attempts`, `last_resubmission_date`) and back-fills existing publications.
+- **Swagger annotations.** There is now one `swagger-annotations` version; Spring AI's javax
+  copy is excluded. `OpenApiDocumentIntegrationTest` guards `/v3/api-docs`.
+- **Gson.** Gson is declared explicitly. The Stripe webhook code uses it and Boot 4 no longer
+  brings it in transitively.
 
 ## Consequences
 

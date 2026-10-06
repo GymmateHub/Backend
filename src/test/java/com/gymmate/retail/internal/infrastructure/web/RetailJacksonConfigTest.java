@@ -1,11 +1,11 @@
 package com.gymmate.retail.internal.infrastructure.web;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import com.gymmate.retail.internal.domain.EquipmentCategory;
 import com.gymmate.retail.internal.domain.EquipmentStatus;
 import com.gymmate.retail.internal.domain.InventoryCategory;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,7 +15,7 @@ class RetailJacksonConfigTest {
     private final ObjectMapper mapper;
 
     RetailJacksonConfigTest() {
-        Jackson2ObjectMapperBuilder builder = new Jackson2ObjectMapperBuilder();
+        JsonMapper.Builder builder = JsonMapper.builder();
         new RetailJacksonConfig().retailEnumBinding().customize(builder);
         mapper = builder.build();
     }

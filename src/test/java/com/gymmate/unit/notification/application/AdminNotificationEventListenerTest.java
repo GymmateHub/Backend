@@ -4,8 +4,8 @@ import com.gymmate.notification.api.event.MemberJoinedEvent;
 import com.gymmate.notification.api.event.PaymentFailedEvent;
 import com.gymmate.notification.api.event.PaymentSuccessEvent;
 import com.gymmate.notification.api.event.SubscriptionExpiringEvent;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.gymmate.notification.internal.infrastructure.messaging.AdminNotificationEventListener;
 import com.gymmate.notification.internal.application.NotificationDispatcher;
 import com.gymmate.notification.internal.domain.Notification;
@@ -40,7 +40,7 @@ class AdminNotificationEventListenerTest {
     private NotificationDispatcher notificationDispatcher;
 
     @Spy
-    private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private ObjectMapper objectMapper = new JsonMapper();
 
     private AdminNotificationEventListener listener;
 
