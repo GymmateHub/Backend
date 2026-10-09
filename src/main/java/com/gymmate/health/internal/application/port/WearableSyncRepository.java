@@ -1,5 +1,6 @@
 package com.gymmate.health.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.health.internal.domain.enums.WearableSource;
 import com.gymmate.health.internal.domain.WearableSync;
 
@@ -7,25 +8,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for WearableSync.
  * Defines domain-level operations for managing wearable device synchronization.
  */
-public interface WearableSyncRepository {
-
-    /**
-     * Save or update a wearable sync record.
-     */
-    WearableSync save(WearableSync wearableSync);
-
-    /**
-     * Find wearable sync by ID.
-     */
-    Optional<WearableSync> findById(UUID id);
+public interface WearableSyncRepository extends DomainRepository<WearableSync, UUID> {
 
     /**
      * Find all wearable syncs for a member.
@@ -71,30 +59,10 @@ public interface WearableSyncRepository {
      * Check if member has specific wearable source connected.
      */
     boolean existsByMemberIdAndSourceType(UUID memberId, WearableSource sourceType);
-    
+
     List<WearableSync> findByMemberIdOrderByLastSyncDesc(UUID memberId);
-    
+
     List<WearableSync> findByGymIdOrderByLastSyncDesc(UUID gymId);
-    
+
     List<WearableSync> findBySyncStatus(String status);
-    
-    List<WearableSync> saveAll(Iterable<WearableSync> entities);
-    
-    boolean existsById(UUID id);
-    
-    List<WearableSync> findAll();
-    
-    List<WearableSync> findAllById(Iterable<UUID> ids);
-    
-    long count();
-    
-    void deleteById(UUID id);
-    
-    void deleteAll(Iterable<WearableSync> entities);
-    
-    WearableSync saveAndFlush(WearableSync entity);
-    
-    void flush();
-    
-    Page<WearableSync> findAll(Pageable pageable);
 }

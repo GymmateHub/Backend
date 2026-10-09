@@ -1,5 +1,6 @@
 package com.gymmate.health.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.health.internal.domain.HealthMetric;
 import com.gymmate.health.internal.domain.enums.MetricType;
 
@@ -7,25 +8,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for HealthMetric.
  * Defines domain-level operations for managing health metrics.
  */
-public interface HealthMetricRepository {
-
-    /**
-     * Save or update a health metric.
-     */
-    HealthMetric save(HealthMetric healthMetric);
-
-    /**
-     * Find health metric by ID.
-     */
-    Optional<HealthMetric> findById(UUID id);
+public interface HealthMetricRepository extends DomainRepository<HealthMetric, UUID> {
 
     /**
      * Find all metrics for a member.
@@ -71,27 +59,7 @@ public interface HealthMetricRepository {
      * Delete a health metric (soft delete).
      */
     void delete(HealthMetric healthMetric);
-    
+
     List<HealthMetric> findByMemberIdOrderByDateDesc(UUID memberId);
-    
-    List<HealthMetric> saveAll(Iterable<HealthMetric> entities);
-    
-    boolean existsById(UUID id);
-    
-    List<HealthMetric> findAll();
-    
-    List<HealthMetric> findAllById(Iterable<UUID> ids);
-    
-    long count();
-    
-    void deleteById(UUID id);
-    
-    void deleteAll(Iterable<HealthMetric> entities);
-    
-    HealthMetric saveAndFlush(HealthMetric entity);
-    
-    void flush();
-    
-    Page<HealthMetric> findAll(Pageable pageable);
 }
 

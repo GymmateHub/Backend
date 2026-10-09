@@ -1,5 +1,6 @@
 package com.gymmate.health.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.health.internal.domain.WorkoutLog;
 import com.gymmate.health.internal.domain.enums.WorkoutStatus;
 import org.springframework.data.domain.Page;
@@ -9,23 +10,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for WorkoutLog.
  * Defines domain-level operations for managing workout logs.
  */
-public interface WorkoutLogRepository {
-
-    /**
-     * Save or update a workout log.
-     */
-    WorkoutLog save(WorkoutLog workoutLog);
-
-    /**
-     * Find workout log by ID.
-     */
-    Optional<WorkoutLog> findById(UUID id);
+public interface WorkoutLogRepository extends DomainRepository<WorkoutLog, UUID> {
 
     /**
      * Find all workout logs for a member.
@@ -71,28 +61,8 @@ public interface WorkoutLogRepository {
      * Find latest workout for a member.
      */
     Optional<WorkoutLog> findLatestByMemberId(UUID memberId);
-    
+
     List<WorkoutLog> findByMemberIdOrderByWorkoutDateDesc(UUID memberId);
-    
+
     Page<WorkoutLog> findByMemberIdPaginated(UUID memberId, Pageable pageable);
-    
-    List<WorkoutLog> saveAll(Iterable<WorkoutLog> entities);
-    
-    boolean existsById(UUID id);
-    
-    List<WorkoutLog> findAll();
-    
-    List<WorkoutLog> findAllById(Iterable<UUID> ids);
-    
-    long count();
-    
-    void deleteById(UUID id);
-    
-    void deleteAll(Iterable<WorkoutLog> entities);
-    
-    WorkoutLog saveAndFlush(WorkoutLog entity);
-    
-    void flush();
-    
-    Page<WorkoutLog> findAll(Pageable pageable);
 }

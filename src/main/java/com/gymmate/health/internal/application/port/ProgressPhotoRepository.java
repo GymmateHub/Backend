@@ -1,30 +1,18 @@
 package com.gymmate.health.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.health.internal.domain.ProgressPhoto;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 /**
  * Domain repository interface for ProgressPhoto.
  * Defines domain-level operations for managing progress photos.
  */
-public interface ProgressPhotoRepository {
-
-    /**
-     * Save or update a progress photo.
-     */
-    ProgressPhoto save(ProgressPhoto progressPhoto);
-
-    /**
-     * Find progress photo by ID.
-     */
-    Optional<ProgressPhoto> findById(UUID id);
+public interface ProgressPhotoRepository extends DomainRepository<ProgressPhoto, UUID> {
 
     /**
      * Find all photos for a member.
@@ -60,26 +48,6 @@ public interface ProgressPhotoRepository {
      * Delete a progress photo (soft delete).
      */
     void delete(ProgressPhoto progressPhoto);
-    
+
     List<ProgressPhoto> findByMemberIdOrderByDateDesc(UUID memberId);
-    
-    List<ProgressPhoto> saveAll(Iterable<ProgressPhoto> entities);
-    
-    boolean existsById(UUID id);
-    
-    List<ProgressPhoto> findAll();
-    
-    List<ProgressPhoto> findAllById(Iterable<UUID> ids);
-    
-    long count();
-    
-    void deleteById(UUID id);
-    
-    void deleteAll(Iterable<ProgressPhoto> entities);
-    
-    ProgressPhoto saveAndFlush(ProgressPhoto entity);
-    
-    void flush();
-    
-    Page<ProgressPhoto> findAll(Pageable pageable);
 }
