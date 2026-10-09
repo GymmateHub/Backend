@@ -7,6 +7,8 @@ import com.gymmate.support.PostgresIntegrationTest;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
@@ -160,6 +162,33 @@ class DomainPersistenceIntegrationTest extends PostgresIntegrationTest {
 
         assertThat(lead.getId()).isNotNull();
         assertThat(leads.findById(lead.getId())).get().extracting(Lead::getFirstName).isEqualTo("Tony");
+    }
+
+    // ------------------------------------------------------------------ generic CRUD (JpaDomainRepositoryAdapter)
+
+    @Test
+    void genericCrudOperationsWorkThroughTheModulePort() {
+        Lead a = persisted("Alan");
+        Lead b = persisted("Betty");
+
+        tx.executeWithoutResult(s -> {
+            assertThat(leads.existsById(a.getId())).isTrue();
+            assertThat(leads.findAllById(List.of(a.getId(), b.getId())))
+                    .extracting(Lead::getFirstName).containsExactlyInAnyOrder("Alan", "Betty");
+            assertThat(leads.count()).isGreaterThanOrEqualTo(2);
+            assertThat(leads.findAll()).extracting(Lead::getId).contains(a.getId(), b.getId());
+
+            Page<Lead> page = leads.findAll(PageRequest.of(0, 1));
+            assertThat(page.getContent()).hasSize(1).first().isInstanceOf(Lead.class);
+            assertThat(page.getTotalElements()).isGreaterThanOrEqualTo(2);
+        });
+
+        List<Lead> saved = tx.execute(s -> leads.saveAll(List.of(newLead("Claude"), newLead("Dana"))));
+        assertThat(saved).allSatisfy(lead -> assertThat(lead.getId()).isNotNull());
+
+        tx.executeWithoutResult(s -> leads.deleteById(a.getId()));
+        Boolean exists = tx.execute(s -> leads.existsById(a.getId()));
+        assertThat(exists).isFalse();
     }
 
     // ------------------------------------------------------------------ optimistic locking
