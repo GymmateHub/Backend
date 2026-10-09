@@ -1,5 +1,6 @@
 package com.gymmate.organisation.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.organisation.internal.application.port.GymRepository;
 import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.shared.constants.GymStatus;
@@ -7,35 +8,20 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link GymRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link GymRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the Gym finders live here.
  */
 @Component
 @Transactional()
-public class GymRepositoryAdapter extends DomainRepositoryAdapter implements GymRepository {
-
-    private final GymJpaRepository jpaRepository;
+public class GymRepositoryAdapter extends JpaDomainRepositoryAdapter<Gym, UUID, GymJpaRepository>
+        implements GymRepository {
 
     public GymRepositoryAdapter(GymJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
-    }
-
-    @Override
-    public Gym save(Gym gym) {
-        return save(jpaRepository, gym);
-    }
-
-    @Override
-    public Optional<Gym> findById(UUID id) {
-        return this.<Optional<Gym>>fromJpa(jpaRepository.findById(id));
+        super(jpaRepository, contexts);
     }
 
     // ========== Organisation-based queries ==========
@@ -71,26 +57,6 @@ public class GymRepositoryAdapter extends DomainRepositoryAdapter implements Gym
     }
 
     @Override
-    public List<Gym> findAll() {
-        return this.<List<Gym>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
     public long countByOrganisationIdAndStatus(UUID organisationId, GymStatus status) {
         return jpaRepository.countByOrganisationIdAndStatus(organisationId, status);
     }
@@ -108,40 +74,5 @@ public class GymRepositoryAdapter extends DomainRepositoryAdapter implements Gym
     @Override
     public List<Gym> findByCity(String city) {
         return this.<List<Gym>>fromJpa(jpaRepository.findByCity(city));
-    }
-
-    @Override
-    public List<Gym> saveAll(Iterable<Gym> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public List<Gym> findAllById(Iterable<UUID> ids) {
-        return this.<List<Gym>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public void delete(Gym entity) {
-        delete(jpaRepository, entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<Gym> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Gym saveAndFlush(Gym entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<Gym> findAll(Pageable pageable) {
-        return this.<Page<Gym>>fromJpa(jpaRepository.findAll(pageable));
     }
 }
