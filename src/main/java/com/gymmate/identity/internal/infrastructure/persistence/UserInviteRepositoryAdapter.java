@@ -1,32 +1,28 @@
 package com.gymmate.identity.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.shared.constants.InviteStatus;
 import com.gymmate.identity.internal.domain.UserInvite;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.gymmate.identity.internal.application.port.UserInviteRepository;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link UserInviteRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link UserInviteRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the UserInvite finders live here.
  */
 @Component()
 @Transactional()
-public class UserInviteRepositoryAdapter extends DomainRepositoryAdapter implements UserInviteRepository {
-
-    private final UserInviteJpaRepository jpaRepository;
+public class UserInviteRepositoryAdapter extends JpaDomainRepositoryAdapter<UserInvite, UUID, UserInviteJpaRepository>
+        implements UserInviteRepository {
 
     public UserInviteRepositoryAdapter(UserInviteJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -52,70 +48,5 @@ public class UserInviteRepositoryAdapter extends DomainRepositoryAdapter impleme
     @Override
     public List<UserInvite> findByStatusAndExpiresAtBefore(InviteStatus status, LocalDateTime dateTime) {
         return this.<List<UserInvite>>fromJpa(jpaRepository.findByStatusAndExpiresAtBefore(status, dateTime));
-    }
-
-    @Override
-    public UserInvite save(UserInvite entity) {
-        return save(jpaRepository, entity);
-    }
-
-    @Override
-    public List<UserInvite> saveAll(Iterable<UserInvite> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Optional<UserInvite> findById(UUID id) {
-        return this.<Optional<UserInvite>>fromJpa(jpaRepository.findById(id));
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<UserInvite> findAll() {
-        return this.<List<UserInvite>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<UserInvite> findAllById(Iterable<UUID> ids) {
-        return this.<List<UserInvite>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void delete(UserInvite entity) {
-        delete(jpaRepository, entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<UserInvite> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public UserInvite saveAndFlush(UserInvite entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<UserInvite> findAll(Pageable pageable) {
-        return this.<Page<UserInvite>>fromJpa(jpaRepository.findAll(pageable));
     }
 }

@@ -1,5 +1,6 @@
 package com.gymmate.identity.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.identity.internal.domain.User;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
@@ -8,15 +9,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 /**
  * Spring Data JPA repository for User entity.
  * Provides tenant-aware and system-wide query methods.
  */
-public interface UserRepository {
+public interface UserRepository extends DomainRepository<User, UUID> {
 
     // Email lookup methods
     Optional<User> findByEmail(String email);
@@ -47,30 +45,4 @@ public interface UserRepository {
     long countByOrganisationIdAndRoleInAndStatus(UUID organisationId,
                                                    Collection<UserRole> roles,
                                                    UserStatus status);
-
-User save(User entity);
-
-List<User> saveAll(Iterable<User> entities);
-
-Optional<User> findById(UUID id);
-
-boolean existsById(UUID id);
-
-List<User> findAll();
-
-List<User> findAllById(Iterable<UUID> ids);
-
-long count();
-
-void deleteById(UUID id);
-
-void delete(User entity);
-
-void deleteAll(Iterable<User> entities);
-
-User saveAndFlush(User entity);
-
-void flush();
-
-Page<User> findAll(Pageable pageable);
 }

@@ -1,5 +1,6 @@
 package com.gymmate.identity.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.identity.internal.domain.Member;
 import com.gymmate.shared.constants.MemberStatus;
 
@@ -8,15 +9,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 /**
  * Spring Data JPA repository for Member entity.
  * Provides multi-tenant aware queries.
  */
-public interface MemberRepository {
+public interface MemberRepository extends DomainRepository<Member, UUID> {
 
     // ========== Organisation-based queries (preferred) ==========
 
@@ -102,30 +100,4 @@ public interface MemberRepository {
 
     long countByGymIdAndCreatedAtBetween(UUID gymId, LocalDateTime startDate,
             LocalDateTime endDate);
-
-Member save(Member entity);
-
-List<Member> saveAll(Iterable<Member> entities);
-
-Optional<Member> findById(UUID id);
-
-boolean existsById(UUID id);
-
-List<Member> findAll();
-
-List<Member> findAllById(Iterable<UUID> ids);
-
-long count();
-
-void deleteById(UUID id);
-
-void delete(Member entity);
-
-void deleteAll(Iterable<Member> entities);
-
-Member saveAndFlush(Member entity);
-
-void flush();
-
-Page<Member> findAll(Pageable pageable);
 }

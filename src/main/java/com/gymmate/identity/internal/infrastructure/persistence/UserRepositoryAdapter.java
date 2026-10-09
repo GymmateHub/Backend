@@ -1,5 +1,6 @@
 package com.gymmate.identity.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.identity.internal.domain.User;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
@@ -7,27 +8,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.gymmate.identity.internal.application.port.UserRepository;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link UserRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link UserRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the User finders live here.
  */
 @Component()
 @Transactional()
-public class UserRepositoryAdapter extends DomainRepositoryAdapter implements UserRepository {
-
-    private final UserJpaRepository jpaRepository;
+public class UserRepositoryAdapter extends JpaDomainRepositoryAdapter<User, UUID, UserJpaRepository>
+        implements UserRepository {
 
     public UserRepositoryAdapter(UserJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -93,70 +89,5 @@ public class UserRepositoryAdapter extends DomainRepositoryAdapter implements Us
     @Override
     public long countByOrganisationIdAndRoleInAndStatus(UUID organisationId, Collection<UserRole> roles, UserStatus status) {
         return jpaRepository.countByOrganisationIdAndRoleInAndStatus(organisationId, roles, status);
-    }
-
-    @Override
-    public User save(User entity) {
-        return save(jpaRepository, entity);
-    }
-
-    @Override
-    public List<User> saveAll(Iterable<User> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Optional<User> findById(UUID id) {
-        return this.<Optional<User>>fromJpa(jpaRepository.findById(id));
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<User> findAll() {
-        return this.<List<User>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<User> findAllById(Iterable<UUID> ids) {
-        return this.<List<User>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void delete(User entity) {
-        delete(jpaRepository, entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<User> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public User saveAndFlush(User entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<User> findAll(Pageable pageable) {
-        return this.<Page<User>>fromJpa(jpaRepository.findAll(pageable));
     }
 }
