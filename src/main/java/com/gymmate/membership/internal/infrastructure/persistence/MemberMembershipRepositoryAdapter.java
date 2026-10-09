@@ -1,5 +1,6 @@
 package com.gymmate.membership.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
 import com.gymmate.membership.internal.domain.MemberMembership;
 import com.gymmate.membership.internal.domain.MembershipStatus;
@@ -9,35 +10,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.math.BigDecimal;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link MemberMembershipRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link MemberMembershipRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the MemberMembership finders live here.
  */
 @Component
 @Transactional()
-public class MemberMembershipRepositoryAdapter extends DomainRepositoryAdapter implements MemberMembershipRepository {
-
-    private final MemberMembershipJpaRepository jpaRepository;
+public class MemberMembershipRepositoryAdapter extends JpaDomainRepositoryAdapter<MemberMembership, UUID, MemberMembershipJpaRepository>
+        implements MemberMembershipRepository {
 
     public MemberMembershipRepositoryAdapter(MemberMembershipJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
-    }
-
-    @Override
-    public MemberMembership save(MemberMembership membership) {
-        return save(jpaRepository, membership);
-    }
-
-    @Override
-    public Optional<MemberMembership> findById(UUID id) {
-        return this.<Optional<MemberMembership>>fromJpa(jpaRepository.findById(id));
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -111,13 +97,6 @@ public class MemberMembershipRepositoryAdapter extends DomainRepositoryAdapter i
     }
 
     @Override
-    public void delete(MemberMembership membership) {
-        delete(jpaRepository, membership);
-    }
-
-
-
-    @Override
     public Optional<MemberMembership> findActiveMembershipByMemberId(UUID memberId, LocalDateTime now) {
         return this.<Optional<MemberMembership>>fromJpa(jpaRepository.findActiveMembershipByMemberId(memberId, now));
     }
@@ -140,55 +119,5 @@ public class MemberMembershipRepositoryAdapter extends DomainRepositoryAdapter i
     @Override
     public BigDecimal sumProjectedRevenueByGymIdAndDateRange(UUID gymId, LocalDateTime startDate, LocalDateTime endDate) {
         return jpaRepository.sumProjectedRevenueByGymIdAndDateRange(gymId, startDate, endDate);
-    }
-
-    @Override
-    public List<MemberMembership> saveAll(Iterable<MemberMembership> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<MemberMembership> findAll() {
-        return this.<List<MemberMembership>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<MemberMembership> findAllById(Iterable<UUID> ids) {
-        return this.<List<MemberMembership>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void deleteAll(Iterable<MemberMembership> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public MemberMembership saveAndFlush(MemberMembership entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<MemberMembership> findAll(Pageable pageable) {
-        return this.<Page<MemberMembership>>fromJpa(jpaRepository.findAll(pageable));
     }
 }

@@ -1,5 +1,6 @@
 package com.gymmate.membership.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.membership.internal.domain.MemberInvoice;
 import com.gymmate.membership.internal.domain.MemberInvoiceStatus;
 
@@ -8,11 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
-public interface MemberInvoiceRepository {
+public interface MemberInvoiceRepository extends DomainRepository<MemberInvoice, UUID> {
 
     // ===== Revenue & Analytics Queries =====
 
@@ -27,31 +25,5 @@ public interface MemberInvoiceRepository {
     Optional<MemberInvoice> findByStripeInvoiceId(String stripeInvoiceId);
 
     List<MemberInvoice> findByMemberIdAndStatus(UUID memberId, MemberInvoiceStatus status);
-    
-    MemberInvoice save(MemberInvoice entity);
-    
-    List<MemberInvoice> saveAll(Iterable<MemberInvoice> entities);
-    
-    Optional<MemberInvoice> findById(UUID id);
-    
-    boolean existsById(UUID id);
-    
-    List<MemberInvoice> findAll();
-    
-    List<MemberInvoice> findAllById(Iterable<UUID> ids);
-    
-    long count();
-    
-    void deleteById(UUID id);
-    
-    void delete(MemberInvoice entity);
-    
-    void deleteAll(Iterable<MemberInvoice> entities);
-    
-    MemberInvoice saveAndFlush(MemberInvoice entity);
-    
-    void flush();
-    
-    Page<MemberInvoice> findAll(Pageable pageable);
 }
 
