@@ -1,15 +1,13 @@
 package com.gymmate.billing.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.billing.internal.domain.SubscriptionTier;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
-public interface SubscriptionTierRepository {
+public interface SubscriptionTierRepository extends DomainRepository<SubscriptionTier, UUID> {
 
     Optional<SubscriptionTier> findByName(String name);
 
@@ -18,31 +16,5 @@ public interface SubscriptionTierRepository {
     List<SubscriptionTier> findFeaturedTiers();
 
     List<SubscriptionTier> findSuitableTiersForMemberCount(Integer memberCount);
-
-SubscriptionTier save(SubscriptionTier entity);
-
-List<SubscriptionTier> saveAll(Iterable<SubscriptionTier> entities);
-
-Optional<SubscriptionTier> findById(UUID id);
-
-boolean existsById(UUID id);
-
-List<SubscriptionTier> findAll();
-
-List<SubscriptionTier> findAllById(Iterable<UUID> ids);
-
-long count();
-
-void deleteById(UUID id);
-
-void delete(SubscriptionTier entity);
-
-void deleteAll(Iterable<SubscriptionTier> entities);
-
-SubscriptionTier saveAndFlush(SubscriptionTier entity);
-
-void flush();
-
-Page<SubscriptionTier> findAll(Pageable pageable);
 }
 

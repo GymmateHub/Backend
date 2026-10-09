@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.billing.internal.domain.RefundRequestEntity;
 import com.gymmate.shared.constants.RefundRequestStatus;
 import com.gymmate.shared.constants.RefundType;
@@ -7,27 +8,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.gymmate.billing.internal.application.port.RefundRequestRepository;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link RefundRequestRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link RefundRequestRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the RefundRequestEntity finders live here.
  */
 @Component()
 @Transactional()
-public class RefundRequestRepositoryAdapter extends DomainRepositoryAdapter implements RefundRequestRepository {
-
-    private final RefundRequestJpaRepository jpaRepository;
+public class RefundRequestRepositoryAdapter extends JpaDomainRepositoryAdapter<RefundRequestEntity, UUID, RefundRequestJpaRepository>
+        implements RefundRequestRepository {
 
     public RefundRequestRepositoryAdapter(RefundRequestJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -93,70 +89,5 @@ public class RefundRequestRepositoryAdapter extends DomainRepositoryAdapter impl
     @Override
     public Optional<RefundRequestEntity> findByIdAndOrganisationId(UUID id, UUID organisationId) {
         return this.<Optional<RefundRequestEntity>>fromJpa(jpaRepository.findByIdAndOrganisationId(id, organisationId));
-    }
-
-    @Override
-    public RefundRequestEntity save(RefundRequestEntity entity) {
-        return save(jpaRepository, entity);
-    }
-
-    @Override
-    public List<RefundRequestEntity> saveAll(Iterable<RefundRequestEntity> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Optional<RefundRequestEntity> findById(UUID id) {
-        return this.<Optional<RefundRequestEntity>>fromJpa(jpaRepository.findById(id));
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<RefundRequestEntity> findAll() {
-        return this.<List<RefundRequestEntity>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<RefundRequestEntity> findAllById(Iterable<UUID> ids) {
-        return this.<List<RefundRequestEntity>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void delete(RefundRequestEntity entity) {
-        delete(jpaRepository, entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<RefundRequestEntity> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public RefundRequestEntity saveAndFlush(RefundRequestEntity entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<RefundRequestEntity> findAll(Pageable pageable) {
-        return this.<Page<RefundRequestEntity>>fromJpa(jpaRepository.findAll(pageable));
     }
 }

@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.billing.internal.domain.RefundRequestEntity;
 import com.gymmate.shared.constants.RefundRequestStatus;
 import com.gymmate.shared.constants.RefundType;
@@ -8,11 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
-public interface RefundRequestRepository {
+public interface RefundRequestRepository extends DomainRepository<RefundRequestEntity, UUID> {
 
     /**
      * Find all refund requests for a gym and organisation, ordered by creation date.
@@ -110,31 +108,5 @@ public interface RefundRequestRepository {
     Optional<RefundRequestEntity> findByIdAndOrganisationId(
             UUID id,
             UUID organisationId);
-
-RefundRequestEntity save(RefundRequestEntity entity);
-
-List<RefundRequestEntity> saveAll(Iterable<RefundRequestEntity> entities);
-
-Optional<RefundRequestEntity> findById(UUID id);
-
-boolean existsById(UUID id);
-
-List<RefundRequestEntity> findAll();
-
-List<RefundRequestEntity> findAllById(Iterable<UUID> ids);
-
-long count();
-
-void deleteById(UUID id);
-
-void delete(RefundRequestEntity entity);
-
-void deleteAll(Iterable<RefundRequestEntity> entities);
-
-RefundRequestEntity saveAndFlush(RefundRequestEntity entity);
-
-void flush();
-
-Page<RefundRequestEntity> findAll(Pageable pageable);
 }
 

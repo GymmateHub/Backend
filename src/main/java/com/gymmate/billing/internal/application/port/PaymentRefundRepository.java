@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.billing.internal.domain.PaymentRefund;
 import com.gymmate.shared.constants.RefundStatus;
 
@@ -8,11 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
-public interface PaymentRefundRepository {
+public interface PaymentRefundRepository extends DomainRepository<PaymentRefund, UUID> {
 
        // ============================================
        // Organisation-based queries (preferred)
@@ -62,32 +60,6 @@ public interface PaymentRefundRepository {
         * Find all refunds for a specific payment intent.
         */
        List<PaymentRefund> findByStripePaymentIntentIdOrderByCreatedAtDesc(String stripePaymentIntentId);
-       
-       PaymentRefund save(PaymentRefund entity);
-       
-       List<PaymentRefund> saveAll(Iterable<PaymentRefund> entities);
-       
-       Optional<PaymentRefund> findById(UUID id);
-       
-       boolean existsById(UUID id);
-       
-       List<PaymentRefund> findAll();
-       
-       List<PaymentRefund> findAllById(Iterable<UUID> ids);
-       
-       long count();
-       
-       void deleteById(UUID id);
-       
-       void delete(PaymentRefund entity);
-       
-       void deleteAll(Iterable<PaymentRefund> entities);
-       
-       PaymentRefund saveAndFlush(PaymentRefund entity);
-       
-       void flush();
-       
-       Page<PaymentRefund> findAll(Pageable pageable);
 
        // ============================================
        // Gym-based queries (backward compatible) -> REMOVED

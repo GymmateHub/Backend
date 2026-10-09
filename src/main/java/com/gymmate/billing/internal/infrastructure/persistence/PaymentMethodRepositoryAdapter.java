@@ -1,31 +1,27 @@
 package com.gymmate.billing.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.billing.internal.domain.PaymentMethod;
 import com.gymmate.shared.constants.PaymentMethodOwnerType;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.gymmate.billing.internal.application.port.PaymentMethodRepository;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link PaymentMethodRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link PaymentMethodRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the PaymentMethod finders live here.
  */
 @Component()
 @Transactional()
-public class PaymentMethodRepositoryAdapter extends DomainRepositoryAdapter implements PaymentMethodRepository {
-
-    private final PaymentMethodJpaRepository jpaRepository;
+public class PaymentMethodRepositoryAdapter extends JpaDomainRepositoryAdapter<PaymentMethod, UUID, PaymentMethodJpaRepository>
+        implements PaymentMethodRepository {
 
     public PaymentMethodRepositoryAdapter(PaymentMethodJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -101,70 +97,5 @@ public class PaymentMethodRepositoryAdapter extends DomainRepositoryAdapter impl
     @Override
     public List<Object[]> countByCardBrand() {
         return jpaRepository.countByCardBrand();
-    }
-
-    @Override
-    public PaymentMethod save(PaymentMethod entity) {
-        return save(jpaRepository, entity);
-    }
-
-    @Override
-    public List<PaymentMethod> saveAll(Iterable<PaymentMethod> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Optional<PaymentMethod> findById(UUID id) {
-        return this.<Optional<PaymentMethod>>fromJpa(jpaRepository.findById(id));
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<PaymentMethod> findAll() {
-        return this.<List<PaymentMethod>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<PaymentMethod> findAllById(Iterable<UUID> ids) {
-        return this.<List<PaymentMethod>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void delete(PaymentMethod entity) {
-        delete(jpaRepository, entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<PaymentMethod> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public PaymentMethod saveAndFlush(PaymentMethod entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<PaymentMethod> findAll(Pageable pageable) {
-        return this.<Page<PaymentMethod>>fromJpa(jpaRepository.findAll(pageable));
     }
 }

@@ -1,32 +1,28 @@
 package com.gymmate.billing.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.billing.internal.domain.Subscription;
 import com.gymmate.shared.constants.SubscriptionStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.gymmate.billing.internal.application.port.SubscriptionRepository;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link SubscriptionRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link SubscriptionRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the Subscription finders live here.
  */
 @Component()
 @Transactional()
-public class SubscriptionRepositoryAdapter extends DomainRepositoryAdapter implements SubscriptionRepository {
-
-    private final SubscriptionJpaRepository jpaRepository;
+public class SubscriptionRepositoryAdapter extends JpaDomainRepositoryAdapter<Subscription, UUID, SubscriptionJpaRepository>
+        implements SubscriptionRepository {
 
     public SubscriptionRepositoryAdapter(SubscriptionJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -87,70 +83,5 @@ public class SubscriptionRepositoryAdapter extends DomainRepositoryAdapter imple
     @Override
     public boolean existsByOrganisationId(UUID organisationId) {
         return jpaRepository.existsByOrganisationId(organisationId);
-    }
-
-    @Override
-    public Subscription save(Subscription entity) {
-        return save(jpaRepository, entity);
-    }
-
-    @Override
-    public List<Subscription> saveAll(Iterable<Subscription> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Optional<Subscription> findById(UUID id) {
-        return this.<Optional<Subscription>>fromJpa(jpaRepository.findById(id));
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<Subscription> findAll() {
-        return this.<List<Subscription>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<Subscription> findAllById(Iterable<UUID> ids) {
-        return this.<List<Subscription>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void delete(Subscription entity) {
-        delete(jpaRepository, entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<Subscription> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Subscription saveAndFlush(Subscription entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<Subscription> findAll(Pageable pageable) {
-        return this.<Page<Subscription>>fromJpa(jpaRepository.findAll(pageable));
     }
 }

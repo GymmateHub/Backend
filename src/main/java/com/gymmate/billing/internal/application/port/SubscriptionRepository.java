@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.billing.internal.domain.Subscription;
 import com.gymmate.shared.constants.SubscriptionStatus;
 
@@ -7,11 +8,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
-public interface SubscriptionRepository {
+public interface SubscriptionRepository extends DomainRepository<Subscription, UUID> {
 
     Optional<Subscription> findByOrganisationId(UUID organisationId);
 
@@ -49,31 +47,5 @@ public interface SubscriptionRepository {
     List<Subscription> findStalePastDueSubscriptions(LocalDateTime cutoff);
 
     boolean existsByOrganisationId(UUID organisationId);
-    
-    Subscription save(Subscription entity);
-    
-    List<Subscription> saveAll(Iterable<Subscription> entities);
-    
-    Optional<Subscription> findById(UUID id);
-    
-    boolean existsById(UUID id);
-    
-    List<Subscription> findAll();
-    
-    List<Subscription> findAllById(Iterable<UUID> ids);
-    
-    long count();
-    
-    void deleteById(UUID id);
-    
-    void delete(Subscription entity);
-    
-    void deleteAll(Iterable<Subscription> entities);
-    
-    Subscription saveAndFlush(Subscription entity);
-    
-    void flush();
-    
-    Page<Subscription> findAll(Pageable pageable);
 }
 

@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.billing.internal.domain.GymInvoice;
 import com.gymmate.shared.constants.InvoiceStatus;
 
@@ -8,11 +9,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
-public interface GymInvoiceRepository {
+public interface GymInvoiceRepository extends DomainRepository<GymInvoice, UUID> {
 
     // ============================================
     // Organisation-based queries (preferred)
@@ -29,31 +27,4 @@ public interface GymInvoiceRepository {
     // ============================================
 
     Optional<GymInvoice> findByStripeInvoiceId(String stripeInvoiceId);
-    
-    GymInvoice save(GymInvoice entity);
-    
-    List<GymInvoice> saveAll(Iterable<GymInvoice> entities);
-    
-    Optional<GymInvoice> findById(UUID id);
-    
-    boolean existsById(UUID id);
-    
-    List<GymInvoice> findAll();
-    
-    List<GymInvoice> findAllById(Iterable<UUID> ids);
-    
-    long count();
-    
-    void deleteById(UUID id);
-    
-    void delete(GymInvoice entity);
-    
-    void deleteAll(Iterable<GymInvoice> entities);
-    
-    GymInvoice saveAndFlush(GymInvoice entity);
-    
-    void flush();
-    
-    Page<GymInvoice> findAll(Pageable pageable);
-
 }

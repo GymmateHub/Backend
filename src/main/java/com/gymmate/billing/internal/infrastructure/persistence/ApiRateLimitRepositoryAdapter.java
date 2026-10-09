@@ -1,31 +1,27 @@
 package com.gymmate.billing.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.billing.internal.domain.ApiRateLimit;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.gymmate.billing.internal.application.port.ApiRateLimitRepository;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link ApiRateLimitRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link ApiRateLimitRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the ApiRateLimit finders live here.
  */
 @Component()
 @Transactional()
-public class ApiRateLimitRepositoryAdapter extends DomainRepositoryAdapter implements ApiRateLimitRepository {
-
-    private final ApiRateLimitJpaRepository jpaRepository;
+public class ApiRateLimitRepositoryAdapter extends JpaDomainRepositoryAdapter<ApiRateLimit, UUID, ApiRateLimitJpaRepository>
+        implements ApiRateLimitRepository {
 
     public ApiRateLimitRepositoryAdapter(ApiRateLimitJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -56,70 +52,5 @@ public class ApiRateLimitRepositoryAdapter extends DomainRepositoryAdapter imple
     @Override
     public Long countBlocksSince(UUID organisationId, LocalDateTime since) {
         return jpaRepository.countBlocksSince(organisationId, since);
-    }
-
-    @Override
-    public ApiRateLimit save(ApiRateLimit entity) {
-        return save(jpaRepository, entity);
-    }
-
-    @Override
-    public List<ApiRateLimit> saveAll(Iterable<ApiRateLimit> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Optional<ApiRateLimit> findById(UUID id) {
-        return this.<Optional<ApiRateLimit>>fromJpa(jpaRepository.findById(id));
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<ApiRateLimit> findAll() {
-        return this.<List<ApiRateLimit>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<ApiRateLimit> findAllById(Iterable<UUID> ids) {
-        return this.<List<ApiRateLimit>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void delete(ApiRateLimit entity) {
-        delete(jpaRepository, entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<ApiRateLimit> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public ApiRateLimit saveAndFlush(ApiRateLimit entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<ApiRateLimit> findAll(Pageable pageable) {
-        return this.<Page<ApiRateLimit>>fromJpa(jpaRepository.findAll(pageable));
     }
 }
