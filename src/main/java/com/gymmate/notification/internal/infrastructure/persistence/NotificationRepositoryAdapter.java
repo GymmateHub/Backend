@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.notification.internal.application.port.NotificationRepository;
 import com.gymmate.notification.internal.domain.Notification;
 import org.springframework.data.domain.Page;
@@ -7,36 +8,22 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import com.gymmate.shared.constants.NotificationPriority;
-import org.springframework.data.domain.Sort;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link NotificationRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link NotificationRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the Notification finders live here.
  */
 @Component
 @Transactional()
-public class NotificationRepositoryAdapter extends DomainRepositoryAdapter implements NotificationRepository {
-
-    private final NotificationJpaRepository jpaRepository;
+public class NotificationRepositoryAdapter extends JpaDomainRepositoryAdapter<Notification, UUID, NotificationJpaRepository>
+        implements NotificationRepository {
 
     public NotificationRepositoryAdapter(NotificationJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
-    }
-
-    @Override
-    public Notification save(Notification notification) {
-        return save(jpaRepository, notification);
-    }
-
-    @Override
-    public Optional<Notification> findById(UUID id) {
-        return this.<Optional<Notification>>fromJpa(jpaRepository.findById(id));
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -62,11 +49,6 @@ public class NotificationRepositoryAdapter extends DomainRepositoryAdapter imple
     @Override
     public List<Notification> findByOrganisationIdAndEventType(UUID organisationId, String eventType) {
         return this.<List<Notification>>fromJpa(jpaRepository.findByOrganisationIdAndEventTypeOrderByCreatedAtDesc(organisationId, eventType));
-    }
-
-    @Override
-    public void delete(Notification notification) {
-        delete(jpaRepository, notification);
     }
 
     @Override
@@ -134,54 +116,5 @@ public class NotificationRepositoryAdapter extends DomainRepositoryAdapter imple
         return this.<List<Notification>>fromJpa(jpaRepository.findByGymIdAndRelatedEntityIdOrderByCreatedAtDesc(gymId, relatedEntityId));
     }
 
-    @Override
-    public List<Notification> saveAll(Iterable<Notification> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
     // ============= Gym-Level Notification Methods (NEW) =============
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<Notification> findAll() {
-        return this.<List<Notification>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<Notification> findAllById(Iterable<UUID> ids) {
-        return this.<List<Notification>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void deleteAll(Iterable<Notification> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Notification saveAndFlush(Notification entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<Notification> findAll(Pageable pageable) {
-        return this.<Page<Notification>>fromJpa(jpaRepository.findAll(pageable));
-    }
 }
