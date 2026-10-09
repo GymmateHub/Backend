@@ -1,39 +1,29 @@
 package com.gymmate.scheduling.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import java.util.UUID;
 import java.util.Optional;
 import java.util.List;
 import java.time.LocalDateTime;
 import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.scheduling.internal.domain.ClassBooking;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.gymmate.scheduling.internal.application.port.ClassBookingRepository;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link ClassBookingRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link ClassBookingRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the ClassBooking finders live here.
  */
 @Component()
 @Transactional()
-public class ClassBookingRepositoryAdapter extends DomainRepositoryAdapter implements ClassBookingRepository {
-
-    private final ClassBookingJpaRepository jpaRepository;
+public class ClassBookingRepositoryAdapter extends JpaDomainRepositoryAdapter<ClassBooking, UUID, ClassBookingJpaRepository>
+        implements ClassBookingRepository {
 
     public ClassBookingRepositoryAdapter(ClassBookingJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
+        super(jpaRepository, contexts);
     }
-
-    @Override
-    public void delete(ClassBooking booking) {
-        delete(jpaRepository, booking);
-    }
-
 
     @Override
     public List<ClassBooking> findUpcomingByMemberId(UUID memberId, LocalDateTime fromDate) {
@@ -50,28 +40,14 @@ public class ClassBookingRepositoryAdapter extends DomainRepositoryAdapter imple
         return jpaRepository.countConfirmedByScheduleId(scheduleId);
     }
 
-
-
-
     @Override
     public List<ClassBooking> findByGymId(UUID gymId) {
         return this.<List<ClassBooking>>fromJpa(jpaRepository.findByGymId(gymId));
     }
 
-
     @Override
     public List<ClassBooking> findByMemberId(UUID memberId) {
         return this.<List<ClassBooking>>fromJpa(jpaRepository.findByMemberId(memberId));
-    }
-
-    @Override
-    public Optional<ClassBooking> findById(UUID id) {
-        return this.<Optional<ClassBooking>>fromJpa(jpaRepository.findById(id));
-    }
-
-    @Override
-    public ClassBooking save(ClassBooking booking) {
-        return save(jpaRepository, booking);
     }
 
     @Override
@@ -122,55 +98,5 @@ public class ClassBookingRepositoryAdapter extends DomainRepositoryAdapter imple
     @Override
     public List<Object[]> countBookingsByTimeSlot(UUID gymId, LocalDateTime startDate, LocalDateTime endDate) {
         return jpaRepository.countBookingsByTimeSlot(gymId, startDate, endDate);
-    }
-
-    @Override
-    public List<ClassBooking> saveAll(Iterable<ClassBooking> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<ClassBooking> findAll() {
-        return this.<List<ClassBooking>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<ClassBooking> findAllById(Iterable<UUID> ids) {
-        return this.<List<ClassBooking>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void deleteAll(Iterable<ClassBooking> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public ClassBooking saveAndFlush(ClassBooking entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<ClassBooking> findAll(Pageable pageable) {
-        return this.<Page<ClassBooking>>fromJpa(jpaRepository.findAll(pageable));
     }
 }
