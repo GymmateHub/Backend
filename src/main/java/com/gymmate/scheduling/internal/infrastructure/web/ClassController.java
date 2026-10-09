@@ -32,7 +32,7 @@ public class ClassController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ClassResponse>> createClass(@Valid @RequestBody CreateClassRequest req) {
     GymClass gc = mapper.toEntity(req);
-    UUID effectiveGymId = req.getGymId() != null ? req.getGymId() : TenantContext.getCurrentGymId();
+    UUID effectiveGymId = req.gymId() != null ? req.gymId() : TenantContext.getCurrentGymId();
     if (effectiveGymId == null) {
       throw new DomainException("GYM_REQUIRED", "Gym ID is required to create a class");
     }
@@ -70,9 +70,9 @@ public class ClassController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ClassResponse>> updateClass(@PathVariable UUID id, @Valid @RequestBody CreateClassRequest req) {
     GymClass gc = classService.getClass(id);
-    gc.updateDetails(req.getName(), req.getDescription(), req.getDurationMinutes());
-    gc.updatePricing(req.getPrice(), req.getCreditsRequired());
-    gc.updateCapacity(req.getCapacity());
+    gc.updateDetails(req.name(), req.description(), req.durationMinutes());
+    gc.updatePricing(req.price(), req.creditsRequired());
+    gc.updateCapacity(req.capacity());
     GymClass updated = classService.updateClass(gc);
     return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated), "Class updated"));
   }

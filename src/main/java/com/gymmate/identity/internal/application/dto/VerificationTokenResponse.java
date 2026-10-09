@@ -1,28 +1,19 @@
 package com.gymmate.identity.internal.application.dto;
 
 import com.gymmate.shared.constants.UserRole;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class VerificationTokenResponse {
-
-  private String verificationToken;
-  private String message;
-  private int expiresIn; // seconds
-
-  private String accessToken;
-  private String refreshToken;
-  private UUID userId;
-  private String email;
-  private UserRole role;
-  private UUID organisationId;
-  private UUID gymId;
+public record VerificationTokenResponse(
+    String verificationToken,
+    String message,
+    int expiresIn, // seconds
+    String accessToken,
+    String refreshToken,
+    UUID userId,
+    String email,
+    UserRole role,
+    UUID organisationId,
+    UUID gymId
+) {
 }

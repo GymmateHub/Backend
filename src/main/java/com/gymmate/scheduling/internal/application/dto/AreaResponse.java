@@ -1,26 +1,23 @@
 package com.gymmate.scheduling.internal.application.dto;
 
 import com.gymmate.scheduling.internal.domain.GymArea;
-import lombok.Data;
 
 import java.util.UUID;
 
-@Data
-public class AreaResponse {
-  private UUID id;
-  private UUID gymId;
-  private String name;
-  private String areaType;
-  private Integer capacity;
+public record AreaResponse(
+    UUID id,
+    UUID gymId,
+    String name,
+    String areaType,
+    Integer capacity
+) {
 
   public static AreaResponse from(GymArea a) {
-    AreaResponse r = new AreaResponse();
-    r.id = a.getId();
-    r.gymId = a.getGymId();
-    r.name = a.getName();
-    r.areaType = a.getAreaType();
-    r.capacity = a.getCapacity();
-    return r;
+    return new AreaResponse(
+        a.getId(),
+        a.getGymId(),
+        a.getName(),
+        a.getAreaType(),
+        a.getCapacity());
   }
 }
-

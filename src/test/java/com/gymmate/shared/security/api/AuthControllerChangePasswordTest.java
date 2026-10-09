@@ -37,9 +37,9 @@ class AuthControllerChangePasswordTest {
     @InjectMocks private AuthController controller;
 
     private static ChangePasswordRequest request(String current, String next) {
-        ChangePasswordRequest r = new ChangePasswordRequest();
-        r.setCurrentPassword(current);
-        r.setNewPassword(next);
+        ChangePasswordRequest r = new ChangePasswordRequest(
+                current,
+                next);
         return r;
     }
 

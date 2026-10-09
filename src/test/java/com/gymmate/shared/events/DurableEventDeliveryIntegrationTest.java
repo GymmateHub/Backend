@@ -42,8 +42,13 @@ class DurableEventDeliveryIntegrationTest extends PostgresIntegrationTest {
     }
 
     private MemberJoinedEvent memberJoined() {
-        return MemberJoinedEvent.builder().organisationId(orgId).gymId(gymId).memberId(UUID.randomUUID())
-                .memberName("Ada Lovelace").memberEmail("ada@example.com").membershipPlan("Gold").build();
+        return new MemberJoinedEvent(
+                orgId,
+                gymId,
+                UUID.randomUUID(),
+                "Ada Lovelace",
+                "ada@example.com",
+                "Gold");
     }
 
     private long notificationsForGym() {

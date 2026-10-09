@@ -108,14 +108,13 @@ class StripeWebhookNewHandlersTest {
         @Test
         @DisplayName("ChargeDisputedEvent should build with correct fields")
         void chargeDisputedEventShouldBuild() {
-            ChargeDisputedEvent event = ChargeDisputedEvent.builder()
-                    .organisationId(organisationId)
-                    .amount(java.math.BigDecimal.valueOf(50.00))
-                    .currency("USD")
-                    .disputeId("dp_test123")
-                    .disputeReason("fraudulent")
-                    .paymentIntentId("pi_test123")
-                    .build();
+            ChargeDisputedEvent event = new ChargeDisputedEvent(
+                    organisationId,
+                    java.math.BigDecimal.valueOf(50.00),
+                    "USD",
+                    "dp_test123",
+                    "fraudulent",
+                    "pi_test123");
 
             assertThat(event.getEventId()).isNotNull();
             assertThat(event.getOccurredAt()).isNotNull();
@@ -130,14 +129,13 @@ class StripeWebhookNewHandlersTest {
         @Test
         @DisplayName("ChargeRefundedEvent should build with correct fields")
         void chargeRefundedEventShouldBuild() {
-            ChargeRefundedEvent event = ChargeRefundedEvent.builder()
-                    .organisationId(organisationId)
-                    .amount(java.math.BigDecimal.valueOf(25.00))
-                    .currency("EUR")
-                    .refundId("re_test456")
-                    .paymentIntentId("pi_test456")
-                    .reason("requested_by_customer")
-                    .build();
+            ChargeRefundedEvent event = new ChargeRefundedEvent(
+                    organisationId,
+                    java.math.BigDecimal.valueOf(25.00),
+                    "EUR",
+                    "re_test456",
+                    "pi_test456",
+                    "requested_by_customer");
 
             assertThat(event.getEventType()).isEqualTo("CHARGE_REFUNDED");
             assertThat(event.getNotificationTitle()).contains("Refund");
@@ -150,11 +148,11 @@ class StripeWebhookNewHandlersTest {
         @DisplayName("SubscriptionPausedEvent should build with correct fields")
         void subscriptionPausedEventShouldBuild() {
             UUID subId = UUID.randomUUID();
-            SubscriptionPausedEvent event = SubscriptionPausedEvent.builder()
-                    .organisationId(organisationId)
-                    .subscriptionId(subId)
-                    .tierName("Pro")
-                    .build();
+            SubscriptionPausedEvent event = new SubscriptionPausedEvent(
+                    organisationId,
+                    subId,
+                    "Pro",
+                    null);
 
             assertThat(event.getEventType()).isEqualTo("SUBSCRIPTION_PAUSED");
             assertThat(event.getNotificationTitle()).contains("Paused");
@@ -165,9 +163,13 @@ class StripeWebhookNewHandlersTest {
         @Test
         @DisplayName("Events should handle null fields gracefully in messages")
         void eventsShouldHandleNullFields() {
-            ChargeDisputedEvent event = ChargeDisputedEvent.builder()
-                    .organisationId(organisationId)
-                    .build();
+            ChargeDisputedEvent event = new ChargeDisputedEvent(
+                    organisationId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
 
             // Should not throw NPE
             String message = event.getNotificationMessage();

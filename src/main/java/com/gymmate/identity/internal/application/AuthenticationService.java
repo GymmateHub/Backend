@@ -129,17 +129,17 @@ public class AuthenticationService {
 
                 log.info("OTP sent to unverified user during login: {}", user.getEmail());
 
-                return LoginResponse.builder()
-                        .accessToken(null)
-                        .refreshToken(null)
-                        .userId(user.getId())
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .role(user.getRole())
-                        .organisationId(user.getOrganisationId())
-                        .emailVerified(false)
-                        .build();
+                return new LoginResponse(
+                        null,
+                        null,
+                        user.getId(),
+                        user.getEmail(),
+                        user.getFirstName(),
+                        user.getLastName(),
+                        user.getRole(),
+                        user.getOrganisationId(),
+                        null,
+                        false);
             }
 
             UUID defaultGymId = resolveDefaultGymId(user);
@@ -152,18 +152,17 @@ public class AuthenticationService {
 
             log.info("User authenticated successfully: {}", user.getEmail());
 
-            return LoginResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .userId(user.getId())
-                    .email(user.getEmail())
-                    .firstName(user.getFirstName())
-                    .lastName(user.getLastName())
-                    .role(user.getRole())
-                    .organisationId(user.getOrganisationId())
-                    .gymId(defaultGymId)
-                    .emailVerified(true)
-                    .build();
+            return new LoginResponse(
+                    accessToken,
+                    refreshToken,
+                    user.getId(),
+                    user.getEmail(),
+                    user.getFirstName(),
+                    user.getLastName(),
+                    user.getRole(),
+                    user.getOrganisationId(),
+                    defaultGymId,
+                    true);
 
         } catch (AuthenticationException ex) {
             loginAttemptService.loginFailed(request.email());
@@ -204,8 +203,8 @@ public class AuthenticationService {
     @Transactional
     @AuditLog(eventType = AuditEventType.PASSWORD_RESET_REQUEST, message = "Password reset requested")
     public void initiatePasswordReset(PasswordResetRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.getEmail()));
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", request.email()));
 
         resetTokenRepository.deleteByUser_Id(user.getId());
 
@@ -219,7 +218,7 @@ public class AuthenticationService {
 
     @Transactional
     public void confirmPasswordReset(PasswordResetConfirmRequest request) {
-        PasswordResetToken resetToken = resetTokenRepository.findByToken(request.getToken())
+        PasswordResetToken resetToken = resetTokenRepository.findByToken(request.token())
                 .orElseThrow(() -> new InvalidTokenException("Invalid or expired password reset token"));
 
         if (resetToken.isExpired()) {
@@ -228,7 +227,7 @@ public class AuthenticationService {
         }
 
         User user = resetToken.getUser();
-        user.setPasswordHash(passwordService.encode(request.getNewPassword()));
+        user.setPasswordHash(passwordService.encode(request.newPassword()));
         userRepository.save(user);
         resetTokenRepository.delete(resetToken);
     }
@@ -237,25 +236,22 @@ public class AuthenticationService {
 
     @Transactional
     public TokenResponse refreshToken(RefreshTokenRequest request) {
-        if (!jwtService.validateToken(request.getRefreshToken())) {
+        if (!jwtService.validateToken(request.refreshToken())) {
             throw new InvalidTokenException("Invalid refresh token");
         }
 
-        UUID userId = jwtService.extractUserId(request.getRefreshToken());
+        UUID userId = jwtService.extractUserId(request.refreshToken());
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
 
         // TODO: This logic is incomplete. the existing refresh token should be
         // blacklisted upon generating a new one.
-        String newAccessToken = request.getTenantId() != null
-                ? jwtService.generateToken(user, request.getTenantId())
+        String newAccessToken = request.tenantId() != null
+                ? jwtService.generateToken(user, request.tenantId())
                 : jwtService.generateToken(user);
         String newRefreshToken = jwtService.generateRefreshToken(user);
 
-        return TokenResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(newRefreshToken)
-                .build();
+        return new TokenResponse(newAccessToken, newRefreshToken);
     }
 
     // ==================== USER REGISTRATION ====================
@@ -313,17 +309,17 @@ public class AuthenticationService {
         String accessToken = jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        return LoginResponse.builder()
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .userId(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .role(user.getRole())
-                .organisationId(user.getOrganisationId())
-                .emailVerified(true)
-                .build();
+        return new LoginResponse(
+                accessToken,
+                refreshToken,
+                user.getId(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getRole(),
+                user.getOrganisationId(),
+                null,
+                true);
     }
 
     // ==================== OTP VERIFICATION ====================
@@ -341,52 +337,51 @@ public class AuthenticationService {
         emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, userId);
         log.info("OTP email sent to user: {}", user.getEmail());
 
-        return RegistrationResponse.builder()
-                .userId(userId)
-                .message("An OTP has been sent to your email for verification.")
-                .expiresIn(OTP_VALIDITY_MINUTES * 60)
-                .build();
+        return new RegistrationResponse(
+                userId,
+                "An OTP has been sent to your email for verification.",
+                OTP_VALIDITY_MINUTES * 60,
+                null);
     }
 
     @Transactional
     public RegistrationResponse resendOtp(ResendOtpRequest request) {
-        User user = userRepository.findById(UUID.fromString(request.getUserId()))
+        User user = userRepository.findById(UUID.fromString(request.userId()))
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (user.isEmailVerified()) {
             throw new BadRequestException("Email already verified.");
         }
 
-        if (!totpService.checkAndUpdateRateLimit(request.getUserId())) {
-            long remainingSeconds = totpService.getRemainingRateLimitSeconds(request.getUserId());
+        if (!totpService.checkAndUpdateRateLimit(request.userId())) {
+            long remainingSeconds = totpService.getRemainingRateLimitSeconds(request.userId());
             throw new BadRequestException(
                     String.format("Please wait %d seconds before requesting another OTP", remainingSeconds));
         }
 
-        String otp = totpService.generateOtp(request.getUserId());
-        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, request.getUserId());
+        String otp = totpService.generateOtp(request.userId());
+        emailService.sendOtpEmail(user.getEmail(), user.getFirstName(), otp, OTP_VALIDITY_MINUTES, request.userId());
 
         log.info("OTP resent to user: {}", user.getEmail());
 
-        return RegistrationResponse.builder()
-                .userId(request.getUserId())
-                .message("OTP resent to your email")
-                .expiresIn(OTP_VALIDITY_MINUTES * 60)
-                .retryAfter(60L)
-                .build();
+        return new RegistrationResponse(
+                request.userId(),
+                "OTP resent to your email",
+                OTP_VALIDITY_MINUTES * 60,
+                60L);
     }
 
     @Transactional
     public VerificationTokenResponse verifyOtp(VerifyOtpRequest request) {
-        User user = userRepository.findById(UUID.fromString(request.getUserId()))
+        User user = userRepository.findById(UUID.fromString(request.userId()))
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (user.isEmailVerified()) {
             throw new BadRequestException("Email already verified.");
         }
 
-        if (!totpService.verifyOtp(request.getUserId(), request.getOtp())) {
-            int remainingAttempts = totpService.getRemainingAttempts(request.getUserId());
+        if (!totpService.verifyOtp(request.userId(), request.otp())) {
+            int remainingAttempts = totpService.getRemainingAttempts(request.userId());
             if (remainingAttempts <= 0) {
                 throw new BadRequestException("Maximum OTP attempts exceeded. Please request a new OTP.");
             }
@@ -409,18 +404,17 @@ public class AuthenticationService {
                 : jwtService.generateToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
 
-        return VerificationTokenResponse.builder()
-                .verificationToken(null)
-                .message("Email verified successfully. Your account is now active.")
-                .expiresIn(0)
-                .accessToken(accessToken)
-                .refreshToken(refreshToken)
-                .userId(user.getId())
-                .email(user.getEmail())
-                .role(user.getRole())
-                .organisationId(user.getOrganisationId())
-                .gymId(defaultGymId)
-                .build();
+        return new VerificationTokenResponse(
+                null,
+                "Email verified successfully. Your account is now active.",
+                0,
+                accessToken,
+                refreshToken,
+                user.getId(),
+                user.getEmail(),
+                user.getRole(),
+                user.getOrganisationId(),
+                defaultGymId);
     }
 
     // Update password change methods to check history

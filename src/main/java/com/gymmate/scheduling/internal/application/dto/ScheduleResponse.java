@@ -1,43 +1,40 @@
 package com.gymmate.scheduling.internal.application.dto;
 
 import com.gymmate.scheduling.internal.domain.ClassSchedule;
-import lombok.Data;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
-public class ScheduleResponse {
-  private UUID id;
-  private UUID classId;
-  private UUID trainerId;
-  private UUID areaId;
-  private LocalDateTime startTime;
-  private LocalDateTime endTime;
-  private Integer capacityOverride;
-  private BigDecimal priceOverride;
-  private String status;
-
-  // extra fields
-  private String cancellationReason;
-  private String instructorNotes;
-  private String adminNotes;
+public record ScheduleResponse(
+    UUID id,
+    UUID classId,
+    UUID trainerId,
+    UUID areaId,
+    LocalDateTime startTime,
+    LocalDateTime endTime,
+    Integer capacityOverride,
+    BigDecimal priceOverride,
+    String status,
+    // extra fields
+    String cancellationReason,
+    String instructorNotes,
+    String adminNotes
+) {
 
   public static ScheduleResponse from(ClassSchedule s) {
-    ScheduleResponse r = new ScheduleResponse();
-    r.id = s.getId();
-    r.classId = s.getClassId();
-    r.trainerId = s.getTrainerId();
-    r.areaId = s.getAreaId();
-    r.startTime = s.getStartTime();
-    r.endTime = s.getEndTime();
-    r.capacityOverride = s.getCapacityOverride();
-    r.priceOverride = s.getPriceOverride();
-    r.status = s.getStatus() == null ? null : s.getStatus().name();
-    r.cancellationReason = s.getCancellationReason();
-    r.instructorNotes = s.getInstructorNotes();
-    r.adminNotes = s.getAdminNotes();
-    return r;
+    return new ScheduleResponse(
+        s.getId(),
+        s.getClassId(),
+        s.getTrainerId(),
+        s.getAreaId(),
+        s.getStartTime(),
+        s.getEndTime(),
+        s.getCapacityOverride(),
+        s.getPriceOverride(),
+        s.getStatus() == null ? null : s.getStatus().name(),
+        s.getCancellationReason(),
+        s.getInstructorNotes(),
+        s.getAdminNotes());
   }
 }

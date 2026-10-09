@@ -15,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -65,14 +66,18 @@ class MemberRefundControllerTest {
                 // Arrange
                 mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn(gymId);
 
-                CreateRefundRequestDTO request = CreateRefundRequestDTO.builder()
-                        .refundType(RefundType.MEMBER_PAYMENT)
-                        .stripePaymentIntentId("pi_test123")
-                        .originalPaymentAmount(new BigDecimal("100.00"))
-                        .requestedRefundAmount(new BigDecimal("100.00"))
-                        .reasonCategory(RefundReasonCategory.CLASS_CANCELLED)
-                        .reasonDescription("Trainer was sick, class cancelled")
-                        .build();
+                CreateRefundRequestDTO request = new CreateRefundRequestDTO(
+                        RefundType.MEMBER_PAYMENT,
+                        "pi_test123",
+                        null,
+                        new BigDecimal("100.00"),
+                        new BigDecimal("100.00"),
+                        null,
+                        null,
+                        null,
+                        RefundReasonCategory.CLASS_CANCELLED,
+                        "Trainer was sick, class cancelled",
+                        null);
 
                 RefundRequestResponse response = createRefundRequestResponse();
                 when(refundRequestService.createRefundRequest(any(), any(), anyString(), any(), anyString(), any()))
@@ -97,13 +102,18 @@ class MemberRefundControllerTest {
                 // Arrange
                 mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn(gymId);
 
-                CreateRefundRequestDTO request = CreateRefundRequestDTO.builder()
-                        .refundType(RefundType.PLATFORM_SUBSCRIPTION) // Try to use wrong type
-                        .stripePaymentIntentId("pi_test123")
-                        .originalPaymentAmount(new BigDecimal("100.00"))
-                        .requestedRefundAmount(new BigDecimal("100.00"))
-                        .reasonCategory(RefundReasonCategory.CLASS_CANCELLED)
-                        .build();
+                CreateRefundRequestDTO request = new CreateRefundRequestDTO(
+                        RefundType.PLATFORM_SUBSCRIPTION, // Try to use wrong type
+                        "pi_test123",
+                        null,
+                        new BigDecimal("100.00"),
+                        new BigDecimal("100.00"),
+                        null,
+                        null,
+                        null,
+                        RefundReasonCategory.CLASS_CANCELLED,
+                        null,
+                        null);
 
                 RefundRequestResponse response = createRefundRequestResponse();
                 when(refundRequestService.createRefundRequest(any(), any(), anyString(), any(), anyString(), any()))
@@ -112,8 +122,10 @@ class MemberRefundControllerTest {
                 // Act
                 controller.requestRefund(request, memberUser);
 
-                // Assert - type should be changed to MEMBER_PAYMENT
-                assertThat(request.getRefundType()).isEqualTo(RefundType.MEMBER_PAYMENT);
+                // Assert - the service receives the request with its type changed to MEMBER_PAYMENT
+                ArgumentCaptor<CreateRefundRequestDTO> sent = ArgumentCaptor.forClass(CreateRefundRequestDTO.class);
+                verify(refundRequestService).createRefundRequest(any(), any(), anyString(), any(), anyString(), sent.capture());
+                assertThat(sent.getValue().refundType()).isEqualTo(RefundType.MEMBER_PAYMENT);
             }
         }
     }
@@ -161,8 +173,8 @@ class MemberRefundControllerTest {
         @DisplayName("Should return request if owned by member")
         void getMyRequest_OwnedByMember_ReturnsRequest() {
             // Arrange
-            RefundRequestResponse response = createRefundRequestResponse();
-            response.setRequestedByUserId(memberId); // Same as current user
+            RefundRequestResponse response =
+                    createRefundRequestResponse(memberId, RefundRequestStatus.PENDING); // Same as current user
             when(refundRequestService.getRequest(requestId)).thenReturn(response);
 
             // Act
@@ -171,15 +183,15 @@ class MemberRefundControllerTest {
 
             // Assert
             assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
-            assertThat(result.getBody().getData().getId()).isEqualTo(requestId);
+            assertThat(result.getBody().getData().id()).isEqualTo(requestId);
         }
 
         @Test
         @DisplayName("Should throw exception for other member's request")
         void getMyRequest_NotOwnedByMember_ThrowsException() {
             // Arrange
-            RefundRequestResponse response = createRefundRequestResponse();
-            response.setRequestedByUserId(UUID.randomUUID()); // Different user
+            RefundRequestResponse response =
+                    createRefundRequestResponse(UUID.randomUUID(), RefundRequestStatus.PENDING); // Different user
             when(refundRequestService.getRequest(requestId)).thenReturn(response);
 
             // Act & Assert
@@ -197,8 +209,7 @@ class MemberRefundControllerTest {
         @DisplayName("Should cancel pending request")
         void cancelMyRequest_Success() {
             // Arrange
-            RefundRequestResponse cancelledResponse = createRefundRequestResponse();
-            cancelledResponse.setStatus(RefundRequestStatus.CANCELLED);
+            RefundRequestResponse cancelledResponse = createRefundRequestResponse(memberId, RefundRequestStatus.CANCELLED);
             when(refundRequestService.cancelRequest(requestId, memberId, "MEMBER"))
                     .thenReturn(cancelledResponse);
 
@@ -214,22 +225,42 @@ class MemberRefundControllerTest {
 
     // Helper method
     private RefundRequestResponse createRefundRequestResponse() {
-        return RefundRequestResponse.builder()
-                .id(requestId)
-                .gymId(gymId)
-                .refundType(RefundType.MEMBER_PAYMENT)
-                .stripePaymentIntentId("pi_test123")
-                .originalPaymentAmount(new BigDecimal("100.00"))
-                .requestedRefundAmount(new BigDecimal("100.00"))
-                .currency("USD")
-                .requestedByUserId(memberId)
-                .requestedByType("MEMBER")
-                .refundToUserId(memberId)
-                .refundToType("MEMBER")
-                .reasonCategory(RefundReasonCategory.CLASS_CANCELLED)
-                .status(RefundRequestStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .build();
+        return createRefundRequestResponse(memberId, RefundRequestStatus.PENDING);
+    }
+
+    private RefundRequestResponse createRefundRequestResponse(UUID requestedByUserId, RefundRequestStatus status) {
+        return new RefundRequestResponse(
+                requestId,
+                gymId,
+                RefundType.MEMBER_PAYMENT,
+                "pi_test123",
+                new BigDecimal("100.00"),
+                new BigDecimal("100.00"),
+                "USD",
+                null,
+                null,
+                requestedByUserId,
+                "MEMBER",
+                null,
+                memberId,
+                "MEMBER",
+                null,
+                RefundReasonCategory.CLASS_CANCELLED,
+                null,
+                status,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                LocalDateTime.now(),
+                null);
     }
 }
 

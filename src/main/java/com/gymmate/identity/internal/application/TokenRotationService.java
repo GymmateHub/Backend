@@ -36,7 +36,7 @@ public class TokenRotationService {
 
   @Transactional
   public TokenResponse refreshTokenWithRotation(RefreshTokenRequest request) {
-    String refreshToken = request.getRefreshToken();
+    String refreshToken = request.refreshToken();
 
     // Check if refresh token was already used
     if (isRefreshTokenUsed(refreshToken)) {
@@ -68,15 +68,12 @@ public class TokenRotationService {
     User user = userRepository.findById(userId)
       .orElseThrow(() -> new ResourceNotFoundException("User", userId.toString()));
 
-    String newAccessToken = request.getTenantId() != null
-      ? jwtService.generateTokenWithFamily(user, request.getTenantId(), familyId)
-      : jwtService.generateTokenWithFamily(user, request.getTenantId(), familyId);
+    String newAccessToken = request.tenantId() != null
+      ? jwtService.generateTokenWithFamily(user, request.tenantId(), familyId)
+      : jwtService.generateTokenWithFamily(user, request.tenantId(), familyId);
     String newRefreshToken = jwtService.generateRefreshTokenWithFamily(user, familyId);
 
-    return TokenResponse.builder()
-      .accessToken(newAccessToken)
-      .refreshToken(newRefreshToken)
-      .build();
+    return new TokenResponse(newAccessToken, newRefreshToken);
   }
 
   private void createRefreshTokenFamily(String familyId, UUID userId) {

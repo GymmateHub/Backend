@@ -1,24 +1,15 @@
 package com.gymmate.billing.internal.application.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class RefundResponse {
-    private String refundId;
-    private String paymentIntentId;
-    private BigDecimal amount;
-    private String currency;
-    private String status;
-    private String reason;
-    private LocalDateTime createdAt;
+public record RefundResponse(
+        String refundId,
+        String paymentIntentId,
+        BigDecimal amount,
+        String currency,
+        String status,
+        String reason,
+        LocalDateTime createdAt
+) {
 }
-

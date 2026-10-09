@@ -61,14 +61,13 @@ public class GymContextController {
         }
         TokenPair tokens = identityApi.issueTokens(claims.userId(), gymId);
 
-        GymSwitchResponse response = GymSwitchResponse.builder()
-                .gymId(gym.getId())
-                .gymName(gym.getName())
-                .organisationId(organisationId)
-                .accessToken(tokens.accessToken())
-                .refreshToken(tokens.refreshToken())
-                .message("Switched to gym: " + gym.getName())
-                .build();
+        GymSwitchResponse response = new GymSwitchResponse(
+                gym.getId(),
+                gym.getName(),
+                organisationId,
+                tokens.accessToken(),
+                tokens.refreshToken(),
+                "Switched to gym: " + gym.getName());
 
         return ResponseEntity.ok(ApiResponse.success(response, "Gym context switched successfully"));
     }
@@ -85,19 +84,23 @@ public class GymContextController {
 
         if (gymId == null) {
             return ResponseEntity.ok(ApiResponse.success(
-                    GymSwitchResponse.builder()
-                            .organisationId(organisationId)
-                            .message("No gym context set. Use /switch-gym/{gymId} to select a gym.")
-                            .build()));
+                    new GymSwitchResponse(
+                            null,
+                            null,
+                            organisationId,
+                            null,
+                            null,
+                            "No gym context set. Use /switch-gym/{gymId} to select a gym.")));
         }
 
         Gym gym = gymService.getGymById(gymId);
-        GymSwitchResponse response = GymSwitchResponse.builder()
-                .gymId(gym.getId())
-                .gymName(gym.getName())
-                .organisationId(organisationId)
-                .message("Current gym: " + gym.getName())
-                .build();
+        GymSwitchResponse response = new GymSwitchResponse(
+                gym.getId(),
+                gym.getName(),
+                organisationId,
+                null,
+                null,
+                "Current gym: " + gym.getName());
 
         return ResponseEntity.ok(ApiResponse.success(response));
     }

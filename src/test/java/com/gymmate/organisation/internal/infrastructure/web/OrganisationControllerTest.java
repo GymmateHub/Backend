@@ -72,10 +72,7 @@ class OrganisationControllerTest {
     @Test
     void shouldCreateHubWithAuthenticatedUser() throws Exception {
         // Arrange
-        CreateHubRequest request = CreateHubRequest.builder()
-                .name("Test Gym")
-                .contactEmail("test@gym.com")
-                .build();
+        CreateHubRequest request = new CreateHubRequest("Test Gym", "test@gym.com");
 
         UUID userId = UUID.randomUUID();
         UUID orgId = UUID.randomUUID();

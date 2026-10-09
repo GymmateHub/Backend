@@ -87,10 +87,7 @@ public class StripeConnectService {
             // Create the account onboarding link
             String onboardingUrl = createOnboardingLink(accountId, gymId);
 
-            return ConnectOnboardingResponse.builder()
-                    .accountId(accountId)
-                    .onboardingUrl(onboardingUrl)
-                    .build();
+            return new ConnectOnboardingResponse(accountId, onboardingUrl);
 
         } catch (StripeException e) {
             log.error("Failed to start Connect onboarding for gym {}: {}", gymId, e.getMessage());
@@ -121,12 +118,14 @@ public class StripeConnectService {
         GymPaymentAccount gym = getGym(gymId);
 
         if (gym.getStripeConnectAccountId() == null) {
-            return ConnectAccountStatusResponse.builder()
-                    .chargesEnabled(false)
-                    .payoutsEnabled(false)
-                    .detailsSubmitted(false)
-                    .requiresAction(true)
-                    .build();
+            return new ConnectAccountStatusResponse(
+                    null,
+                    false,
+                    false,
+                    false,
+                    true,
+                    null,
+                    null);
         }
 
         validateStripeConfigured();
@@ -149,14 +148,14 @@ public class StripeConnectService {
                     account.getRequirements().getCurrentlyDue() != null &&
                     !account.getRequirements().getCurrentlyDue().isEmpty();
 
-            return ConnectAccountStatusResponse.builder()
-                    .accountId(account.getId())
-                    .chargesEnabled(account.getChargesEnabled())
-                    .payoutsEnabled(account.getPayoutsEnabled())
-                    .detailsSubmitted(account.getDetailsSubmitted())
-                    .requiresAction(requiresAction)
-                    .currentDeadline(deadline)
-                    .build();
+            return new ConnectAccountStatusResponse(
+                    account.getId(),
+                    account.getChargesEnabled(),
+                    account.getPayoutsEnabled(),
+                    account.getDetailsSubmitted(),
+                    requiresAction,
+                    deadline,
+                    null);
 
         } catch (StripeException e) {
             log.error("Failed to get Connect account status for gym {}: {}", gymId, e.getMessage());
@@ -206,10 +205,7 @@ public class StripeConnectService {
         try {
             String onboardingUrl = createOnboardingLink(gym.getStripeConnectAccountId(), gymId);
 
-            return ConnectOnboardingResponse.builder()
-                    .accountId(gym.getStripeConnectAccountId())
-                    .onboardingUrl(onboardingUrl)
-                    .build();
+            return new ConnectOnboardingResponse(gym.getStripeConnectAccountId(), onboardingUrl);
 
         } catch (StripeException e) {
             log.error("Failed to refresh onboarding link for gym {}: {}", gymId, e.getMessage());

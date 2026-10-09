@@ -1,14 +1,10 @@
 package com.gymmate.notification.api.event;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.extern.jackson.Jacksonized;
 import com.gymmate.shared.events.DomainEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -17,24 +13,42 @@ import java.util.UUID;
  * Event published when a Stripe charge is disputed (chargeback).
  * Triggers critical notification to the organisation owner.
  */
-@Getter
-@Builder
-@Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ChargeDisputedEvent implements DomainEvent, TenantAwareEvent {
+public record ChargeDisputedEvent(
+        UUID eventId,
+        LocalDateTime occurredAt,
+        UUID organisationId,
+        BigDecimal amount,
+        String currency,
+        String disputeId,
+        String disputeReason,
+        String paymentIntentId
+) implements DomainEvent, TenantAwareEvent {
 
-    @Builder.Default
-    private final UUID eventId = UUID.randomUUID();
+    public ChargeDisputedEvent {
+        if (eventId == null) eventId = UUID.randomUUID();
+        if (occurredAt == null) occurredAt = LocalDateTime.now();
+    }
 
-    @Builder.Default
-    private final LocalDateTime occurredAt = LocalDateTime.now();
+    /** A new event with a fresh id, occurring now. */
+    public ChargeDisputedEvent(UUID organisationId, BigDecimal amount, String currency, String disputeId, String disputeReason, String paymentIntentId) {
+        this(null, null, organisationId, amount, currency, disputeId, disputeReason, paymentIntentId);
+    }
 
-    private final UUID organisationId;
-    private final BigDecimal amount;
-    private final String currency;
-    private final String disputeId;
-    private final String disputeReason;
-    private final String paymentIntentId;
+    @Override
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    @Override
+    public LocalDateTime getOccurredAt() {
+        return occurredAt;
+    }
+
+    @Override
+    public UUID getOrganisationId() {
+        return organisationId;
+    }
 
     @Override
     public TenantIdentity getTenantIdentity() {
@@ -67,4 +81,3 @@ public class ChargeDisputedEvent implements DomainEvent, TenantAwareEvent {
         return NotificationPriority.CRITICAL;
     }
 }
-

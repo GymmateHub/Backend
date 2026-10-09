@@ -1,27 +1,17 @@
 package com.gymmate.billing.internal.application.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 import java.time.LocalDateTime;
 
 /**
  * Response containing Stripe Connect account status.
  */
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ConnectAccountStatusResponse {
-
-    private String accountId;
-    private Boolean chargesEnabled;
-    private Boolean payoutsEnabled;
-    private Boolean detailsSubmitted;
-    private Boolean requiresAction;
-    private LocalDateTime currentDeadline;
-    private String dashboardUrl;
+public record ConnectAccountStatusResponse(
+        String accountId,
+        Boolean chargesEnabled,
+        Boolean payoutsEnabled,
+        Boolean detailsSubmitted,
+        Boolean requiresAction,
+        LocalDateTime currentDeadline,
+        String dashboardUrl
+) {
 }
-

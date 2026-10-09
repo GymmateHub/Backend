@@ -104,16 +104,16 @@ public class WhitelabelController {
             @Valid @RequestBody SmtpTestRequest request) {
         try {
             mailSenderFactory.testSmtpConnection(
-                    request.getSmtpHost(),
-                    request.getSmtpPort(),
-                    request.getSmtpUsername(),
-                    request.getSmtpPassword(),
-                    request.getSmtpSecurity(),
-                    request.getFromEmail(),
-                    request.getRecipientEmail());
+                    request.smtpHost(),
+                    request.smtpPort(),
+                    request.smtpUsername(),
+                    request.smtpPassword(),
+                    request.smtpSecurity(),
+                    request.fromEmail(),
+                    request.recipientEmail());
 
             return ResponseEntity.ok(ApiResponse.success(
-                    TestConnectionResponse.success("SMTP connection test succeeded! Test email sent to " + request.getRecipientEmail())));
+                    TestConnectionResponse.success("SMTP connection test succeeded! Test email sent to " + request.recipientEmail())));
         } catch (Exception e) {
             log.error("SMTP test failed: {}", e.getMessage());
             return ResponseEntity.ok(ApiResponse.success(
@@ -131,15 +131,15 @@ public class WhitelabelController {
             @Valid @RequestBody WhatsAppTestRequest request) {
         try {
             whitelabelSettingsService.sendWhatsAppMessage(
-                    request.getWhatsappProvider(),
-                    request.getWhatsappPhoneNumberId(),
-                    request.getWhatsappApiKey(),
-                    request.getRecipientPhoneNumber(),
+                    request.whatsappProvider(),
+                    request.whatsappPhoneNumberId(),
+                    request.whatsappApiKey(),
+                    request.recipientPhoneNumber(),
                     "GymMate Whitelabel WhatsApp Test: Your credentials are valid!"
             );
 
             return ResponseEntity.ok(ApiResponse.success(
-                    TestConnectionResponse.success("WhatsApp test message sent successfully to " + request.getRecipientPhoneNumber())));
+                    TestConnectionResponse.success("WhatsApp test message sent successfully to " + request.recipientPhoneNumber())));
         } catch (Exception e) {
             log.error("WhatsApp test failed: {}", e.getMessage());
             return ResponseEntity.ok(ApiResponse.success(

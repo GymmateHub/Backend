@@ -290,14 +290,13 @@ public class StripeWebhookService {
                         ).toDays();
 
                         com.gymmate.notification.api.event.SubscriptionExpiringEvent expiringEvent =
-                                com.gymmate.notification.api.event.SubscriptionExpiringEvent.builder()
-                                .organisationId(subscription.getOrganisationId())
-                                .subscriptionId(subscription.getId())
-                                .tierName(subscription.getTier().getDisplayName())
-                                .price(subscription.getTier().getPrice())
-                                .expiresAt(subscription.getTrialEnd())
-                                .daysUntilExpiry((int) daysUntilExpiry)
-                                .build();
+                                new com.gymmate.notification.api.event.SubscriptionExpiringEvent(
+                                        subscription.getOrganisationId(),
+                                        subscription.getId(),
+                                        subscription.getTier().getDisplayName(),
+                                        subscription.getTier().getPrice(),
+                                        subscription.getTrialEnd(),
+                                        (int) daysUntilExpiry);
 
                         eventPublisher.publishEvent(expiringEvent);
                         log.info("Published SubscriptionExpiringEvent for organisation {}", subscription.getOrganisationId());
@@ -324,14 +323,15 @@ public class StripeWebhookService {
 
         // Publish payment success event
         if (invoice.getOrganisationId() != null) {
-            PaymentSuccessEvent successEvent = PaymentSuccessEvent.builder()
-                    .organisationId(invoice.getOrganisationId())
-                    .gymId(invoice.getOrganisationId()) // Using org ID for now
-                    .amount(invoice.getAmount())
-                    .invoiceNumber(invoice.getInvoiceNumber())
-                    .invoiceUrl(invoice.getHostedInvoiceUrl())
-                    .periodEnd(invoice.getPeriodEnd())
-                    .build();
+            PaymentSuccessEvent successEvent = new PaymentSuccessEvent(
+                    invoice.getOrganisationId(),
+                    invoice.getOrganisationId(), // Using org ID for now
+                    invoice.getAmount(),
+                    invoice.getInvoiceNumber(),
+                    invoice.getHostedInvoiceUrl(),
+                    invoice.getPeriodEnd(),
+                    null,
+                    null);
 
             eventPublisher.publishEvent(successEvent);
             log.info("Published PaymentSuccessEvent for organisation {}", invoice.getOrganisationId());
@@ -419,13 +419,15 @@ public class StripeWebhookService {
                             BigDecimal amount = BigDecimal.valueOf(stripeInvoice.getAmountDue())
                                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
 
-                            PaymentFailedEvent paymentFailedEvent = PaymentFailedEvent.builder()
-                                    .organisationId(subscription.getOrganisationId())
-                                    .amount(amount)
-                                    .failureReason(failureReason)
-                                    .nextRetryDate(nextRetryDate)
-                                    .invoiceId(stripeInvoice.getId())
-                                    .build();
+                            PaymentFailedEvent paymentFailedEvent = new PaymentFailedEvent(
+                                    subscription.getOrganisationId(),
+                                    null,
+                                    amount,
+                                    failureReason,
+                                    nextRetryDate,
+                                    stripeInvoice.getId(),
+                                    null,
+                                    null);
 
                             eventPublisher.publishEvent(paymentFailedEvent);
                             log.info("Published PaymentFailedEvent for organisation {}", subscription.getOrganisationId());
@@ -538,14 +540,15 @@ public class StripeWebhookService {
             return;
         }
 
-        PaymentSuccessEvent successEvent = PaymentSuccessEvent.builder()
-                .organisationId(gym.getOrganisationId())
-                .gymId(gymId)
-                .membershipId(membershipIdStr != null ? UUID.fromString(membershipIdStr) : null)
-                .amount(amount)
-                .currency(currency)
-                .invoiceNumber(paymentIntent.getId())
-                .build();
+        PaymentSuccessEvent successEvent = new PaymentSuccessEvent(
+                gym.getOrganisationId(),
+                gymId,
+                amount,
+                paymentIntent.getId(),
+                null,
+                null,
+                membershipIdStr != null ? UUID.fromString(membershipIdStr) : null,
+                currency);
         eventPublisher.publishEvent(successEvent);
     }
 
@@ -582,21 +585,20 @@ public class StripeWebhookService {
             return;
         }
 
-        PaymentFailedEvent failedEvent = PaymentFailedEvent.builder()
-                .organisationId(gym.getOrganisationId())
-                .gymId(gymId)
-                .membershipId(membershipIdStr != null ? UUID.fromString(membershipIdStr) : null)
-                .amount(amount)
-                .currency(currency)
-                .failureReason(failureMessage)
-                .nextRetryDate(LocalDateTime.now().plusDays(3))
-                .invoiceId(paymentIntent.getId())
-                .build();
+        PaymentFailedEvent failedEvent = new PaymentFailedEvent(
+                gym.getOrganisationId(),
+                gymId,
+                amount,
+                failureMessage,
+                LocalDateTime.now().plusDays(3),
+                paymentIntent.getId(),
+                membershipIdStr != null ? UUID.fromString(membershipIdStr) : null,
+                currency);
         eventPublisher.publishEvent(failedEvent);
         log.info("Published PaymentFailedEvent for Connect payment failure on gym {}", gymIdStr);
 
         paymentNotificationService.sendPaymentFailedNotification(
-                gymId, amount, failureMessage, failedEvent.getNextRetryDate());
+                gymId, amount, failureMessage, failedEvent.nextRetryDate());
     }
 
     // Helper methods
@@ -617,13 +619,12 @@ public class StripeWebhookService {
                     subscriptionRepository.save(subscription);
                     log.info("Subscription {} paused", subscription.getId());
 
-                    SubscriptionPausedEvent pausedEvent = SubscriptionPausedEvent.builder()
-                            .organisationId(subscription.getOrganisationId())
-                            .subscriptionId(subscription.getId())
-                            .tierName(subscription.getTier() != null
-                                    ? subscription.getTier().getDisplayName() : "Unknown")
-                            .pausedAt(LocalDateTime.now())
-                            .build();
+                    SubscriptionPausedEvent pausedEvent = new SubscriptionPausedEvent(
+                            subscription.getOrganisationId(),
+                            subscription.getId(),
+                            subscription.getTier() != null
+                                        ? subscription.getTier().getDisplayName() : "Unknown",
+                            LocalDateTime.now());
 
                     eventPublisher.publishEvent(pausedEvent);
                     log.info("Published SubscriptionPausedEvent for organisation {}",
@@ -652,14 +653,13 @@ public class StripeWebhookService {
         UUID organisationId = resolveOrganisationFromDispute(dispute);
 
         if (organisationId != null) {
-            ChargeDisputedEvent disputedEvent = ChargeDisputedEvent.builder()
-                    .organisationId(organisationId)
-                    .amount(amount)
-                    .currency(currency)
-                    .disputeId(dispute.getId())
-                    .disputeReason(reason)
-                    .paymentIntentId(dispute.getPaymentIntent())
-                    .build();
+            ChargeDisputedEvent disputedEvent = new ChargeDisputedEvent(
+                    organisationId,
+                    amount,
+                    currency,
+                    dispute.getId(),
+                    reason,
+                    dispute.getPaymentIntent());
 
             eventPublisher.publishEvent(disputedEvent);
             log.info("Published ChargeDisputedEvent for organisation {}", organisationId);
@@ -739,14 +739,13 @@ public class StripeWebhookService {
                 }
             }
 
-            ChargeRefundedEvent refundedEvent = ChargeRefundedEvent.builder()
-                    .organisationId(organisationId)
-                    .amount(amountRefunded)
-                    .currency(currency)
-                    .refundId(latestRefundId)
-                    .paymentIntentId(charge.getPaymentIntent())
-                    .reason(refundReason)
-                    .build();
+            ChargeRefundedEvent refundedEvent = new ChargeRefundedEvent(
+                    organisationId,
+                    amountRefunded,
+                    currency,
+                    latestRefundId,
+                    charge.getPaymentIntent(),
+                    refundReason);
 
             eventPublisher.publishEvent(refundedEvent);
             log.info("Published ChargeRefundedEvent for organisation {}", organisationId);

@@ -154,13 +154,12 @@ public class ClassBookingService {
 
           // Notify member they've been promoted from waitlist
           try {
-            eventPublisher.publishEvent(WaitlistPromotedEvent.builder()
-                .organisationId(first.getOrganisationId())
-                .gymId(first.getGymId())
-                .memberId(first.getMemberId())
-                .bookingId(first.getId())
-                .scheduleId(first.getClassScheduleId())
-                .build());
+            eventPublisher.publishEvent(new WaitlistPromotedEvent(
+                    first.getOrganisationId(),
+                    first.getGymId(),
+                    first.getMemberId(),
+                    first.getId(),
+                    first.getClassScheduleId()));
           } catch (Exception e) {
             log.warn("Failed to publish WaitlistPromotedEvent for booking {}: {}", first.getId(), e.getMessage());
           }

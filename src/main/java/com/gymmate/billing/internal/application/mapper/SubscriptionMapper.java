@@ -36,66 +36,64 @@ public class SubscriptionMapper {
             if (daysUntilRenewal < 0) daysUntilRenewal = 0L;
         }
 
-        return SubscriptionResponse.builder()
-            .id(subscription.getId())
-            .organisationId(subscription.getOrganisationId())
-            .tierName(subscription.getTier().getName())
-            .tierDisplayName(subscription.getTier().getDisplayName())
-            .status(subscription.getStatus().name())
-            .currentPeriodStart(subscription.getCurrentPeriodStart())
-            .currentPeriodEnd(subscription.getCurrentPeriodEnd())
-            .cancelAtPeriodEnd(subscription.getCancelAtPeriodEnd())
-            .cancelledAt(subscription.getCancelledAt())
-            .trialStart(subscription.getTrialStart())
-            .trialEnd(subscription.getTrialEnd())
-            .currentMemberCount(subscription.getCurrentMemberCount())
-            .maxMembers(subscription.getTier().getMaxMembers())
-            .price(subscription.getTier().getPrice())
-            .billingCycle(subscription.getTier().getBillingCycle())
-            .apiRequestsPerHour(subscription.getTier().getApiRequestsPerHour())
-            .apiBurstLimit(subscription.getTier().getApiBurstLimit())
-            .smsCreditsPerMonth(subscription.getTier().getSmsCreditsPerMonth())
-            .emailCreditsPerMonth(subscription.getTier().getEmailCreditsPerMonth())
-            .isActive(subscription.isActive())
-            .isInTrial(subscription.isInTrial())
-            .hasExceededMemberLimit(subscription.hasExceededMemberLimit())
-            .memberOverage(subscription.getMemberOverage())
-            .hasStripeSubscription(subscription.getStripeSubscriptionId() != null)
-            .hasPaymentMethod(subscription.getStripeCustomerId() != null)
-            .daysRemainingInTrial(daysRemainingInTrial)
-            .daysUntilRenewal(daysUntilRenewal)
-            .build();
+        return new SubscriptionResponse(
+                subscription.getId(),
+                subscription.getOrganisationId(),
+                subscription.getTier().getName(),
+                subscription.getTier().getDisplayName(),
+                subscription.getStatus().name(),
+                subscription.getCurrentPeriodStart(),
+                subscription.getCurrentPeriodEnd(),
+                subscription.getCancelAtPeriodEnd(),
+                subscription.getCancelledAt(),
+                subscription.getTrialStart(),
+                subscription.getTrialEnd(),
+                subscription.getCurrentMemberCount(),
+                subscription.getTier().getMaxMembers(),
+                subscription.getTier().getPrice(),
+                subscription.getTier().getBillingCycle(),
+                subscription.getTier().getApiRequestsPerHour(),
+                subscription.getTier().getApiBurstLimit(),
+                subscription.getTier().getSmsCreditsPerMonth(),
+                subscription.getTier().getEmailCreditsPerMonth(),
+                subscription.isActive(),
+                subscription.isInTrial(),
+                subscription.hasExceededMemberLimit(),
+                subscription.getMemberOverage(),
+                subscription.getStripeSubscriptionId() != null,
+                subscription.getStripeCustomerId() != null,
+                daysRemainingInTrial,
+                daysUntilRenewal);
     }
 
     public SubscriptionTierResponse toTierResponse(SubscriptionTier tier) {
         List<String> features = parseFeatures(tier.getFeatures());
 
-        return SubscriptionTierResponse.builder()
-            .id(tier.getId())
-            .name(tier.getName())
-            .displayName(tier.getDisplayName())
-            .description(tier.getDescription())
-            .price(tier.getPrice())
-            .billingCycle(tier.getBillingCycle())
-            .isActive(tier.getActive())
-            .isFeatured(tier.getFeatured())
-            .maxMembers(tier.getMaxMembers())
-            .maxLocations(tier.getMaxLocations())
-            .maxStaff(tier.getMaxStaff())
-            .maxClassesPerMonth(tier.getMaxClassesPerMonth())
-            .apiRequestsPerHour(tier.getApiRequestsPerHour())
-            .apiBurstLimit(tier.getApiBurstLimit())
-            .concurrentConnections(tier.getConcurrentConnections())
-            .smsCreditsPerMonth(tier.getSmsCreditsPerMonth())
-            .emailCreditsPerMonth(tier.getEmailCreditsPerMonth())
-            .features(features)
-            .overageMemberPrice(tier.getOverageMemberPrice())
-            .overageSmsPrice(tier.getOverageSmsPrice())
-            .overageEmailPrice(tier.getOverageEmailPrice())
-            .sortOrder(tier.getSortOrder())
-            .trialDays(tier.getTrialDays())
-            .hasStripeIntegration(tier.getStripePriceId() != null && !tier.getStripePriceId().isBlank())
-            .build();
+        return new SubscriptionTierResponse(
+                tier.getId(),
+                tier.getName(),
+                tier.getDisplayName(),
+                tier.getDescription(),
+                tier.getPrice(),
+                tier.getBillingCycle(),
+                tier.getActive(),
+                tier.getFeatured(),
+                tier.getMaxMembers(),
+                tier.getMaxLocations(),
+                tier.getMaxStaff(),
+                tier.getMaxClassesPerMonth(),
+                tier.getApiRequestsPerHour(),
+                tier.getApiBurstLimit(),
+                tier.getConcurrentConnections(),
+                tier.getSmsCreditsPerMonth(),
+                tier.getEmailCreditsPerMonth(),
+                features,
+                tier.getOverageMemberPrice(),
+                tier.getOverageSmsPrice(),
+                tier.getOverageEmailPrice(),
+                tier.getSortOrder(),
+                tier.getTrialDays(),
+                tier.getStripePriceId() != null && !tier.getStripePriceId().isBlank());
     }
 
     private List<String> parseFeatures(String featuresJson) {

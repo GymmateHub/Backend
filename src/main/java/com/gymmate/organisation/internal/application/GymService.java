@@ -398,17 +398,21 @@ public class GymService {
         totalRevenue = totalRevenue.add(platformInvoiceRevenueSource.sumPaidAmountByOrganisationIdAndPeriod(
                 owner.organisationId(), monthStart, monthEnd));
 
-        return GymAnalyticsResponse.builder()
-                .totalGyms(totalGyms)
-                .activeLocations((int) activeLocations)
-                .totalCapacity(totalCapacity)
-                .avgUtilization(Math.round(avgUtilization * 100.0) / 100.0) // Round to 2 decimal places
-                .totalRevenue(totalRevenue)
-                .totalMembers(totalMembers)
-                .totalActiveMembers(totalActiveMembers)
-                .totalStaff(totalStaff)
-                .totalTrainers(totalTrainers)
-                .build();
+        return new GymAnalyticsResponse(
+                null,
+                null,
+                totalGyms,
+                totalCapacity,
+                (int) activeLocations,
+                Math.round(avgUtilization * 100.0) / 100.0, // Round to 2 decimal places
+                totalRevenue,
+                totalMembers,
+                totalActiveMembers,
+                totalStaff,
+                totalTrainers,
+                null,
+                null,
+                null);
     }
 
     /**
@@ -451,21 +455,20 @@ public class GymService {
         LocalDateTime monthEnd = monthStart.plusMonths(1);
         BigDecimal gymRevenue = membershipRevenueSource.sumPaidAmountByGymIdAndPeriod(gymId, monthStart, monthEnd);
 
-        return GymAnalyticsResponse.builder()
-                .gymId(gymId)
-                .gymName(gym.getName())
-                .totalGyms(1)
-                .activeLocations(gym.getStatus() == GymStatus.ACTIVE ? 1 : 0)
-                .totalCapacity(maxMembers)
-                .avgUtilization(Math.round(utilization * 100.0) / 100.0)
-                .totalRevenue(gymRevenue)
-                .totalMembers((int) currentMembers)
-                .totalActiveMembers((int) activeMembers)
-                .totalStaff((int) staff)
-                .totalTrainers((int) trainers)
-                .currentMembers((int) currentMembers)
-                .maxMembers(maxMembers)
-                .utilizationPercentage(Math.round(utilization * 100.0) / 100.0)
-                .build();
+        return new GymAnalyticsResponse(
+                gymId,
+                gym.getName(),
+                1,
+                maxMembers,
+                gym.getStatus() == GymStatus.ACTIVE ? 1 : 0,
+                Math.round(utilization * 100.0) / 100.0,
+                gymRevenue,
+                (int) currentMembers,
+                (int) activeMembers,
+                (int) staff,
+                (int) trainers,
+                (int) currentMembers,
+                maxMembers,
+                Math.round(utilization * 100.0) / 100.0);
     }
 }

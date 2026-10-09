@@ -108,7 +108,7 @@ public class NewsletterCampaignController {
             @PathVariable UUID id,
             @Valid @RequestBody ScheduleCampaignRequest request) {
 
-        NewsletterCampaign campaign = campaignService.schedule(id, request.getScheduledAt());
+        NewsletterCampaign campaign = campaignService.schedule(id, request.scheduledAt());
 
         return ResponseEntity.ok(ApiResponse.success(
                 CampaignResponse.fromEntity(campaign),

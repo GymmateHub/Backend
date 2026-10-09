@@ -93,15 +93,18 @@ class RefundRequestServiceTest {
                 @DisplayName("Should create refund request successfully")
                 void createRefundRequest_Success() {
                         // Arrange
-                        CreateRefundRequestDTO dto = CreateRefundRequestDTO.builder()
-                                        .refundType(RefundType.MEMBER_PAYMENT)
-                                        .stripePaymentIntentId(paymentIntentId)
-                                        .originalPaymentAmount(new BigDecimal("100.00"))
-                                        .requestedRefundAmount(new BigDecimal("50.00"))
-                                        .currency("USD")
-                                        .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
-                                        .reasonDescription("Class was cancelled")
-                                        .build();
+                        CreateRefundRequestDTO dto = new CreateRefundRequestDTO(
+                                RefundType.MEMBER_PAYMENT,
+                                paymentIntentId,
+                                null,
+                                new BigDecimal("100.00"),
+                                new BigDecimal("50.00"),
+                                "USD",
+                                null,
+                                null,
+                                RefundReasonCategory.SERVICE_NOT_PROVIDED,
+                                "Class was cancelled",
+                                null);
 
                         when(refundRequestRepository.findByStripePaymentIntentIdAndStatus(
                                         paymentIntentId, RefundRequestStatus.PENDING))
@@ -125,12 +128,12 @@ class RefundRequestServiceTest {
 
                         // Assert
                         assertThat(response).isNotNull();
-                        assertThat(response.getGymId()).isEqualTo(gymId);
-                        assertThat(response.getRefundType()).isEqualTo(RefundType.MEMBER_PAYMENT);
-                        assertThat(response.getOriginalPaymentAmount()).isEqualByComparingTo(new BigDecimal("100.00"));
-                        assertThat(response.getRequestedRefundAmount()).isEqualByComparingTo(new BigDecimal("50.00"));
-                        assertThat(response.getStatus()).isEqualTo(RefundRequestStatus.PENDING);
-                        assertThat(response.getReasonCategory()).isEqualTo(RefundReasonCategory.SERVICE_NOT_PROVIDED);
+                        assertThat(response.gymId()).isEqualTo(gymId);
+                        assertThat(response.refundType()).isEqualTo(RefundType.MEMBER_PAYMENT);
+                        assertThat(response.originalPaymentAmount()).isEqualByComparingTo(new BigDecimal("100.00"));
+                        assertThat(response.requestedRefundAmount()).isEqualByComparingTo(new BigDecimal("50.00"));
+                        assertThat(response.status()).isEqualTo(RefundRequestStatus.PENDING);
+                        assertThat(response.reasonCategory()).isEqualTo(RefundReasonCategory.SERVICE_NOT_PROVIDED);
 
                         // Verify audit log was created
                         verify(auditLogRepository).save(any(RefundAuditLog.class));
@@ -140,13 +143,18 @@ class RefundRequestServiceTest {
                 @DisplayName("Should reject when refund amount exceeds original payment")
                 void createRefundRequest_AmountExceedsOriginal_ThrowsException() {
                         // Arrange
-                        CreateRefundRequestDTO dto = CreateRefundRequestDTO.builder()
-                                        .refundType(RefundType.MEMBER_PAYMENT)
-                                        .stripePaymentIntentId(paymentIntentId)
-                                        .originalPaymentAmount(new BigDecimal("50.00"))
-                                        .requestedRefundAmount(new BigDecimal("100.00")) // More than original
-                                        .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
-                                        .build();
+                        CreateRefundRequestDTO dto = new CreateRefundRequestDTO(
+                                RefundType.MEMBER_PAYMENT,
+                                paymentIntentId,
+                                null,
+                                new BigDecimal("50.00"),
+                                new BigDecimal("100.00"), // More than original
+                                null,
+                                null,
+                                null,
+                                RefundReasonCategory.SERVICE_NOT_PROVIDED,
+                                null,
+                                null);
 
                         // Act & Assert
                         assertThatThrownBy(() -> refundRequestService.createRefundRequest(
@@ -161,13 +169,18 @@ class RefundRequestServiceTest {
                 @DisplayName("Should reject duplicate pending request for same payment")
                 void createRefundRequest_DuplicatePending_ThrowsException() {
                         // Arrange
-                        CreateRefundRequestDTO dto = CreateRefundRequestDTO.builder()
-                                        .refundType(RefundType.MEMBER_PAYMENT)
-                                        .stripePaymentIntentId(paymentIntentId)
-                                        .originalPaymentAmount(new BigDecimal("100.00"))
-                                        .requestedRefundAmount(new BigDecimal("50.00"))
-                                        .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
-                                        .build();
+                        CreateRefundRequestDTO dto = new CreateRefundRequestDTO(
+                                RefundType.MEMBER_PAYMENT,
+                                paymentIntentId,
+                                null,
+                                new BigDecimal("100.00"),
+                                new BigDecimal("50.00"),
+                                null,
+                                null,
+                                null,
+                                RefundReasonCategory.SERVICE_NOT_PROVIDED,
+                                null,
+                                null);
 
                         RefundRequestEntity existingRequest = RefundRequestEntity.builder()
                                         .status(RefundRequestStatus.PENDING)
@@ -190,13 +203,18 @@ class RefundRequestServiceTest {
                 @DisplayName("Should set default SLA due date")
                 void createRefundRequest_SetsDueDate() {
                         // Arrange
-                        CreateRefundRequestDTO dto = CreateRefundRequestDTO.builder()
-                                        .refundType(RefundType.MEMBER_PAYMENT)
-                                        .stripePaymentIntentId(paymentIntentId)
-                                        .originalPaymentAmount(new BigDecimal("100.00"))
-                                        .requestedRefundAmount(new BigDecimal("100.00"))
-                                        .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
-                                        .build();
+                        CreateRefundRequestDTO dto = new CreateRefundRequestDTO(
+                                RefundType.MEMBER_PAYMENT,
+                                paymentIntentId,
+                                null,
+                                new BigDecimal("100.00"),
+                                new BigDecimal("100.00"),
+                                null,
+                                null,
+                                null,
+                                RefundReasonCategory.SERVICE_NOT_PROVIDED,
+                                null,
+                                null);
 
                         when(refundRequestRepository.findByStripePaymentIntentIdAndStatus(any(), any()))
                                         .thenReturn(Optional.empty());
@@ -244,8 +262,8 @@ class RefundRequestServiceTest {
                                         requestId, approverId, "GYM_OWNER", "Approved for good customer");
 
                         // Assert
-                        assertThat(response.getStatus()).isEqualTo(RefundRequestStatus.APPROVED);
-                        assertThat(response.getProcessedByUserId()).isEqualTo(approverId);
+                        assertThat(response.status()).isEqualTo(RefundRequestStatus.APPROVED);
+                        assertThat(response.processedByUserId()).isEqualTo(approverId);
                         verify(auditLogRepository).save(any(RefundAuditLog.class));
                 }
 
@@ -311,8 +329,8 @@ class RefundRequestServiceTest {
                                         "Customer misused service");
 
                         // Assert
-                        assertThat(response.getStatus()).isEqualTo(RefundRequestStatus.REJECTED);
-                        assertThat(response.getRejectionReason()).isEqualTo("Policy violation");
+                        assertThat(response.status()).isEqualTo(RefundRequestStatus.REJECTED);
+                        assertThat(response.rejectionReason()).isEqualTo("Policy violation");
                         verify(auditLogRepository).save(any(RefundAuditLog.class));
                 }
 
@@ -366,7 +384,7 @@ class RefundRequestServiceTest {
                                         requestId, requesterId, "MEMBER");
 
                         // Assert
-                        assertThat(response.getStatus()).isEqualTo(RefundRequestStatus.CANCELLED);
+                        assertThat(response.status()).isEqualTo(RefundRequestStatus.CANCELLED);
                         verify(auditLogRepository).save(any(RefundAuditLog.class));
                 }
 
@@ -394,7 +412,7 @@ class RefundRequestServiceTest {
                                         requestId, adminId, "SUPER_ADMIN");
 
                         // Assert
-                        assertThat(response.getStatus()).isEqualTo(RefundRequestStatus.CANCELLED);
+                        assertThat(response.status()).isEqualTo(RefundRequestStatus.CANCELLED);
                 }
 
                 @Test
@@ -469,13 +487,14 @@ class RefundRequestServiceTest {
                         request.setGymId(gymId);
                         request.setCreatedAt(LocalDateTime.now());
 
-                        RefundResponse stripeResponse = RefundResponse.builder()
-                                        .refundId("re_test123")
-                                        .paymentIntentId(paymentIntentId)
-                                        .amount(new BigDecimal("50.00"))
-                                        .currency("USD")
-                                        .status("succeeded")
-                                        .build();
+                        RefundResponse stripeResponse = new RefundResponse(
+                                "re_test123",
+                                paymentIntentId,
+                                new BigDecimal("50.00"),
+                                "USD",
+                                "succeeded",
+                                null,
+                                null);
 
                         PaymentRefund paymentRefund = PaymentRefund.builder()
                                         .stripeRefundId("re_test123")
@@ -498,8 +517,8 @@ class RefundRequestServiceTest {
 
                         // Assert
                         assertThat(response).isNotNull();
-                        assertThat(response.getRefundId()).isEqualTo("re_test123");
-                        assertThat(response.getAmount()).isEqualByComparingTo(new BigDecimal("50.00"));
+                        assertThat(response.refundId()).isEqualTo("re_test123");
+                        assertThat(response.amount()).isEqualByComparingTo(new BigDecimal("50.00"));
 
                         // Verify payment refund was updated with tracking info
                         ArgumentCaptor<PaymentRefund> refundCaptor = ArgumentCaptor.forClass(PaymentRefund.class);
@@ -598,7 +617,7 @@ class RefundRequestServiceTest {
 
                         // Assert
                         assertThat(response).isNotNull();
-                        assertThat(response.getId()).isEqualTo(requestId);
+                        assertThat(response.id()).isEqualTo(requestId);
                 }
 
                 @Test

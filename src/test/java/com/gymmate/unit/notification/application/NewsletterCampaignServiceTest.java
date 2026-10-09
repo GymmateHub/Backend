@@ -89,12 +89,15 @@ class NewsletterCampaignServiceTest {
         @DisplayName("Should create campaign without template")
         void create_WithoutTemplate_Success() {
             // Arrange
-            CreateCampaignRequest request = new CreateCampaignRequest();
-            request.setGymId(gymId);
-            request.setName("Monthly Newsletter");
-            request.setSubject("Monthly Update");
-            request.setBody("<p>Hello members!</p>");
-            request.setAudienceType(AudienceType.ALL_MEMBERS);
+            CreateCampaignRequest request = new CreateCampaignRequest(
+                    gymId,
+                    null,
+                    "Monthly Newsletter",
+                    "Monthly Update",
+                    "<p>Hello members!</p>",
+                    AudienceType.ALL_MEMBERS,
+                    null,
+                    null);
 
             when(campaignRepository.save(any(NewsletterCampaign.class)))
                     .thenAnswer(inv -> {
@@ -129,13 +132,15 @@ class NewsletterCampaignServiceTest {
                     .build();
             template.setId(templateId);
 
-            CreateCampaignRequest request = new CreateCampaignRequest();
-            request.setGymId(gymId);
-            request.setTemplateId(templateId);
-            request.setName("Welcome Campaign");
-            request.setSubject(""); // Should use template subject
-            request.setBody(""); // Should use template body
-            request.setAudienceType(AudienceType.ALL_MEMBERS);
+            CreateCampaignRequest request = new CreateCampaignRequest(
+                    gymId,
+                    templateId,
+                    "Welcome Campaign",
+                    "", // Should use template subject
+                    "", // Should use template body
+                    AudienceType.ALL_MEMBERS,
+                    null,
+                    null);
 
             when(templateRepository.findById(templateId)).thenReturn(Optional.of(template));
             when(campaignRepository.save(any(NewsletterCampaign.class)))
@@ -163,12 +168,15 @@ class NewsletterCampaignServiceTest {
         void create_TemplateNotFound_ThrowsException() {
             // Arrange
             UUID templateId = UUID.randomUUID();
-            CreateCampaignRequest request = new CreateCampaignRequest();
-            request.setGymId(gymId);
-            request.setTemplateId(templateId);
-            request.setSubject("Subject");
-            request.setBody("Body");
-            request.setAudienceType(AudienceType.ALL_MEMBERS);
+            CreateCampaignRequest request = new CreateCampaignRequest(
+                    gymId,
+                    templateId,
+                    null,
+                    "Subject",
+                    "Body",
+                    AudienceType.ALL_MEMBERS,
+                    null,
+                    null);
 
             when(templateRepository.findById(templateId)).thenReturn(Optional.empty());
 
@@ -186,13 +194,15 @@ class NewsletterCampaignServiceTest {
         @DisplayName("Should schedule campaign if scheduledAt provided")
         void create_WithScheduledAt_SchedulesCampaign() {
             // Arrange
-            CreateCampaignRequest request = new CreateCampaignRequest();
-            request.setGymId(gymId);
-            request.setName("Scheduled Campaign");
-            request.setSubject("Subject");
-            request.setBody("Body");
-            request.setAudienceType(AudienceType.ALL_MEMBERS);
-            request.setScheduledAt(LocalDateTime.now().plusDays(1));
+            CreateCampaignRequest request = new CreateCampaignRequest(
+                    gymId,
+                    null,
+                    "Scheduled Campaign",
+                    "Subject",
+                    "Body",
+                    AudienceType.ALL_MEMBERS,
+                    null,
+                    LocalDateTime.now().plusDays(1));
 
             when(campaignRepository.save(any(NewsletterCampaign.class)))
                     .thenAnswer(inv -> {
@@ -324,9 +334,7 @@ class NewsletterCampaignServiceTest {
             NewsletterCampaign campaign = createExistingCampaign(campaignId);
             campaign.setGymId(gymId);
 
-            AudiencePreviewResponse preview = AudiencePreviewResponse.builder()
-                    .totalCount(150)
-                    .build();
+            AudiencePreviewResponse preview = new AudiencePreviewResponse(150, null);
 
             when(campaignRepository.findById(campaignId)).thenReturn(Optional.of(campaign));
             when(audienceResolver.getAudiencePreview(gymId, AudienceType.ALL_MEMBERS, null))
@@ -336,7 +344,7 @@ class NewsletterCampaignServiceTest {
             AudiencePreviewResponse result = campaignService.getAudiencePreview(campaignId);
 
             // Assert
-            assertThat(result.getTotalCount()).isEqualTo(150);
+            assertThat(result.totalCount()).isEqualTo(150);
         }
     }
 

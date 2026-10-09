@@ -48,8 +48,8 @@ public class PaymentController {
         UUID gymId = TenantContext.getCurrentTenantId();
         PaymentMethodResponse response = stripePaymentService.attachPaymentMethod(
                 gymId,
-                request.getStripePaymentMethodId(),
-                request.getSetAsDefault() != null ? request.getSetAsDefault() : true);
+                request.stripePaymentMethodId(),
+                request.setAsDefault() != null ? request.setAsDefault() : true);
 
         return ResponseEntity.ok(ApiResponse.success(response, "Payment method attached successfully"));
     }

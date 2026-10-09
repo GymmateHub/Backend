@@ -50,14 +50,14 @@ public class NewsletterCampaignService {
      */
     @Transactional
     public NewsletterCampaign create(CreateCampaignRequest request, UUID createdBy) {
-        String subject = request.getSubject();
-        String body = request.getBody();
+        String subject = request.subject();
+        String body = request.body();
 
         // If using a template, copy content from template
-        if (request.getTemplateId() != null) {
-            NewsletterTemplate template = templateRepository.findById(request.getTemplateId())
+        if (request.templateId() != null) {
+            NewsletterTemplate template = templateRepository.findById(request.templateId())
                     .orElseThrow(() -> new DomainException("TEMPLATE_NOT_FOUND",
-                            "Template not found: " + request.getTemplateId()));
+                            "Template not found: " + request.templateId()));
             if (subject == null || subject.isBlank()) {
                 subject = template.getSubject();
             }
@@ -67,25 +67,25 @@ public class NewsletterCampaignService {
         }
 
         NewsletterCampaign campaign = NewsletterCampaign.builder()
-                .templateId(request.getTemplateId())
-                .name(request.getName())
+                .templateId(request.templateId())
+                .name(request.name())
                 .subject(subject)
                 .body(body)
-                .audienceType(request.getAudienceType())
-                .audienceFilter(request.getAudienceFilter())
+                .audienceType(request.audienceType())
+                .audienceFilter(request.audienceFilter())
                 .build();
         campaign.setCreatedBy(createdBy.toString());
 
-        campaign.setGymId(request.getGymId());
+        campaign.setGymId(request.gymId());
         campaign.setOrganisationId(TenantContext.getCurrentTenantId());
 
         // Schedule if requested
-        if (request.getScheduledAt() != null) {
-            campaign.schedule(request.getScheduledAt());
+        if (request.scheduledAt() != null) {
+            campaign.schedule(request.scheduledAt());
         }
 
         NewsletterCampaign saved = campaignRepository.save(campaign);
-        log.info("Created newsletter campaign: {} for gym: {}", saved.getId(), request.getGymId());
+        log.info("Created newsletter campaign: {} for gym: {}", saved.getId(), request.gymId());
         return saved;
     }
 

@@ -40,27 +40,27 @@ public class AdminNotificationEventListener {
     public void handlePaymentFailedEvent(PaymentFailedEvent event) {
         log.info("Handling PaymentFailedEvent for organisation: {}", event.getOrganisationId());
 
-        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.getGymId())) {
+        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.gymId())) {
             Map<String, Object> metadata = new HashMap<>();
-            metadata.put("gymId", event.getGymId());
-            metadata.put("amount", event.getAmount());
-            metadata.put("failureReason", event.getFailureReason());
-            metadata.put("nextRetryDate", event.getNextRetryDate());
-            metadata.put("invoiceId", event.getInvoiceId());
+            metadata.put("gymId", event.gymId());
+            metadata.put("amount", event.amount());
+            metadata.put("failureReason", event.failureReason());
+            metadata.put("nextRetryDate", event.nextRetryDate());
+            metadata.put("invoiceId", event.invoiceId());
 
             // A platform (organisation-level) subscription failure has no single gym
             // (event.getGymId() is null — see StripeWebhookService.handleInvoicePaymentFailed);
             // a Connect (member payment) failure always has one. Scope the in-app
             // notification accordingly instead of forcing GYM scope with a null id.
-            boolean isGymScoped = event.getGymId() != null;
+            boolean isGymScoped = event.gymId() != null;
             Notification notification = Notification.builder()
-                    .gymId(event.getGymId())
+                    .gymId(event.gymId())
                     .title(event.getNotificationTitle())
                     .message(event.getNotificationMessage())
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
-                    .relatedEntityId(isGymScoped ? event.getGymId() : event.getOrganisationId())
+                    .relatedEntityId(isGymScoped ? event.gymId() : event.getOrganisationId())
                     .relatedEntityType(isGymScoped ? "GYM" : "ORGANISATION")
                     .recipientRole(Notification.RecipientRole.OWNER)
                     .scope(isGymScoped ? Notification.NotificationScope.GYM : Notification.NotificationScope.ORGANISATION)
@@ -89,22 +89,22 @@ public class AdminNotificationEventListener {
     public void handlePaymentSuccessEvent(PaymentSuccessEvent event) {
         log.info("Handling PaymentSuccessEvent for organisation: {}", event.getOrganisationId());
 
-        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.getGymId())) {
+        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.gymId())) {
             Map<String, Object> metadata = new HashMap<>();
-            metadata.put("gymId", event.getGymId());
-            metadata.put("amount", event.getAmount());
-            metadata.put("invoiceNumber", event.getInvoiceNumber());
-            metadata.put("invoiceUrl", event.getInvoiceUrl());
-            metadata.put("periodEnd", event.getPeriodEnd());
+            metadata.put("gymId", event.gymId());
+            metadata.put("amount", event.amount());
+            metadata.put("invoiceNumber", event.invoiceNumber());
+            metadata.put("invoiceUrl", event.invoiceUrl());
+            metadata.put("periodEnd", event.periodEnd());
 
             Notification notification = Notification.builder()
-                    .gymId(event.getGymId())
+                    .gymId(event.gymId())
                     .title(event.getNotificationTitle())
                     .message(event.getNotificationMessage())
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
-                    .relatedEntityId(event.getGymId())
+                    .relatedEntityId(event.gymId())
                     .relatedEntityType("GYM")
                     .recipientRole(Notification.RecipientRole.OWNER)
                     .scope(Notification.NotificationScope.GYM)
@@ -130,11 +130,11 @@ public class AdminNotificationEventListener {
 
         try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), null)) {
             Map<String, Object> metadata = new HashMap<>();
-            metadata.put("subscriptionId", event.getSubscriptionId());
-            metadata.put("tierName", event.getTierName());
-            metadata.put("price", event.getPrice());
-            metadata.put("expiresAt", event.getExpiresAt());
-            metadata.put("daysUntilExpiry", event.getDaysUntilExpiry());
+            metadata.put("subscriptionId", event.subscriptionId());
+            metadata.put("tierName", event.tierName());
+            metadata.put("price", event.price());
+            metadata.put("expiresAt", event.expiresAt());
+            metadata.put("daysUntilExpiry", event.daysUntilExpiry());
 
             Notification notification = Notification.builder()
                     .title(event.getNotificationTitle())
@@ -142,7 +142,7 @@ public class AdminNotificationEventListener {
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
-                    .relatedEntityId(event.getSubscriptionId())
+                    .relatedEntityId(event.subscriptionId())
                     .relatedEntityType("SUBSCRIPTION")
                     .recipientRole(Notification.RecipientRole.OWNER)
                     .scope(Notification.NotificationScope.ORGANISATION)
@@ -166,22 +166,22 @@ public class AdminNotificationEventListener {
     public void handleMemberJoinedEvent(MemberJoinedEvent event) {
         log.info("Handling MemberJoinedEvent for organisation: {}", event.getOrganisationId());
 
-        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.getGymId())) {
+        try (TenantScope ignored = TenantScope.activate(event.getOrganisationId(), event.gymId())) {
             Map<String, Object> metadata = new HashMap<>();
-            metadata.put("gymId", event.getGymId());
-            metadata.put("memberId", event.getMemberId());
-            metadata.put("memberName", event.getMemberName());
-            metadata.put("memberEmail", event.getMemberEmail());
-            metadata.put("membershipPlan", event.getMembershipPlan());
+            metadata.put("gymId", event.gymId());
+            metadata.put("memberId", event.memberId());
+            metadata.put("memberName", event.memberName());
+            metadata.put("memberEmail", event.memberEmail());
+            metadata.put("membershipPlan", event.membershipPlan());
 
             Notification notification = Notification.builder()
-                    .gymId(event.getGymId())
+                    .gymId(event.gymId())
                     .title(event.getNotificationTitle())
                     .message(event.getNotificationMessage())
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
-                    .relatedEntityId(event.getMemberId())
+                    .relatedEntityId(event.memberId())
                     .relatedEntityType("MEMBER")
                     .recipientRole(Notification.RecipientRole.GYM_MANAGER)
                     .scope(Notification.NotificationScope.GYM)

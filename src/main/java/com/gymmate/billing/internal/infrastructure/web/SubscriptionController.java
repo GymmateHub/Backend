@@ -47,13 +47,13 @@ public class SubscriptionController {
         UUID organisationId = TenantContext.getCurrentTenantId();
         Subscription subscription = subscriptionService.createSubscription(
             organisationId,
-            request.getTierName(),
-            Boolean.TRUE.equals(request.getStartTrial()),
-            request.getPaymentMethodId(),
-            request.getEnableStripeBilling() != null ? request.getEnableStripeBilling() : true
+            request.tierName(),
+            Boolean.TRUE.equals(request.startTrial()),
+            request.paymentMethodId(),
+            request.enableStripeBilling() != null ? request.enableStripeBilling() : true
         );
 
-        String message = Boolean.TRUE.equals(request.getStartTrial())
+        String message = Boolean.TRUE.equals(request.startTrial())
             ? "Subscription created with trial period"
             : "Subscription created successfully";
 
@@ -78,7 +78,7 @@ public class SubscriptionController {
             @Valid @RequestBody ChangeTierRequest request) {
 
         UUID organisationId = TenantContext.getCurrentTenantId();
-        Subscription subscription = subscriptionService.upgradeSubscription(organisationId, request.getNewTierName());
+        Subscription subscription = subscriptionService.upgradeSubscription(organisationId, request.newTierName());
 
         return ResponseEntity.ok(
             ApiResponse.success(mapper.toResponse(subscription), "Subscription upgraded successfully"));
@@ -91,7 +91,7 @@ public class SubscriptionController {
             @Valid @RequestBody ChangeTierRequest request) {
 
         UUID organisationId = TenantContext.getCurrentTenantId();
-        Subscription subscription = subscriptionService.downgradeSubscription(organisationId, request.getNewTierName());
+        Subscription subscription = subscriptionService.downgradeSubscription(organisationId, request.newTierName());
 
         return ResponseEntity.ok(
             ApiResponse.success(mapper.toResponse(subscription), "Subscription downgraded successfully"));

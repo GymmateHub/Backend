@@ -31,7 +31,7 @@ public class ClassCategoryController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CreateCategoryRequest req) {
     ClassCategory c = mapper.toEntity(req);
-    UUID effectiveGymId = req.getGymId() != null ? req.getGymId() : TenantContext.getCurrentGymId();
+    UUID effectiveGymId = req.gymId() != null ? req.gymId() : TenantContext.getCurrentGymId();
     c.setGymId(effectiveGymId);
     ClassCategory created = categoryService.createCategory(c);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Category created"));
@@ -54,7 +54,7 @@ public class ClassCategoryController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<CategoryResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateCategoryRequest req) {
     ClassCategory c = categoryService.getCategory(id);
-    c.updateDetails(req.getName(), req.getDescription(), req.getColor());
+    c.updateDetails(req.name(), req.description(), req.color());
     ClassCategory updated = categoryService.updateCategory(c);
     return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated), "Category updated"));
   }

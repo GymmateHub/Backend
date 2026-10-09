@@ -1,27 +1,16 @@
 package com.gymmate.notification.internal.application.dto;
 
-import lombok.Builder;
-import lombok.Data;
-
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Response DTO for audience preview.
  */
-@Data
-@Builder
-public class AudiencePreviewResponse {
+public record AudiencePreviewResponse(
+        int totalCount,
+        List<RecipientPreview> sampleRecipients
+) {
 
-    private int totalCount;
-    private List<RecipientPreview> sampleRecipients;
-
-    @Data
-    @Builder
-    public static class RecipientPreview {
-        private UUID memberId;
-        private String firstName;
-        private String lastName;
-        private String email;
+    public record RecipientPreview(UUID memberId, String firstName, String lastName, String email) {
     }
 }

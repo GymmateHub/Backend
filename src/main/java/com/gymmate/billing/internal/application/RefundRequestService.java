@@ -60,14 +60,14 @@ public class RefundRequestService {
     UUID organisationId = tenantValidationService.requireCurrentTenantId();
 
     // Validate requested amount doesn't exceed original
-    if (dto.getRequestedRefundAmount().compareTo(dto.getOriginalPaymentAmount()) > 0) {
+    if (dto.requestedRefundAmount().compareTo(dto.originalPaymentAmount()) > 0) {
       throw new DomainException("INVALID_REFUND_AMOUNT",
         "Requested refund amount cannot exceed original payment amount");
     }
 
     // Check for existing pending request for same payment
     refundRequestRepository.findByStripePaymentIntentIdAndStatus(
-        dto.getStripePaymentIntentId(), RefundRequestStatus.PENDING)
+        dto.stripePaymentIntentId(), RefundRequestStatus.PENDING)
       .ifPresent(existing -> {
         // SECURITY: Validate the existing request belongs to current tenant
         tenantValidationService.validateTenantAccess(
@@ -78,21 +78,21 @@ public class RefundRequestService {
 
     // Create refund request
     RefundRequestEntity request = RefundRequestEntity.builder()
-      .refundType(dto.getRefundType())
-      .stripePaymentIntentId(dto.getStripePaymentIntentId())
-      .stripeChargeId(dto.getStripeChargeId())
-      .originalPaymentAmount(dto.getOriginalPaymentAmount())
-      .requestedRefundAmount(dto.getRequestedRefundAmount())
-      .currency(dto.getCurrency() != null ? dto.getCurrency() : "USD")
-      .membershipId(dto.getMembershipId())
-      .classBookingId(dto.getClassBookingId())
+      .refundType(dto.refundType())
+      .stripePaymentIntentId(dto.stripePaymentIntentId())
+      .stripeChargeId(dto.stripeChargeId())
+      .originalPaymentAmount(dto.originalPaymentAmount())
+      .requestedRefundAmount(dto.requestedRefundAmount())
+      .currency(dto.currency() != null ? dto.currency() : "USD")
+      .membershipId(dto.membershipId())
+      .classBookingId(dto.classBookingId())
       .requestedByUserId(requestedByUserId)
       .requestedByType(requestedByType)
       .refundToUserId(refundToUserId)
       .refundToType(refundToType)
-      .reasonCategory(dto.getReasonCategory())
-      .reasonDescription(dto.getReasonDescription())
-      .supportingEvidence(dto.getSupportingEvidence())
+      .reasonCategory(dto.reasonCategory())
+      .reasonDescription(dto.reasonDescription())
+      .supportingEvidence(dto.supportingEvidence())
       .status(RefundRequestStatus.PENDING)
       .dueBy(LocalDateTime.now().plusDays(DEFAULT_SLA_DAYS))
       .build();
@@ -106,7 +106,7 @@ public class RefundRequestService {
     auditLogRepository.save(auditLog);
 
     log.info("Created refund request {} for payment {} by user {} ({})",
-      saved.getId(), dto.getStripePaymentIntentId(), requestedByUserId, requestedByType);
+      saved.getId(), dto.stripePaymentIntentId(), requestedByUserId, requestedByType);
 
     return toResponse(saved);
   }
@@ -238,11 +238,10 @@ public class RefundRequestService {
         }
 
         // Create the refund request DTO for Stripe
-        RefundRequest stripeRequest = RefundRequest.builder()
-                .paymentIntentId(request.getStripePaymentIntentId())
-                .amount(request.getRequestedRefundAmount())
-                .reason(request.getReasonDescription())
-                .build();
+        RefundRequest stripeRequest = new RefundRequest(
+                request.getStripePaymentIntentId(),
+                request.getRequestedRefundAmount(),
+                request.getReasonDescription());
 
         // Process the actual refund via Stripe
         RefundResponse refundResponse = stripePaymentService.processRefund(
@@ -250,7 +249,7 @@ public class RefundRequestService {
 
         // Update the PaymentRefund with additional tracking info
         PaymentRefund paymentRefund = paymentRefundRepository
-                .findByStripeRefundId(refundResponse.getRefundId())
+                .findByStripeRefundId(refundResponse.refundId())
                 .orElseThrow(() -> new DomainException("REFUND_NOT_FOUND", "Processed refund not found"));
 
         paymentRefund.setRefundToUserId(request.getRefundToUserId());
@@ -270,7 +269,7 @@ public class RefundRequestService {
         auditLogRepository.save(auditLog);
 
         log.info("Refund request {} processed successfully. Stripe refund: {}",
-                requestId, refundResponse.getRefundId());
+                requestId, refundResponse.refundId());
 
         return refundResponse;
     }
@@ -373,59 +372,52 @@ public class RefundRequestService {
     }
 
     private RefundRequestResponse toResponse(RefundRequestEntity request) {
-        RefundRequestResponse.RefundRequestResponseBuilder builder = RefundRequestResponse.builder()
-                .id(request.getId())
-                .gymId(request.getGymId())
-                .refundType(request.getRefundType())
-                .stripePaymentIntentId(request.getStripePaymentIntentId())
-                .originalPaymentAmount(request.getOriginalPaymentAmount())
-                .requestedRefundAmount(request.getRequestedRefundAmount())
-                .currency(request.getCurrency())
-                .membershipId(request.getMembershipId())
-                .classBookingId(request.getClassBookingId())
-                .requestedByUserId(request.getRequestedByUserId())
-                .requestedByType(request.getRequestedByType())
-                .refundToUserId(request.getRefundToUserId())
-                .refundToType(request.getRefundToType())
-                .reasonCategory(request.getReasonCategory())
-                .reasonDescription(request.getReasonDescription())
-                .status(request.getStatus())
-                .rejectionReason(request.getRejectionReason())
-                .processorNotes(request.getProcessorNotes())
-                .processedByUserId(request.getProcessedByUserId())
-                .processedByType(request.getProcessedByType())
-                .processedAt(request.getProcessedAt())
-                .dueBy(request.getDueBy())
-                .escalated(request.getEscalated())
-                .escalatedTo(request.getEscalatedTo())
-                .paymentRefundId(request.getPaymentRefundId())
-                .createdAt(request.getCreatedAt())
-                .updatedAt(request.getUpdatedAt());
+        String processedByName = request.getProcessedByUserId() != null
+                ? fullName(request.getProcessedByUserId())
+                : null;
 
-        // Populate names if user service is available
+        return new RefundRequestResponse(
+                request.getId(),
+                request.getGymId(),
+                request.getRefundType(),
+                request.getStripePaymentIntentId(),
+                request.getOriginalPaymentAmount(),
+                request.getRequestedRefundAmount(),
+                request.getCurrency(),
+                request.getMembershipId(),
+                request.getClassBookingId(),
+                request.getRequestedByUserId(),
+                request.getRequestedByType(),
+                fullName(request.getRequestedByUserId()),
+                request.getRefundToUserId(),
+                request.getRefundToType(),
+                fullName(request.getRefundToUserId()),
+                request.getReasonCategory(),
+                request.getReasonDescription(),
+                request.getStatus(),
+                request.getRejectionReason(),
+                request.getProcessorNotes(),
+                request.getProcessedByUserId(),
+                request.getProcessedByType(),
+                processedByName,
+                request.getProcessedAt(),
+                request.getDueBy(),
+                request.getEscalated(),
+                request.getEscalatedTo(),
+                request.getPaymentRefundId(),
+                null,
+                request.getCreatedAt(),
+                request.getUpdatedAt());
+    }
+
+    /** The user's display name, or null when the user cannot be looked up. */
+    private String fullName(UUID userId) {
         try {
-            UserSummary requester = identityApi.getUser(request.getRequestedByUserId());
-            builder.requestedByName(requester.firstName() + " " + requester.lastName());
+            UserSummary user = identityApi.getUser(userId);
+            return user.firstName() + " " + user.lastName();
         } catch (Exception e) {
             // User not found or service unavailable
+            return null;
         }
-
-        try {
-            UserSummary recipient = identityApi.getUser(request.getRefundToUserId());
-            builder.refundToName(recipient.firstName() + " " + recipient.lastName());
-        } catch (Exception e) {
-            // User not found or service unavailable
-        }
-
-        if (request.getProcessedByUserId() != null) {
-            try {
-                UserSummary processor = identityApi.getUser(request.getProcessedByUserId());
-                builder.processedByName(processor.firstName() + " " + processor.lastName());
-            } catch (Exception e) {
-                // User not found or service unavailable
-            }
-        }
-
-        return builder.build();
     }
 }

@@ -136,17 +136,10 @@ public class AudienceResolver {
 
         List<AudiencePreviewResponse.RecipientPreview> sampleRecipients = recipients.stream()
                 .limit(10)
-                .map(r -> AudiencePreviewResponse.RecipientPreview.builder()
-                        .memberId(r.memberId())
-                        .firstName(r.firstName())
-                        .lastName(r.lastName())
-                        .email(r.email())
-                        .build())
+                .map(r -> new AudiencePreviewResponse.RecipientPreview(
+                        r.memberId(), r.firstName(), r.lastName(), r.email()))
                 .collect(Collectors.toList());
 
-        return AudiencePreviewResponse.builder()
-                .totalCount(recipients.size())
-                .sampleRecipients(sampleRecipients)
-                .build();
+        return new AudiencePreviewResponse(recipients.size(), sampleRecipients);
     }
 }

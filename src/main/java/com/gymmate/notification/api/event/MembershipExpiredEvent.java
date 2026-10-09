@@ -1,14 +1,10 @@
 package com.gymmate.notification.api.event;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.extern.jackson.Jacksonized;
 import com.gymmate.shared.events.DomainEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -16,23 +12,41 @@ import java.util.UUID;
 /**
  * Event published when a member's membership expires.
  */
-@Getter
-@Builder
-@Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MembershipExpiredEvent implements DomainEvent, TenantAwareEvent {
+public record MembershipExpiredEvent(
+        UUID eventId,
+        LocalDateTime occurredAt,
+        UUID organisationId,
+        UUID gymId,
+        UUID memberId,
+        UUID membershipId,
+        LocalDate expiredOn
+) implements DomainEvent, TenantAwareEvent {
 
-    @Builder.Default
-    private final UUID eventId = UUID.randomUUID();
+    public MembershipExpiredEvent {
+        if (eventId == null) eventId = UUID.randomUUID();
+        if (occurredAt == null) occurredAt = LocalDateTime.now();
+    }
 
-    @Builder.Default
-    private final LocalDateTime occurredAt = LocalDateTime.now();
+    /** A new event with a fresh id, occurring now. */
+    public MembershipExpiredEvent(UUID organisationId, UUID gymId, UUID memberId, UUID membershipId, LocalDate expiredOn) {
+        this(null, null, organisationId, gymId, memberId, membershipId, expiredOn);
+    }
 
-    private final UUID organisationId;
-    private final UUID gymId;
-    private final UUID memberId;
-    private final UUID membershipId;
-    private final LocalDate expiredOn;
+    @Override
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    @Override
+    public LocalDateTime getOccurredAt() {
+        return occurredAt;
+    }
+
+    @Override
+    public UUID getOrganisationId() {
+        return organisationId;
+    }
 
     @Override
     public TenantIdentity getTenantIdentity() {
@@ -59,4 +73,3 @@ public class MembershipExpiredEvent implements DomainEvent, TenantAwareEvent {
         return NotificationPriority.HIGH;
     }
 }
-

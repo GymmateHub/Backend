@@ -1,38 +1,52 @@
 package com.gymmate.notification.api.event;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.extern.jackson.Jacksonized;
 import com.gymmate.shared.events.DomainEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
  * Event published when a new member joins a gym.
  */
-@Getter
-@Builder
-@Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class MemberJoinedEvent implements DomainEvent, TenantAwareEvent {
+public record MemberJoinedEvent(
+        UUID eventId,
+        LocalDateTime occurredAt,
+        UUID organisationId,
+        UUID gymId,
+        UUID memberId,
+        String memberName,
+        String memberEmail,
+        String membershipPlan
+) implements DomainEvent, TenantAwareEvent {
 
-    @Builder.Default
-    private final UUID eventId = UUID.randomUUID();
+    public MemberJoinedEvent {
+        if (eventId == null) eventId = UUID.randomUUID();
+        if (occurredAt == null) occurredAt = LocalDateTime.now();
+    }
 
-    @Builder.Default
-    private final LocalDateTime occurredAt = LocalDateTime.now();
+    /** A new event with a fresh id, occurring now. */
+    public MemberJoinedEvent(UUID organisationId, UUID gymId, UUID memberId, String memberName, String memberEmail, String membershipPlan) {
+        this(null, null, organisationId, gymId, memberId, memberName, memberEmail, membershipPlan);
+    }
 
-    private final UUID organisationId;
-    private final UUID gymId;
-    private final UUID memberId;
-    private final String memberName;
-    private final String memberEmail;
-    private final String membershipPlan;
+    @Override
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    @Override
+    public LocalDateTime getOccurredAt() {
+        return occurredAt;
+    }
+
+    @Override
+    public UUID getOrganisationId() {
+        return organisationId;
+    }
 
     @Override
     public TenantIdentity getTenantIdentity() {
@@ -61,4 +75,3 @@ public class MemberJoinedEvent implements DomainEvent, TenantAwareEvent {
         return NotificationPriority.LOW;
     }
 }
-

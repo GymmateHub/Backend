@@ -36,28 +36,26 @@ public class AdminService {
                 .map(this::mapToSummary)
                 .collect(Collectors.toList());
 
-        return PlatformOverview.builder()
-                .totalOrganisations(totalOrganisations)
-                .totalGyms(totalGyms)
-                .totalUsers(totalUsers)
-                .totalOwners(totalOwners)
-                .totalMembers(totalMembers)
-                .recentOrganisations(recentOrganisations)
-                .build();
+        return new PlatformOverview(
+                totalOrganisations,
+                totalGyms,
+                totalUsers,
+                totalOwners,
+                totalMembers,
+                recentOrganisations);
     }
 
     private OrganisationSummary mapToSummary(OrganisationInfo org) {
         long gymCount = organisationApi.countGymsByOrganisation(org.id());
-        return OrganisationSummary.builder()
-                .id(org.id())
-                .name(org.name())
-                .slug(org.slug())
-                .contactEmail(org.contactEmail())
-                .subscriptionPlan(org.subscriptionPlan())
-                .subscriptionStatus(org.subscriptionStatus())
-                .gymCount(gymCount)
-                .createdAt(org.createdAt())
-                .build();
+        return new OrganisationSummary(
+                org.id(),
+                org.name(),
+                org.slug(),
+                org.contactEmail(),
+                org.subscriptionPlan(),
+                org.subscriptionStatus(),
+                gymCount,
+                org.createdAt());
     }
 
     public List<TenantSummary> getOrganisations() {
@@ -84,17 +82,16 @@ public class AdminService {
             status = "suspended";
         }
 
-        return TenantSummary.builder()
-                .id(org.id())
-                .name(org.name())
-                .slug(org.slug())
-                .ownerName(ownerName)
-                .contactEmail(org.contactEmail())
-                .gymCount(gymCount)
-                .memberCount(memberCount)
-                .plan(org.subscriptionPlan())
-                .status(status)
-                .createdAt(org.createdAt())
-                .build();
+        return new TenantSummary(
+                org.id(),
+                org.name(),
+                org.slug(),
+                ownerName,
+                org.contactEmail(),
+                gymCount,
+                memberCount,
+                org.subscriptionPlan(),
+                status,
+                org.createdAt());
     }
 }

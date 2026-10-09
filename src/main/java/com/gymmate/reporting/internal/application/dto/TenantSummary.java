@@ -1,22 +1,18 @@
 package com.gymmate.reporting.internal.application.dto;
 
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
-@Builder
-public class TenantSummary {
-    private UUID id;
-    private String name;
-    private String slug;
-    private String ownerName;
-    private String contactEmail;
-    private long gymCount;
-    private long memberCount;
-    private String plan;
-    private String status;
-    private LocalDateTime createdAt;
+public record TenantSummary(
+        UUID id,
+        String name,
+        String slug,
+        String ownerName,
+        String contactEmail,
+        long gymCount,
+        long memberCount,
+        String plan,
+        String status,
+        LocalDateTime createdAt
+) {
 }

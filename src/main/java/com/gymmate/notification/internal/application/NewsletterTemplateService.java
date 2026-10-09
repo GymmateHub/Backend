@@ -34,22 +34,22 @@ public class NewsletterTemplateService {
      */
     @Transactional
     public NewsletterTemplate create(CreateTemplateRequest request, UUID createdBy) {
-        UUID gymId = request.getGymId();
+        UUID gymId = request.gymId();
         if (gymId == null) {
             gymId = TenantContext.getCurrentGymId();
         }
 
-        if (templateRepository.existsByGymIdAndName(gymId, request.getName())) {
+        if (templateRepository.existsByGymIdAndName(gymId, request.name())) {
             throw new DomainException("TEMPLATE_NAME_EXISTS",
                     "A template with this name already exists");
         }
 
         NewsletterTemplate template = NewsletterTemplate.builder()
-                .name(request.getName())
-                .subject(request.getSubject())
-                .body(request.getBody())
-                .templateType(request.getTemplateType())
-                .placeholders(request.getPlaceholders())
+                .name(request.name())
+                .subject(request.subject())
+                .body(request.body())
+                .templateType(request.templateType())
+                .placeholders(request.placeholders())
                 .build();
         template.setCreatedBy(createdBy.toString());
 
@@ -69,12 +69,12 @@ public class NewsletterTemplateService {
         NewsletterTemplate template = getById(id);
 
         template.updateContent(
-                request.getName(),
-                request.getSubject(),
-                request.getBody());
+                request.name(),
+                request.subject(),
+                request.body());
 
-        if (request.getPlaceholders() != null) {
-            template.updatePlaceholders(request.getPlaceholders());
+        if (request.placeholders() != null) {
+            template.updatePlaceholders(request.placeholders());
         }
 
         NewsletterTemplate updated = templateRepository.save(template);

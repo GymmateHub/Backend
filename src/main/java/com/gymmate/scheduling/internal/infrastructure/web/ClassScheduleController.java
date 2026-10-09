@@ -31,7 +31,7 @@ public class ClassScheduleController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> create(@Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = mapper.toEntity(req);
-    UUID effectiveGymId = req.getGymId() != null ? req.getGymId() : TenantContext.getCurrentGymId();
+    UUID effectiveGymId = req.gymId() != null ? req.gymId() : TenantContext.getCurrentGymId();
     if (s.getGymId() == null) {
       s.setGymId(effectiveGymId);
     }
@@ -56,12 +56,12 @@ public class ClassScheduleController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = scheduleService.getSchedule(id);
-    s.setStartTime(req.getStartTime());
-    s.setEndTime(req.getEndTime());
-    s.setCapacityOverride(req.getCapacityOverride());
-    s.setPriceOverride(req.getPriceOverride());
-    s.setTrainerId(req.getTrainerId());
-    s.setAreaId(req.getAreaId());
+    s.setStartTime(req.startTime());
+    s.setEndTime(req.endTime());
+    s.setCapacityOverride(req.capacityOverride());
+    s.setPriceOverride(req.priceOverride());
+    s.setTrainerId(req.trainerId());
+    s.setAreaId(req.areaId());
     ClassSchedule updated = scheduleService.updateSchedule(s);
     return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated), "Schedule updated"));
   }

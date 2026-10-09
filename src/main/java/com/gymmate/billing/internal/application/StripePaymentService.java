@@ -340,13 +340,13 @@ public class StripePaymentService {
 
         try {
             RefundCreateParams.Builder paramsBuilder = RefundCreateParams.builder()
-                    .setPaymentIntent(request.getPaymentIntentId());
+                    .setPaymentIntent(request.paymentIntentId());
 
-            if (request.getAmount() != null) {
-                paramsBuilder.setAmount(request.getAmount().multiply(BigDecimal.valueOf(100)).longValue());
+            if (request.amount() != null) {
+                paramsBuilder.setAmount(request.amount().multiply(BigDecimal.valueOf(100)).longValue());
             }
 
-            if (request.getReason() != null && !request.getReason().isEmpty()) {
+            if (request.reason() != null && !request.reason().isEmpty()) {
                 paramsBuilder.setReason(RefundCreateParams.Reason.REQUESTED_BY_CUSTOMER);
             }
 
@@ -357,12 +357,12 @@ public class StripePaymentService {
                     .organisationId(organisationId)
                     .gymId(gymId)
                     .stripeRefundId(refund.getId())
-                    .stripePaymentIntentId(request.getPaymentIntentId())
+                    .stripePaymentIntentId(request.paymentIntentId())
                     .stripeChargeId(refund.getCharge())
                     .amount(BigDecimal.valueOf(refund.getAmount()).divide(BigDecimal.valueOf(100)))
                     .currency(refund.getCurrency().toUpperCase())
                     .status(RefundStatus.valueOf(refund.getStatus().toUpperCase()))
-                    .reason(request.getReason())
+                    .reason(request.reason())
                     .receiptNumber(refund.getReceiptNumber())
                     .stripeCreatedAt(utilityService.secondsToLocalDateTime(refund.getCreated()))
                     .build();
@@ -370,17 +370,16 @@ public class StripePaymentService {
             paymentRefundRepository.save(paymentRefund);
 
             log.info("Processed refund {} for organisation {} (gym {}) on payment {}",
-                    refund.getId(), organisationId, gymId, request.getPaymentIntentId());
+                    refund.getId(), organisationId, gymId, request.paymentIntentId());
 
-            return RefundResponse.builder()
-                    .refundId(refund.getId())
-                    .paymentIntentId(request.getPaymentIntentId())
-                    .amount(paymentRefund.getAmount())
-                    .currency(paymentRefund.getCurrency())
-                    .status(paymentRefund.getStatus().name())
-                    .reason(request.getReason())
-                    .createdAt(paymentRefund.getStripeCreatedAt())
-                    .build();
+            return new RefundResponse(
+                    refund.getId(),
+                    request.paymentIntentId(),
+                    paymentRefund.getAmount(),
+                    paymentRefund.getCurrency(),
+                    paymentRefund.getStatus().name(),
+                    request.reason(),
+                    paymentRefund.getStripeCreatedAt());
 
         } catch (StripeException e) {
             log.error("Failed to process refund for organisation {}: {}", organisationId, e.getMessage());
@@ -513,44 +512,41 @@ public class StripePaymentService {
     }
 
     private PaymentMethodResponse toPaymentMethodResponse(com.gymmate.billing.internal.domain.PaymentMethod method) {
-        return PaymentMethodResponse.builder()
-                .id(method.getId())
-                .type(method.getMethodType() != null ? method.getMethodType().name() : null)
-                .cardBrand(method.getCardBrand())
-                .lastFour(method.getLastFour())
-                .expiryMonth(method.getExpiryMonth())
-                .expiryYear(method.getExpiryYear())
-                .isDefault(method.getIsDefault())
-                .build();
+        return new PaymentMethodResponse(
+                method.getId(),
+                method.getMethodType() != null ? method.getMethodType().name() : null,
+                method.getCardBrand(),
+                method.getLastFour(),
+                method.getExpiryMonth(),
+                method.getExpiryYear(),
+                method.getIsDefault());
     }
 
     private InvoiceResponse toInvoiceResponse(GymInvoice invoice) {
-        return InvoiceResponse.builder()
-                .id(invoice.getId())
-                .invoiceNumber(invoice.getInvoiceNumber())
-                .amount(invoice.getAmount())
-                .currency(invoice.getCurrency())
-                .status(invoice.getStatus().name())
-                .description(invoice.getDescription())
-                .periodStart(invoice.getPeriodStart())
-                .periodEnd(invoice.getPeriodEnd())
-                .dueDate(invoice.getDueDate())
-                .paidAt(invoice.getPaidAt())
-                .invoicePdfUrl(invoice.getInvoicePdfUrl())
-                .hostedInvoiceUrl(invoice.getHostedInvoiceUrl())
-                .createdAt(invoice.getCreatedAt())
-                .build();
+        return new InvoiceResponse(
+                invoice.getId(),
+                invoice.getInvoiceNumber(),
+                invoice.getAmount(),
+                invoice.getCurrency(),
+                invoice.getStatus().name(),
+                invoice.getDescription(),
+                invoice.getPeriodStart(),
+                invoice.getPeriodEnd(),
+                invoice.getDueDate(),
+                invoice.getPaidAt(),
+                invoice.getInvoicePdfUrl(),
+                invoice.getHostedInvoiceUrl(),
+                invoice.getCreatedAt());
     }
 
     private RefundResponse toRefundResponse(PaymentRefund refund) {
-        return RefundResponse.builder()
-                .refundId(refund.getStripeRefundId())
-                .paymentIntentId(refund.getStripePaymentIntentId())
-                .amount(refund.getAmount())
-                .currency(refund.getCurrency())
-                .status(refund.getStatus().name())
-                .reason(refund.getReason())
-                .createdAt(refund.getStripeCreatedAt())
-                .build();
+        return new RefundResponse(
+                refund.getStripeRefundId(),
+                refund.getStripePaymentIntentId(),
+                refund.getAmount(),
+                refund.getCurrency(),
+                refund.getStatus().name(),
+                refund.getReason(),
+                refund.getStripeCreatedAt());
     }
 }

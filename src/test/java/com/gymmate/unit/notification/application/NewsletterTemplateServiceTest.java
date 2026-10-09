@@ -55,13 +55,13 @@ class NewsletterTemplateServiceTest {
         @DisplayName("Should create template successfully")
         void create_ValidRequest_Success() {
             // Arrange
-            CreateTemplateRequest request = new CreateTemplateRequest();
-            request.setGymId(gymId);
-            request.setName("Welcome Email");
-            request.setSubject("Welcome {{first_name}}!");
-            request.setBody("<h1>Welcome!</h1>");
-            request.setTemplateType("EMAIL");
-            request.setPlaceholders("[\"first_name\"]");
+            CreateTemplateRequest request = new CreateTemplateRequest(
+                    gymId,
+                    "Welcome Email",
+                    "Welcome {{first_name}}!",
+                    "<h1>Welcome!</h1>",
+                    "EMAIL",
+                    "[\"first_name\"]");
 
             when(templateRepository.existsByGymIdAndName(gymId, "Welcome Email")).thenReturn(false);
             when(templateRepository.save(any(NewsletterTemplate.class)))
@@ -93,11 +93,13 @@ class NewsletterTemplateServiceTest {
         @DisplayName("Should reject duplicate template name for same gym")
         void create_DuplicateName_ThrowsException() {
             // Arrange
-            CreateTemplateRequest request = new CreateTemplateRequest();
-            request.setGymId(gymId);
-            request.setName("Existing Template");
-            request.setSubject("Subject");
-            request.setBody("Body");
+            CreateTemplateRequest request = new CreateTemplateRequest(
+                    gymId,
+                    "Existing Template",
+                    "Subject",
+                    "Body",
+                    null,
+                    null);
 
             when(templateRepository.existsByGymIdAndName(gymId, "Existing Template")).thenReturn(true);
 
@@ -125,11 +127,11 @@ class NewsletterTemplateServiceTest {
             UUID templateId = UUID.randomUUID();
             NewsletterTemplate existing = createExistingTemplate(templateId);
 
-            UpdateTemplateRequest request = new UpdateTemplateRequest();
-            request.setName("Updated Name");
-            request.setSubject("Updated Subject");
-            request.setBody("Updated Body");
-            request.setPlaceholders("[\"new_var\"]");
+            UpdateTemplateRequest request = new UpdateTemplateRequest(
+                    "Updated Name",
+                    "Updated Subject",
+                    "Updated Body",
+                    "[\"new_var\"]");
 
             when(templateRepository.findById(templateId)).thenReturn(Optional.of(existing));
             when(templateRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -149,10 +151,11 @@ class NewsletterTemplateServiceTest {
         void update_NotFound_ThrowsException() {
             // Arrange
             UUID templateId = UUID.randomUUID();
-            UpdateTemplateRequest request = new UpdateTemplateRequest();
-            request.setName("New Name");
-            request.setSubject("New Subject");
-            request.setBody("New Body");
+            UpdateTemplateRequest request = new UpdateTemplateRequest(
+                    "New Name",
+                    "New Subject",
+                    "New Body",
+                    null);
 
             when(templateRepository.findById(templateId)).thenReturn(Optional.empty());
 

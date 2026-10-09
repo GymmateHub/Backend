@@ -39,20 +39,16 @@ public class ClassCategoryControllerTest {
 
   @Test
   void createCategory_returnsCreated() throws Exception {
-    CreateCategoryRequest req = new CreateCategoryRequest();
     UUID gymId = UUID.randomUUID();
-    req.setGymId(gymId);
-    req.setName("Spin");
-    req.setDescription("Spin classes");
-    req.setColor("#00FF00");
+    CreateCategoryRequest req = new CreateCategoryRequest(gymId, "Spin", "Spin classes", "#00FF00");
 
-    ClassCategory saved = ClassCategory.builder().name(req.getName()).description(req.getDescription()).color(req.getColor()).build();
+    ClassCategory saved = ClassCategory.builder().name(req.name()).description(req.description()).color(req.color()).build();
     saved.setId(UUID.randomUUID());
     saved.setGymId(gymId);
 
     when(mapper.toEntity(any(CreateCategoryRequest.class))).thenReturn(saved);
     when(categoryService.createCategory(any(ClassCategory.class))).thenReturn(saved);
-    when(mapper.toResponse(any(ClassCategory.class))).thenReturn(new CategoryResponse());
+    when(mapper.toResponse(any(ClassCategory.class))).thenReturn(new CategoryResponse(null, null, null, null, null, null));
 
     mvc.perform(post("/api/class-categories")
       .contentType(MediaType.APPLICATION_JSON)

@@ -54,7 +54,7 @@ public class WhitelabelSettingsService {
     public WhitelabelSettingsResponse getOrganisationSettingsResponse(UUID organisationId) {
         Optional<WhitelabelSettings> settingsOpt = settingsRepository.findByOrganisationIdAndGymIdIsNull(organisationId);
         if (settingsOpt.isEmpty()) {
-            return new WhitelabelSettingsResponse();
+            return WhitelabelSettingsResponse.empty();
         }
         WhitelabelSettings settings = settingsOpt.get();
         return toResponse(settings);
@@ -132,48 +132,48 @@ public class WhitelabelSettingsService {
 
     private void updateSettingsFromRequest(WhitelabelSettings settings, WhitelabelSettingsRequest request) {
         // Branding
-        if (request.getBrandName() != null) settings.setBrandName(request.getBrandName());
-        if (request.getLogoUrl() != null) settings.setLogoUrl(request.getLogoUrl());
-        if (request.getFaviconUrl() != null) settings.setFaviconUrl(request.getFaviconUrl());
-        if (request.getPrimaryColor() != null) settings.setPrimaryColor(request.getPrimaryColor());
-        if (request.getSecondaryColor() != null) settings.setSecondaryColor(request.getSecondaryColor());
-        if (request.getCustomDomain() != null) settings.setCustomDomain(request.getCustomDomain());
-        if (request.getEmailHeaderLogoUrl() != null) settings.setEmailHeaderLogoUrl(request.getEmailHeaderLogoUrl());
-        if (request.getEmailFooterText() != null) settings.setEmailFooterText(request.getEmailFooterText());
-        if (request.getSupportEmail() != null) settings.setSupportEmail(request.getSupportEmail());
-        if (request.getSupportPhone() != null) settings.setSupportPhone(request.getSupportPhone());
+        if (request.brandName() != null) settings.setBrandName(request.brandName());
+        if (request.logoUrl() != null) settings.setLogoUrl(request.logoUrl());
+        if (request.faviconUrl() != null) settings.setFaviconUrl(request.faviconUrl());
+        if (request.primaryColor() != null) settings.setPrimaryColor(request.primaryColor());
+        if (request.secondaryColor() != null) settings.setSecondaryColor(request.secondaryColor());
+        if (request.customDomain() != null) settings.setCustomDomain(request.customDomain());
+        if (request.emailHeaderLogoUrl() != null) settings.setEmailHeaderLogoUrl(request.emailHeaderLogoUrl());
+        if (request.emailFooterText() != null) settings.setEmailFooterText(request.emailFooterText());
+        if (request.supportEmail() != null) settings.setSupportEmail(request.supportEmail());
+        if (request.supportPhone() != null) settings.setSupportPhone(request.supportPhone());
 
         // SMTP Configuration
-        settings.setSmtpEnabled(request.isSmtpEnabled());
-        if (request.getSmtpHost() != null) settings.setSmtpHost(request.getSmtpHost());
-        if (request.getSmtpPort() != null) settings.setSmtpPort(request.getSmtpPort());
-        if (request.getSmtpUsername() != null) settings.setSmtpUsername(request.getSmtpUsername());
-        if (StringUtils.hasText(request.getSmtpPassword()) && !"••••••••".equals(request.getSmtpPassword())) {
-            settings.setSmtpPasswordEncrypted(encryptionService.encrypt(request.getSmtpPassword()));
+        settings.setSmtpEnabled(request.smtpEnabled());
+        if (request.smtpHost() != null) settings.setSmtpHost(request.smtpHost());
+        if (request.smtpPort() != null) settings.setSmtpPort(request.smtpPort());
+        if (request.smtpUsername() != null) settings.setSmtpUsername(request.smtpUsername());
+        if (StringUtils.hasText(request.smtpPassword()) && !"••••••••".equals(request.smtpPassword())) {
+            settings.setSmtpPasswordEncrypted(encryptionService.encrypt(request.smtpPassword()));
         }
-        if (request.getSmtpSecurity() != null) settings.setSmtpSecurity(request.getSmtpSecurity());
-        if (request.getSmtpFromEmail() != null) settings.setSmtpFromEmail(request.getSmtpFromEmail());
-        if (request.getSmtpFromName() != null) settings.setSmtpFromName(request.getSmtpFromName());
+        if (request.smtpSecurity() != null) settings.setSmtpSecurity(request.smtpSecurity());
+        if (request.smtpFromEmail() != null) settings.setSmtpFromEmail(request.smtpFromEmail());
+        if (request.smtpFromName() != null) settings.setSmtpFromName(request.smtpFromName());
 
         // WhatsApp Configuration
-        settings.setWhatsappEnabled(request.isWhatsappEnabled());
-        if (request.getWhatsappProvider() != null) settings.setWhatsappProvider(request.getWhatsappProvider());
-        if (request.getWhatsappPhoneNumber() != null) settings.setWhatsappPhoneNumber(request.getWhatsappPhoneNumber());
-        if (request.getWhatsappPhoneNumberId() != null) settings.setWhatsappPhoneNumberId(request.getWhatsappPhoneNumberId());
-        if (request.getWhatsappBusinessId() != null) settings.setWhatsappBusinessId(request.getWhatsappBusinessId());
-        if (StringUtils.hasText(request.getWhatsappApiKey()) && !"••••••••".equals(request.getWhatsappApiKey())) {
-            settings.setWhatsappApiKeyEncrypted(encryptionService.encrypt(request.getWhatsappApiKey()));
+        settings.setWhatsappEnabled(request.whatsappEnabled());
+        if (request.whatsappProvider() != null) settings.setWhatsappProvider(request.whatsappProvider());
+        if (request.whatsappPhoneNumber() != null) settings.setWhatsappPhoneNumber(request.whatsappPhoneNumber());
+        if (request.whatsappPhoneNumberId() != null) settings.setWhatsappPhoneNumberId(request.whatsappPhoneNumberId());
+        if (request.whatsappBusinessId() != null) settings.setWhatsappBusinessId(request.whatsappBusinessId());
+        if (StringUtils.hasText(request.whatsappApiKey()) && !"••••••••".equals(request.whatsappApiKey())) {
+            settings.setWhatsappApiKeyEncrypted(encryptionService.encrypt(request.whatsappApiKey()));
         }
 
         // Newsletter Configuration
-        settings.setNewsletterEnabled(request.isNewsletterEnabled());
-        if (request.getNewsletterProvider() != null) settings.setNewsletterProvider(request.getNewsletterProvider());
-        if (StringUtils.hasText(request.getNewsletterApiKey()) && !"••••••••".equals(request.getNewsletterApiKey())) {
-            settings.setNewsletterApiKeyEncrypted(encryptionService.encrypt(request.getNewsletterApiKey()));
+        settings.setNewsletterEnabled(request.newsletterEnabled());
+        if (request.newsletterProvider() != null) settings.setNewsletterProvider(request.newsletterProvider());
+        if (StringUtils.hasText(request.newsletterApiKey()) && !"••••••••".equals(request.newsletterApiKey())) {
+            settings.setNewsletterApiKeyEncrypted(encryptionService.encrypt(request.newsletterApiKey()));
         }
-        if (request.getNewsletterListId() != null) settings.setNewsletterListId(request.getNewsletterListId());
-        if (request.getNewsletterSenderEmail() != null) settings.setNewsletterSenderEmail(request.getNewsletterSenderEmail());
-        if (request.getNewsletterSenderName() != null) settings.setNewsletterSenderName(request.getNewsletterSenderName());
+        if (request.newsletterListId() != null) settings.setNewsletterListId(request.newsletterListId());
+        if (request.newsletterSenderEmail() != null) settings.setNewsletterSenderEmail(request.newsletterSenderEmail());
+        if (request.newsletterSenderName() != null) settings.setNewsletterSenderName(request.newsletterSenderName());
     }
 
     private WhitelabelSettingsResponse toResponse(WhitelabelSettings settings) {

@@ -386,13 +386,12 @@ public class MembershipService {
         membershipRepository.save(membership);
 
         // Publish event for notification
-        eventPublisher.publishEvent(MembershipExpiredEvent.builder()
-                .organisationId(membership.getOrganisationId())
-                .gymId(membership.getGymId())
-                .memberId(membership.getMemberId())
-                .membershipId(membership.getId())
-                .expiredOn(membership.getEndDate())
-                .build());
+        eventPublisher.publishEvent(new MembershipExpiredEvent(
+                membership.getOrganisationId(),
+                membership.getGymId(),
+                membership.getMemberId(),
+                membership.getId(),
+                membership.getEndDate()));
 
         log.info("Expired membership {} (end date: {})", membership.getId(), membership.getEndDate());
         expiredCount++;

@@ -101,10 +101,13 @@ public class AccessService {
     if (tailgating != null) {
       AccessEvent ev = record(point, credential, member, dir,
           AccessDecision.DENIED, DenyReason.TAILGATING_BLOCKED, true, tailgating);
-      eventPublisher.publishEvent(TailgatingSuspectedEvent.builder()
-          .organisationId(point.getOrganisationId()).gymId(point.getGymId())
-          .memberId(member.id()).accessPointId(point.getId())
-          .accessPointName(point.getName()).reason(tailgating).build());
+      eventPublisher.publishEvent(new TailgatingSuspectedEvent(
+              point.getOrganisationId(),
+              point.getGymId(),
+              member.id(),
+              point.getId(),
+              point.getName(),
+              tailgating));
       return ev;
     }
 
@@ -194,11 +197,13 @@ public class AccessService {
   private AccessEvent deny(AccessPoint point, AccessCredential credential, MemberProfile member,
                            AccessDirection dir, DenyReason reason) {
     AccessEvent ev = record(point, credential, member, dir, AccessDecision.DENIED, reason, false, null);
-    eventPublisher.publishEvent(AccessDeniedEvent.builder()
-        .organisationId(point.getOrganisationId()).gymId(point.getGymId())
-        .memberId(member != null ? member.id() : null)
-        .accessPointId(point.getId()).accessPointName(point.getName())
-        .denyReason(reason != null ? reason.name() : null).build());
+    eventPublisher.publishEvent(new AccessDeniedEvent(
+            point.getOrganisationId(),
+            point.getGymId(),
+            member != null ? member.id() : null,
+            point.getId(),
+            point.getName(),
+            reason != null ? reason.name() : null));
     return ev;
   }
 
@@ -261,11 +266,13 @@ public class AccessService {
     ev = accessEventRepository.save(ev);
 
     if (tailgating) {
-      eventPublisher.publishEvent(TailgatingSuspectedEvent.builder()
-          .organisationId(point.getOrganisationId()).gymId(point.getGymId())
-          .accessPointId(point.getId()).accessPointName(point.getName())
-          .reason("device pass-count (" + passCount + ") exceeded valid scans (" + validScanCount + ")")
-          .build());
+      eventPublisher.publishEvent(new TailgatingSuspectedEvent(
+              point.getOrganisationId(),
+              point.getGymId(),
+              null,
+              point.getId(),
+              point.getName(),
+              "device pass-count (" + passCount + ") exceeded valid scans (" + validScanCount + ")"));
     }
     return ev;
   }

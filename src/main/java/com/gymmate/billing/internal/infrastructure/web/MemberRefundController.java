@@ -43,8 +43,8 @@ public class MemberRefundController {
         UUID gymId = TenantContext.getCurrentTenantId();
 
         // Ensure the request is for member payment type
-        if (request.getRefundType() != RefundType.MEMBER_PAYMENT) {
-            request.setRefundType(RefundType.MEMBER_PAYMENT);
+        if (request.refundType() != RefundType.MEMBER_PAYMENT) {
+            request = request.withRefundType(RefundType.MEMBER_PAYMENT);
         }
 
         // Member requests refund, and the refund goes back to the member
@@ -80,7 +80,7 @@ public class MemberRefundController {
         RefundRequestResponse response = refundRequestService.getRequest(requestId);
 
         // Verify the request belongs to this member
-        if (!response.getRequestedByUserId().equals(currentUser.getUserId())) {
+        if (!response.requestedByUserId().equals(currentUser.getUserId())) {
             throw new DomainException("ACCESS_DENIED", "You can only view your own refund requests");
         }
 

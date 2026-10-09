@@ -1,8 +1,6 @@
 package com.gymmate.notification.internal.application.dto;
 
 import com.gymmate.notification.internal.domain.NewsletterTemplate;
-import lombok.Builder;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -10,35 +8,32 @@ import java.util.UUID;
 /**
  * Response DTO for newsletter template.
  */
-@Data
-@Builder
-public class TemplateResponse {
-
-    private UUID id;
-    private UUID gymId;
-    private UUID organisationId;
-    private String name;
-    private String subject;
-    private String body;
-    private String templateType;
-    private String placeholders;
-    private boolean active;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+public record TemplateResponse(
+        UUID id,
+        UUID gymId,
+        UUID organisationId,
+        String name,
+        String subject,
+        String body,
+        String templateType,
+        String placeholders,
+        boolean active,
+        LocalDateTime createdAt,
+        LocalDateTime updatedAt
+) {
 
     public static TemplateResponse fromEntity(NewsletterTemplate template) {
-        return TemplateResponse.builder()
-                .id(template.getId())
-                .gymId(template.getGymId())
-                .organisationId(template.getOrganisationId())
-                .name(template.getName())
-                .subject(template.getSubject())
-                .body(template.getBody())
-                .templateType(template.getTemplateType())
-                .placeholders(template.getPlaceholders())
-                .active(template.isActive())
-                .createdAt(template.getCreatedAt())
-                .updatedAt(template.getUpdatedAt())
-                .build();
+        return new TemplateResponse(
+                template.getId(),
+                template.getGymId(),
+                template.getOrganisationId(),
+                template.getName(),
+                template.getSubject(),
+                template.getBody(),
+                template.getTemplateType(),
+                template.getPlaceholders(),
+                template.isActive(),
+                template.getCreatedAt(),
+                template.getUpdatedAt());
     }
 }

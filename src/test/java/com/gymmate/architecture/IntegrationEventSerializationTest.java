@@ -49,15 +49,22 @@ class IntegrationEventSerializationTest {
     @Test
     void preservesPayloadValues() throws Exception {
         UUID org = UUID.randomUUID();
-        PaymentFailedEvent event = PaymentFailedEvent.builder().organisationId(org).amount(new BigDecimal("12.50"))
-                .failureReason("card_declined").nextRetryDate(LocalDateTime.of(2026, 1, 2, 3, 4)).build();
+        PaymentFailedEvent event = new PaymentFailedEvent(
+                org,
+                null,
+                new BigDecimal("12.50"),
+                "card_declined",
+                LocalDateTime.of(2026, 1, 2, 3, 4),
+                null,
+                null,
+                null);
 
         PaymentFailedEvent back = mapper.readValue(mapper.writeValueAsString(event), PaymentFailedEvent.class);
 
         assertThat(back.getEventId()).isEqualTo(event.getEventId());
         assertThat(back.getOrganisationId()).isEqualTo(org);
-        assertThat(back.getAmount()).isEqualByComparingTo("12.50");
-        assertThat(back.getNextRetryDate()).isEqualTo(event.getNextRetryDate());
+        assertThat(back.amount()).isEqualByComparingTo("12.50");
+        assertThat(back.nextRetryDate()).isEqualTo(event.nextRetryDate());
 
         MemberOnboardedEvent onboarded = new MemberOnboardedEvent(org, UUID.randomUUID(), UUID.randomUUID(), new String[]{"strength"});
         MemberOnboardedEvent onboardedBack = mapper.readValue(mapper.writeValueAsString(onboarded), MemberOnboardedEvent.class);
@@ -77,11 +84,18 @@ class IntegrationEventSerializationTest {
                 Object[] values = new Object[components.length];
                 for (int i = 0; i < components.length; i++) {
                     types[i] = components[i].getType();
-                    values[i] = types[i] == UUID.class ? UUID.randomUUID() : null;
+                    values[i] = types[i] == UUID.class ? UUID.randomUUID() : primitiveDefault(types[i]);
                 }
                 return type.getDeclaredConstructor(types).newInstance(values);
             }
             return new MemberOnboardedEvent(UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), new String[0]);
         }
+    }
+
+    private static Object primitiveDefault(Class<?> type) {
+        if (!type.isPrimitive()) return null;
+        if (type == boolean.class) return false;
+        if (type == char.class) return '\0';
+        return java.lang.reflect.Array.get(java.lang.reflect.Array.newInstance(type, 1), 0);
     }
 }

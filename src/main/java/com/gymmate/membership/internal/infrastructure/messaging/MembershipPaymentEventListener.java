@@ -49,11 +49,11 @@ public class MembershipPaymentEventListener {
     @EventListener
     @Transactional
     public void handlePaymentSucceeded(PaymentSuccessEvent event) {
-        if (event.getMembershipId() == null) {
+        if (event.membershipId() == null) {
             return;
         }
 
-        memberMembershipRepository.findById(event.getMembershipId()).ifPresent(membership -> {
+        memberMembershipRepository.findById(event.membershipId()).ifPresent(membership -> {
             // PAST_DUE goes through clearPastDue() specifically so the grace-period
             // clock (see MembershipService.escalatePastDueMemberships) resets —
             // otherwise a membership that pays successfully while PAST_DUE would
@@ -72,8 +72,8 @@ public class MembershipPaymentEventListener {
             MemberInvoice invoice = MemberInvoice.builder()
                     .memberId(membership.getMemberId())
                     .membershipId(membership.getId())
-                    .amount(event.getAmount())
-                    .currency(event.getCurrency())
+                    .amount(event.amount())
+                    .currency(event.currency())
                     .status(MemberInvoiceStatus.PAID)
                     .description("Membership payment via Stripe Connect")
                     .paidAt(LocalDateTime.now())
@@ -87,11 +87,11 @@ public class MembershipPaymentEventListener {
     @EventListener
     @Transactional
     public void handlePaymentFailed(PaymentFailedEvent event) {
-        if (event.getMembershipId() == null) {
+        if (event.membershipId() == null) {
             return;
         }
 
-        memberMembershipRepository.findById(event.getMembershipId()).ifPresent(membership -> {
+        memberMembershipRepository.findById(event.membershipId()).ifPresent(membership -> {
             membership.markPastDue();
             memberMembershipRepository.save(membership);
             log.warn("Membership {} marked as PAST_DUE due to payment failure", membership.getId());
@@ -99,10 +99,10 @@ public class MembershipPaymentEventListener {
             MemberInvoice invoice = MemberInvoice.builder()
                     .memberId(membership.getMemberId())
                     .membershipId(membership.getId())
-                    .amount(event.getAmount())
-                    .currency(event.getCurrency())
+                    .amount(event.amount())
+                    .currency(event.currency())
                     .status(MemberInvoiceStatus.PAYMENT_FAILED)
-                    .description("Payment failed: " + event.getFailureReason())
+                    .description("Payment failed: " + event.failureReason())
                     .build();
             invoice.setGymId(membership.getGymId());
             invoice.setOrganisationId(membership.getOrganisationId());

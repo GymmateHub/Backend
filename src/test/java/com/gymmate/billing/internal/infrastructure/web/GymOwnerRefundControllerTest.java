@@ -102,8 +102,7 @@ class GymOwnerRefundControllerTest {
             try (MockedStatic<TenantContext> mockedTenantContext = mockStatic(TenantContext.class)) {
                 // Arrange
                 mockedTenantContext.when(TenantContext::getCurrentTenantId).thenReturn(gymId);
-                RefundRequestResponse pendingRequest = createRefundRequestResponse();
-                pendingRequest.setStatus(RefundRequestStatus.PENDING);
+                RefundRequestResponse pendingRequest = createRefundRequestResponse(RefundRequestStatus.PENDING, null, null);
                 when(refundRequestService.getPendingRequests(gymId)).thenReturn(List.of(pendingRequest));
 
                 // Act
@@ -111,7 +110,7 @@ class GymOwnerRefundControllerTest {
 
                 // Assert
                 assertThat(result.getBody().getData()).hasSize(1);
-                assertThat(result.getBody().getData().get(0).getStatus()).isEqualTo(RefundRequestStatus.PENDING);
+                assertThat(result.getBody().getData().get(0).status()).isEqualTo(RefundRequestStatus.PENDING);
             }
         }
     }
@@ -124,8 +123,7 @@ class GymOwnerRefundControllerTest {
         @DisplayName("Should approve refund request")
         void approveRefundRequest_Success() {
             // Arrange
-            RefundRequestResponse approvedResponse = createRefundRequestResponse();
-            approvedResponse.setStatus(RefundRequestStatus.APPROVED);
+            RefundRequestResponse approvedResponse = createRefundRequestResponse(RefundRequestStatus.APPROVED, null, null);
 
             when(refundRequestService.approveRequest(eq(requestId), any(), eq("GYM_OWNER"), anyString()))
                     .thenReturn(approvedResponse);
@@ -148,8 +146,7 @@ class GymOwnerRefundControllerTest {
         @DisplayName("Should reject refund request with reason")
         void rejectRefundRequest_Success() {
             // Arrange
-            RefundRequestResponse rejectedResponse = createRefundRequestResponse();
-            rejectedResponse.setStatus(RefundRequestStatus.REJECTED);
+            RefundRequestResponse rejectedResponse = createRefundRequestResponse(RefundRequestStatus.REJECTED, null, null);
 
             when(refundRequestService.rejectRequest(eq(requestId), any(), eq("GYM_OWNER"), anyString(), anyString()))
                     .thenReturn(rejectedResponse);
@@ -202,9 +199,8 @@ class GymOwnerRefundControllerTest {
         @DisplayName("Should escalate refund request")
         void escalateRefundRequest_Success() {
             // Arrange
-            RefundRequestResponse escalatedResponse = createRefundRequestResponse();
-            escalatedResponse.setEscalated(true);
-            escalatedResponse.setEscalatedTo("SUPER_ADMIN");
+            RefundRequestResponse escalatedResponse =
+                    createRefundRequestResponse(RefundRequestStatus.PENDING, true, "SUPER_ADMIN");
 
             when(refundRequestService.escalateRequest(eq(requestId), any(), eq("GYM_OWNER"), eq("SUPER_ADMIN")))
                     .thenReturn(escalatedResponse);
@@ -221,22 +217,42 @@ class GymOwnerRefundControllerTest {
 
     // Helper method
     private RefundRequestResponse createRefundRequestResponse() {
-        return RefundRequestResponse.builder()
-                .id(requestId)
-                .gymId(gymId)
-                .refundType(RefundType.MEMBER_PAYMENT)
-                .stripePaymentIntentId("pi_test123")
-                .originalPaymentAmount(new BigDecimal("100.00"))
-                .requestedRefundAmount(new BigDecimal("50.00"))
-                .currency("USD")
-                .requestedByUserId(UUID.randomUUID())
-                .requestedByType("MEMBER")
-                .refundToUserId(UUID.randomUUID())
-                .refundToType("MEMBER")
-                .reasonCategory(RefundReasonCategory.SERVICE_NOT_PROVIDED)
-                .status(RefundRequestStatus.PENDING)
-                .createdAt(LocalDateTime.now())
-                .build();
+        return createRefundRequestResponse(RefundRequestStatus.PENDING, null, null);
+    }
+
+    private RefundRequestResponse createRefundRequestResponse(RefundRequestStatus status, Boolean escalated, String escalatedTo) {
+        return new RefundRequestResponse(
+                requestId,
+                gymId,
+                RefundType.MEMBER_PAYMENT,
+                "pi_test123",
+                new BigDecimal("100.00"),
+                new BigDecimal("50.00"),
+                "USD",
+                null,
+                null,
+                UUID.randomUUID(),
+                "MEMBER",
+                null,
+                UUID.randomUUID(),
+                "MEMBER",
+                null,
+                RefundReasonCategory.SERVICE_NOT_PROVIDED,
+                null,
+                status,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                escalated,
+                escalatedTo,
+                null,
+                null,
+                LocalDateTime.now(),
+                null);
     }
 }
 

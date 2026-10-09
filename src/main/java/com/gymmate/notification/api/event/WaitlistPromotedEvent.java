@@ -1,37 +1,51 @@
 package com.gymmate.notification.api.event;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.extern.jackson.Jacksonized;
 import com.gymmate.shared.events.DomainEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 /**
  * Event published when a member is promoted from waitlist to confirmed booking.
  */
-@Getter
-@Builder
-@Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class WaitlistPromotedEvent implements DomainEvent, TenantAwareEvent {
+public record WaitlistPromotedEvent(
+        UUID eventId,
+        LocalDateTime occurredAt,
+        UUID organisationId,
+        UUID gymId,
+        UUID memberId,
+        UUID bookingId,
+        UUID scheduleId
+) implements DomainEvent, TenantAwareEvent {
 
-    @Builder.Default
-    private final UUID eventId = UUID.randomUUID();
+    public WaitlistPromotedEvent {
+        if (eventId == null) eventId = UUID.randomUUID();
+        if (occurredAt == null) occurredAt = LocalDateTime.now();
+    }
 
-    @Builder.Default
-    private final LocalDateTime occurredAt = LocalDateTime.now();
+    /** A new event with a fresh id, occurring now. */
+    public WaitlistPromotedEvent(UUID organisationId, UUID gymId, UUID memberId, UUID bookingId, UUID scheduleId) {
+        this(null, null, organisationId, gymId, memberId, bookingId, scheduleId);
+    }
 
-    private final UUID organisationId;
-    private final UUID gymId;
-    private final UUID memberId;
-    private final UUID bookingId;
-    private final UUID scheduleId;
+    @Override
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    @Override
+    public LocalDateTime getOccurredAt() {
+        return occurredAt;
+    }
+
+    @Override
+    public UUID getOrganisationId() {
+        return organisationId;
+    }
 
     @Override
     public TenantIdentity getTenantIdentity() {
@@ -58,4 +72,3 @@ public class WaitlistPromotedEvent implements DomainEvent, TenantAwareEvent {
         return NotificationPriority.HIGH;
     }
 }
-

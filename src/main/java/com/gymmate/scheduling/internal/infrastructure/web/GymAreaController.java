@@ -30,7 +30,7 @@ public class GymAreaController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<AreaResponse>> create(@Valid @RequestBody CreateAreaRequest req) {
     GymArea a = mapper.toEntity(req);
-    a.setGymId(req.getGymId());
+    a.setGymId(req.gymId());
     GymArea created = areaService.createArea(a);
     return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Area created"));
   }
@@ -52,7 +52,7 @@ public class GymAreaController {
   @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
   public ResponseEntity<ApiResponse<AreaResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateAreaRequest req) {
     GymArea a = areaService.getArea(id);
-    a.updateDetails(req.getName(), req.getAreaType(), req.getCapacity());
+    a.updateDetails(req.name(), req.areaType(), req.capacity());
     GymArea updated = areaService.updateArea(a);
     return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated), "Area updated"));
   }

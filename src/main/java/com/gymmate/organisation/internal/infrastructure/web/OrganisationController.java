@@ -76,8 +76,8 @@ public class OrganisationController {
         }
 
         Organisation organisation = organisationService.createHub(
-                request.getName(),
-                request.getContactEmail(),
+                request.name(),
+                request.contactEmail(),
                 user.id());
 
         OrganisationResponse response = OrganisationResponse.fromEntity(organisation);
@@ -113,11 +113,11 @@ public class OrganisationController {
 
         Organisation organisation = organisationService.updateDetails(
                 organisationId,
-                request.getName(),
-                request.getContactEmail(),
-                request.getContactPhone(),
-                request.getBillingEmail(),
-                request.getSettings());
+                request.name(),
+                request.contactEmail(),
+                request.contactPhone(),
+                request.billingEmail(),
+                request.settings());
 
         OrganisationResponse response = OrganisationResponse.fromEntity(organisation);
         return ResponseEntity.ok(ApiResponse.success(response, "Organisation updated successfully"));
@@ -190,33 +190,33 @@ public class OrganisationController {
 
         // Create the gym
         Gym gym = new Gym(
-                request.getName(),
-                request.getDescription(),
-                request.getContactEmail(),
-                request.getContactPhone(),
+                request.name(),
+                request.description(),
+                request.contactEmail(),
+                request.contactPhone(),
                 organisationId);
 
         // Set optional fields
-        if (request.getAddress() != null) {
-            gym.setAddress(request.getAddress());
+        if (request.address() != null) {
+            gym.setAddress(request.address());
         }
-        if (request.getCity() != null) {
-            gym.setCity(request.getCity());
+        if (request.city() != null) {
+            gym.setCity(request.city());
         }
-        if (request.getState() != null) {
-            gym.setState(request.getState());
+        if (request.state() != null) {
+            gym.setState(request.state());
         }
-        if (request.getCountry() != null) {
-            gym.setCountry(request.getCountry());
+        if (request.country() != null) {
+            gym.setCountry(request.country());
         }
-        if (request.getPostalCode() != null) {
-            gym.setPostalCode(request.getPostalCode());
+        if (request.postalCode() != null) {
+            gym.setPostalCode(request.postalCode());
         }
-        if (request.getTimezone() != null) {
-            gym.setTimezone(request.getTimezone());
+        if (request.timezone() != null) {
+            gym.setTimezone(request.timezone());
         }
-        if (request.getCurrency() != null) {
-            gym.setCurrency(request.getCurrency());
+        if (request.currency() != null) {
+            gym.setCurrency(request.currency());
         }
 
         Gym savedGym = gymService.saveGym(gym);

@@ -1,20 +1,16 @@
 package com.gymmate.reporting.internal.application.dto;
 
-import lombok.Builder;
-import lombok.Data;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
-@Builder
-public class OrganisationSummary {
-    private UUID id;
-    private String name;
-    private String slug;
-    private String contactEmail;
-    private String subscriptionPlan;
-    private String subscriptionStatus;
-    private long gymCount;
-    private LocalDateTime createdAt;
+public record OrganisationSummary(
+        UUID id,
+        String name,
+        String slug,
+        String contactEmail,
+        String subscriptionPlan,
+        String subscriptionStatus,
+        long gymCount,
+        LocalDateTime createdAt
+) {
 }

@@ -65,14 +65,14 @@ public class AuthController {
         public ResponseEntity<ApiResponse<RegistrationResponse>> resendOtp(
                         @Valid @RequestBody ResendOtpRequest request) {
                 RegistrationResponse response = authenticationService.resendOtp(request);
-                return ResponseEntity.ok(ApiResponse.success(response, response.getMessage()));
+                return ResponseEntity.ok(ApiResponse.success(response, response.message()));
         }
 
         @PostMapping("/register/verify-otp")
         public ResponseEntity<ApiResponse<VerificationTokenResponse>> verifyOtp(
                         @Valid @RequestBody VerifyOtpRequest request) {
                 VerificationTokenResponse response = authenticationService.verifyOtp(request);
-                return ResponseEntity.ok(ApiResponse.success(response, response.getMessage()));
+                return ResponseEntity.ok(ApiResponse.success(response, response.message()));
         }
 
         // ==================== LOGIN / LOGOUT ====================
@@ -80,7 +80,7 @@ public class AuthController {
         @PostMapping("/login")
         public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
                 LoginResponse response = authenticationService.authenticate(request);
-                String message = response.isEmailVerified()
+                String message = response.emailVerified()
                                 ? "Login successful"
                                 : "Email not verified. An OTP has been sent to your email.";
                 return ResponseEntity.ok(ApiResponse.success(response, message));
@@ -124,7 +124,7 @@ public class AuthController {
                         @AuthenticationPrincipal TenantAwareUserDetails userDetails,
                         @Valid @RequestBody ChangePasswordRequest request) {
                 authenticationService.changePassword(
-                                userDetails.getUserId(), request.getCurrentPassword(), request.getNewPassword());
+                                userDetails.getUserId(), request.currentPassword(), request.newPassword());
                 return ResponseEntity.ok(ApiResponse.success(null, "Password changed successfully"));
         }
 

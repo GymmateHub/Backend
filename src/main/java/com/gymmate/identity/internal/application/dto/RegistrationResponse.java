@@ -1,19 +1,8 @@
 package com.gymmate.identity.internal.application.dto;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class RegistrationResponse {
-
-  private String userId;
-  private String message;
-  private int expiresIn; // seconds
-  private Long retryAfter; // seconds (for rate limiting)
+public record RegistrationResponse(
+    String userId,
+    String message,
+    int expiresIn, // seconds
+    Long retryAfter // seconds (for rate limiting)
+) {
 }
-

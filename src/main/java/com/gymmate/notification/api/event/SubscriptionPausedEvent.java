@@ -1,14 +1,10 @@
 package com.gymmate.notification.api.event;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import lombok.extern.jackson.Jacksonized;
 import com.gymmate.shared.events.DomainEvent;
 import com.gymmate.shared.constants.NotificationPriority;
 import com.gymmate.shared.multitenancy.TenantAwareEvent;
 import com.gymmate.shared.multitenancy.TenantIdentity;
-import lombok.Builder;
-import lombok.Getter;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -16,22 +12,40 @@ import java.util.UUID;
  * Event published when a Stripe subscription is paused.
  * Informs the organisation owner that their subscription has been paused.
  */
-@Getter
-@Builder
-@Jacksonized
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class SubscriptionPausedEvent implements DomainEvent, TenantAwareEvent {
+public record SubscriptionPausedEvent(
+        UUID eventId,
+        LocalDateTime occurredAt,
+        UUID organisationId,
+        UUID subscriptionId,
+        String tierName,
+        LocalDateTime pausedAt
+) implements DomainEvent, TenantAwareEvent {
 
-    @Builder.Default
-    private final UUID eventId = UUID.randomUUID();
+    public SubscriptionPausedEvent {
+        if (eventId == null) eventId = UUID.randomUUID();
+        if (occurredAt == null) occurredAt = LocalDateTime.now();
+    }
 
-    @Builder.Default
-    private final LocalDateTime occurredAt = LocalDateTime.now();
+    /** A new event with a fresh id, occurring now. */
+    public SubscriptionPausedEvent(UUID organisationId, UUID subscriptionId, String tierName, LocalDateTime pausedAt) {
+        this(null, null, organisationId, subscriptionId, tierName, pausedAt);
+    }
 
-    private final UUID organisationId;
-    private final UUID subscriptionId;
-    private final String tierName;
-    private final LocalDateTime pausedAt;
+    @Override
+    public UUID getEventId() {
+        return eventId;
+    }
+
+    @Override
+    public LocalDateTime getOccurredAt() {
+        return occurredAt;
+    }
+
+    @Override
+    public UUID getOrganisationId() {
+        return organisationId;
+    }
 
     @Override
     public TenantIdentity getTenantIdentity() {
@@ -61,4 +75,3 @@ public class SubscriptionPausedEvent implements DomainEvent, TenantAwareEvent {
         return NotificationPriority.HIGH;
     }
 }
-

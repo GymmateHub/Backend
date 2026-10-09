@@ -2,8 +2,6 @@ package com.gymmate.notification.internal.application.dto;
 
 import com.gymmate.notification.internal.domain.Notification;
 import com.gymmate.shared.constants.NotificationPriority;
-import lombok.Builder;
-import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -11,49 +9,46 @@ import java.util.UUID;
 /**
  * Response DTO for notification.
  */
-@Data
-@Builder
-public class NotificationResponse {
-
-    private UUID id;
-    private UUID organisationId;
-    private UUID gymId;
-    private String scope;
-    private String title;
-    private String message;
-    private NotificationPriority priority;
-    private String eventType;
-    private String metadata;
-    private UUID relatedEntityId;
-    private String relatedEntityType;
-    private String recipientRole;
-    private LocalDateTime readAt;
-    private boolean read;
-    private String deliveredVia;
-    private LocalDateTime deliveredAt;
-    private LocalDateTime createdAt;
+public record NotificationResponse(
+        UUID id,
+        UUID organisationId,
+        UUID gymId,
+        String scope,
+        String title,
+        String message,
+        NotificationPriority priority,
+        String eventType,
+        String metadata,
+        UUID relatedEntityId,
+        String relatedEntityType,
+        String recipientRole,
+        LocalDateTime readAt,
+        boolean read,
+        String deliveredVia,
+        LocalDateTime deliveredAt,
+        LocalDateTime createdAt
+) {
 
     public static NotificationResponse fromEntity(Notification notification) {
-        return NotificationResponse.builder()
-                .id(notification.getId())
-                .organisationId(notification.getOrganisationId())
-                .gymId(notification.getGymId())
-                .scope(notification.getScope() != null ? notification.getScope().name() : null)
-                .title(notification.getTitle())
-                .message(notification.getMessage())
-                .priority(notification.getPriority())
-                .eventType(notification.getEventType())
-                .metadata(notification.getMetadata())
-                .relatedEntityId(notification.getRelatedEntityId())
-                .relatedEntityType(notification.getRelatedEntityType())
-                .recipientRole(notification.getRecipientRole() != null ?
-                        notification.getRecipientRole().name() : null)
-                .readAt(notification.getReadAt())
-                .read(notification.isRead())
-                .deliveredVia(notification.getDeliveredVia() != null ?
-                        notification.getDeliveredVia().name() : null)
-                .deliveredAt(notification.getDeliveredAt())
-                .createdAt(notification.getCreatedAt())
-                .build();
+        return new NotificationResponse(
+                notification.getId(),
+                notification.getOrganisationId(),
+                notification.getGymId(),
+                notification.getScope() != null ? notification.getScope().name() : null,
+                notification.getTitle(),
+                notification.getMessage(),
+                notification.getPriority(),
+                notification.getEventType(),
+                notification.getMetadata(),
+                notification.getRelatedEntityId(),
+                notification.getRelatedEntityType(),
+                notification.getRecipientRole() != null ?
+                            notification.getRecipientRole().name() : null,
+                notification.getReadAt(),
+                notification.isRead(),
+                notification.getDeliveredVia() != null ?
+                            notification.getDeliveredVia().name() : null,
+                notification.getDeliveredAt(),
+                notification.getCreatedAt());
     }
 }

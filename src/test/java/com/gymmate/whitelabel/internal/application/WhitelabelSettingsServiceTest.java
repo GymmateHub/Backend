@@ -47,15 +47,38 @@ class WhitelabelSettingsServiceTest {
 
     @Test
     void testSaveOrganisationSettingsEncryptsPassword() {
-        WhitelabelSettingsRequest request = WhitelabelSettingsRequest.builder()
-                .brandName("FitNation")
-                .smtpEnabled(true)
-                .smtpHost("smtp.fitnation.com")
-                .smtpPort(587)
-                .smtpUsername("admin@fitnation.com")
-                .smtpPassword("SecretPass123!")
-                .smtpSecurity(SmtpSecurity.STARTTLS)
-                .build();
+        WhitelabelSettingsRequest request = new WhitelabelSettingsRequest(
+                null,
+                "FitNation",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "smtp.fitnation.com",
+                587,
+                "admin@fitnation.com",
+                "SecretPass123!",
+                SmtpSecurity.STARTTLS,
+                null,
+                null,
+                false,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                null,
+                null,
+                null,
+                null);
 
         when(settingsRepository.findByOrganisationIdAndGymIdIsNull(organisationId))
                 .thenReturn(Optional.empty());
@@ -67,10 +90,10 @@ class WhitelabelSettingsServiceTest {
         WhitelabelSettingsResponse response = settingsService.saveOrganisationSettings(organisationId, request);
 
         assertNotNull(response);
-        assertEquals("FitNation", response.getBrandName());
-        assertTrue(response.isSmtpEnabled());
-        assertEquals("smtp.fitnation.com", response.getSmtpHost());
-        assertEquals("••••••••", response.getSmtpPasswordMasked());
+        assertEquals("FitNation", response.brandName());
+        assertTrue(response.smtpEnabled());
+        assertEquals("smtp.fitnation.com", response.smtpHost());
+        assertEquals("••••••••", response.smtpPasswordMasked());
 
         verify(encryptionService).encrypt("SecretPass123!");
         verify(mailSenderFactory).evictCache(organisationId, null);

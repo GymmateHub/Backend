@@ -1,27 +1,25 @@
 package com.gymmate.scheduling.internal.application.dto;
 
 import com.gymmate.scheduling.internal.domain.ClassCategory;
-import lombok.Data;
 
 import java.util.UUID;
 
-@Data
-public class CategoryResponse {
-  private UUID id;
-  private UUID gymId;
-  private String name;
-  private String description;
-  private String color;
-  private String icon;
+public record CategoryResponse(
+    UUID id,
+    UUID gymId,
+    String name,
+    String description,
+    String color,
+    String icon
+) {
 
   public static CategoryResponse from(ClassCategory c) {
-    CategoryResponse r = new CategoryResponse();
-    r.id = c.getId();
-    r.gymId = c.getGymId();
-    r.name = c.getName();
-    r.description = c.getDescription();
-    r.color = c.getColor();
-    r.icon = c.getIcon();
-    return r;
+    return new CategoryResponse(
+        c.getId(),
+        c.getGymId(),
+        c.getName(),
+        c.getDescription(),
+        c.getColor(),
+        c.getIcon());
   }
 }
