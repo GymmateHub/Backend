@@ -1,5 +1,6 @@
 package com.gymmate.retail.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.retail.internal.domain.Equipment;
 import com.gymmate.retail.internal.domain.EquipmentStatus;
 
@@ -7,18 +8,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 /**
  * Repository interface for Equipment domain entity.
  */
-public interface EquipmentRepository {
-
-  Equipment save(Equipment equipment);
-
-  Optional<Equipment> findById(UUID id);
+public interface EquipmentRepository extends DomainRepository<Equipment, UUID> {
 
   List<Equipment> findByOrganisationId(UUID organisationId);
 
@@ -40,31 +34,9 @@ public interface EquipmentRepository {
 
   Optional<Equipment> findBySerialNumber(String serialNumber);
 
-  void delete(Equipment equipment);
-
   long countByGymId(UUID gymId);
 
   long countByOrganisationId(UUID organisationId);
 
   boolean existsBySerialNumber(String serialNumber);
-  
-  List<Equipment> saveAll(Iterable<Equipment> entities);
-  
-  boolean existsById(UUID id);
-  
-  List<Equipment> findAll();
-  
-  List<Equipment> findAllById(Iterable<UUID> ids);
-  
-  long count();
-  
-  void deleteById(UUID id);
-  
-  void deleteAll(Iterable<Equipment> entities);
-  
-  Equipment saveAndFlush(Equipment entity);
-  
-  void flush();
-  
-  Page<Equipment> findAll(Pageable pageable);
 }

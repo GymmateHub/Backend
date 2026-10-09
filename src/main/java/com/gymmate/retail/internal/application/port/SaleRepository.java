@@ -1,5 +1,6 @@
 package com.gymmate.retail.internal.application.port;
 
+import com.gymmate.shared.application.port.DomainRepository;
 import com.gymmate.retail.internal.domain.Sale;
 import com.gymmate.retail.internal.domain.SaleStatus;
 import java.math.BigDecimal;
@@ -7,12 +8,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 
 /** Repository port for {@link Sale} aggregates. */
-public interface SaleRepository {
+public interface SaleRepository extends DomainRepository<Sale, UUID> {
 
     Optional<Sale> findBySaleNumber(String saleNumber);
 
@@ -39,30 +37,4 @@ public interface SaleRepository {
     BigDecimal sumTodaysTotalByGymId(UUID gymId);
 
     List<Object[]> sumTotalByPaymentTypeAndDateRange(UUID gymId, LocalDateTime startDate, LocalDateTime endDate);
-
-    Sale save(Sale entity);
-
-    List<Sale> saveAll(Iterable<Sale> entities);
-
-    Optional<Sale> findById(UUID id);
-
-    boolean existsById(UUID id);
-
-    List<Sale> findAll();
-
-    List<Sale> findAllById(Iterable<UUID> ids);
-
-    long count();
-
-    void deleteById(UUID id);
-
-    void delete(Sale entity);
-
-    void deleteAll(Iterable<Sale> entities);
-
-    Sale saveAndFlush(Sale entity);
-
-    void flush();
-
-    Page<Sale> findAll(Pageable pageable);
 }

@@ -1,5 +1,6 @@
 package com.gymmate.retail.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.retail.internal.application.port.EquipmentRepository;
 import com.gymmate.retail.internal.domain.Equipment;
 import com.gymmate.retail.internal.domain.EquipmentStatus;
@@ -8,35 +9,20 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link EquipmentRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link EquipmentRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the Equipment finders live here.
  */
 @Component
 @Transactional()
-public class EquipmentRepositoryAdapter extends DomainRepositoryAdapter implements EquipmentRepository {
-
-    private final EquipmentJpaRepository jpaRepository;
+public class EquipmentRepositoryAdapter extends JpaDomainRepositoryAdapter<Equipment, UUID, EquipmentJpaRepository>
+        implements EquipmentRepository {
 
     public EquipmentRepositoryAdapter(EquipmentJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
-    }
-
-    @Override
-    public Equipment save(Equipment equipment) {
-        return save(jpaRepository, equipment);
-    }
-
-    @Override
-    public Optional<Equipment> findById(UUID id) {
-        return this.<Optional<Equipment>>fromJpa(jpaRepository.findById(id));
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -90,11 +76,6 @@ public class EquipmentRepositoryAdapter extends DomainRepositoryAdapter implemen
     }
 
     @Override
-    public void delete(Equipment equipment) {
-        delete(jpaRepository, equipment);
-    }
-
-    @Override
     public long countByGymId(UUID gymId) {
         return jpaRepository.countByGymId(gymId);
     }
@@ -107,55 +88,5 @@ public class EquipmentRepositoryAdapter extends DomainRepositoryAdapter implemen
     @Override
     public boolean existsBySerialNumber(String serialNumber) {
         return jpaRepository.existsBySerialNumber(serialNumber);
-    }
-
-    @Override
-    public List<Equipment> saveAll(Iterable<Equipment> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<Equipment> findAll() {
-        return this.<List<Equipment>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<Equipment> findAllById(Iterable<UUID> ids) {
-        return this.<List<Equipment>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void deleteAll(Iterable<Equipment> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Equipment saveAndFlush(Equipment entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<Equipment> findAll(Pageable pageable) {
-        return this.<Page<Equipment>>fromJpa(jpaRepository.findAll(pageable));
     }
 }

@@ -1,40 +1,26 @@
 package com.gymmate.retail.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.retail.internal.application.port.InventoryItemRepository;
 import com.gymmate.retail.internal.domain.InventoryItem;
 import org.springframework.stereotype.Component;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link InventoryItemRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link InventoryItemRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the InventoryItem finders live here.
  */
 @Component
 @Transactional()
-public class InventoryItemRepositoryAdapter extends DomainRepositoryAdapter implements InventoryItemRepository {
-
-    private final InventoryItemJpaRepository jpaRepository;
+public class InventoryItemRepositoryAdapter extends JpaDomainRepositoryAdapter<InventoryItem, UUID, InventoryItemJpaRepository>
+        implements InventoryItemRepository {
 
     public InventoryItemRepositoryAdapter(InventoryItemJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
-    }
-
-    @Override
-    public InventoryItem save(InventoryItem inventoryItem) {
-        return save(jpaRepository, inventoryItem);
-    }
-
-    @Override
-    public Optional<InventoryItem> findById(UUID id) {
-        return this.<Optional<InventoryItem>>fromJpa(jpaRepository.findById(id));
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -83,11 +69,6 @@ public class InventoryItemRepositoryAdapter extends DomainRepositoryAdapter impl
     }
 
     @Override
-    public void delete(InventoryItem inventoryItem) {
-        delete(jpaRepository, inventoryItem);
-    }
-
-    @Override
     public long countByGymId(UUID gymId) {
         return jpaRepository.countByGymId(gymId);
     }
@@ -105,55 +86,5 @@ public class InventoryItemRepositoryAdapter extends DomainRepositoryAdapter impl
     @Override
     public long countByGymIdAndCurrentStockLessThanMinimumStock(UUID gymId) {
         return jpaRepository.countByGymIdAndCurrentStockLessThanMinimumStock(gymId);
-    }
-
-    @Override
-    public List<InventoryItem> saveAll(Iterable<InventoryItem> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<InventoryItem> findAll() {
-        return this.<List<InventoryItem>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<InventoryItem> findAllById(Iterable<UUID> ids) {
-        return this.<List<InventoryItem>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void deleteAll(Iterable<InventoryItem> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public InventoryItem saveAndFlush(InventoryItem entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<InventoryItem> findAll(Pageable pageable) {
-        return this.<Page<InventoryItem>>fromJpa(jpaRepository.findAll(pageable));
     }
 }

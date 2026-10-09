@@ -1,5 +1,6 @@
 package com.gymmate.retail.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.JpaDomainRepositoryAdapter;
 import com.gymmate.retail.internal.domain.Sale;
 import com.gymmate.retail.internal.domain.SaleStatus;
 import java.math.BigDecimal;
@@ -7,27 +8,22 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import com.gymmate.retail.internal.application.port.SaleRepository;
-import com.gymmate.shared.infrastructure.persistence.DomainRepositoryAdapter;
 import com.gymmate.shared.infrastructure.persistence.DomainPersistenceContexts;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Persistence adapter implementing {@link SaleRepository} with Spring Data JPA.
+ * Persistence adapter implementing {@link SaleRepository} with Spring Data JPA; CRUD comes
+ * from {@link JpaDomainRepositoryAdapter}, only the Sale finders live here.
  */
 @Component()
 @Transactional()
-public class SaleRepositoryAdapter extends DomainRepositoryAdapter implements SaleRepository {
-
-    private final SaleJpaRepository jpaRepository;
+public class SaleRepositoryAdapter extends JpaDomainRepositoryAdapter<Sale, UUID, SaleJpaRepository>
+        implements SaleRepository {
 
     public SaleRepositoryAdapter(SaleJpaRepository jpaRepository, DomainPersistenceContexts contexts) {
-        super(contexts);
-        this.jpaRepository = jpaRepository;
+        super(jpaRepository, contexts);
     }
 
     @Override
@@ -93,70 +89,5 @@ public class SaleRepositoryAdapter extends DomainRepositoryAdapter implements Sa
     @Override
     public List<Object[]> sumTotalByPaymentTypeAndDateRange(UUID gymId, LocalDateTime startDate, LocalDateTime endDate) {
         return jpaRepository.sumTotalByPaymentTypeAndDateRange(gymId, startDate, endDate);
-    }
-
-    @Override
-    public Sale save(Sale entity) {
-        return save(jpaRepository, entity);
-    }
-
-    @Override
-    public List<Sale> saveAll(Iterable<Sale> entities) {
-        return saveAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Optional<Sale> findById(UUID id) {
-        return this.<Optional<Sale>>fromJpa(jpaRepository.findById(id));
-    }
-
-    @Override
-    public boolean existsById(UUID id) {
-        return jpaRepository.existsById(id);
-    }
-
-    @Override
-    public List<Sale> findAll() {
-        return this.<List<Sale>>fromJpa(jpaRepository.findAll());
-    }
-
-    @Override
-    public List<Sale> findAllById(Iterable<UUID> ids) {
-        return this.<List<Sale>>fromJpa(jpaRepository.findAllById(ids));
-    }
-
-    @Override
-    public long count() {
-        return jpaRepository.count();
-    }
-
-    @Override
-    public void deleteById(UUID id) {
-        jpaRepository.deleteById(id);
-    }
-
-    @Override
-    public void delete(Sale entity) {
-        delete(jpaRepository, entity);
-    }
-
-    @Override
-    public void deleteAll(Iterable<Sale> entities) {
-        deleteAll(jpaRepository, entities);
-    }
-
-    @Override
-    public Sale saveAndFlush(Sale entity) {
-        return saveAndFlush(jpaRepository, entity);
-    }
-
-    @Override
-    public void flush() {
-        jpaRepository.flush();
-    }
-
-    @Override
-    public Page<Sale> findAll(Pageable pageable) {
-        return this.<Page<Sale>>fromJpa(jpaRepository.findAll(pageable));
     }
 }
