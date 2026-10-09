@@ -178,6 +178,24 @@ Notable decisions:
 - **Gson.** Gson is declared explicitly. The Stripe webhook code uses it and Boot 4 no longer
   brings it in transitively.
 
+### 10. Generic repository ports and adapters
+
+The CRUD contract is declared and implemented once.
+
+- **The contract:** `shared.application.port.DomainRepository<D, ID>`. It covers `save`,
+  `saveAll`, `findById`, `existsById`, `findAll`, paged `findAll`, `findAllById`, `count`,
+  `deleteById` and `delete`.
+- **The implementation:** `shared.infrastructure.persistence.JpaDomainRepositoryAdapter<D, ID, R>`,
+  built on the module's Spring Data repository `R`. Subclasses reach `R` as `jpaRepository`.
+
+Module ports extend `DomainRepository` and adapters extend the base, so each declares only
+its own finders. The repositories' Spring Data interfaces are unchanged.
+
+`flush`, `saveAndFlush` and `deleteAll` were dropped from the contract because nothing called
+them. Health aggregates use `SoftDeletingJpaDomainRepositoryAdapter`, where every delete path
+deactivates the row (previously `deleteById` hard-deleted it). Net effect: about 6,000 fewer
+lines across 62 ports and 62 adapters.
+
 ## Consequences
 
 - New code has one template, and the build enforces it.
