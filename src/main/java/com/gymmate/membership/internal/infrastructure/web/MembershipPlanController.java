@@ -33,7 +33,8 @@ public class MembershipPlanController {
   private final MembershipPlanService membershipPlanService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('plans:manage')")
   @Operation(summary = "Create membership plan", description = "Create a new membership plan for a gym")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> createPlan(
     @RequestParam UUID gymId,
@@ -70,6 +71,8 @@ public class MembershipPlanController {
   }
 
   @GetMapping("/{planId}")
+
+  @PreAuthorize("hasAuthority('plans:view')")
   @Operation(summary = "Get membership plan", description = "Get membership plan by ID")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> getPlan(@PathVariable UUID planId) {
     MembershipPlan plan = membershipPlanService.getPlanById(planId);
@@ -77,6 +80,8 @@ public class MembershipPlanController {
   }
 
   @GetMapping("/gym/{gymId}")
+
+  @PreAuthorize("hasAuthority('plans:view')")
   @Operation(summary = "Get gym's membership plans", description = "Get all membership plans for a gym")
   public ResponseEntity<ApiResponse<List<MembershipPlanResponse>>> getGymPlans(
     @PathVariable UUID gymId,
@@ -101,7 +106,8 @@ public class MembershipPlanController {
   }
 
   @PutMapping("/{planId}/pricing")
-  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('plans:manage')")
   @Operation(summary = "Update plan pricing", description = "Update pricing for a membership plan")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> updatePricing(
     @PathVariable UUID planId,
@@ -117,7 +123,8 @@ public class MembershipPlanController {
   }
 
   @PutMapping("/{planId}/features")
-  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('plans:manage')")
   @Operation(summary = "Update plan features", description = "Update features for a membership plan")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> updateFeatures(
     @PathVariable UUID planId,
@@ -134,7 +141,8 @@ public class MembershipPlanController {
   }
 
   @PutMapping("/{planId}/featured")
-  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('plans:manage')")
   @Operation(summary = "Set plan as featured", description = "Mark a plan as featured or not featured")
   public ResponseEntity<ApiResponse<MembershipPlanResponse>> setFeatured(
     @PathVariable UUID planId,
@@ -145,7 +153,8 @@ public class MembershipPlanController {
   }
 
   @DeleteMapping("/{planId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('plans:manage')")
   @Operation(summary = "Deactivate plan", description = "Deactivate a membership plan (soft delete)")
   public ResponseEntity<ApiResponse<Void>> deactivatePlan(@PathVariable UUID planId) {
     membershipPlanService.deactivatePlan(planId);

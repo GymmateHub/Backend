@@ -32,7 +32,7 @@ import java.util.UUID;
     defaultCondition = "organisation_id = :organisationId"
 )
 @Filter(name = "tenantFilter")
-public abstract class TenantJpaEntity extends BaseAuditJpaEntity {
+public abstract class TenantJpaEntity extends BaseAuditJpaEntity implements TenantOwned {
 
   @Column(name = "organisation_id")
   @Getter

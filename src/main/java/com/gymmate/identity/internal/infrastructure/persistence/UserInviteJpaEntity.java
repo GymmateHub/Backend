@@ -1,5 +1,6 @@
 package com.gymmate.identity.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.TenantOwned;
 import com.gymmate.shared.constants.InviteStatus;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
@@ -26,7 +27,7 @@ import com.gymmate.shared.infrastructure.persistence.DomainModel;
 @Setter
 @NoArgsConstructor
 @DomainModel(UserInvite.class)
-public class UserInviteJpaEntity extends BaseAuditJpaEntity {
+public class UserInviteJpaEntity extends BaseAuditJpaEntity implements TenantOwned {
 
     @Column(name = "gym_id", nullable = false)
     private UUID gymId;

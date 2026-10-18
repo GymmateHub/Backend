@@ -27,7 +27,8 @@ public class GymAreaController {
   private final GymAreaMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<AreaResponse>> create(@Valid @RequestBody CreateAreaRequest req) {
     GymArea a = mapper.toEntity(req);
     a.setGymId(req.gymId());
@@ -36,12 +37,16 @@ public class GymAreaController {
   }
 
   @GetMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<AreaResponse>> get(@PathVariable UUID id) {
     GymArea a = areaService.getArea(id);
     return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(a)));
   }
 
   @GetMapping("/gym/{gymId}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<List<AreaResponse>>> listByGym(@PathVariable UUID gymId) {
     List<GymArea> list = areaService.listByGym(gymId);
     List<AreaResponse> res = list.stream().map(mapper::toResponse).collect(Collectors.toList());
@@ -49,7 +54,8 @@ public class GymAreaController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<AreaResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateAreaRequest req) {
     GymArea a = areaService.getArea(id);
     a.updateDetails(req.name(), req.areaType(), req.capacity());
@@ -58,7 +64,8 @@ public class GymAreaController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
     areaService.deleteArea(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Area deleted"));

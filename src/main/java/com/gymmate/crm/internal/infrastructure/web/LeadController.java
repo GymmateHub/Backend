@@ -33,7 +33,8 @@ public class LeadController {
     private final LeadService leadService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     @Operation(summary = "Create lead")
     public ResponseEntity<ApiResponse<LeadResponse>> createLead(@Valid @RequestBody LeadCreateRequest request) {
         UUID gymId = request.gymId();
@@ -43,7 +44,8 @@ public class LeadController {
     }
 
     @GetMapping("/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     @Operation(summary = "Get leads by gym")
     public ResponseEntity<ApiResponse<List<LeadResponse>>> getByGym(@PathVariable UUID gymId) {
         List<LeadResponse> list = leadService.findByGymId(gymId).stream()
@@ -53,7 +55,8 @@ public class LeadController {
     }
 
     @GetMapping("/gym/{gymId}/status/{status}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     @Operation(summary = "Get leads by gym and status")
     public ResponseEntity<ApiResponse<List<LeadResponse>>> getByGymAndStatus(
             @PathVariable UUID gymId,
@@ -65,7 +68,8 @@ public class LeadController {
     }
 
     @GetMapping("/organisation")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     @Operation(summary = "Get leads for organisation")
     public ResponseEntity<ApiResponse<List<LeadResponse>>> getByOrganisation() {
         UUID orgId = TenantContext.requireCurrentTenantId();
@@ -76,14 +80,16 @@ public class LeadController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     public ResponseEntity<ApiResponse<LeadResponse>> getById(@PathVariable UUID id) {
         Lead lead = leadService.findById(id);
         return ResponseEntity.ok(ApiResponse.success(LeadResponse.fromEntity(lead)));
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     public ResponseEntity<ApiResponse<LeadResponse>> update(
             @PathVariable UUID id,
             @RequestBody LeadUpdateRequest request) {
@@ -92,7 +98,8 @@ public class LeadController {
     }
 
     @PatchMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     public ResponseEntity<ApiResponse<LeadResponse>> updateStatus(
             @PathVariable UUID id,
             @Valid @RequestBody LeadStatusUpdateRequest request) {
@@ -102,7 +109,8 @@ public class LeadController {
     }
 
     @PostMapping("/{id}/convert")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     public ResponseEntity<ApiResponse<LeadResponse>> convert(
             @PathVariable UUID id,
             @RequestBody(required = false) LeadConvertRequest request) {
@@ -112,7 +120,8 @@ public class LeadController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('leads:manage')")
     public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
         leadService.deleteLead(id);
         return ResponseEntity.ok(ApiResponse.success(null, "Lead deleted"));

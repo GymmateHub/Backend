@@ -55,7 +55,7 @@ public class OrganisationController {
      * This also creates a default subscription and links the user.
      */
     @PostMapping("/")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Create organisation", description = "Create a new organisation (Hub) for the authenticated user")
     public ResponseEntity<ApiResponse<OrganisationResponse>> createHub(
             @Valid @RequestBody CreateHubRequest request) {
@@ -89,7 +89,7 @@ public class OrganisationController {
      * Get the current organisation details.
      */
     @GetMapping("/current")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('org:view')")
     @Operation(summary = "Get current organisation", description = "Get details of the authenticated user's organisation")
     public ResponseEntity<ApiResponse<OrganisationResponse>> getCurrentOrganisation() {
         UUID organisationId = requireOrganisationId();
@@ -104,7 +104,7 @@ public class OrganisationController {
      * Update the current organisation details.
      */
     @PutMapping("/current")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Update current organisation", description = "Update details of the authenticated user's organisation")
     public ResponseEntity<ApiResponse<OrganisationResponse>> updateCurrentOrganisation(
             @Valid @RequestBody OrganisationUpdateRequest request) {
@@ -128,7 +128,7 @@ public class OrganisationController {
      * Shows current resource usage vs subscription limits.
      */
     @GetMapping("/current/usage")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Get organisation usage", description = "Get usage statistics (gyms, members, staff) vs subscription limits")
     public ResponseEntity<ApiResponse<OrganisationUsageResponse>> getOrganisationUsage() {
         UUID organisationId = requireOrganisationId();
@@ -143,7 +143,7 @@ public class OrganisationController {
      * Get all gyms in the current organisation.
      */
     @GetMapping("/current/gyms")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('org:view')")
     @Operation(summary = "Get organisation gyms", description = "Get all gyms belonging to the current organisation")
     public ResponseEntity<ApiResponse<List<GymResponse>>> getOrganisationGyms() {
         UUID organisationId = requireOrganisationId();
@@ -160,7 +160,7 @@ public class OrganisationController {
      * Get only active gyms in the current organisation.
      */
     @GetMapping("/current/gyms/active")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('org:view')")
     @Operation(summary = "Get active organisation gyms", description = "Get all active gyms belonging to the current organisation")
     public ResponseEntity<ApiResponse<List<GymResponse>>> getActiveOrganisationGyms() {
         UUID organisationId = requireOrganisationId();
@@ -178,7 +178,7 @@ public class OrganisationController {
      * Checks subscription limits before creating.
      */
     @PostMapping("/current/gyms")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Create a new gym", description = "Create a new gym location within the current organisation")
     public ResponseEntity<ApiResponse<GymResponse>> createGym(
             @Valid @RequestBody CreateGymRequest request) {
@@ -233,7 +233,7 @@ public class OrganisationController {
      * Complete onboarding for the current organisation.
      */
     @PostMapping("/current/complete-onboarding")
-    @PreAuthorize("hasRole('OWNER')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Complete onboarding", description = "Mark the organisation's onboarding as complete")
     public ResponseEntity<ApiResponse<OrganisationResponse>> completeOnboarding() {
         UUID organisationId = requireOrganisationId();

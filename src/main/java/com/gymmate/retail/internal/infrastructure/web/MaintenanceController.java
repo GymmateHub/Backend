@@ -40,7 +40,8 @@ public class MaintenanceController {
   // ===== Maintenance Records =====
 
   @PostMapping("/records")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Create maintenance record")
   public ResponseEntity<ApiResponse<MaintenanceRecordResponse>> createMaintenanceRecord(
       @Valid @RequestBody MaintenanceRecordCreateRequest request) {
@@ -75,7 +76,8 @@ public class MaintenanceController {
   }
 
   @GetMapping("/records/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get maintenance record by ID")
   public ResponseEntity<ApiResponse<MaintenanceRecordResponse>> getMaintenanceRecord(@PathVariable UUID id) {
     MaintenanceRecord record = maintenanceService.getMaintenanceRecordById(id);
@@ -83,7 +85,8 @@ public class MaintenanceController {
   }
 
   @GetMapping("/records/equipment/{equipmentId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get maintenance records for equipment")
   public ResponseEntity<ApiResponse<List<MaintenanceRecordResponse>>> getMaintenanceRecordsByEquipment(
       @PathVariable UUID equipmentId) {
@@ -95,7 +98,8 @@ public class MaintenanceController {
   }
 
   @GetMapping("/records/gym/{gymId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get maintenance records for gym")
   public ResponseEntity<ApiResponse<List<MaintenanceRecordResponse>>> getMaintenanceRecordsByGym(
       @PathVariable UUID gymId,
@@ -116,7 +120,8 @@ public class MaintenanceController {
   }
 
   @PutMapping("/records/{id}/complete")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Complete maintenance record")
   public ResponseEntity<ApiResponse<MaintenanceRecordResponse>> completeMaintenanceRecord(
       @PathVariable UUID id,
@@ -129,7 +134,8 @@ public class MaintenanceController {
   // ===== Maintenance Schedules =====
 
   @PostMapping("/schedules")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Create maintenance schedule")
   public ResponseEntity<ApiResponse<MaintenanceScheduleResponse>> createMaintenanceSchedule(
       @Valid @RequestBody MaintenanceScheduleCreateRequest request) {
@@ -160,7 +166,8 @@ public class MaintenanceController {
   }
 
   @GetMapping("/schedules/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get maintenance schedule by ID")
   public ResponseEntity<ApiResponse<MaintenanceScheduleResponse>> getMaintenanceSchedule(@PathVariable UUID id) {
     MaintenanceSchedule schedule = maintenanceService.getMaintenanceScheduleById(id);
@@ -168,7 +175,8 @@ public class MaintenanceController {
   }
 
   @GetMapping("/schedules/gym/{gymId}/pending")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get pending maintenance schedules for gym")
   public ResponseEntity<ApiResponse<List<MaintenanceScheduleResponse>>> getPendingMaintenanceSchedules(
       @PathVariable UUID gymId) {
@@ -180,7 +188,8 @@ public class MaintenanceController {
   }
 
   @GetMapping("/schedules/gym/{gymId}/due")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get due maintenance schedules for gym")
   public ResponseEntity<ApiResponse<List<MaintenanceScheduleResponse>>> getDueMaintenanceSchedules(
       @PathVariable UUID gymId) {
@@ -192,7 +201,8 @@ public class MaintenanceController {
   }
 
   @PutMapping("/schedules/{id}/complete")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Complete maintenance schedule")
   public ResponseEntity<ApiResponse<MaintenanceScheduleResponse>> completeMaintenanceSchedule(
       @PathVariable UUID id,
@@ -203,7 +213,8 @@ public class MaintenanceController {
   }
 
   @PutMapping("/schedules/{id}/reschedule")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Reschedule maintenance")
   public ResponseEntity<ApiResponse<MaintenanceScheduleResponse>> rescheduleMaintenance(
       @PathVariable UUID id,

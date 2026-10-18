@@ -236,13 +236,6 @@ public class NotificationService {
         log.info("Deleted {} old notifications for gym {}", oldNotifications.size(), gymId);
     }
 
-    /**
-     * Send test email
-     */
-    @Transactional
-    public void sendTestEmail(String to) {
-        emailService.sendHtmlEmail(to, "Test Email", "This is a test email");
-    }
 
     /**
      * send notification to a user

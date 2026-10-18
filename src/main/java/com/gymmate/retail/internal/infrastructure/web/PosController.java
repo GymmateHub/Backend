@@ -47,7 +47,8 @@ public class PosController {
     // ===== SALE ENDPOINTS =====
 
     @PostMapping("/sales")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Create a new sale")
     public ResponseEntity<ApiResponse<SaleResponse>> createSale(
             @Valid @RequestBody CreateSaleRequest request,
@@ -61,7 +62,8 @@ public class PosController {
     }
 
     @PostMapping("/sales/quick")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Create and complete a sale in one step")
     public ResponseEntity<ApiResponse<SaleResponse>> createAndCompleteSale(
             @Valid @RequestBody CreateSaleRequest request,
@@ -76,7 +78,8 @@ public class PosController {
     }
 
     @PostMapping("/sales/{saleId}/complete")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Complete a pending sale with payment")
     public ResponseEntity<ApiResponse<SaleResponse>> completeSale(
             @PathVariable UUID saleId,
@@ -92,7 +95,8 @@ public class PosController {
     }
 
     @PostMapping("/sales/{saleId}/cancel")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Cancel a pending sale")
     public ResponseEntity<ApiResponse<SaleResponse>> cancelSale(@PathVariable UUID saleId) {
         Sale sale = posService.cancelSale(saleId);
@@ -100,7 +104,8 @@ public class PosController {
     }
 
     @PostMapping("/sales/{saleId}/refund")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('pos:manage')")
     @Operation(summary = "Refund a completed sale (full or partial)")
     public ResponseEntity<ApiResponse<SaleResponse>> refundSale(
             @PathVariable UUID saleId,
@@ -112,7 +117,8 @@ public class PosController {
     }
 
     @PostMapping("/sales/{saleId}/items")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Add item to a pending sale")
     public ResponseEntity<ApiResponse<SaleResponse>> addItemToSale(
             @PathVariable UUID saleId,
@@ -123,7 +129,8 @@ public class PosController {
     }
 
     @DeleteMapping("/sales/{saleId}/items/{itemId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Remove item from a pending sale")
     public ResponseEntity<ApiResponse<SaleResponse>> removeItemFromSale(
             @PathVariable UUID saleId,
@@ -134,7 +141,8 @@ public class PosController {
     }
 
     @GetMapping("/sales/{saleId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Get sale by ID")
     public ResponseEntity<ApiResponse<SaleResponse>> getSale(@PathVariable UUID saleId) {
         Sale sale = posService.getSaleById(saleId);
@@ -142,7 +150,8 @@ public class PosController {
     }
 
     @GetMapping("/sales/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Get all sales for a gym")
     public ResponseEntity<ApiResponse<List<SaleResponse>>> getSalesByGym(
             @PathVariable UUID gymId,
@@ -160,7 +169,8 @@ public class PosController {
     }
 
     @GetMapping("/sales/gym/{gymId}/today")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Get today's sales for a gym")
     public ResponseEntity<ApiResponse<List<SaleResponse>>> getTodaysSales(@PathVariable UUID gymId) {
         List<Sale> sales = posService.getTodaysSales(gymId);
@@ -172,7 +182,8 @@ public class PosController {
     }
 
     @GetMapping("/sales/gym/{gymId}/daterange")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Get sales for a gym within date range")
     public ResponseEntity<ApiResponse<List<SaleResponse>>> getSalesByDateRange(
             @PathVariable UUID gymId,
@@ -188,7 +199,8 @@ public class PosController {
     }
 
     @GetMapping("/sales/member/{memberId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'MEMBER')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Get sales for a member")
     public ResponseEntity<ApiResponse<List<SaleResponse>>> getSalesByMember(@PathVariable UUID memberId) {
         List<Sale> sales = posService.getSalesByMember(memberId);
@@ -202,7 +214,8 @@ public class PosController {
     // ===== CASH DRAWER ENDPOINTS =====
 
     @PostMapping("/drawer/open")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Open a new cash drawer session")
     public ResponseEntity<ApiResponse<CashDrawerResponse>> openCashDrawer(
             @Valid @RequestBody OpenCashDrawerRequest request,
@@ -220,7 +233,8 @@ public class PosController {
     }
 
     @PostMapping("/drawer/{drawerId}/close")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Close an open cash drawer session")
     public ResponseEntity<ApiResponse<CashDrawerResponse>> closeCashDrawer(
             @PathVariable UUID drawerId,
@@ -239,7 +253,8 @@ public class PosController {
     }
 
     @GetMapping("/drawer/gym/{gymId}/current")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('pos:operate')")
     @Operation(summary = "Get current open cash drawer for a gym")
     public ResponseEntity<ApiResponse<CashDrawerResponse>> getCurrentCashDrawer(@PathVariable UUID gymId) {
         return posService.getOpenCashDrawer(gymId)
@@ -248,7 +263,8 @@ public class PosController {
     }
 
     @GetMapping("/drawer/gym/{gymId}/history")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('pos:manage')")
     @Operation(summary = "Get cash drawer history for a gym")
     public ResponseEntity<ApiResponse<List<CashDrawerResponse>>> getCashDrawerHistory(
             @PathVariable UUID gymId,
@@ -266,7 +282,8 @@ public class PosController {
     // ===== REPORTING ENDPOINTS =====
 
     @GetMapping("/reports/gym/{gymId}/summary")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('pos:manage')")
     @Operation(summary = "Get sales summary for a gym")
     public ResponseEntity<ApiResponse<PosService.PosSalesSummary>> getSalesSummary(
             @PathVariable UUID gymId,
@@ -278,7 +295,8 @@ public class PosController {
     }
 
     @GetMapping("/reports/gym/{gymId}/top-items")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('pos:manage')")
     @Operation(summary = "Get top selling items for a gym")
     public ResponseEntity<ApiResponse<List<Object[]>>> getTopSellingItems(
             @PathVariable UUID gymId,

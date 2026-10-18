@@ -126,12 +126,13 @@ public class JwtService {
         return userId != null ? UUID.fromString(userId) : null;
     }
 
+    /**
+     * The gym claim, or null when the token carries no gym. It must not fall back to the
+     * {@code tenantId} claim: that holds the organisation id, and treating it as a gym id made
+     * gym-scoped inserts (members, leads) fail their gym foreign key with an HTTP 500.
+     */
     public UUID extractGymId(String token) {
-        String gymId = extractClaim(token, claims -> claims.get("gymId", String.class));
-        if (gymId == null) {
-            gymId = extractClaim(token, claims -> claims.get("tenantId", String.class));
-        }
-        return parseUuid(gymId);
+        return parseUuid(extractClaim(token, claims -> claims.get("gymId", String.class)));
     }
 
     public UUID extractOrganisationId(String token) {

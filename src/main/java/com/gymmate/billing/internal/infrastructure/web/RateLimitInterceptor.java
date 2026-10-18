@@ -36,6 +36,19 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             return true;
         }
 
+        try {
+            return applyRateLimit(request, response, gymId, path);
+        } catch (RuntimeException e) {
+            // Metering must never fail the caller's request. The limiter's bookkeeping rows are
+            // updated by every request of the organisation, so parallel requests can conflict
+            // (optimistic locking) or find a missing subscription; let the request through.
+            log.warn("Rate limiting skipped for organisation {} on {}: {}", gymId, path, e.toString());
+            return true;
+        }
+    }
+
+    private boolean applyRateLimit(HttpServletRequest request, HttpServletResponse response, UUID gymId, String path)
+            throws java.io.IOException {
         String endpoint = path;
         String ipAddress = getClientIp(request);
 

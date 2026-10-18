@@ -5,6 +5,8 @@ import com.gymmate.crm.internal.application.LeadService;
 import com.gymmate.crm.internal.domain.Lead;
 import com.gymmate.crm.internal.domain.LeadStatus;
 import com.gymmate.crm.internal.application.port.LeadRepository;
+import com.gymmate.organisation.api.OrganisationApi;
+import com.gymmate.organisation.api.dto.GymSummary;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
@@ -27,6 +29,7 @@ import static org.mockito.Mockito.*;
 class LeadServiceTest {
 
     @Mock private LeadRepository leadRepository;
+    @Mock private OrganisationApi organisationApi;
     @InjectMocks private LeadService leadService;
 
     private final UUID orgId = UUID.randomUUID();
@@ -35,6 +38,12 @@ class LeadServiceTest {
     @BeforeEach
     void setUp() {
         TenantContext.setCurrentTenantId(orgId);
+        lenient().when(organisationApi.findGym(gymId)).thenReturn(Optional.of(gym(gymId, orgId)));
+    }
+
+    private static GymSummary gym(UUID id, UUID organisationId) {
+        return new GymSummary(id, organisationId, "Gym", null, null, null, null, null, null, true,
+                null, null, null, null, null);
     }
 
     @AfterEach
@@ -69,6 +78,30 @@ class LeadServiceTest {
         Lead lead = leadService.createLead(null, request(null));
 
         assertEquals(gymId, lead.getGymId());
+    }
+
+    @Test
+    void rejectsUnknownGym() {
+        UUID unknownGym = UUID.randomUUID();
+        when(organisationApi.findGym(unknownGym)).thenReturn(Optional.empty());
+
+        DomainException ex = assertThrows(DomainException.class,
+                () -> leadService.createLead(unknownGym, request(unknownGym)));
+
+        assertEquals("GYM_NOT_FOUND", ex.getErrorCode());
+        verify(leadRepository, never()).save(any());
+    }
+
+    @Test
+    void rejectsGymOfAnotherOrganisation() {
+        UUID foreignGym = UUID.randomUUID();
+        when(organisationApi.findGym(foreignGym)).thenReturn(Optional.of(gym(foreignGym, UUID.randomUUID())));
+
+        DomainException ex = assertThrows(DomainException.class,
+                () -> leadService.createLead(foreignGym, request(foreignGym)));
+
+        assertEquals("GYM_NOT_FOUND", ex.getErrorCode());
+        verify(leadRepository, never()).save(any());
     }
 
     @Test

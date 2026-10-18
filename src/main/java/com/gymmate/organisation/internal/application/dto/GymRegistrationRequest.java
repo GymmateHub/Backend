@@ -2,7 +2,6 @@ package com.gymmate.organisation.internal.application.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.UUID;
@@ -11,7 +10,8 @@ import java.util.UUID;
  * DTO for gym registration requests.
  */
 public record GymRegistrationRequest(
-    @NotNull(message = "Owner ID is required")
+    // Optional: the authenticated owner registers their own gym. Only a SUPER_ADMIN may name
+    // another owner (registering on their behalf).
     UUID ownerId,
 
     @NotBlank(message = "Gym name is required")

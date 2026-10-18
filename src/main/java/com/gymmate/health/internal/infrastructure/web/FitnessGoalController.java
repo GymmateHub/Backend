@@ -41,7 +41,7 @@ public class FitnessGoalController {
      * Create a new fitness goal.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#request.memberId())")
     @Operation(summary = "Create goal", description = "Create a new fitness goal for a member")
     public ResponseEntity<ApiResponse<FitnessGoalResponse>> createGoal(
             @RequestParam UUID gymId,
@@ -71,6 +71,7 @@ public class FitnessGoalController {
      * Get goal by ID.
      */
     @GetMapping("/{goalId}")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessGoal(#goalId)")
     @Operation(summary = "Get goal by ID", description = "Retrieve a specific fitness goal")
     public ResponseEntity<ApiResponse<FitnessGoalResponse>> getGoalById(@PathVariable UUID goalId) {
         FitnessGoal goal = fitnessGoalService.getGoalById(goalId);
@@ -81,6 +82,7 @@ public class FitnessGoalController {
      * Get all goals for a member.
      */
     @GetMapping("/member/{memberId}")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get member goals", description = "Retrieve all fitness goals for a member")
     public ResponseEntity<ApiResponse<List<FitnessGoalResponse>>> getMemberGoals(@PathVariable UUID memberId) {
         List<FitnessGoal> goals = fitnessGoalService.getMemberGoals(memberId);
@@ -94,6 +96,7 @@ public class FitnessGoalController {
      * Get active goals for a member.
      */
     @GetMapping("/member/{memberId}/active")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get active goals", description = "Retrieve active fitness goals for a member")
     public ResponseEntity<ApiResponse<List<FitnessGoalResponse>>> getActiveGoals(@PathVariable UUID memberId) {
         List<FitnessGoal> goals = fitnessGoalService.getActiveGoals(memberId);
@@ -107,6 +110,7 @@ public class FitnessGoalController {
      * Get goals by status.
      */
     @GetMapping("/member/{memberId}/status/{status}")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get goals by status", description = "Retrieve goals with a specific status")
     public ResponseEntity<ApiResponse<List<FitnessGoalResponse>>> getGoalsByStatus(
             @PathVariable UUID memberId,
@@ -123,6 +127,7 @@ public class FitnessGoalController {
      * Get goals by type.
      */
     @GetMapping("/member/{memberId}/type/{goalType}")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get goals by type", description = "Retrieve goals of a specific type")
     public ResponseEntity<ApiResponse<List<FitnessGoalResponse>>> getGoalsByType(
             @PathVariable UUID memberId,
@@ -139,7 +144,7 @@ public class FitnessGoalController {
      * Update goal progress.
      */
     @PutMapping("/{goalId}/progress")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessGoal(#goalId)")
     @Operation(summary = "Update progress", description = "Update progress for a fitness goal")
     public ResponseEntity<ApiResponse<FitnessGoalResponse>> updateGoalProgress(
             @PathVariable UUID goalId,
@@ -153,7 +158,7 @@ public class FitnessGoalController {
      * Mark goal as achieved.
      */
     @PostMapping("/{goalId}/achieve")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessGoal(#goalId)")
     @Operation(summary = "Achieve goal", description = "Manually mark a goal as achieved")
     public ResponseEntity<ApiResponse<FitnessGoalResponse>> achieveGoal(@PathVariable UUID goalId) {
         FitnessGoal goal = fitnessGoalService.achieveGoal(goalId);
@@ -164,7 +169,7 @@ public class FitnessGoalController {
      * Abandon a goal.
      */
     @PostMapping("/{goalId}/abandon")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessGoal(#goalId)")
     @Operation(summary = "Abandon goal", description = "Abandon a fitness goal with a reason")
     public ResponseEntity<ApiResponse<FitnessGoalResponse>> abandonGoal(
             @PathVariable UUID goalId,
@@ -178,7 +183,7 @@ public class FitnessGoalController {
      * Pause a goal.
      */
     @PostMapping("/{goalId}/pause")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessGoal(#goalId)")
     @Operation(summary = "Pause goal", description = "Pause an active fitness goal")
     public ResponseEntity<ApiResponse<FitnessGoalResponse>> pauseGoal(@PathVariable UUID goalId) {
         FitnessGoal goal = fitnessGoalService.pauseGoal(goalId);
@@ -189,7 +194,7 @@ public class FitnessGoalController {
      * Resume a paused goal.
      */
     @PostMapping("/{goalId}/resume")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessGoal(#goalId)")
     @Operation(summary = "Resume goal", description = "Resume a paused fitness goal")
     public ResponseEntity<ApiResponse<FitnessGoalResponse>> resumeGoal(@PathVariable UUID goalId) {
         FitnessGoal goal = fitnessGoalService.resumeGoal(goalId);
@@ -200,6 +205,7 @@ public class FitnessGoalController {
      * Get goal progress report.
      */
     @GetMapping("/{goalId}/progress-report")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessGoal(#goalId)")
     @Operation(summary = "Get progress report", description = "Get detailed progress report for a goal")
     public ResponseEntity<ApiResponse<GoalProgressReportResponse>> getProgressReport(@PathVariable UUID goalId) {
         FitnessGoalService.GoalProgressReport report = fitnessGoalService.calculateProgressReport(goalId);
@@ -210,6 +216,7 @@ public class FitnessGoalController {
      * Get goal statistics for a member.
      */
     @GetMapping("/member/{memberId}/statistics")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get goal statistics", description = "Get goal statistics for a member")
     public ResponseEntity<ApiResponse<MemberHealthDashboardResponse.GoalStatisticsResponse>> getGoalStatistics(
             @PathVariable UUID memberId) {
@@ -222,7 +229,7 @@ public class FitnessGoalController {
      * Get overdue goals for a gym.
      */
     @GetMapping("/gym/{gymId}/overdue")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Get overdue goals", description = "Get all overdue goals for a gym")
     public ResponseEntity<ApiResponse<List<FitnessGoalResponse>>> getOverdueGoals(@PathVariable UUID gymId) {
         List<FitnessGoal> goals = fitnessGoalService.getOverdueGoals(gymId);
@@ -236,7 +243,7 @@ public class FitnessGoalController {
      * Get goals with upcoming deadlines.
      */
     @GetMapping("/gym/{gymId}/upcoming-deadlines")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Get upcoming deadlines", description = "Get goals with upcoming deadlines for a gym")
     public ResponseEntity<ApiResponse<List<FitnessGoalResponse>>> getUpcomingDeadlines(
             @PathVariable UUID gymId,
@@ -253,7 +260,7 @@ public class FitnessGoalController {
      * Delete a goal.
      */
     @DeleteMapping("/{goalId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Delete goal", description = "Delete a fitness goal")
     public ResponseEntity<ApiResponse<Void>> deleteGoal(@PathVariable UUID goalId) {
         fitnessGoalService.deleteGoal(goalId);

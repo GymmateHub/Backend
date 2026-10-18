@@ -10,6 +10,7 @@ import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.identity.internal.domain.User;
 import com.gymmate.identity.internal.application.port.MemberRepository;
 import com.gymmate.identity.internal.application.port.UserRepository;
+import com.gymmate.identity.api.spi.GymDirectory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final UserRepository userRepository;
+    private final GymDirectory gymDirectory;
     private final PasswordEncoder passwordEncoder;
     private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
@@ -58,6 +60,7 @@ public class MemberService {
             throw new DomainException("GYM_ID_REQUIRED",
                     "A gym must be selected before adding a member");
         }
+        requireGymInOrganisation(targetGymId, orgId);
 
         User user = userRepository.findByEmail(email.trim()).orElseGet(() -> {
             User newUser = User.builder()
@@ -104,6 +107,23 @@ public class MemberService {
         member.setOrganisationId(user.getOrganisationId() != null ? user.getOrganisationId() : orgId);
 
         return memberRepository.save(member);
+    }
+
+    /**
+     * Rejects a gym that does not exist or belongs to another organisation. Without this an
+     * unknown gym failed the members.gym_id foreign key as a 500, and another organisation's
+     * gym was accepted.
+     */
+    private void requireGymInOrganisation(UUID gymId, UUID orgId) {
+        UUID gymOrganisationId;
+        try {
+            gymOrganisationId = gymDirectory.getGymSummary(gymId).organisationId();
+        } catch (ResourceNotFoundException e) {
+            gymOrganisationId = null;
+        }
+        if (gymOrganisationId == null || (orgId != null && !orgId.equals(gymOrganisationId))) {
+            throw new DomainException("GYM_NOT_FOUND", "The selected gym does not exist in your organisation");
+        }
     }
 
     /**

@@ -27,7 +27,8 @@ public class InviteController {
     private final JwtService jwtService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:invite')")
     @Operation(summary = "Create invite", description = "Invite a new user (Trainer or Staff)")
     public ResponseEntity<ApiResponse<InviteResponse>> createInvite(
             @PathVariable UUID gymId,
@@ -41,7 +42,8 @@ public class InviteController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:invite')")
     @Operation(summary = "Get invites", description = "Get all invites for a gym")
     public ResponseEntity<ApiResponse<List<InviteResponse>>> getInvites(
             @PathVariable UUID gymId) {
@@ -50,7 +52,8 @@ public class InviteController {
     }
 
     @PostMapping("/{inviteId}/resend")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:invite')")
     @Operation(summary = "Resend invite", description = "Resend an expired or pending invite")
     public ResponseEntity<ApiResponse<InviteResponse>> resendInvite(
             @PathVariable UUID gymId,
@@ -63,7 +66,8 @@ public class InviteController {
     }
 
     @DeleteMapping("/{inviteId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:invite')")
     @Operation(summary = "Revoke invite", description = "Revoke a pending invite")
     public ResponseEntity<ApiResponse<Void>> revokeInvite(
             @PathVariable UUID gymId,

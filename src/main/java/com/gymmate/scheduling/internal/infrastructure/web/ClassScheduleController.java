@@ -28,7 +28,8 @@ public class ClassScheduleController {
   private final ClassScheduleMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> create(@Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = mapper.toEntity(req);
     UUID effectiveGymId = req.gymId() != null ? req.gymId() : TenantContext.getCurrentGymId();
@@ -40,12 +41,16 @@ public class ClassScheduleController {
   }
 
   @GetMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> get(@PathVariable UUID id) {
     ClassSchedule s = scheduleService.getSchedule(id);
     return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(s)));
   }
 
   @GetMapping("/gym/{gymId}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<List<ScheduleResponse>>> listByGym(@PathVariable UUID gymId) {
     List<ClassSchedule> list = scheduleService.listByGym(gymId);
     List<ScheduleResponse> res = list.stream().map(mapper::toResponse).collect(Collectors.toList());
@@ -53,7 +58,8 @@ public class ClassScheduleController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<ScheduleResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateScheduleRequest req) {
     ClassSchedule s = scheduleService.getSchedule(id);
     s.setStartTime(req.startTime());
@@ -67,7 +73,8 @@ public class ClassScheduleController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
     scheduleService.deleteSchedule(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Schedule deleted"));

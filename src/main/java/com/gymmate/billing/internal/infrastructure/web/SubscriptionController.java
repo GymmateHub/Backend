@@ -39,7 +39,8 @@ public class SubscriptionController {
     private final SubscriptionMapper mapper;
 
     @PostMapping
-    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Create a new subscription", description = "Create a subscription for an organisation with optional Stripe billing")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> createSubscription(
             @Valid @RequestBody CreateSubscriptionRequest request) {
@@ -62,7 +63,8 @@ public class SubscriptionController {
     }
 
     @GetMapping("/current")
-    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Get current subscription", description = "Get the current subscription for the organisation")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> getCurrentSubscription() {
         UUID organisationId = TenantContext.getCurrentTenantId();
@@ -72,7 +74,8 @@ public class SubscriptionController {
     }
 
     @PostMapping("/upgrade")
-    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Upgrade subscription", description = "Upgrade to a higher tier")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> upgradeSubscription(
             @Valid @RequestBody ChangeTierRequest request) {
@@ -85,7 +88,8 @@ public class SubscriptionController {
     }
 
     @PostMapping("/downgrade")
-    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Downgrade subscription", description = "Downgrade to a lower tier")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> downgradeSubscription(
             @Valid @RequestBody ChangeTierRequest request) {
@@ -98,7 +102,8 @@ public class SubscriptionController {
     }
 
     @PostMapping("/cancel")
-    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Cancel subscription", description = "Cancel the subscription")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> cancelSubscription(
             @RequestParam(defaultValue = "false") boolean immediate) {
@@ -114,7 +119,8 @@ public class SubscriptionController {
     }
 
     @PostMapping("/reactivate")
-    @PreAuthorize("hasRole('OWNER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Reactivate subscription", description = "Reactivate a cancelled subscription")
     public ResponseEntity<ApiResponse<SubscriptionResponse>> reactivateSubscription() {
         UUID organisationId = TenantContext.getCurrentTenantId();
@@ -147,7 +153,8 @@ public class SubscriptionController {
     }
 
     @GetMapping("/usage/current")
-    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Get current usage", description = "Get current billing period usage")
     public ResponseEntity<ApiResponse<SubscriptionUsage>> getCurrentUsage() {
         UUID organisationId = TenantContext.getCurrentTenantId();
@@ -158,7 +165,8 @@ public class SubscriptionController {
     }
 
     @GetMapping("/usage/history")
-    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Get usage history", description = "Get historical usage records")
     public ResponseEntity<ApiResponse<List<SubscriptionUsage>>> getUsageHistory() {
         UUID organisationId = TenantContext.getCurrentTenantId();
@@ -168,7 +176,8 @@ public class SubscriptionController {
     }
 
     @GetMapping("/rate-limit/status")
-    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Get rate limit status", description = "Get current rate limit status")
     public ResponseEntity<ApiResponse<RateLimitStatus>> getRateLimitStatus() {
         UUID organisationId = TenantContext.getCurrentTenantId();
@@ -178,7 +187,8 @@ public class SubscriptionController {
     }
 
     @GetMapping("/rate-limit/statistics")
-    @PreAuthorize("hasRole('OWNER') or hasRole('MANAGER') or hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('org:billing')")
     @Operation(summary = "Get rate limit statistics", description = "Get rate limit statistics")
     public ResponseEntity<ApiResponse<RateLimitStatistics>> getRateLimitStatistics(
             @RequestParam(required = false) Integer days) {
@@ -194,7 +204,8 @@ public class SubscriptionController {
     }
 
     @PostMapping("/rate-limit/unblock")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('platform:admin')")
     @Operation(summary = "Unblock organisation", description = "Manually unblock a rate-limited organisation (Admin only)")
     public ResponseEntity<ApiResponse<Void>> unblockOrganisation(@RequestParam UUID organisationId) {
         rateLimitService.unblockOrganisation(organisationId);

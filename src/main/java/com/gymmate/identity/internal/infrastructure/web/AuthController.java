@@ -119,6 +119,8 @@ public class AuthController {
         // ==================== PASSWORD CHANGE ====================
 
         @PostMapping("/change-password")
+
+        @PreAuthorize("isAuthenticated()")
         @Operation(summary = "Change password", description = "Change the authenticated user's password")
         public ResponseEntity<ApiResponse<Void>> changePassword(
                         @AuthenticationPrincipal TenantAwareUserDetails userDetails,

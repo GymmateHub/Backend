@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.TenantOwned;
 import com.gymmate.shared.constants.PaymentMethodOwnerType;
 import com.gymmate.shared.constants.PaymentMethodType;
 import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
@@ -25,7 +26,7 @@ public class // ============================================
 // ============================================
 // Convenience methods
 // ============================================
-PaymentMethodJpaEntity extends BaseAuditJpaEntity {
+PaymentMethodJpaEntity extends BaseAuditJpaEntity implements TenantOwned {
 
     /**
      * Organisation ID - the billing entity that owns this payment method.

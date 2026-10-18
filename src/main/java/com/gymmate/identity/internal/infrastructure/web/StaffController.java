@@ -33,7 +33,8 @@ public class StaffController {
     private final StaffService staffService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     @Operation(summary = "Create staff", description = "Create a new staff profile")
     public ResponseEntity<ApiResponse<StaffResponse>> createStaff(@Valid @RequestBody StaffCreateRequest request) {
         Staff staff = staffService.createStaff(
@@ -50,7 +51,8 @@ public class StaffController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('staff:view')")
     public ResponseEntity<ApiResponse<StaffResponse>> getStaffById(@PathVariable UUID id) {
         Staff staff = staffService.findById(id);
         // Tenant isolation: findById bypasses Hibernate @Filter
@@ -65,7 +67,8 @@ public class StaffController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('staff:view')")
     public ResponseEntity<ApiResponse<StaffResponse>> getStaffByUserId(@PathVariable UUID userId) {
         Staff staff = staffService.findByUserId(userId);
         // Tenant isolation: findByUserId may bypass Hibernate @Filter
@@ -80,11 +83,12 @@ public class StaffController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:view')")
     @Operation(summary = "Get all staff", description = "Get all staff in the current organisation")
     public ResponseEntity<ApiResponse<List<StaffResponse>>> getAllStaff(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         List<Staff> staff = staffService.findAllByOrganisation(organisationId);
         List<StaffResponse> responses = staff.stream()
                 .map(StaffResponse::fromEntity)
@@ -93,11 +97,12 @@ public class StaffController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:view')")
     @Operation(summary = "Get active staff", description = "Get active staff in the current organisation")
     public ResponseEntity<ApiResponse<List<StaffResponse>>> getActiveStaff(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         List<Staff> staff = staffService.findAllActive(organisationId);
         List<StaffResponse> responses = staff.stream()
                 .map(StaffResponse::fromEntity)
@@ -106,12 +111,13 @@ public class StaffController {
     }
 
     @GetMapping("/department/{department}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:view')")
     @Operation(summary = "Get staff by department", description = "Get staff by department in the current organisation")
     public ResponseEntity<ApiResponse<List<StaffResponse>>> getStaffByDepartment(
             @PathVariable String department,
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         List<Staff> staff = staffService.findByDepartment(organisationId, department);
         List<StaffResponse> responses = staff.stream()
                 .map(StaffResponse::fromEntity)
@@ -120,7 +126,8 @@ public class StaffController {
     }
 
     @PutMapping("/{id}/position")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<StaffResponse>> updatePosition(
             @PathVariable UUID id,
             @Valid @RequestBody StaffUpdateRequest request) {
@@ -130,7 +137,8 @@ public class StaffController {
     }
 
     @PutMapping("/{id}/wage")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<StaffResponse>> updateWage(
             @PathVariable UUID id,
             @Valid @RequestBody StaffUpdateRequest request) {
@@ -140,7 +148,8 @@ public class StaffController {
     }
 
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<StaffResponse>> activate(@PathVariable UUID id) {
         Staff staff = staffService.activate(id);
         StaffResponse response = StaffResponse.fromEntity(staff);
@@ -148,7 +157,8 @@ public class StaffController {
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<StaffResponse>> deactivate(@PathVariable UUID id) {
         Staff staff = staffService.deactivate(id);
         StaffResponse response = StaffResponse.fromEntity(staff);

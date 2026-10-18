@@ -33,7 +33,8 @@ public class AnalyticsController {
     // ===== MAIN DASHBOARD =====
 
     @GetMapping("/dashboard/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get complete dashboard with all KPIs for a gym")
     public ResponseEntity<ApiResponse<DashboardResponse>> getDashboard(
             @PathVariable UUID gymId,
@@ -45,7 +46,8 @@ public class AnalyticsController {
     }
 
     @GetMapping("/dashboard/gym/{gymId}/today")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get today's dashboard snapshot")
     public ResponseEntity<ApiResponse<DashboardResponse>> getTodaysDashboard(@PathVariable UUID gymId) {
         DashboardResponse dashboard = analyticsService.getDashboard(gymId, AnalyticsPeriod.TODAY);
@@ -53,7 +55,8 @@ public class AnalyticsController {
     }
 
     @GetMapping("/dashboard/gym/{gymId}/weekly")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get weekly dashboard")
     public ResponseEntity<ApiResponse<DashboardResponse>> getWeeklyDashboard(@PathVariable UUID gymId) {
         DashboardResponse dashboard = analyticsService.getDashboard(gymId, AnalyticsPeriod.LAST_7_DAYS);
@@ -61,7 +64,8 @@ public class AnalyticsController {
     }
 
     @GetMapping("/dashboard/gym/{gymId}/monthly")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get monthly dashboard")
     public ResponseEntity<ApiResponse<DashboardResponse>> getMonthlyDashboard(@PathVariable UUID gymId) {
         DashboardResponse dashboard = analyticsService.getDashboard(gymId, AnalyticsPeriod.LAST_30_DAYS);
@@ -71,7 +75,8 @@ public class AnalyticsController {
     // ===== MEMBER ANALYTICS =====
 
     @GetMapping("/members/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get detailed member analytics")
     public ResponseEntity<ApiResponse<MemberAnalyticsResponse>> getMemberAnalytics(
             @PathVariable UUID gymId,
@@ -85,7 +90,8 @@ public class AnalyticsController {
     // ===== REVENUE ANALYTICS =====
 
     @GetMapping("/revenue/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get detailed revenue analytics")
     public ResponseEntity<ApiResponse<RevenueAnalyticsResponse>> getRevenueAnalytics(
             @PathVariable UUID gymId,
@@ -99,7 +105,8 @@ public class AnalyticsController {
     // ===== CLASS ANALYTICS =====
 
     @GetMapping("/classes/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get detailed class and booking analytics")
     public ResponseEntity<ApiResponse<ClassAnalyticsResponse>> getClassAnalytics(
             @PathVariable UUID gymId,
@@ -113,7 +120,8 @@ public class AnalyticsController {
     // ===== KPI WIDGETS (Individual) =====
 
     @GetMapping("/kpi/members/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get member-related KPI cards only")
     public ResponseEntity<ApiResponse<MemberKpisResponse>> getMemberKpis(
             @PathVariable UUID gymId,
@@ -129,7 +137,8 @@ public class AnalyticsController {
     }
 
     @GetMapping("/kpi/revenue/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get revenue-related KPI cards only")
     public ResponseEntity<ApiResponse<RevenueKpisResponse>> getRevenueKpis(
             @PathVariable UUID gymId,
@@ -145,7 +154,8 @@ public class AnalyticsController {
     }
 
     @GetMapping("/kpi/classes/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('analytics:view')")
     @Operation(summary = "Get class-related KPI cards only")
     public ResponseEntity<ApiResponse<ClassKpisResponse>> getClassKpis(
             @PathVariable UUID gymId,

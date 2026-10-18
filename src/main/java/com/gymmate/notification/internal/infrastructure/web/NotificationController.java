@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.infrastructure.web;
 
+import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.notification.internal.application.dto.NotificationResponse;
 import com.gymmate.notification.internal.application.NotificationService;
 import com.gymmate.notification.api.spi.GymAccessVerifier;
@@ -42,14 +43,14 @@ public class NotificationController {
      * Get all notifications for the current organisation with pagination.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Get notifications", description = "Get paginated list of notifications")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Notification> notifications = notificationService.getNotifications(organisationId, pageable);
@@ -62,14 +63,14 @@ public class NotificationController {
      * Get unread notifications.
      */
     @GetMapping("/unread")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Get unread notifications", description = "Get paginated list of unread notifications")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getUnreadNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         Pageable pageable = PageRequest.of(page, size);
 
         Page<Notification> notifications = notificationService.getUnreadNotifications(organisationId, pageable);
@@ -82,11 +83,11 @@ public class NotificationController {
      * Get unread notification count.
      */
     @GetMapping("/unread-count")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Get unread count", description = "Get count of unread notifications for badge display")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getUnreadCount(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         long count = notificationService.getUnreadCount(organisationId);
 
         Map<String, Long> response = new HashMap<>();
@@ -99,7 +100,7 @@ public class NotificationController {
      * Get a single notification by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Get notification by ID")
     public ResponseEntity<ApiResponse<NotificationResponse>> getNotification(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -107,7 +108,7 @@ public class NotificationController {
         Notification notification = notificationService.getById(id);
 
         // Security check: ensure notification belongs to current organisation
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         if (!notification.getOrganisationId().equals(organisationId)) {
             return ResponseEntity.status(403).body(ApiResponse.<NotificationResponse>error("Access denied"));
         }
@@ -119,7 +120,7 @@ public class NotificationController {
      * Mark a notification as read.
      */
     @PatchMapping("/{id}/read")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Mark as read", description = "Mark a notification as read")
     public ResponseEntity<ApiResponse<NotificationResponse>> markAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -127,7 +128,7 @@ public class NotificationController {
         Notification notification = notificationService.getById(id);
 
         // Security check
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         if (!notification.getOrganisationId().equals(organisationId)) {
             return ResponseEntity.status(403).body(ApiResponse.<NotificationResponse>error("Access denied"));
         }
@@ -140,11 +141,11 @@ public class NotificationController {
      * Mark all notifications as read.
      */
     @PostMapping("/mark-all-read")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Mark all as read", description = "Mark all notifications as read for the organisation")
     public ResponseEntity<ApiResponse<String>> markAllAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         notificationService.markAllAsRead(organisationId);
 
         return ResponseEntity.ok(ApiResponse.success("All notifications marked as read"));
@@ -156,7 +157,7 @@ public class NotificationController {
      * Get all notifications for a specific gym with pagination.
      */
     @GetMapping("/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Get gym notifications", description = "Get paginated list of notifications for a specific gym")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getGymNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -164,7 +165,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        verifyGymAccess(gymId, userDetails.getOrganisationId());
+        verifyGymAccess(gymId, TenantContext.getCurrentTenantId());
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Notification> notifications = notificationService.getGymNotifications(gymId, pageable);
@@ -178,7 +179,7 @@ public class NotificationController {
      * Get unread notifications for a specific gym.
      */
     @GetMapping("/gym/{gymId}/unread")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Get unread gym notifications", description = "Get paginated list of unread notifications for a specific gym")
     public ResponseEntity<ApiResponse<Page<NotificationResponse>>> getUnreadGymNotifications(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -186,7 +187,7 @@ public class NotificationController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
-        verifyGymAccess(gymId, userDetails.getOrganisationId());
+        verifyGymAccess(gymId, TenantContext.getCurrentTenantId());
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Notification> notifications = notificationService.getUnreadGymNotifications(gymId, pageable);
@@ -199,13 +200,13 @@ public class NotificationController {
      * Get unread notification count for a gym.
      */
     @GetMapping("/gym/{gymId}/unread-count")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Get gym unread count", description = "Get count of unread notifications for a gym (for badge display)")
     public ResponseEntity<ApiResponse<Map<String, Long>>> getGymUnreadCount(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
             @PathVariable UUID gymId) {
 
-        verifyGymAccess(gymId, userDetails.getOrganisationId());
+        verifyGymAccess(gymId, TenantContext.getCurrentTenantId());
 
         long count = notificationService.getUnreadGymCount(gymId);
 
@@ -220,13 +221,13 @@ public class NotificationController {
      * Mark all gym notifications as read.
      */
     @PostMapping("/gym/{gymId}/mark-all-read")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'GYM_MANAGER', 'MANAGER', 'STAFF', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(summary = "Mark all gym notifications as read", description = "Mark all notifications as read for a specific gym")
     public ResponseEntity<ApiResponse<String>> markAllGymNotificationsAsRead(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
             @PathVariable UUID gymId) {
 
-        verifyGymAccess(gymId, userDetails.getOrganisationId());
+        verifyGymAccess(gymId, TenantContext.getCurrentTenantId());
 
         notificationService.markAllGymNotificationsAsRead(gymId);
         log.info("Marked all notifications as read for gym: {}", gymId);
@@ -234,15 +235,6 @@ public class NotificationController {
         return ResponseEntity.ok(ApiResponse.success("All gym notifications marked as read"));
     }
 
-  /**
-   * Test email notification endpoint- unauthenticated
-   */
-  @GetMapping("/test-email")
-  public ResponseEntity<ApiResponse<String>> testEmailNotification() {
-
-    notificationService.sendTestEmail("davidgodswill@gmail.com");
-    return ResponseEntity.ok(ApiResponse.success("Test email sent successfully"));
-  }
 
   private void verifyGymAccess(UUID gymId, UUID organisationId) {
       gymAccessVerifier.verifyGymBelongsToOrganisation(gymId, organisationId);

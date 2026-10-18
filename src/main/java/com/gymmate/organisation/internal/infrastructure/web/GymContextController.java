@@ -37,7 +37,8 @@ public class GymContextController {
     private final IdentityApi identityApi;
 
     @PostMapping("/switch-gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+    @PreAuthorize("hasAuthority('org:view')")
     @Operation(summary = "Switch gym context", description = "Switch to a different gym within your organisation")
     public ResponseEntity<ApiResponse<GymSwitchResponse>> switchGym(
             @PathVariable UUID gymId,
@@ -73,7 +74,8 @@ public class GymContextController {
     }
 
     @GetMapping("/current-gym")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+
+    @PreAuthorize("hasAnyAuthority('org:view', 'self:service')")
     @Operation(summary = "Get current gym context")
     public ResponseEntity<ApiResponse<GymSwitchResponse>> getCurrentGym(
             @RequestHeader("Authorization") String authHeader) {

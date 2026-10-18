@@ -31,6 +31,7 @@ import java.util.UUID;
 public class GymService {
 
     private final GymRepository gymRepository;
+    private final OrganisationLimitService organisationLimitService;
     private final UserQueryPort userQueryPort;
     private final MembershipRevenueSource membershipRevenueSource;
     private final PlatformInvoiceRevenueSource platformInvoiceRevenueSource;
@@ -39,10 +40,10 @@ public class GymService {
      * Register a new gym with the system.
      */
     @Transactional
-    public Gym registerGym(com.gymmate.organisation.internal.application.dto.GymRegistrationRequest request) {
+    public Gym registerGym(com.gymmate.organisation.internal.application.dto.GymRegistrationRequest request, UUID ownerId) {
         // Validate that the owner exists and has the correct role
-        UserQueryPort.UserOwnerSummary owner = userQueryPort.findOwnerSummaryById(request.ownerId())
-                .orElseThrow(() -> new ResourceNotFoundException("User", request.ownerId().toString()));
+        UserQueryPort.UserOwnerSummary owner = userQueryPort.findOwnerSummaryById(ownerId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", ownerId.toString()));
 
         if (owner.role() != UserRole.ADMIN && owner.role() != UserRole.SUPER_ADMIN
                 && owner.role() != UserRole.GYM_OWNER) {
@@ -60,9 +61,12 @@ public class GymService {
                     "Owner must be associated with an organisation to register a gym");
         }
 
+        // Same location limit as creating a gym from the dashboard.
+        organisationLimitService.checkCanCreateGym(owner.organisationId());
+
         // Create gym with required fields
         Gym gym = new Gym(request.name(), request.description(), request.contactEmail(),
-                request.contactPhone(), request.ownerId());
+                request.contactPhone(), ownerId);
 
         // Set organisation ID from owner
         gym.setOrganisationId(owner.organisationId());

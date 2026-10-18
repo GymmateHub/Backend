@@ -1,5 +1,6 @@
 package com.gymmate.identity.internal.application.mapper;
 
+import com.gymmate.shared.security.RolePermissions;
 import com.gymmate.identity.api.dto.UserResponse;
 import com.gymmate.identity.internal.domain.User;
 
@@ -22,7 +23,8 @@ public final class UserResponses {
                 user.isActive(),
                 user.getCreatedAt(),
                 user.getUpdatedAt(),
-                user.getLastLoginAt()
+                user.getLastLoginAt(),
+                RolePermissions.authorities(user.getRole() == null ? null : user.getRole().name())
         );
     }
 }

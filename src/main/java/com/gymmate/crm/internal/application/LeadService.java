@@ -5,6 +5,7 @@ import com.gymmate.crm.internal.application.dto.LeadUpdateRequest;
 import com.gymmate.crm.internal.domain.Lead;
 import com.gymmate.crm.internal.domain.LeadStatus;
 import com.gymmate.crm.internal.application.port.LeadRepository;
+import com.gymmate.organisation.api.OrganisationApi;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
@@ -23,6 +24,7 @@ import java.util.UUID;
 public class LeadService {
 
     private final LeadRepository leadRepository;
+    private final OrganisationApi organisationApi;
 
     @Transactional
     public Lead createLead(UUID gymId, LeadCreateRequest request) {
@@ -31,6 +33,12 @@ public class LeadService {
         if (targetGymId == null) {
             throw new DomainException("GYM_ID_REQUIRED", "A gym must be selected before adding a lead");
         }
+        // An unknown gym used to fail the gym foreign key as a 500; another organisation's gym
+        // would have been accepted.
+        organisationApi.findGym(targetGymId)
+                .filter(gym -> orgId.equals(gym.organisationId()))
+                .orElseThrow(() -> new DomainException("GYM_NOT_FOUND",
+                        "The selected gym does not exist in your organisation"));
         Lead lead = Lead.builder()
                 .firstName(request.firstName().trim())
                 .lastName(request.lastName().trim())

@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -36,6 +37,7 @@ public class HealthDashboardController {
      * Get comprehensive health dashboard for a member.
      */
     @GetMapping("/member/{memberId}")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get member dashboard", description = "Generate comprehensive health dashboard for a member")
     public ResponseEntity<ApiResponse<MemberHealthDashboardResponse>> getMemberDashboard(@PathVariable UUID memberId) {
         HealthAnalyticsService.MemberHealthDashboard dashboard =
@@ -62,6 +64,7 @@ public class HealthDashboardController {
      * Get workout insights for a member.
      */
     @GetMapping("/member/{memberId}/workout-insights")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get workout insights", description = "Generate workout insights and recommendations")
     public ResponseEntity<ApiResponse<WorkoutInsightsResponse>> getWorkoutInsights(
             @PathVariable UUID memberId,
@@ -77,6 +80,7 @@ public class HealthDashboardController {
      * Get health insights for a member.
      */
     @GetMapping("/member/{memberId}/health-insights")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get health insights", description = "Generate health insights and recommendations")
     public ResponseEntity<ApiResponse<HealthInsightsResponse>> getHealthInsights(@PathVariable UUID memberId) {
         HealthAnalyticsService.HealthInsights insights =
@@ -89,6 +93,7 @@ public class HealthDashboardController {
      * Analyze metric trends for a member.
      */
     @GetMapping("/member/{memberId}/metric-trends")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get metric trends", description = "Analyze key metric trends over time")
     public ResponseEntity<ApiResponse<MemberHealthDashboardResponse.MetricTrendsResponse>> getMetricTrends(
             @PathVariable UUID memberId,

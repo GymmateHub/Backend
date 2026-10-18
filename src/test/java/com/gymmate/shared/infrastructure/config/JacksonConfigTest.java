@@ -1,32 +1,46 @@
 package com.gymmate.shared.infrastructure.config;
 
-import lombok.Builder;
-import lombok.Data;
+import com.gymmate.retail.internal.application.dto.InventoryItemCreateRequest;
+import com.gymmate.retail.internal.application.dto.MaintenanceRecordCreateRequest;
+import com.gymmate.retail.internal.application.dto.MaintenanceScheduleCreateRequest;
+import com.gymmate.whitelabel.internal.application.dto.WhitelabelSettingsRequest;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** Request DTOs built with Lombok {@code @Data @Builder} still bind from JSON on Jackson 3. */
+/**
+ * Request records with primitive components must bind when the client omits those fields,
+ * as they did on Jackson 2 (the dashboard's Add Product request omits the tracking flags).
+ */
 class JacksonConfigTest {
 
-    /** Same shape as the API's request DTOs: no default constructor, package-private all-args. */
-    @Data
-    @Builder
-    static class HubRequest {
-        private String name;
-        private String contactEmail;
+    private final JsonMapper mapper = mapper();
+
+    private static JsonMapper mapper() {
+        JacksonConfig config = new JacksonConfig();
+        JsonMapper.Builder builder = JsonMapper.builder();
+        config.jackson2CreatorVisibility().customize(builder);
+        config.jackson2NullForPrimitives().customize(builder);
+        return builder.build();
     }
 
     @Test
-    void bindsBuilderDtosThroughTheirPackagePrivateConstructor() {
-        JsonMapper.Builder builder = JsonMapper.builder();
-        new JacksonConfig().jackson2CreatorVisibility().customize(builder);
+    void omittedPrimitiveFlagsDefaultToFalse() {
+        InventoryItemCreateRequest item = mapper.readValue(
+                "{\"name\":\"Whey\",\"category\":\"SUPPLEMENTS\",\"unitPrice\":25}", InventoryItemCreateRequest.class);
+        assertThat(item.expiryTracking()).isFalse();
+        assertThat(item.batchTracking()).isFalse();
 
-        HubRequest request = builder.build()
-                .readValue("{\"name\":\"Iron Temple\",\"contactEmail\":\"owner@example.com\"}", HubRequest.class);
+        assertThat(mapper.readValue("{}", MaintenanceRecordCreateRequest.class).completed()).isFalse();
+        assertThat(mapper.readValue("{}", MaintenanceScheduleCreateRequest.class).recurring()).isFalse();
+        assertThat(mapper.readValue("{}", WhitelabelSettingsRequest.class).smtpEnabled()).isFalse();
+    }
 
-        assertThat(request.getName()).isEqualTo("Iron Temple");
-        assertThat(request.getContactEmail()).isEqualTo("owner@example.com");
+    @Test
+    void explicitNullForPrimitiveIsTreatedAsDefault() {
+        InventoryItemCreateRequest item = mapper.readValue(
+                "{\"name\":\"Whey\",\"expiryTracking\":null}", InventoryItemCreateRequest.class);
+        assertThat(item.expiryTracking()).isFalse();
     }
 }

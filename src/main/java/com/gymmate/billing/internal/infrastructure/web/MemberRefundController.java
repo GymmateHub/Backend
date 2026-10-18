@@ -33,7 +33,8 @@ public class MemberRefundController {
     private final RefundRequestService refundRequestService;
 
     @PostMapping("/request")
-    @PreAuthorize("hasRole('MEMBER')")
+
+    @PreAuthorize("hasAuthority('self:service')")
     @Operation(summary = "Request refund",
                description = "Submit a refund request for a payment (membership, class booking, etc.)")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> requestRefund(
@@ -61,7 +62,8 @@ public class MemberRefundController {
     }
 
     @GetMapping("/my-requests")
-    @PreAuthorize("hasRole('MEMBER')")
+
+    @PreAuthorize("hasAuthority('self:service')")
     @Operation(summary = "Get my refund requests", description = "Get all refund requests submitted by the current member")
     public ResponseEntity<ApiResponse<List<RefundRequestResponse>>> getMyRefundRequests(
             @AuthenticationPrincipal TenantAwareUserDetails currentUser) {
@@ -71,7 +73,8 @@ public class MemberRefundController {
     }
 
     @GetMapping("/my-requests/{requestId}")
-    @PreAuthorize("hasRole('MEMBER')")
+
+    @PreAuthorize("hasAuthority('self:service')")
     @Operation(summary = "Get refund request", description = "Get details of a specific refund request")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> getMyRefundRequest(
             @PathVariable UUID requestId,
@@ -88,7 +91,8 @@ public class MemberRefundController {
     }
 
     @PutMapping("/my-requests/{requestId}/cancel")
-    @PreAuthorize("hasRole('MEMBER')")
+
+    @PreAuthorize("hasAuthority('self:service')")
     @Operation(summary = "Cancel refund request", description = "Cancel a pending refund request")
     public ResponseEntity<ApiResponse<RefundRequestResponse>> cancelMyRefundRequest(
             @PathVariable UUID requestId,

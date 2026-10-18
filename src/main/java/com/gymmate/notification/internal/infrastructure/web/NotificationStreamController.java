@@ -37,14 +37,14 @@ public class NotificationStreamController {
      * @return SseEmitter for streaming notifications
      */
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:view')")
     @Operation(
             summary = "Subscribe to real-time notifications",
             description = "Opens an SSE connection to receive real-time notifications. " +
                     "Connection includes periodic heartbeats to keep it alive."
     )
     public SseEmitter streamNotifications(@AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         UUID userId = userDetails.getUserId();
 
         log.info("User {} from organisation {} subscribing to notification stream", userId, organisationId);
@@ -63,10 +63,10 @@ public class NotificationStreamController {
      * Get SSE connection statistics (for debugging/monitoring).
      */
     @GetMapping("/stream/stats")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Get SSE connection statistics")
     public ConnectionStats getConnectionStats(@AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
 
         return new ConnectionStats(
                 sseEmitterRegistry.getConnectionCount(organisationId),

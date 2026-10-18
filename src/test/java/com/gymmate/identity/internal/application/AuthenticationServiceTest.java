@@ -126,4 +126,25 @@ class AuthenticationServiceTest {
         verify(userRepository, never()).save(any(User.class));
         verify(passwordPolicyService, never()).addToPasswordHistory(any(), anyString());
     }
+
+    // ---- refresh keeps the gym context (GMH-007/014) ----
+
+    @Test
+    void refreshWithoutTenantIdIssuesTokenForDefaultGym() {
+        UUID userId = UUID.randomUUID();
+        UUID orgId = UUID.randomUUID();
+        UUID gymId = UUID.randomUUID();
+        User user = userWithPassword(userId);
+        user.setOrganisationId(orgId);
+        org.mockito.Mockito.when(jwtService.validateToken("refresh")).thenReturn(true);
+        org.mockito.Mockito.when(jwtService.extractUserId("refresh")).thenReturn(userId);
+        org.mockito.Mockito.when(userRepository.findById(userId)).thenReturn(java.util.Optional.of(user));
+        org.mockito.Mockito.when(gymDirectory.findDefaultActiveGymId(orgId)).thenReturn(java.util.Optional.of(gymId));
+        org.mockito.Mockito.when(jwtService.generateToken(user, gymId)).thenReturn("access-with-gym");
+
+        var tokens = authenticationService.refreshToken(
+                new com.gymmate.identity.internal.application.dto.RefreshTokenRequest("refresh", null));
+
+        org.assertj.core.api.Assertions.assertThat(tokens.accessToken()).isEqualTo("access-with-gym");
+    }
 }

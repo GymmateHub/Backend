@@ -42,7 +42,8 @@ public class AccessController {
   private final AccessService accessService;
 
   @PostMapping("/scan")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('access:operate')")
   @Operation(summary = "Scan credential", description = "Validate a credential at an access point and decide entry")
   public ResponseEntity<ApiResponse<ScanResponse>> scan(@Valid @RequestBody ScanRequest request) {
     AccessEvent event = accessService.scan(request.token(), request.accessPointId(), request.direction());
@@ -52,7 +53,8 @@ public class AccessController {
   }
 
   @PostMapping("/devices/{accessPointId}/events")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('access:operate')")
   @Operation(summary = "Device event webhook",
       description = "Turnstile/CV pass-count reconciliation; flags tailgating when passes exceed valid scans")
   public ResponseEntity<ApiResponse<AccessEventResponse>> deviceEvent(
@@ -66,7 +68,8 @@ public class AccessController {
   }
 
   @PostMapping("/access-points")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER')")
+
+  @PreAuthorize("hasAuthority('org:manage')")
   @Operation(summary = "Create access point", description = "Register a controlled entry point")
   public ResponseEntity<ApiResponse<AccessPointResponse>> createAccessPoint(
       @Valid @RequestBody AccessPointCreateRequest request) {
@@ -89,7 +92,8 @@ public class AccessController {
   }
 
   @GetMapping("/access-points/gym/{gymId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('access:operate')")
   @Operation(summary = "List access points", description = "List access points for a gym")
   public ResponseEntity<ApiResponse<List<AccessPointResponse>>> getAccessPoints(@PathVariable UUID gymId) {
     List<AccessPointResponse> points = accessService.getAccessPointsByGym(gymId).stream()
@@ -98,7 +102,8 @@ public class AccessController {
   }
 
   @PostMapping("/credentials")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('access:operate')")
   @Operation(summary = "Issue credential", description = "Issue a QR/PIN/NFC credential for a member (token shown once)")
   public ResponseEntity<ApiResponse<CredentialIssuedResponse>> issueCredential(
       @Valid @RequestBody IssueCredentialRequest request) {
@@ -108,7 +113,8 @@ public class AccessController {
   }
 
   @DeleteMapping("/credentials/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('access:operate')")
   @Operation(summary = "Revoke credential", description = "Revoke a member access credential")
   public ResponseEntity<ApiResponse<Void>> revokeCredential(@PathVariable UUID id) {
     accessService.revokeCredential(id);
@@ -116,7 +122,8 @@ public class AccessController {
   }
 
   @GetMapping("/credentials/member/{memberId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('access:operate')")
   @Operation(summary = "List member credentials", description = "List credentials issued to a member")
   public ResponseEntity<ApiResponse<List<AccessCredentialResponse>>> getMemberCredentials(@PathVariable UUID memberId) {
     List<AccessCredentialResponse> creds = accessService.getCredentialsByMember(memberId).stream()
@@ -125,7 +132,8 @@ public class AccessController {
   }
 
   @GetMapping("/events/gym/{gymId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'MANAGER', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('access:operate')")
   @Operation(summary = "List access events", description = "Audit log / tailgating report for a gym")
   public ResponseEntity<ApiResponse<List<AccessEventResponse>>> getEvents(
       @PathVariable UUID gymId,

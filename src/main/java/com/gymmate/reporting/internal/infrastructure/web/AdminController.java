@@ -26,7 +26,8 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping("/overview")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('platform:admin')")
     @Operation(summary = "Get platform overview", description = "Get high-level statistics for the platform")
     public ResponseEntity<ApiResponse<PlatformOverview>> getOverview() {
         PlatformOverview overview = adminService.getPlatformOverview();
@@ -34,7 +35,8 @@ public class AdminController {
     }
 
     @GetMapping("/organisations")
-    @PreAuthorize("hasRole('SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('platform:admin')")
     @Operation(summary = "Get all organisations", description = "Get a list of all organisations/tenants on the platform")
     public ResponseEntity<ApiResponse<List<TenantSummary>>> getOrganisations() {
         List<TenantSummary> organisations = adminService.getOrganisations();

@@ -37,7 +37,7 @@ public class NewsletterTemplateController {
      * Create a new newsletter template.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Create template", description = "Create a new newsletter template")
     public ResponseEntity<ApiResponse<TemplateResponse>> createTemplate(
             @Valid @RequestBody CreateTemplateRequest request,
@@ -56,7 +56,7 @@ public class NewsletterTemplateController {
      * Get all templates for a gym or organisation.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "List templates", description = "Get all newsletter templates for a gym or organisation")
     public ResponseEntity<ApiResponse<List<TemplateResponse>>> getTemplates(
             @RequestParam(required = false) UUID gymId) {
@@ -79,7 +79,7 @@ public class NewsletterTemplateController {
      * Get a template by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Get template", description = "Get a newsletter template by ID")
     public ResponseEntity<ApiResponse<TemplateResponse>> getTemplate(@PathVariable UUID id) {
         NewsletterTemplate template = templateService.getById(id);
@@ -90,7 +90,7 @@ public class NewsletterTemplateController {
      * Update a template.
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Update template", description = "Update a newsletter template")
     public ResponseEntity<ApiResponse<TemplateResponse>> updateTemplate(
             @PathVariable UUID id,
@@ -107,7 +107,7 @@ public class NewsletterTemplateController {
      * Delete a template.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Delete template", description = "Delete a newsletter template")
     public ResponseEntity<ApiResponse<Void>> deleteTemplate(@PathVariable UUID id) {
         templateService.delete(id);

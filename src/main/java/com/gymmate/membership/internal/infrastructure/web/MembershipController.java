@@ -36,7 +36,8 @@ public class MembershipController {
   private final MembershipService membershipService;
 
   @PostMapping("/subscribe")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'MEMBER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
   @Operation(summary = "Subscribe member", description = "Subscribe a member to a membership plan")
   public ResponseEntity<ApiResponse<MemberMembershipResponse>> subscribeMember(
     @RequestParam UUID gymId,
@@ -59,6 +60,8 @@ public class MembershipController {
   }
 
   @GetMapping("/{membershipId}")
+
+  @PreAuthorize("hasAnyAuthority('members:view', 'self:service')")
   @Operation(summary = "Get membership", description = "Get membership by ID")
   public ResponseEntity<ApiResponse<MemberMembershipResponse>> getMembership(@PathVariable UUID membershipId) {
     MemberMembership membership = membershipService.getMembershipById(membershipId);
@@ -66,6 +69,8 @@ public class MembershipController {
   }
 
   @GetMapping("/member/{memberId}")
+
+  @PreAuthorize("hasAnyAuthority('members:view', 'self:service')")
   @Operation(summary = "Get member's memberships", description = "Get membership history for a member")
   public ResponseEntity<ApiResponse<List<MemberMembershipResponse>>> getMemberMemberships(@PathVariable UUID memberId) {
     List<MemberMembership> memberships = membershipService.getMembershipHistory(memberId);
@@ -76,6 +81,8 @@ public class MembershipController {
   }
 
   @GetMapping("/member/{memberId}/active")
+
+  @PreAuthorize("hasAnyAuthority('members:view', 'self:service')")
   @Operation(summary = "Get active membership", description = "Get current active membership for a member")
   public ResponseEntity<ApiResponse<MemberMembershipResponse>> getActiveMembership(@PathVariable UUID memberId) {
     MemberMembership membership = membershipService.getActiveMembership(memberId);
@@ -83,7 +90,8 @@ public class MembershipController {
   }
 
   @GetMapping("/gym/{gymId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('members:view')")
   @Operation(summary = "Get gym's memberships", description = "Get all memberships for a gym")
   public ResponseEntity<ApiResponse<List<MemberMembershipResponse>>> getGymMemberships(
     @PathVariable UUID gymId,
@@ -105,7 +113,8 @@ public class MembershipController {
   }
 
   @GetMapping("/gym/{gymId}/expiring")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('members:view')")
   @Operation(summary = "Get expiring memberships", description = "Get memberships expiring within specified days")
   public ResponseEntity<ApiResponse<List<MemberMembershipResponse>>> getExpiringMemberships(
     @PathVariable UUID gymId,
@@ -120,7 +129,8 @@ public class MembershipController {
   }
 
   @GetMapping("/gym/{gymId}/count")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('members:view')")
   @Operation(summary = "Count active memberships", description = "Get count of active memberships for a gym")
   public ResponseEntity<ApiResponse<Long>> getActiveMembershipCount(@PathVariable UUID gymId) {
     long count = membershipService.getActiveMembershipCount(gymId);
@@ -128,7 +138,8 @@ public class MembershipController {
   }
 
   @PutMapping("/{membershipId}/freeze")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'MEMBER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
   @Operation(summary = "Freeze membership", description = "Freeze/hold a membership")
   public ResponseEntity<ApiResponse<MemberMembershipResponse>> freezeMembership(
     @PathVariable UUID membershipId,
@@ -144,7 +155,8 @@ public class MembershipController {
   }
 
   @PutMapping("/{membershipId}/unfreeze")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'MEMBER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
   @Operation(summary = "Unfreeze membership", description = "Unfreeze a frozen membership")
   public ResponseEntity<ApiResponse<MemberMembershipResponse>> unfreezeMembership(@PathVariable UUID membershipId) {
     MemberMembership membership = membershipService.unfreezeMembership(membershipId);
@@ -152,7 +164,8 @@ public class MembershipController {
   }
 
   @PutMapping("/{membershipId}/renew")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('members:manage')")
   @Operation(summary = "Renew membership", description = "Manually renew a membership")
   public ResponseEntity<ApiResponse<MemberMembershipResponse>> renewMembership(@PathVariable UUID membershipId) {
     MemberMembership membership = membershipService.renewMembership(membershipId);
@@ -160,7 +173,8 @@ public class MembershipController {
   }
 
   @PutMapping("/{membershipId}/cancel")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'MEMBER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
   @Operation(summary = "Cancel membership", description = "Cancel a membership")
   public ResponseEntity<ApiResponse<MemberMembershipResponse>> cancelMembership(
     @PathVariable UUID membershipId,
@@ -171,7 +185,8 @@ public class MembershipController {
   }
 
   @PutMapping("/{membershipId}/use-credit")
-  @PreAuthorize("hasAnyRole('OWNER', 'STAFF', 'MEMBER', 'SUPER_ADMIN')")
+
+  @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
   @Operation(summary = "Use class credit", description = "Use a class credit from membership")
   public ResponseEntity<ApiResponse<MemberMembershipResponse>> useClassCredit(@PathVariable UUID membershipId) {
     MemberMembership membership = membershipService.useClassCredit(membershipId);

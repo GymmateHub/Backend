@@ -1,5 +1,6 @@
 package com.gymmate.identity.internal.infrastructure.web;
 
+import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.identity.internal.application.dto.MemberCreateRequest;
@@ -70,7 +71,7 @@ public class MemberController {
      * Checks organisation member limit before creating.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:manage')")
     @Operation(summary = "Create member", description = "Create a new member profile")
     public ResponseEntity<ApiResponse<MemberResponse>> createMember(@Valid @RequestBody MemberCreateRequest request) {
         // Check organisation member limit
@@ -92,7 +93,7 @@ public class MemberController {
         } else if (request.userId() != null) {
             member = memberService.createMember(request.userId(), request.gymId(), request.membershipNumber());
         } else {
-            throw new IllegalArgumentException("Either email and name or userId must be provided");
+            throw new DomainException("MEMBER_IDENTITY_REQUIRED", "Either email and name or userId must be provided");
         }
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -104,7 +105,7 @@ public class MemberController {
      * SECURITY: Validates the fetched member belongs to the caller's organisation.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAuthority('members:view')")
     public ResponseEntity<ApiResponse<MemberResponse>> getMemberById(@PathVariable UUID id) {
         Member member = memberService.findById(id);
         UUID tenantId = TenantContext.getCurrentTenantId();
@@ -121,7 +122,7 @@ public class MemberController {
      * SECURITY: Validates the fetched member belongs to the caller's organisation.
      */
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAuthority('members:view')")
     public ResponseEntity<ApiResponse<MemberResponse>> getMemberByUserId(@PathVariable UUID userId) {
         Member member = memberService.findByUserId(userId);
         UUID tenantId = TenantContext.getCurrentTenantId();
@@ -138,7 +139,7 @@ public class MemberController {
      * SECURITY: Validates the fetched member belongs to the caller's organisation.
      */
     @GetMapping("/membership-number/{number}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('members:view')")
     public ResponseEntity<ApiResponse<MemberResponse>> getMemberByMembershipNumber(@PathVariable String number) {
         Member member = memberService.findByMembershipNumber(number);
         UUID tenantId = TenantContext.getCurrentTenantId();
@@ -154,7 +155,7 @@ public class MemberController {
      * Get all members in current organisation.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:view')")
     @Operation(summary = "Get all members", description = "Get all members in the current organisation")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getAllMembers() {
         UUID organisationId = TenantContext.requireCurrentTenantId();
@@ -166,7 +167,7 @@ public class MemberController {
      * Get members by gym ID within the organisation.
      */
     @GetMapping("/gym/{gymId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('members:view')")
     @Operation(summary = "Get members by gym", description = "Get all members for a specific gym")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getMembersByGym(@PathVariable UUID gymId) {
         UUID organisationId = TenantContext.requireCurrentTenantId();
@@ -178,7 +179,7 @@ public class MemberController {
      * Get all members across organisation (organisation-scoped).
      */
     @GetMapping("/organisation")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('members:view')")
     @Operation(summary = "Get organisation members", description = "Get all members across all gyms in the organisation")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getOrganisationMembers() {
         UUID organisationId = TenantContext.requireCurrentTenantId();
@@ -190,7 +191,7 @@ public class MemberController {
      * Get active members.
      */
     @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:view')")
     @Operation(summary = "Get active members", description = "Get all active members in current organisation")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getActiveMembers() {
         UUID organisationId = TenantContext.requireCurrentTenantId();
@@ -202,7 +203,7 @@ public class MemberController {
      * Get members by status.
      */
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:view')")
     @Operation(summary = "Get members by status", description = "Get members by status in current organisation")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getMembersByStatus(@PathVariable MemberStatus status) {
         UUID organisationId = TenantContext.requireCurrentTenantId();
@@ -214,7 +215,7 @@ public class MemberController {
      * Get members without waiver.
      */
     @GetMapping("/without-waiver")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:view')")
     @Operation(summary = "Get members without waiver", description = "Get members who haven't signed waiver in current organisation")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getMembersWithoutWaiver() {
         UUID organisationId = TenantContext.requireCurrentTenantId();
@@ -226,7 +227,7 @@ public class MemberController {
      * Update member emergency contact.
      */
     @PutMapping("/{id}/emergency-contact")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'MEMBER')")
+    @PreAuthorize("hasAuthority('members:manage')")
     public ResponseEntity<ApiResponse<MemberResponse>> updateEmergencyContact(
             @PathVariable UUID id,
             @Valid @RequestBody MemberUpdateRequest request) {
@@ -243,7 +244,7 @@ public class MemberController {
      * Sign waiver.
      */
     @PatchMapping("/{id}/sign-waiver")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'MEMBER')")
+    @PreAuthorize("hasAuthority('members:manage')")
     public ResponseEntity<ApiResponse<MemberResponse>> signWaiver(@PathVariable UUID id) {
         Member member = memberService.signWaiver(id);
         return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Waiver signed successfully"));
@@ -253,7 +254,7 @@ public class MemberController {
      * Update health information.
      */
     @PutMapping("/{id}/health-info")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'MEMBER')")
+    @PreAuthorize("hasAuthority('members:manage')")
     public ResponseEntity<ApiResponse<MemberResponse>> updateHealthInfo(
             @PathVariable UUID id,
             @Valid @RequestBody MemberUpdateRequest request) {
@@ -270,7 +271,7 @@ public class MemberController {
      * Update fitness goals.
      */
     @PutMapping("/{id}/fitness-goals")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'MEMBER')")
+    @PreAuthorize("hasAuthority('members:manage')")
     public ResponseEntity<ApiResponse<MemberResponse>> updateFitnessGoals(
             @PathVariable UUID id,
             @Valid @RequestBody MemberUpdateRequest request) {
@@ -286,7 +287,7 @@ public class MemberController {
      * Activate member.
      */
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:manage')")
     public ResponseEntity<ApiResponse<MemberResponse>> activate(@PathVariable UUID id) {
         Member member = memberService.activate(id);
         return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Member activated successfully"));
@@ -296,7 +297,7 @@ public class MemberController {
      * Suspend member.
      */
     @PatchMapping("/{id}/suspend")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:manage')")
     public ResponseEntity<ApiResponse<MemberResponse>> suspend(@PathVariable UUID id) {
         Member member = memberService.suspend(id);
         return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Member suspended successfully"));
@@ -306,7 +307,7 @@ public class MemberController {
      * Cancel member.
      */
     @PatchMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:manage')")
     public ResponseEntity<ApiResponse<MemberResponse>> cancel(@PathVariable UUID id) {
         Member member = memberService.cancel(id);
         return ResponseEntity.ok(ApiResponse.success(mapWithUser(member), "Member cancelled successfully"));
@@ -316,7 +317,7 @@ public class MemberController {
      * Get member count by status within current organisation.
      */
     @GetMapping("/count/status/{status}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:view')")
     public ResponseEntity<ApiResponse<Long>> countByStatus(@PathVariable MemberStatus status) {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         long count = memberService.countByStatus(organisationId, status);
@@ -327,7 +328,7 @@ public class MemberController {
      * Get new members after a specific date within current organisation.
      */
     @GetMapping("/new-since/{date}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('members:view')")
     public ResponseEntity<ApiResponse<List<MemberResponse>>> getNewMembers(@PathVariable String date) {
         UUID organisationId = TenantContext.requireCurrentTenantId();
         LocalDate afterDate = LocalDate.parse(date);

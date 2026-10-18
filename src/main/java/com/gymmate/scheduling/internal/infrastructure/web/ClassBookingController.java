@@ -29,7 +29,8 @@ public class ClassBookingController {
   private final ClassBookingCoordinator bookingCoordinator;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+
+  @PreAuthorize("hasAnyAuthority('bookings:manage', 'self:service')")
   @Operation(summary = "Create booking", description = "Book a class or join waitlist if full")
   public ResponseEntity<ApiResponse<BookingResponse>> createBooking(@Valid @RequestBody CreateBookingRequest request) {
     ClassBooking booking = bookingCoordinator.createBooking(request.gymId(), request.memberId(), request.scheduleId(), request.memberNotes());
@@ -37,14 +38,16 @@ public class ClassBookingController {
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+
+  @PreAuthorize("hasAnyAuthority('bookings:manage', 'self:service')")
   public ResponseEntity<ApiResponse<BookingResponse>> getBooking(@PathVariable UUID id) {
     ClassBooking booking = bookingService.getBooking(id);
     return ResponseEntity.ok(ApiResponse.success(BookingResponse.from(booking)));
   }
 
   @GetMapping("/member/{memberId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+
+  @PreAuthorize("hasAnyAuthority('bookings:manage', 'self:service')")
   public ResponseEntity<ApiResponse<List<BookingResponse>>> getBookingsByMember(@PathVariable UUID memberId) {
     List<ClassBooking> bookings = bookingService.getBookingsByMember(memberId);
     List<BookingResponse> res = bookings.stream().map(BookingResponse::from).collect(Collectors.toList());
@@ -52,7 +55,8 @@ public class ClassBookingController {
   }
 
   @GetMapping("/schedule/{scheduleId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+  @PreAuthorize("hasAuthority('bookings:manage')")
   public ResponseEntity<ApiResponse<List<BookingResponse>>> getBookingsBySchedule(@PathVariable UUID scheduleId) {
     List<ClassBooking> bookings = bookingService.getBookingsBySchedule(scheduleId);
     List<BookingResponse> res = bookings.stream().map(BookingResponse::from).collect(Collectors.toList());
@@ -60,7 +64,8 @@ public class ClassBookingController {
   }
 
   @GetMapping("/schedule/{scheduleId}/waitlist")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+  @PreAuthorize("hasAuthority('bookings:manage')")
   @Operation(summary = "Get waitlist", description = "Get ordered waitlist for a class schedule")
   public ResponseEntity<ApiResponse<List<BookingResponse>>> getWaitlist(@PathVariable UUID scheduleId) {
     List<ClassBooking> waitlist = bookingService.getWaitlist(scheduleId);
@@ -69,21 +74,24 @@ public class ClassBookingController {
   }
 
   @PutMapping("/{id}/cancel")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+
+  @PreAuthorize("hasAnyAuthority('bookings:manage', 'self:service')")
   public ResponseEntity<ApiResponse<BookingResponse>> cancelBooking(@PathVariable UUID id, @RequestParam(required = false) String reason) {
     ClassBooking booking = bookingCoordinator.cancelBooking(id, reason == null ? "Cancelled by user" : reason);
     return ResponseEntity.ok(ApiResponse.success(BookingResponse.from(booking), "Booking cancelled"));
   }
 
   @PutMapping("/{id}/check-in")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+  @PreAuthorize("hasAuthority('bookings:manage')")
   public ResponseEntity<ApiResponse<BookingResponse>> checkIn(@PathVariable UUID id) {
     ClassBooking booking = bookingService.checkIn(id);
     return ResponseEntity.ok(ApiResponse.success(BookingResponse.from(booking), "Checked in"));
   }
 
   @PutMapping("/{id}/check-out")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+  @PreAuthorize("hasAuthority('bookings:manage')")
   public ResponseEntity<ApiResponse<BookingResponse>> checkOut(@PathVariable UUID id) {
     ClassBooking booking = bookingService.checkOut(id);
     return ResponseEntity.ok(ApiResponse.success(BookingResponse.from(booking), "Checked out"));

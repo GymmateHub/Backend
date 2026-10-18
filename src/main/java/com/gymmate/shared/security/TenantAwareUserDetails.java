@@ -38,25 +38,24 @@ public class TenantAwareUserDetails implements UserDetails {
         this.active = active;
     }
 
+    /**
+     * {@code ROLE_<role>} plus the role's permissions from {@link RolePermissions}. Endpoints
+     * authorise on permissions; the role authority remains for display and auditing.
+     */
     private static Collection<? extends GrantedAuthority> buildAuthorities(String roleName) {
         java.util.Set<GrantedAuthority> auths = new java.util.HashSet<>();
         if (roleName != null) {
             auths.add(new SimpleGrantedAuthority("ROLE_" + roleName));
-            if ("GYM_OWNER".equalsIgnoreCase(roleName) || "OWNER".equalsIgnoreCase(roleName)) {
-                auths.add(new SimpleGrantedAuthority("ROLE_GYM_OWNER"));
-                auths.add(new SimpleGrantedAuthority("ROLE_OWNER"));
-                auths.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-            } else if ("SUPER_ADMIN".equalsIgnoreCase(roleName)) {
-                auths.add(new SimpleGrantedAuthority("ROLE_SUPER_ADMIN"));
-                auths.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                auths.add(new SimpleGrantedAuthority("ROLE_OWNER"));
-                auths.add(new SimpleGrantedAuthority("ROLE_GYM_OWNER"));
-            } else if ("MANAGER".equalsIgnoreCase(roleName) || "GYM_MANAGER".equalsIgnoreCase(roleName)) {
-                auths.add(new SimpleGrantedAuthority("ROLE_MANAGER"));
-                auths.add(new SimpleGrantedAuthority("ROLE_GYM_MANAGER"));
+            for (Permission permission : RolePermissions.of(roleName)) {
+                auths.add(new SimpleGrantedAuthority(permission.authority()));
             }
         }
         return auths;
+    }
+
+    /** This user's permission authorities, sorted (sent to the frontend). */
+    public java.util.List<String> getPermissions() {
+        return RolePermissions.authorities(role);
     }
 
     @Override

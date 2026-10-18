@@ -153,7 +153,6 @@ GET /api/notifications/gym/{gymId}/unread
 GET /api/notifications/gym/{gymId}/unread-count
 GET /api/notifications/stream
 GET /api/notifications/stream/stats
-GET /api/notifications/test-email
 GET /api/notifications/unread
 GET /api/notifications/unread-count
 GET /api/notifications/{id}

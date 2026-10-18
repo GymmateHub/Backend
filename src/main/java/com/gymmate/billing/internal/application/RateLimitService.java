@@ -12,6 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
@@ -195,37 +196,41 @@ public class RateLimitService {
 
     private void updateUsageTracking(Subscription subscription) {
         LocalDateTime now = LocalDateTime.now();
-        SubscriptionUsage usage = usageRepository
-            .findBySubscriptionAndPeriod(subscription.getId(), now)
-            .orElseGet(() -> {
-                SubscriptionUsage newUsage = SubscriptionUsage.builder()
-                    .subscription(subscription)
-                    .billingPeriodStart(now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS))
-                    .billingPeriodEnd(now.withDayOfMonth(1).plusMonths(1).truncatedTo(ChronoUnit.DAYS))
-                    .apiRequests(0)
-                    .apiRateLimitHits(0)
-                    .build();
-                return usageRepository.save(newUsage);
-            });
+        SubscriptionUsage usage = currentUsage(subscription, now);
 
         usage.incrementApiRequest();
         usageRepository.save(usage);
     }
 
-    private void recordRateLimitHit(Subscription subscription) {
-        LocalDateTime now = LocalDateTime.now();
-        SubscriptionUsage usage = usageRepository
+    /**
+     * The usage record for the billing period containing {@code now}, created when missing.
+     * base_cost and total_cost are NOT NULL, so a new record starts at the tier price (as
+     * SubscriptionService.createUsageRecord does); leaving them null made the insert fail and
+     * turned every API request of the organisation into an HTTP 500.
+     */
+    private SubscriptionUsage currentUsage(Subscription subscription, LocalDateTime now) {
+        return usageRepository
             .findBySubscriptionAndPeriod(subscription.getId(), now)
             .orElseGet(() -> {
+                BigDecimal tierPrice = subscription.getTier() != null && subscription.getTier().getPrice() != null
+                    ? subscription.getTier().getPrice()
+                    : BigDecimal.ZERO;
                 SubscriptionUsage newUsage = SubscriptionUsage.builder()
                     .subscription(subscription)
                     .billingPeriodStart(now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS))
                     .billingPeriodEnd(now.withDayOfMonth(1).plusMonths(1).truncatedTo(ChronoUnit.DAYS))
                     .apiRequests(0)
                     .apiRateLimitHits(0)
+                    .baseCost(tierPrice)
+                    .totalCost(tierPrice)
                     .build();
                 return usageRepository.save(newUsage);
             });
+    }
+
+    private void recordRateLimitHit(Subscription subscription) {
+        LocalDateTime now = LocalDateTime.now();
+        SubscriptionUsage usage = currentUsage(subscription, now);
 
         usage.recordRateLimitHit();
         usageRepository.save(usage);

@@ -52,7 +52,7 @@ public class AiTrainerController {
      * Served from Redis cache when available (TTL configurable via AI_PLAN_CACHE_TTL_HOURS).
      */
     @GetMapping("/my-plan")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAnyAuthority('self:service', 'health:manage')")
     @Operation(
         summary = "Get my AI plan",
         description = "Returns the authenticated member's latest personalised AI workout and meal plan. "
@@ -73,7 +73,7 @@ public class AiTrainerController {
      * Accepts optional new goals — when provided, the member's stored goals are updated first.
      */
     @PostMapping("/generate-plan")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAnyAuthority('self:service', 'health:manage')")
     @Operation(
         summary = "Generate / refresh my AI plan",
         description = "Generates a fresh AI workout and meal plan for the authenticated member. "
@@ -93,7 +93,7 @@ public class AiTrainerController {
      * Get the full plan history for the authenticated member (newest first).
      */
     @GetMapping("/my-plans")
-    @PreAuthorize("hasAnyRole('MEMBER', 'OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAnyAuthority('self:service', 'health:manage')")
     @Operation(
         summary = "Get my AI plan history",
         description = "Returns all previously generated AI plans for the authenticated member, newest first."
@@ -114,7 +114,7 @@ public class AiTrainerController {
      * Get the latest plan for any member — accessible by TRAINER, STAFF, OWNER, ADMIN.
      */
     @GetMapping("/plan/{memberId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(
         summary = "Get AI plan for a specific member",
         description = "Allows trainers and staff to view the latest AI plan for any member "
@@ -132,7 +132,7 @@ public class AiTrainerController {
      * Regenerate the AI plan for any member — accessible by TRAINER, STAFF, OWNER, ADMIN.
      */
     @PostMapping("/plan/{memberId}/generate")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(
         summary = "Generate AI plan for a specific member",
         description = "Allows trainers and staff to trigger a fresh AI plan generation for any member."
@@ -149,7 +149,7 @@ public class AiTrainerController {
      * Get plan history for any member — accessible by TRAINER, STAFF, OWNER, ADMIN.
      */
     @GetMapping("/plan/{memberId}/history")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(
         summary = "Get AI plan history for a specific member",
         description = "Returns all previously generated AI plans for a member, newest first."

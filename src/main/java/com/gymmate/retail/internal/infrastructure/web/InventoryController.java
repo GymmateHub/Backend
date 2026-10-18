@@ -38,7 +38,8 @@ public class InventoryController {
   private final InventoryService inventoryService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Create inventory item")
   public ResponseEntity<ApiResponse<InventoryItemResponse>> createInventoryItem(
       @Valid @RequestBody InventoryItemCreateRequest request) {
@@ -77,7 +78,8 @@ public class InventoryController {
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get inventory item by ID")
   public ResponseEntity<ApiResponse<InventoryItemResponse>> getInventoryItem(@PathVariable UUID id) {
     InventoryItem item = inventoryService.getInventoryItemById(id);
@@ -85,7 +87,8 @@ public class InventoryController {
   }
 
   @GetMapping("/gym/{gymId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get inventory items by gym")
   public ResponseEntity<ApiResponse<List<InventoryItemResponse>>> getInventoryItemsByGym(@PathVariable UUID gymId) {
     List<InventoryItem> items = inventoryService.getInventoryItemsByGym(gymId);
@@ -96,7 +99,8 @@ public class InventoryController {
   }
 
   @GetMapping("/gym/{gymId}/low-stock")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get low stock items")
   public ResponseEntity<ApiResponse<List<InventoryItemResponse>>> getLowStockItems(@PathVariable UUID gymId) {
     List<InventoryItem> items = inventoryService.getLowStockItemsByGym(gymId);
@@ -107,7 +111,8 @@ public class InventoryController {
   }
 
   @GetMapping("/gym/{gymId}/reorder-needed")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get items needing reorder")
   public ResponseEntity<ApiResponse<List<InventoryItemResponse>>> getReorderNeeded(@PathVariable UUID gymId) {
     List<InventoryItem> items = inventoryService.getReorderNeededByGym(gymId);
@@ -118,7 +123,8 @@ public class InventoryController {
   }
 
   @PostMapping("/{id}/purchase")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Record stock purchase")
   public ResponseEntity<ApiResponse<StockMovementResponse>> recordPurchase(
       @PathVariable UUID id,
@@ -137,7 +143,8 @@ public class InventoryController {
   }
 
   @PostMapping("/{id}/sale")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Record stock sale")
   public ResponseEntity<ApiResponse<StockMovementResponse>> recordSale(
       @PathVariable UUID id,
@@ -156,7 +163,8 @@ public class InventoryController {
   }
 
   @PostMapping("/{id}/adjustment")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Record stock adjustment")
   public ResponseEntity<ApiResponse<StockMovementResponse>> recordAdjustment(
       @PathVariable UUID id,
@@ -170,7 +178,8 @@ public class InventoryController {
   }
 
   @PostMapping("/{id}/damage")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Record damaged stock")
   public ResponseEntity<ApiResponse<StockMovementResponse>> recordDamage(
       @PathVariable UUID id,
@@ -184,7 +193,8 @@ public class InventoryController {
   }
 
   @GetMapping("/{id}/movements")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get stock movements for item")
   public ResponseEntity<ApiResponse<List<StockMovementResponse>>> getStockMovements(@PathVariable UUID id) {
     List<StockMovement> movements = inventoryService.getStockMovementsByItem(id);
@@ -195,7 +205,8 @@ public class InventoryController {
   }
 
   @GetMapping("/movements/gym/{gymId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get stock movements for gym")
   public ResponseEntity<ApiResponse<List<StockMovementResponse>>> getStockMovementsByGym(
       @PathVariable UUID gymId,

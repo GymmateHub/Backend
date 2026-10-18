@@ -33,7 +33,8 @@ public class SupplierController {
   private final SupplierService supplierService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Create supplier")
   public ResponseEntity<ApiResponse<SupplierResponse>> createSupplier(
       @Valid @RequestBody SupplierCreateRequest request) {
@@ -71,7 +72,8 @@ public class SupplierController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Update supplier")
   public ResponseEntity<ApiResponse<SupplierResponse>> updateSupplier(
       @PathVariable UUID id,
@@ -105,7 +107,8 @@ public class SupplierController {
   }
 
   @PutMapping("/{id}/rating")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Set supplier rating")
   public ResponseEntity<ApiResponse<SupplierResponse>> setSupplierRating(
       @PathVariable UUID id,
@@ -116,7 +119,8 @@ public class SupplierController {
   }
 
   @PutMapping("/{id}/preferred")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+  @PreAuthorize("hasAuthority('org:manage')")
   @Operation(summary = "Mark supplier as preferred")
   public ResponseEntity<ApiResponse<SupplierResponse>> markAsPreferred(@PathVariable UUID id) {
     Supplier updated = supplierService.markAsPreferred(id);
@@ -125,7 +129,8 @@ public class SupplierController {
   }
 
   @DeleteMapping("/{id}/preferred")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+  @PreAuthorize("hasAuthority('org:manage')")
   @Operation(summary = "Unmark supplier as preferred")
   public ResponseEntity<ApiResponse<SupplierResponse>> unmarkAsPreferred(@PathVariable UUID id) {
     Supplier updated = supplierService.unmarkAsPreferred(id);
@@ -134,7 +139,8 @@ public class SupplierController {
   }
 
   @PutMapping("/{id}/deactivate")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+  @PreAuthorize("hasAuthority('org:manage')")
   @Operation(summary = "Deactivate supplier")
   public ResponseEntity<ApiResponse<SupplierResponse>> deactivateSupplier(@PathVariable UUID id) {
     Supplier updated = supplierService.deactivateSupplier(id);
@@ -143,7 +149,8 @@ public class SupplierController {
   }
 
   @PutMapping("/{id}/activate")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+  @PreAuthorize("hasAuthority('org:manage')")
   @Operation(summary = "Activate supplier")
   public ResponseEntity<ApiResponse<SupplierResponse>> activateSupplier(@PathVariable UUID id) {
     Supplier updated = supplierService.activateSupplier(id);
@@ -152,7 +159,8 @@ public class SupplierController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+  @PreAuthorize("hasAuthority('org:manage')")
   @Operation(summary = "Delete supplier")
   public ResponseEntity<ApiResponse<Void>> deleteSupplier(@PathVariable UUID id) {
     supplierService.deleteSupplier(id);
@@ -160,7 +168,8 @@ public class SupplierController {
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get supplier by ID")
   public ResponseEntity<ApiResponse<SupplierResponse>> getSupplier(@PathVariable UUID id) {
     Supplier supplier = supplierService.getSupplierById(id);
@@ -168,7 +177,8 @@ public class SupplierController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get all suppliers for organisation")
   public ResponseEntity<ApiResponse<List<SupplierResponse>>> getAllSuppliers(
       @RequestParam(required = false, defaultValue = "false") boolean activeOnly,

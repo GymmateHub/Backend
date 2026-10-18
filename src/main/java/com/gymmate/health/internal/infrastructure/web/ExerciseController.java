@@ -39,6 +39,7 @@ public class ExerciseController {
      * Get all exercise categories.
      */
     @GetMapping("/categories")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get all categories", description = "Retrieve all active exercise categories")
     public ResponseEntity<ApiResponse<List<ExerciseCategoryResponse>>> getAllCategories() {
         List<ExerciseCategory> categories = exerciseService.getAllCategories();
@@ -52,6 +53,7 @@ public class ExerciseController {
      * Get category by ID.
      */
     @GetMapping("/categories/{categoryId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get category by ID", description = "Retrieve a specific exercise category")
     public ResponseEntity<ApiResponse<ExerciseCategoryResponse>> getCategoryById(@PathVariable UUID categoryId) {
         ExerciseCategory category = exerciseService.getCategoryById(categoryId);
@@ -62,7 +64,7 @@ public class ExerciseController {
      * Create new exercise category (admin only).
      */
     @PostMapping("/categories")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Create category", description = "Create a new exercise category (admin only)")
     public ResponseEntity<ApiResponse<ExerciseCategoryResponse>> createCategory(
             @RequestParam String name,
@@ -81,6 +83,7 @@ public class ExerciseController {
      * Get all public exercises.
      */
     @GetMapping("/public")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get public exercises", description = "Retrieve all public exercises available to all gyms")
     public ResponseEntity<ApiResponse<List<ExerciseResponse>>> getAllPublicExercises() {
         List<Exercise> exercises = exerciseService.getAllPublicExercises();
@@ -94,6 +97,7 @@ public class ExerciseController {
      * Get exercises for current gym (public + custom).
      */
     @GetMapping
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get exercises for gym", description = "Retrieve all exercises available for the current gym")
     public ResponseEntity<ApiResponse<List<ExerciseResponse>>> getExercisesForGym(@RequestParam UUID gymId) {
         List<Exercise> exercises = exerciseService.getExercisesForGym(gymId);
@@ -107,6 +111,7 @@ public class ExerciseController {
      * Get exercise by ID.
      */
     @GetMapping("/{exerciseId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get exercise by ID", description = "Retrieve a specific exercise")
     public ResponseEntity<ApiResponse<ExerciseResponse>> getExerciseById(@PathVariable UUID exerciseId) {
         Exercise exercise = exerciseService.getExerciseById(exerciseId);
@@ -117,6 +122,7 @@ public class ExerciseController {
      * Get exercises by category.
      */
     @GetMapping("/by-category/{categoryId}")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get exercises by category", description = "Retrieve exercises in a specific category")
     public ResponseEntity<ApiResponse<List<ExerciseResponse>>> getExercisesByCategory(@PathVariable UUID categoryId) {
         List<Exercise> exercises = exerciseService.getExercisesByCategory(categoryId);
@@ -130,6 +136,7 @@ public class ExerciseController {
      * Get exercises by muscle group.
      */
     @GetMapping("/by-muscle-group")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get exercises by muscle group", description = "Retrieve exercises targeting a specific muscle group")
     public ResponseEntity<ApiResponse<List<ExerciseResponse>>> getExercisesByMuscleGroup(@RequestParam String muscleGroup) {
         List<Exercise> exercises = exerciseService.getExercisesByMuscleGroup(muscleGroup);
@@ -143,6 +150,7 @@ public class ExerciseController {
      * Get exercises by difficulty level.
      */
     @GetMapping("/by-difficulty")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get exercises by difficulty", description = "Retrieve exercises by difficulty level")
     public ResponseEntity<ApiResponse<List<ExerciseResponse>>> getExercisesByDifficulty(@RequestParam String difficultyLevel) {
         List<Exercise> exercises = exerciseService.getExercisesByDifficulty(difficultyLevel);
@@ -156,6 +164,7 @@ public class ExerciseController {
      * Search exercises by name.
      */
     @GetMapping("/search")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Search exercises", description = "Search exercises by name")
     public ResponseEntity<ApiResponse<List<ExerciseResponse>>> searchExercises(@RequestParam String query) {
         List<Exercise> exercises = exerciseService.searchExercises(query);
@@ -169,7 +178,7 @@ public class ExerciseController {
      * Get custom exercises for a gym.
      */
     @GetMapping("/custom")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Get custom exercises", description = "Retrieve custom exercises for a specific gym")
     public ResponseEntity<ApiResponse<List<ExerciseResponse>>> getCustomExercises(@RequestParam UUID gymId) {
         List<Exercise> exercises = exerciseService.getCustomExercisesForGym(gymId);
@@ -183,7 +192,7 @@ public class ExerciseController {
      * Create custom exercise for gym.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Create custom exercise", description = "Create a custom exercise for the gym")
     public ResponseEntity<ApiResponse<ExerciseResponse>> createCustomExercise(
             @RequestParam UUID gymId,
@@ -210,7 +219,7 @@ public class ExerciseController {
      * Update custom exercise.
      */
     @PutMapping("/{exerciseId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Update custom exercise", description = "Update a custom exercise owned by the gym")
     public ResponseEntity<ApiResponse<ExerciseResponse>> updateCustomExercise(
             @PathVariable UUID exerciseId,
@@ -238,7 +247,7 @@ public class ExerciseController {
      * Delete custom exercise.
      */
     @DeleteMapping("/{exerciseId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Delete custom exercise", description = "Delete a custom exercise owned by the gym")
     public ResponseEntity<ApiResponse<Void>> deleteCustomExercise(
             @PathVariable UUID exerciseId,

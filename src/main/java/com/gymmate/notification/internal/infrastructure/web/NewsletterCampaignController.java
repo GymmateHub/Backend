@@ -38,7 +38,7 @@ public class NewsletterCampaignController {
      * Create a new campaign.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Create campaign", description = "Create a new newsletter campaign")
     public ResponseEntity<ApiResponse<CampaignResponse>> createCampaign(
             @Valid @RequestBody CreateCampaignRequest request,
@@ -57,7 +57,7 @@ public class NewsletterCampaignController {
      * Get all campaigns for a gym or organisation.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "List campaigns", description = "Get all newsletter campaigns for a gym or organisation")
     public ResponseEntity<ApiResponse<List<CampaignResponse>>> getCampaigns(
             @RequestParam(required = false) UUID gymId) {
@@ -80,7 +80,7 @@ public class NewsletterCampaignController {
      * Get a campaign by ID.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Get campaign", description = "Get a newsletter campaign by ID")
     public ResponseEntity<ApiResponse<CampaignResponse>> getCampaign(@PathVariable UUID id) {
         NewsletterCampaign campaign = campaignService.getById(id);
@@ -91,7 +91,7 @@ public class NewsletterCampaignController {
      * Preview campaign audience.
      */
     @GetMapping("/{id}/preview")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'STAFF')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Preview audience", description = "Preview the target audience for a campaign")
     public ResponseEntity<ApiResponse<AudiencePreviewResponse>> previewAudience(@PathVariable UUID id) {
         AudiencePreviewResponse preview = campaignService.getAudiencePreview(id);
@@ -102,7 +102,7 @@ public class NewsletterCampaignController {
      * Schedule a campaign for future delivery.
      */
     @PostMapping("/{id}/schedule")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Schedule campaign", description = "Schedule a campaign for future delivery")
     public ResponseEntity<ApiResponse<CampaignResponse>> scheduleCampaign(
             @PathVariable UUID id,
@@ -119,7 +119,7 @@ public class NewsletterCampaignController {
      * Send a campaign immediately.
      */
     @PostMapping("/{id}/send")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Send campaign", description = "Send a campaign immediately to all recipients")
     public ResponseEntity<ApiResponse<CampaignResponse>> sendCampaign(
             @PathVariable UUID id,
@@ -137,7 +137,7 @@ public class NewsletterCampaignController {
      * Cancel a scheduled campaign.
      */
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Cancel campaign", description = "Cancel a scheduled campaign")
     public ResponseEntity<ApiResponse<CampaignResponse>> cancelCampaign(@PathVariable UUID id) {
         NewsletterCampaign campaign = campaignService.cancel(id);
@@ -151,7 +151,7 @@ public class NewsletterCampaignController {
      * Delete a campaign.
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('notifications:manage')")
     @Operation(summary = "Delete campaign", description = "Delete a newsletter campaign")
     public ResponseEntity<ApiResponse<Void>> deleteCampaign(@PathVariable UUID id) {
         campaignService.delete(id);

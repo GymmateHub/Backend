@@ -95,13 +95,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 path.startsWith("/api/auth/password-reset/") ||
                 path.equals("/api/auth/refresh") ||
                 path.startsWith("/api/auth/email-status/") ||
-                path.equals("/api/gyms/register") ||
                 path.equals("/api/users/register/gym-owner") ||
                 path.startsWith("/v3/api-docs") ||
                 path.startsWith("/scalar.html") ||
                 path.startsWith("/actuator/health") ||
                 path.startsWith("/actuator/info") ||
-                path.startsWith("/api/webhooks/") ||
-                path.startsWith("/api/notifications/test-email");
+                path.startsWith("/api/webhooks/");
     }
 }

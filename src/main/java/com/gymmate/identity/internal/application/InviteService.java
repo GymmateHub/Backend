@@ -11,6 +11,7 @@ import com.gymmate.identity.api.spi.GymDirectory;
 import com.gymmate.identity.internal.domain.User;
 import com.gymmate.identity.internal.domain.UserInvite;
 import com.gymmate.shared.constants.UserRole;
+import com.gymmate.shared.security.RolePermissions;
 import com.gymmate.identity.internal.application.port.UserInviteRepository;
 import com.gymmate.identity.internal.application.port.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -59,9 +60,10 @@ public class InviteService {
             }
         }
 
-        // Validate Role (Owner cannot be invited)
-        if (request.role() == UserRole.GYM_OWNER || request.role() == UserRole.SUPER_ADMIN) {
-            throw new BadRequestException("Owners and Super Admins cannot be invited via this flow");
+        // A Gym Owner builds the team: managers, staff and trainers. Members join through
+        // Add Member or the app; owners and platform admins are never invited.
+        if (!RolePermissions.INVITABLE_ROLES.contains(request.role())) {
+            throw new BadRequestException("Only managers, staff and trainers can be invited");
         }
 
         String token = UUID.randomUUID().toString();

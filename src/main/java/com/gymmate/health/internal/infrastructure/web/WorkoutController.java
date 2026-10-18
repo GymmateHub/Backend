@@ -41,7 +41,7 @@ public class WorkoutController {
      * Log a new workout with exercises.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#request.memberId())")
     @Operation(summary = "Log workout", description = "Log a new workout with exercises")
     public ResponseEntity<ApiResponse<WorkoutLogResponse>> logWorkout(
             @RequestParam UUID gymId,
@@ -97,6 +97,7 @@ public class WorkoutController {
      * Get workout by ID with exercises.
      */
     @GetMapping("/{workoutId}")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessWorkout(#workoutId)")
     @Operation(summary = "Get workout by ID", description = "Retrieve a specific workout with all exercises")
     public ResponseEntity<ApiResponse<WorkoutLogResponse>> getWorkoutById(@PathVariable UUID workoutId) {
         WorkoutTrackingService.WorkoutWithExercises workoutWithExercises =
@@ -115,6 +116,7 @@ public class WorkoutController {
      * Get workout history for a member.
      */
     @GetMapping("/member/{memberId}")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get member workout history", description = "Retrieve all workouts for a member")
     public ResponseEntity<ApiResponse<List<WorkoutLogResponse>>> getWorkoutHistory(@PathVariable UUID memberId) {
         List<WorkoutLog> workouts = workoutTrackingService.getWorkoutHistory(memberId);
@@ -137,6 +139,7 @@ public class WorkoutController {
      * Get workout history by date range.
      */
     @GetMapping("/member/{memberId}/range")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get workouts by date range", description = "Retrieve workouts within a date range")
     public ResponseEntity<ApiResponse<List<WorkoutLogResponse>>> getWorkoutHistoryByDateRange(
             @PathVariable UUID memberId,
@@ -165,6 +168,7 @@ public class WorkoutController {
      * Get paginated workout history.
      */
     @GetMapping("/member/{memberId}/paginated")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get paginated workouts", description = "Retrieve paginated workout history")
     public ResponseEntity<ApiResponse<Page<WorkoutLogResponse>>> getWorkoutHistoryPaginated(
             @PathVariable UUID memberId,
@@ -189,6 +193,7 @@ public class WorkoutController {
      * Get latest workout for a member.
      */
     @GetMapping("/member/{memberId}/latest")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get latest workout", description = "Retrieve the most recent workout for a member")
     public ResponseEntity<ApiResponse<WorkoutLogResponse>> getLatestWorkout(@PathVariable UUID memberId) {
         WorkoutLog workout = workoutTrackingService.getLatestWorkout(memberId);
@@ -209,6 +214,7 @@ public class WorkoutController {
      * Calculate workout statistics.
      */
     @GetMapping("/member/{memberId}/statistics")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get workout statistics", description = "Calculate workout statistics within a date range")
     public ResponseEntity<ApiResponse<WorkoutStatisticsResponse>> calculateStatistics(
             @PathVariable UUID memberId,
@@ -225,6 +231,7 @@ public class WorkoutController {
      * Get workout streak.
      */
     @GetMapping("/member/{memberId}/streak")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get workout streak", description = "Calculate consecutive days with workouts")
     public ResponseEntity<ApiResponse<Integer>> getWorkoutStreak(@PathVariable UUID memberId) {
         int streak = workoutTrackingService.calculateWorkoutStreak(memberId);
@@ -235,7 +242,7 @@ public class WorkoutController {
      * Delete a workout.
      */
     @DeleteMapping("/{workoutId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Delete workout", description = "Delete a workout and its exercises")
     public ResponseEntity<ApiResponse<Void>> deleteWorkout(@PathVariable UUID workoutId) {
         workoutTrackingService.deleteWorkout(workoutId);

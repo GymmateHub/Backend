@@ -33,7 +33,8 @@ public class TrainerController {
     private final TrainerService trainerService;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'SUPER_ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     @Operation(summary = "Create trainer", description = "Create a new trainer profile")
     public ResponseEntity<ApiResponse<TrainerResponse>> createTrainer(@Valid @RequestBody TrainerCreateRequest request) {
         Trainer trainer = trainerService.createTrainer(
@@ -51,7 +52,8 @@ public class TrainerController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+
+    @PreAuthorize("hasAuthority('classes:view')")
     public ResponseEntity<ApiResponse<TrainerResponse>> getTrainerById(@PathVariable UUID id) {
         Trainer trainer = trainerService.findById(id);
         // Tenant isolation: findById bypasses Hibernate @Filter
@@ -66,7 +68,8 @@ public class TrainerController {
     }
 
     @GetMapping("/user/{userId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+    @PreAuthorize("hasAuthority('classes:view')")
     public ResponseEntity<ApiResponse<TrainerResponse>> getTrainerByUserId(@PathVariable UUID userId) {
         Trainer trainer = trainerService.findByUserId(userId);
         // Tenant isolation: findByUserId may bypass Hibernate @Filter
@@ -81,11 +84,12 @@ public class TrainerController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+    @PreAuthorize("hasAuthority('classes:view')")
     @Operation(summary = "Get all trainers", description = "Get all trainers in the current organisation")
     public ResponseEntity<ApiResponse<List<TrainerResponse>>> getAllTrainers(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         List<Trainer> trainers = trainerService.findAllByOrganisation(organisationId);
         List<TrainerResponse> responses = trainers.stream()
                 .map(TrainerResponse::fromEntity)
@@ -94,11 +98,12 @@ public class TrainerController {
     }
 
     @GetMapping("/available")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'MEMBER')")
+
+    @PreAuthorize("hasAuthority('classes:view')")
     @Operation(summary = "Get available trainers", description = "Get active trainers accepting clients in the current organisation")
     public ResponseEntity<ApiResponse<List<TrainerResponse>>> getAvailableTrainers(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         List<Trainer> trainers = trainerService.findActiveAndAcceptingClients(organisationId);
         List<TrainerResponse> responses = trainers.stream()
                 .map(TrainerResponse::fromEntity)
@@ -107,7 +112,8 @@ public class TrainerController {
     }
 
     @PutMapping("/{id}/rate")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<TrainerResponse>> updateRate(
             @PathVariable UUID id,
             @Valid @RequestBody TrainerUpdateRequest request) {
@@ -117,7 +123,8 @@ public class TrainerController {
     }
 
     @PatchMapping("/{id}/toggle-accepting")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'TRAINER')")
+
+    @PreAuthorize("hasAuthority('classes:manage')")
     public ResponseEntity<ApiResponse<TrainerResponse>> toggleAcceptingClients(@PathVariable UUID id) {
         Trainer trainer = trainerService.toggleAcceptingClients(id);
         TrainerResponse response = TrainerResponse.fromEntity(trainer);
@@ -125,7 +132,8 @@ public class TrainerController {
     }
 
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<TrainerResponse>> activate(@PathVariable UUID id) {
         Trainer trainer = trainerService.activate(id);
         TrainerResponse response = TrainerResponse.fromEntity(trainer);
@@ -133,7 +141,8 @@ public class TrainerController {
     }
 
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<TrainerResponse>> deactivate(@PathVariable UUID id) {
         Trainer trainer = trainerService.deactivate(id);
         TrainerResponse response = TrainerResponse.fromEntity(trainer);

@@ -42,7 +42,7 @@ public class WhitelabelController {
      * Get Organisation Whitelabel settings.
      */
     @GetMapping("/organisation")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Get Organisation Whitelabel settings")
     public ResponseEntity<ApiResponse<WhitelabelSettingsResponse>> getOrganisationSettings(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
@@ -55,7 +55,7 @@ public class WhitelabelController {
      * Update Organisation Whitelabel settings.
      */
     @PutMapping("/organisation")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Update Organisation Whitelabel settings (Branding, SMTP, WhatsApp, Newsletter)")
     public ResponseEntity<ApiResponse<WhitelabelSettingsResponse>> updateOrganisationSettings(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -69,7 +69,7 @@ public class WhitelabelController {
      * Get Gym Whitelabel settings.
      */
     @GetMapping("/gyms/{gymId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN', 'GYM_MANAGER', 'STAFF')")
+    @PreAuthorize("hasAuthority('org:view')")
     @Operation(summary = "Get Gym Whitelabel settings")
     public ResponseEntity<ApiResponse<WhitelabelSettingsResponse>> getGymSettings(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -83,7 +83,7 @@ public class WhitelabelController {
      * Update Gym Whitelabel settings.
      */
     @PutMapping("/gyms/{gymId}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Update Gym Whitelabel settings")
     public ResponseEntity<ApiResponse<WhitelabelSettingsResponse>> updateGymSettings(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails,
@@ -98,7 +98,7 @@ public class WhitelabelController {
      * Test Custom SMTP credentials.
      */
     @PostMapping("/test-smtp")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Test custom SMTP configuration", description = "Validates custom SMTP settings by attempting to send a test email")
     public ResponseEntity<ApiResponse<TestConnectionResponse>> testSmtpConnection(
             @Valid @RequestBody SmtpTestRequest request) {
@@ -125,7 +125,7 @@ public class WhitelabelController {
      * Test WhatsApp credentials.
      */
     @PostMapping("/test-whatsapp")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'ADMIN')")
+    @PreAuthorize("hasAuthority('org:manage')")
     @Operation(summary = "Test WhatsApp credentials", description = "Validates WhatsApp Business API credentials by sending a test message")
     public ResponseEntity<ApiResponse<TestConnectionResponse>> testWhatsAppConnection(
             @Valid @RequestBody WhatsAppTestRequest request) {
@@ -148,8 +148,8 @@ public class WhitelabelController {
     }
 
     private UUID requireOrganisationId(TenantAwareUserDetails userDetails) {
-        if (userDetails != null && userDetails.getOrganisationId() != null) {
-            return userDetails.getOrganisationId();
+        if (userDetails != null && TenantContext.getCurrentTenantId() != null) {
+            return TenantContext.getCurrentTenantId();
         }
         UUID orgId = TenantContext.getCurrentTenantId();
         if (orgId == null) {

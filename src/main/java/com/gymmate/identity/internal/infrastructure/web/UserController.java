@@ -1,7 +1,9 @@
 package com.gymmate.identity.internal.infrastructure.web;
 
+import com.gymmate.shared.multitenancy.TenantContext;
 import com.gymmate.identity.internal.application.mapper.UserResponses;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.security.Permission;
 import com.gymmate.shared.security.TenantAwareUserDetails;
 import com.gymmate.identity.internal.application.dto.UserProfileUpdateRequest;
 import com.gymmate.identity.api.dto.UserResponse;
@@ -35,14 +37,14 @@ public class UserController {
      * SECURITY: Validates the fetched user belongs to the caller's organisation.
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('staff:view')")
     public ResponseEntity<ApiResponse<UserResponse>> getUserById(
             @PathVariable UUID id,
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
         User user = userService.findById(id);
 
         // Tenant isolation: non-SUPER_ADMIN can only see users in their own org
-        UUID callerOrgId = userDetails.getOrganisationId();
+        UUID callerOrgId = TenantContext.getCurrentTenantId();
         if (callerOrgId != null && !callerOrgId.equals(user.getOrganisationId())) {
             return ResponseEntity.status(403)
                     .body(ApiResponse.error("You do not have permission to access this user"));
@@ -56,6 +58,7 @@ public class UserController {
      * Get User profile by getting the user's id from the login token.
      */
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<UserResponse>> getUserProfile(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
         User user = userService.findById(userDetails.getUserId());
@@ -67,10 +70,10 @@ public class UserController {
      * Get all users within the caller's organisation.
      */
     @GetMapping
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('staff:view')")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        List<User> users = userService.findByOrganisationId(userDetails.getOrganisationId());
+        List<User> users = userService.findByOrganisationId(TenantContext.getCurrentTenantId());
         List<UserResponse> responses = users.stream()
                 .map(UserResponses::from)
                 .toList();
@@ -91,9 +94,7 @@ public class UserController {
         // Ownership check: user can only update their own profile, unless admin
         boolean isSelf = userDetails.getUserId().equals(id);
         boolean isAdmin = userDetails.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_OWNER")
-                        || a.getAuthority().equals("ROLE_ADMIN")
-                        || a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals(Permission.STAFF_MANAGE.authority()));
 
         if (!isSelf && !isAdmin) {
             return ResponseEntity.status(403)
@@ -103,7 +104,7 @@ public class UserController {
         // Tenant check for admin editing another user
         if (!isSelf && isAdmin) {
             User target = userService.findById(id);
-            UUID callerOrgId = userDetails.getOrganisationId();
+            UUID callerOrgId = TenantContext.getCurrentTenantId();
             if (callerOrgId != null && !callerOrgId.equals(target.getOrganisationId())) {
                 return ResponseEntity.status(403)
                         .body(ApiResponse.error("You do not have permission to update this user"));
@@ -120,12 +121,12 @@ public class UserController {
      * Get all users by role within the caller's organisation.
      */
     @GetMapping("/by-role/{role}")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('staff:view')")
     @Operation(summary = "Get users by role", description = "Get users by role scoped to organisation")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getUsersByRole(
             @PathVariable UserRole role,
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         List<User> users = userService.findByRoleAndOrganisation(role, organisationId);
         List<UserResponse> responses = users.stream()
                 .map(UserResponses::from)
@@ -137,11 +138,11 @@ public class UserController {
      * Get all gym admins within the caller's organisation.
      */
     @GetMapping("/gym-admins")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('staff:view')")
     @Operation(summary = "Get gym admins", description = "Get active gym admins scoped to organisation")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getGymAdmins(
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID organisationId = userDetails.getOrganisationId();
+        UUID organisationId = TenantContext.getCurrentTenantId();
         List<User> gymAdmins = userService.findActiveGymAdmins(organisationId);
         List<UserResponse> responses = gymAdmins.stream()
                 .map(UserResponses::from)
@@ -154,11 +155,11 @@ public class UserController {
      * SECURITY: Validates user belongs to caller's organisation.
      */
     @PatchMapping("/{id}/deactivate")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<UserResponse>> deactivateUser(
             @PathVariable UUID id,
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID callerOrgId = userDetails.getOrganisationId();
+        UUID callerOrgId = TenantContext.getCurrentTenantId();
         User target = userService.findById(id);
         if (callerOrgId != null && !callerOrgId.equals(target.getOrganisationId())) {
             return ResponseEntity.status(403)
@@ -174,11 +175,11 @@ public class UserController {
      * SECURITY: Validates user belongs to caller's organisation.
      */
     @PatchMapping("/{id}/activate")
-    @PreAuthorize("hasAnyRole('GYM_OWNER', 'OWNER', 'ADMIN', 'SUPER_ADMIN')")
+    @PreAuthorize("hasAuthority('staff:manage')")
     public ResponseEntity<ApiResponse<UserResponse>> activateUser(
             @PathVariable UUID id,
             @AuthenticationPrincipal TenantAwareUserDetails userDetails) {
-        UUID callerOrgId = userDetails.getOrganisationId();
+        UUID callerOrgId = TenantContext.getCurrentTenantId();
         User target = userService.findById(id);
         if (callerOrgId != null && !callerOrgId.equals(target.getOrganisationId())) {
             return ResponseEntity.status(403)

@@ -37,7 +37,8 @@ public class EquipmentController {
   private final EquipmentService equipmentService;
 
   @PostMapping
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Create equipment", description = "Create new equipment")
   public ResponseEntity<ApiResponse<EquipmentResponse>> createEquipment(
       @Valid @RequestBody EquipmentCreateRequest request) {
@@ -74,7 +75,8 @@ public class EquipmentController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Update equipment", description = "Update equipment details")
   public ResponseEntity<ApiResponse<EquipmentResponse>> updateEquipment(
       @PathVariable UUID id,
@@ -99,7 +101,8 @@ public class EquipmentController {
   }
 
   @PutMapping("/{id}/status")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Update equipment status", description = "Update equipment status")
   public ResponseEntity<ApiResponse<EquipmentResponse>> updateEquipmentStatus(
       @PathVariable UUID id,
@@ -111,7 +114,8 @@ public class EquipmentController {
   }
 
   @PostMapping("/{id}/maintenance")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Record maintenance", description = "Record maintenance on equipment")
   public ResponseEntity<ApiResponse<EquipmentResponse>> recordMaintenance(
       @PathVariable UUID id,
@@ -123,7 +127,8 @@ public class EquipmentController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+  @PreAuthorize("hasAuthority('org:manage')")
   @Operation(summary = "Delete equipment", description = "Delete equipment")
   public ResponseEntity<ApiResponse<Void>> deleteEquipment(@PathVariable UUID id) {
     equipmentService.deleteEquipment(id);
@@ -131,7 +136,8 @@ public class EquipmentController {
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get equipment by ID", description = "Get equipment details by ID")
   public ResponseEntity<ApiResponse<EquipmentResponse>> getEquipmentById(@PathVariable UUID id) {
     Equipment equipment = equipmentService.getEquipmentById(id);
@@ -139,7 +145,8 @@ public class EquipmentController {
   }
 
   @GetMapping("/gym/{gymId}")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get equipment by gym", description = "Get all equipment for a gym")
   public ResponseEntity<ApiResponse<List<EquipmentResponse>>> getEquipmentByGym(@PathVariable UUID gymId) {
     List<Equipment> equipment = equipmentService.getEquipmentByGym(gymId);
@@ -150,7 +157,8 @@ public class EquipmentController {
   }
 
   @GetMapping("/organisation")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get equipment by organisation", description = "Get all equipment for current organisation")
   public ResponseEntity<ApiResponse<List<EquipmentResponse>>> getEquipmentByOrganisation() {
     UUID organisationId = TenantContext.getCurrentTenantId();
@@ -162,7 +170,8 @@ public class EquipmentController {
   }
 
   @GetMapping("/gym/{gymId}/active")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get active equipment by gym", description = "Get active equipment for a gym")
   public ResponseEntity<ApiResponse<List<EquipmentResponse>>> getActiveEquipmentByGym(@PathVariable UUID gymId) {
     List<Equipment> equipment = equipmentService.getActiveEquipmentByGym(gymId);
@@ -173,7 +182,8 @@ public class EquipmentController {
   }
 
   @GetMapping("/gym/{gymId}/maintenance-due")
-  @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF')")
+
+  @PreAuthorize("hasAuthority('inventory:manage')")
   @Operation(summary = "Get maintenance due equipment", description = "Get equipment due for maintenance")
   public ResponseEntity<ApiResponse<List<EquipmentResponse>>> getMaintenanceDueByGym(@PathVariable UUID gymId) {
     List<Equipment> equipment = equipmentService.getMaintenanceDueByGym(gymId);

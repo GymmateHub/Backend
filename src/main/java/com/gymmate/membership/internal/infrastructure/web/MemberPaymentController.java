@@ -33,7 +33,8 @@ public class MemberPaymentController {
     private final MemberPaymentService memberPaymentService;
 
     @PostMapping("/methods")
-    @PreAuthorize("hasAnyRole('MEMBER', 'GYM_OWNER', 'MANAGER', 'STAFF', 'SUPER_ADMIN')")
+
+    @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
     @Operation(summary = "Attach payment method", description = "Attach a payment method for a member")
     public ResponseEntity<ApiResponse<MemberPaymentMethodResponse>> attachPaymentMethod(
             @Valid @RequestBody AttachMemberPaymentMethodRequest request) {
@@ -52,7 +53,8 @@ public class MemberPaymentController {
     }
 
     @GetMapping("/methods/{memberId}")
-    @PreAuthorize("hasAnyRole('MEMBER', 'GYM_OWNER', 'MANAGER', 'STAFF', 'SUPER_ADMIN')")
+
+    @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
     @Operation(summary = "Get payment methods", description = "Get all payment methods for a member")
     public ResponseEntity<ApiResponse<List<MemberPaymentMethodResponse>>> getPaymentMethods(
             @PathVariable UUID memberId) {
@@ -63,7 +65,8 @@ public class MemberPaymentController {
     }
 
     @GetMapping("/invoices/{memberId}")
-    @PreAuthorize("hasAnyRole('MEMBER', 'GYM_OWNER', 'MANAGER', 'STAFF', 'SUPER_ADMIN')")
+
+    @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
     @Operation(summary = "Get member invoices", description = "Get all invoices for a member's memberships")
     public ResponseEntity<ApiResponse<List<MemberInvoiceResponse>>> getMemberInvoices(
             @PathVariable UUID memberId) {
@@ -74,7 +77,8 @@ public class MemberPaymentController {
     }
 
     @PostMapping("/{membershipId}/cancel")
-    @PreAuthorize("hasAnyRole('MEMBER', 'GYM_OWNER', 'MANAGER', 'SUPER_ADMIN')")
+
+    @PreAuthorize("hasAnyAuthority('members:manage', 'self:service')")
     @Operation(summary = "Cancel membership subscription", description = "Cancel a member's subscription")
     public ResponseEntity<ApiResponse<Void>> cancelSubscription(
             @PathVariable UUID membershipId,

@@ -246,8 +246,11 @@ public class AuthenticationService {
 
         // TODO: This logic is incomplete. the existing refresh token should be
         // blacklisted upon generating a new one.
-        String newAccessToken = request.tenantId() != null
-                ? jwtService.generateToken(user, request.tenantId())
+        // Keep the gym context across refreshes: clients send only the refresh token, so fall
+        // back to the user's default gym, as login does.
+        UUID gymId = request.tenantId() != null ? request.tenantId() : resolveDefaultGymId(user);
+        String newAccessToken = gymId != null
+                ? jwtService.generateToken(user, gymId)
                 : jwtService.generateToken(user);
         String newRefreshToken = jwtService.generateRefreshToken(user);
 

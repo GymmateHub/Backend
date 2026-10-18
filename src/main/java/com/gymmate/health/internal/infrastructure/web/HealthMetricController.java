@@ -9,6 +9,7 @@ import com.gymmate.health.internal.domain.HealthMetric;
 import com.gymmate.health.internal.domain.enums.MetricType;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.shared.security.TenantAwareUserDetails;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -43,7 +44,7 @@ public class HealthMetricController {
      * Record a health metric.
      */
     @PostMapping
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER', 'MEMBER')")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#request.memberId())")
     @Operation(summary = "Record metric", description = "Record a new health metric for a member")
     public ResponseEntity<ApiResponse<HealthMetricResponse>> recordMetric(
             @RequestParam UUID gymId,
@@ -51,7 +52,7 @@ public class HealthMetricController {
             Authentication authentication) {
 
         UUID organisationId = TenantContext.getCurrentTenantId();
-        UUID recordedByUserId = UUID.fromString(authentication.getName());
+        UUID recordedByUserId = ((TenantAwareUserDetails) authentication.getPrincipal()).getUserId();
 
         HealthMetric metric = healthMetricService.recordMetric(
             organisationId,
@@ -72,6 +73,7 @@ public class HealthMetricController {
      * Get latest metric by type.
      */
     @GetMapping("/latest")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get latest metric", description = "Get the latest metric of a specific type for a member")
     public ResponseEntity<ApiResponse<HealthMetricResponse>> getLatestMetric(
             @RequestParam UUID memberId,
@@ -88,6 +90,7 @@ public class HealthMetricController {
      * Get metric history by type.
      */
     @GetMapping("/history")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get metric history", description = "Get metric history for a specific type")
     public ResponseEntity<ApiResponse<List<HealthMetricResponse>>> getMetricHistory(
             @RequestParam UUID memberId,
@@ -104,6 +107,7 @@ public class HealthMetricController {
      * Get metric history by date range.
      */
     @GetMapping("/history/range")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get metric history by date range", description = "Get metric history within a date range")
     public ResponseEntity<ApiResponse<List<HealthMetricResponse>>> getMetricHistoryByDateRange(
             @RequestParam UUID memberId,
@@ -124,6 +128,7 @@ public class HealthMetricController {
      * Get all metrics for a member.
      */
     @GetMapping("/all")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get all metrics", description = "Get all health metrics for a member")
     public ResponseEntity<ApiResponse<List<HealthMetricResponse>>> getAllMetrics(@RequestParam UUID memberId) {
         List<HealthMetric> metrics = healthMetricService.getAllMetrics(memberId);
@@ -137,6 +142,7 @@ public class HealthMetricController {
      * Get latest body composition snapshot.
      */
     @GetMapping("/body-composition")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Get body composition", description = "Get latest body composition snapshot for a member")
     public ResponseEntity<ApiResponse<BodyCompositionResponse>> getBodyComposition(@RequestParam UUID memberId) {
         HealthMetricService.BodyCompositionSnapshot snapshot = healthMetricService.getLatestBodyComposition(memberId);
@@ -147,6 +153,7 @@ public class HealthMetricController {
      * Analyze metric trend.
      */
     @GetMapping("/trend")
+    @PreAuthorize("hasAnyAuthority('health:manage', 'self:service') and @memberHealthAccess.canAccessMember(#memberId)")
     @Operation(summary = "Analyze metric trend", description = "Analyze trend for a specific metric over time")
     public ResponseEntity<ApiResponse<MetricTrendResponse>> analyzeMetricTrend(
             @RequestParam UUID memberId,
@@ -161,7 +168,7 @@ public class HealthMetricController {
      * Calculate and record BMI.
      */
     @PostMapping("/bmi")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Calculate BMI", description = "Calculate and record BMI from weight and height")
     public ResponseEntity<ApiResponse<HealthMetricResponse>> calculateBMI(
             @RequestParam UUID gymId,
@@ -171,7 +178,7 @@ public class HealthMetricController {
             Authentication authentication) {
 
         UUID organisationId = TenantContext.getCurrentTenantId();
-        UUID recordedByUserId = UUID.fromString(authentication.getName());
+        UUID recordedByUserId = ((TenantAwareUserDetails) authentication.getPrincipal()).getUserId();
 
         HealthMetric metric = healthMetricService.calculateAndRecordBMI(
             organisationId, gymId, memberId, weightKg, heightM, recordedByUserId
@@ -185,7 +192,7 @@ public class HealthMetricController {
      * Delete a health metric.
      */
     @DeleteMapping("/{metricId}")
-    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN', 'STAFF', 'TRAINER')")
+    @PreAuthorize("hasAuthority('health:manage')")
     @Operation(summary = "Delete metric", description = "Delete a health metric")
     public ResponseEntity<ApiResponse<Void>> deleteMetric(@PathVariable UUID metricId) {
         healthMetricService.deleteMetric(metricId);

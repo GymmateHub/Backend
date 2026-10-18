@@ -1,5 +1,6 @@
 package com.gymmate.notification.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.TenantOwned;
 import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,7 +18,7 @@ import com.gymmate.shared.infrastructure.persistence.DomainModel;
 @Setter
 @NoArgsConstructor
 @DomainModel(EmailSuppression.class)
-public class EmailSuppressionJpaEntity extends BaseAuditJpaEntity {
+public class EmailSuppressionJpaEntity extends BaseAuditJpaEntity implements TenantOwned {
 
     @Column(nullable = false)
     private String email;

@@ -28,7 +28,8 @@ public class ClassCategoryController {
   private final ClassCategoryMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CreateCategoryRequest req) {
     ClassCategory c = mapper.toEntity(req);
     UUID effectiveGymId = req.gymId() != null ? req.gymId() : TenantContext.getCurrentGymId();
@@ -38,12 +39,16 @@ public class ClassCategoryController {
   }
 
   @GetMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<CategoryResponse>> get(@PathVariable UUID id) {
     ClassCategory c = categoryService.getCategory(id);
     return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(c)));
   }
 
   @GetMapping("/gym/{gymId}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<List<CategoryResponse>>> listByGym(@PathVariable UUID gymId) {
     List<ClassCategory> list = categoryService.listByGym(gymId);
     List<CategoryResponse> res = list.stream().map(mapper::toResponse).collect(Collectors.toList());
@@ -51,7 +56,8 @@ public class ClassCategoryController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<CategoryResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateCategoryRequest req) {
     ClassCategory c = categoryService.getCategory(id);
     c.updateDetails(req.name(), req.description(), req.color());
@@ -60,7 +66,8 @@ public class ClassCategoryController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
     categoryService.deleteCategory(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Category deleted"));

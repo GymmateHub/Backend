@@ -4,6 +4,7 @@ import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -21,7 +22,9 @@ public record UserResponse(
     boolean active,
     LocalDateTime createdAt,
     LocalDateTime updatedAt,
-    LocalDateTime lastLoginAt
+    LocalDateTime lastLoginAt,
+    // Granted by the role (shared.security.RolePermissions); the frontend shows screens from it.
+    List<String> permissions
 ) {
 
 

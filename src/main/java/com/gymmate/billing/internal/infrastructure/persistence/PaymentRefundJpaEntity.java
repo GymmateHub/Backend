@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.TenantOwned;
 import com.gymmate.shared.constants.RefundStatus;
 import com.gymmate.shared.constants.RefundType;
 import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
@@ -20,7 +21,7 @@ import com.gymmate.shared.infrastructure.persistence.DomainModel;
 @Setter
 @NoArgsConstructor
 @DomainModel(PaymentRefund.class)
-public class PaymentRefundJpaEntity extends BaseAuditJpaEntity {
+public class PaymentRefundJpaEntity extends BaseAuditJpaEntity implements TenantOwned {
 
     /**
      * Organisation ID - the billing entity this refund belongs to.

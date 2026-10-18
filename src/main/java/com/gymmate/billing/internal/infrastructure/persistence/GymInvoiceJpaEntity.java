@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.TenantOwned;
 import com.gymmate.shared.constants.InvoiceStatus;
 import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
@@ -19,7 +20,7 @@ import com.gymmate.shared.infrastructure.persistence.DomainModel;
 @Setter
 @NoArgsConstructor
 @DomainModel(GymInvoice.class)
-public class GymInvoiceJpaEntity extends BaseAuditJpaEntity {
+public class GymInvoiceJpaEntity extends BaseAuditJpaEntity implements TenantOwned {
 
     /**
      * Organisation ID - the billing entity this invoice belongs to.

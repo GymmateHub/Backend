@@ -3,6 +3,9 @@ package com.gymmate.shared.multitenancy;
 import tools.jackson.databind.ObjectMapper;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.security.TenantAwareUserDetails;
+import com.gymmate.shared.security.audit.SecurityAuditService;
+import com.gymmate.shared.security.Permission;
+import com.gymmate.shared.constants.AuditEventType;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +28,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TenantFilter extends OncePerRequestFilter {
 
+    /** Header a SUPER_ADMIN sends to act inside an organisation; ignored for everyone else. */
+    public static final String ORGANISATION_OVERRIDE_HEADER = "X-Organisation-Id";
+
     private final ObjectMapper objectMapper;
+    private final SecurityAuditService securityAuditService;
 
     // Endpoints that don't require tenant context
     // BUG-033: "/api/users/register", "/api/users/verify-otp", "/api/users/resend-otp" were
@@ -49,6 +56,11 @@ public class TenantFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain) throws ServletException, IOException {
         try {
+            if (applySuperAdminOverride(request)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             // Skip tenant filtering for public/non-tenant endpoints
             if (shouldSkipTenantFilter(request)) {
                 log.debug("Skipping tenant filter for endpoint: {}", request.getRequestURI());
@@ -127,9 +139,57 @@ public class TenantFilter extends OncePerRequestFilter {
         objectMapper.writeValue(response.getWriter(), apiResponse);
     }
 
+    /**
+     * A SUPER_ADMIN acts inside an organisation by sending {@value #ORGANISATION_OVERRIDE_HEADER}
+     * (and optionally X-Gym-Id). Every such request is written to the security audit log.
+     *
+     * @return true when the override was applied
+     */
+    private boolean applySuperAdminOverride(HttpServletRequest request) {
+        String header = request.getHeader(ORGANISATION_OVERRIDE_HEADER);
+        if (header == null || header.isBlank()) {
+            return false;
+        }
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof TenantAwareUserDetails user)
+                || !isSuperAdmin(user)) {
+            log.debug("Ignoring {} from a non-platform-admin caller", ORGANISATION_OVERRIDE_HEADER);
+            return false;
+        }
+        UUID organisationId;
+        try {
+            organisationId = UUID.fromString(header.trim());
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
+        UUID gymId = null;
+        String gymHeader = request.getHeader("X-Gym-Id");
+        if (org.springframework.util.StringUtils.hasText(gymHeader)) {
+            try {
+                gymId = UUID.fromString(gymHeader.trim());
+            } catch (IllegalArgumentException ignored) {
+                // no gym context
+            }
+        }
+        TenantContext.setCurrentTenantId(organisationId);
+        if (gymId != null) {
+            TenantContext.setCurrentGymId(gymId);
+        }
+        java.util.Map<String, Object> metadata = new java.util.HashMap<>();
+        metadata.put("organisationId", organisationId.toString());
+        metadata.put("method", request.getMethod());
+        metadata.put("path", request.getRequestURI());
+        if (gymId != null) {
+            metadata.put("gymId", gymId.toString());
+        }
+        securityAuditService.logSecurityEvent(AuditEventType.SUPER_ADMIN_ORG_OVERRIDE, user.getUserId(), user.getEmail(),
+                request.getRemoteAddr(), request.getHeader("User-Agent"),
+                request.getMethod() + " " + request.getRequestURI() + " as organisation " + organisationId, metadata);
+        return true;
+    }
+
     private boolean isSuperAdmin(TenantAwareUserDetails userDetails) {
         return userDetails.getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_SUPER_ADMIN")
-                        || auth.getAuthority().equals("SUPER_ADMIN"));
+                .anyMatch(auth -> auth.getAuthority().equals(Permission.PLATFORM_ADMIN.authority()));
     }
 }

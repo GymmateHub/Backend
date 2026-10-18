@@ -11,6 +11,8 @@ import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.infrastructure.web.GlobalExceptionHandler;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.security.TenantAwareUserDetails;
+import com.gymmate.shared.multitenancy.TenantContext;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -89,6 +91,15 @@ class NotificationControllerTest {
 
         gymManagerUser = new TenantAwareUserDetails(
                 UUID.randomUUID(), organisationId, "manager@test.com", "password", "GYM_MANAGER", true, true);
+
+        // The tenant filter does not run in this standalone setup; the controller reads the
+        // organisation from the tenant context (which also covers a platform admin acting in it).
+        TenantContext.setCurrentTenantId(organisationId);
+    }
+
+    @AfterEach
+    void clearTenant() {
+        TenantContext.clear();
     }
 
     /** Sets the given user as the authenticated principal in the SecurityContext. */

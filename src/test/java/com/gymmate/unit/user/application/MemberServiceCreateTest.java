@@ -2,7 +2,9 @@ package com.gymmate.unit.user.application;
 
 import com.gymmate.shared.constants.MemberStatus;
 import com.gymmate.shared.exception.DomainException;
+import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.identity.api.spi.GymDirectory;
 import com.gymmate.identity.internal.application.MemberService;
 import com.gymmate.identity.internal.domain.Member;
 import com.gymmate.identity.internal.domain.User;
@@ -32,6 +34,7 @@ class MemberServiceCreateTest {
     @Mock private UserRepository userRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private GymDirectory gymDirectory;
 
     @InjectMocks private MemberService memberService;
 
@@ -41,6 +44,8 @@ class MemberServiceCreateTest {
     @BeforeEach
     void setUp() {
         TenantContext.setCurrentTenantId(orgId);
+        lenient().when(gymDirectory.getGymSummary(gymId))
+                .thenReturn(new GymDirectory.GymSummary(gymId, "Gym", orgId));
     }
 
     @AfterEach
@@ -92,6 +97,31 @@ class MemberServiceCreateTest {
         assertEquals("GYM_ID_REQUIRED", ex.getErrorCode());
         verify(memberRepository, never()).save(any());
         verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void rejectsUnknownGym() {
+        UUID unknownGym = UUID.randomUUID();
+        when(gymDirectory.getGymSummary(unknownGym)).thenThrow(new ResourceNotFoundException("Gym", unknownGym.toString()));
+
+        DomainException ex = assertThrows(DomainException.class, () -> memberService.createMemberWithDetails(
+                "jane@example.com", "Jane", "Doe", null, unknownGym, null));
+
+        assertEquals("GYM_NOT_FOUND", ex.getErrorCode());
+        verify(memberRepository, never()).save(any());
+    }
+
+    @Test
+    void rejectsGymOfAnotherOrganisation() {
+        UUID foreignGym = UUID.randomUUID();
+        when(gymDirectory.getGymSummary(foreignGym))
+                .thenReturn(new GymDirectory.GymSummary(foreignGym, "Other", UUID.randomUUID()));
+
+        DomainException ex = assertThrows(DomainException.class, () -> memberService.createMemberWithDetails(
+                "jane@example.com", "Jane", "Doe", null, foreignGym, null));
+
+        assertEquals("GYM_NOT_FOUND", ex.getErrorCode());
+        verify(memberRepository, never()).save(any());
     }
 
     @Test

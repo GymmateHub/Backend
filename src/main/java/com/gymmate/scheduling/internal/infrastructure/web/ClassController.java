@@ -29,7 +29,8 @@ public class ClassController {
   private final GymClassMapper mapper;
 
   @PostMapping
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<ClassResponse>> createClass(@Valid @RequestBody CreateClassRequest req) {
     GymClass gc = mapper.toEntity(req);
     UUID effectiveGymId = req.gymId() != null ? req.gymId() : TenantContext.getCurrentGymId();
@@ -42,7 +43,8 @@ public class ClassController {
   }
 
   @GetMapping
-  @PreAuthorize("hasAnyRole('TRAINER', 'ADMIN', 'SUPER_ADMIN', 'GYM_OWNER', 'OWNER', 'MANAGER', 'MEMBER')")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<List<ClassResponse>>> listClasses(@RequestParam(required = false) UUID gymId) {
     UUID effectiveGymId = gymId != null ? gymId : TenantContext.getCurrentGymId();
     if (effectiveGymId == null) {
@@ -54,12 +56,16 @@ public class ClassController {
   }
 
   @GetMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<ClassResponse>> getClass(@PathVariable UUID id) {
     GymClass gc = classService.getClass(id);
     return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(gc)));
   }
 
   @GetMapping("/gym/{gymId}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
   public ResponseEntity<ApiResponse<List<ClassResponse>>> listByGym(@PathVariable UUID gymId) {
     List<GymClass> list = classService.listByGym(gymId);
     List<ClassResponse> res = list.stream().map(mapper::toResponse).collect(Collectors.toList());
@@ -67,7 +73,8 @@ public class ClassController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<ClassResponse>> updateClass(@PathVariable UUID id, @Valid @RequestBody CreateClassRequest req) {
     GymClass gc = classService.getClass(id);
     gc.updateDetails(req.name(), req.description(), req.durationMinutes());
@@ -78,7 +85,8 @@ public class ClassController {
   }
 
   @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('GYM_OWNER') or hasRole('OWNER') or hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
   public ResponseEntity<ApiResponse<Void>> deleteClass(@PathVariable UUID id) {
     classService.deleteClass(id);
     return ResponseEntity.ok(ApiResponse.success(null, "Class deleted"));

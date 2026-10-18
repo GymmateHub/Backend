@@ -1,5 +1,6 @@
 package com.gymmate.billing.internal.infrastructure.persistence;
 
+import com.gymmate.shared.infrastructure.persistence.TenantOwned;
 import com.gymmate.shared.infrastructure.persistence.BaseAuditJpaEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -17,7 +18,7 @@ import com.gymmate.shared.infrastructure.persistence.DomainModel;
 @Setter
 @NoArgsConstructor
 @DomainModel(ApiRateLimit.class)
-public class ApiRateLimitJpaEntity extends BaseAuditJpaEntity {
+public class ApiRateLimitJpaEntity extends BaseAuditJpaEntity implements TenantOwned {
 
     @Column(name = "organisation_id", nullable = false)
     private UUID organisationId;
