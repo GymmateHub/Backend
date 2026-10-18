@@ -1,12 +1,15 @@
 package com.gymmate.unit.notification.application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.gymmate.notification.application.AdminNotificationEventListener;
-import com.gymmate.notification.application.NotificationDispatcher;
-import com.gymmate.notification.domain.Notification;
-import com.gymmate.notification.events.*;
-import com.gymmate.notification.infrastructure.NotificationRepository;
+import com.gymmate.notification.api.event.MemberJoinedEvent;
+import com.gymmate.notification.api.event.PaymentFailedEvent;
+import com.gymmate.notification.api.event.PaymentSuccessEvent;
+import com.gymmate.notification.api.event.SubscriptionExpiringEvent;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import com.gymmate.notification.internal.infrastructure.messaging.AdminNotificationEventListener;
+import com.gymmate.notification.internal.application.NotificationDispatcher;
+import com.gymmate.notification.internal.domain.Notification;
+import com.gymmate.notification.internal.application.port.NotificationRepository;
 import com.gymmate.shared.constants.NotificationPriority;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -37,7 +40,7 @@ class AdminNotificationEventListenerTest {
     private NotificationDispatcher notificationDispatcher;
 
     @Spy
-    private ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
+    private ObjectMapper objectMapper = new JsonMapper();
 
     private AdminNotificationEventListener listener;
 
@@ -67,14 +70,15 @@ class AdminNotificationEventListenerTest {
         @DisplayName("Should handle PaymentFailedEvent")
         void shouldHandlePaymentFailedEvent() {
             // Arrange
-            PaymentFailedEvent event = PaymentFailedEvent.builder()
-                    .organisationId(organisationId)
-                    .gymId(gymId)
-                    .amount(BigDecimal.valueOf(99.99))
-                    .failureReason("Insufficient funds")
-                    .nextRetryDate(LocalDateTime.now().plusDays(3))
-                    .invoiceId("inv-123")
-                    .build();
+            PaymentFailedEvent event = new PaymentFailedEvent(
+                    organisationId,
+                    gymId,
+                    BigDecimal.valueOf(99.99),
+                    "Insufficient funds",
+                    LocalDateTime.now().plusDays(3),
+                    "inv-123",
+                    null,
+                    null);
 
             ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
 
@@ -97,13 +101,15 @@ class AdminNotificationEventListenerTest {
         void shouldHandlePaymentFailedEventOrganisationScoped() {
             // Platform (subscription) failures have no single gym — see
             // StripeWebhookService.handleInvoicePaymentFailed.
-            PaymentFailedEvent event = PaymentFailedEvent.builder()
-                    .organisationId(organisationId)
-                    .amount(BigDecimal.valueOf(49.99))
-                    .failureReason("Card declined")
-                    .nextRetryDate(LocalDateTime.now().plusDays(3))
-                    .invoiceId("inv-789")
-                    .build();
+            PaymentFailedEvent event = new PaymentFailedEvent(
+                    organisationId,
+                    null,
+                    BigDecimal.valueOf(49.99),
+                    "Card declined",
+                    LocalDateTime.now().plusDays(3),
+                    "inv-789",
+                    null,
+                    null);
 
             ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
 
@@ -120,14 +126,15 @@ class AdminNotificationEventListenerTest {
         @DisplayName("Should handle PaymentSuccessEvent")
         void shouldHandlePaymentSuccessEvent() {
             // Arrange
-            PaymentSuccessEvent event = PaymentSuccessEvent.builder()
-                    .organisationId(organisationId)
-                    .gymId(gymId)
-                    .amount(BigDecimal.valueOf(99.99))
-                    .invoiceNumber("INV-001")
-                    .invoiceUrl("https://example.com/invoice")
-                    .periodEnd(LocalDateTime.now())
-                    .build();
+            PaymentSuccessEvent event = new PaymentSuccessEvent(
+                    organisationId,
+                    gymId,
+                    BigDecimal.valueOf(99.99),
+                    "INV-001",
+                    "https://example.com/invoice",
+                    LocalDateTime.now(),
+                    null,
+                    null);
 
             ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
 
@@ -152,14 +159,13 @@ class AdminNotificationEventListenerTest {
         @DisplayName("Should handle SubscriptionExpiringEvent")
         void shouldHandleSubscriptionExpiringEvent() {
             // Arrange
-            SubscriptionExpiringEvent event = SubscriptionExpiringEvent.builder()
-                    .organisationId(organisationId)
-                    .subscriptionId(UUID.randomUUID())
-                    .tierName("Premium")
-                    .price(BigDecimal.valueOf(99.99))
-                    .expiresAt(LocalDateTime.now().plusDays(7))
-                    .daysUntilExpiry(7)
-                    .build();
+            SubscriptionExpiringEvent event = new SubscriptionExpiringEvent(
+                    organisationId,
+                    UUID.randomUUID(),
+                    "Premium",
+                    BigDecimal.valueOf(99.99),
+                    LocalDateTime.now().plusDays(7),
+                    7);
 
             ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
 
@@ -184,14 +190,13 @@ class AdminNotificationEventListenerTest {
         @DisplayName("Should handle MemberJoinedEvent")
         void shouldHandleMemberJoinedEvent() {
             // Arrange
-            MemberJoinedEvent event = MemberJoinedEvent.builder()
-                    .organisationId(organisationId)
-                    .gymId(gymId)
-                    .memberId(UUID.randomUUID())
-                    .memberName("John Doe")
-                    .memberEmail("john@example.com")
-                    .membershipPlan("Monthly")
-                    .build();
+            MemberJoinedEvent event = new MemberJoinedEvent(
+                    organisationId,
+                    gymId,
+                    UUID.randomUUID(),
+                    "John Doe",
+                    "john@example.com",
+                    "Monthly");
 
             ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
 
@@ -217,11 +222,15 @@ class AdminNotificationEventListenerTest {
         @DisplayName("Should handle exception during event processing")
         void shouldHandleException() {
             // Arrange
-            PaymentFailedEvent event = PaymentFailedEvent.builder()
-                    .organisationId(organisationId)
-                    .gymId(gymId)
-                    .amount(BigDecimal.valueOf(99.99))
-                    .build();
+            PaymentFailedEvent event = new PaymentFailedEvent(
+                    organisationId,
+                    gymId,
+                    BigDecimal.valueOf(99.99),
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
 
             when(notificationRepository.save(any())).thenThrow(RuntimeException.class);
 
@@ -236,13 +245,13 @@ class AdminNotificationEventListenerTest {
         @DisplayName("Should handle database error gracefully")
         void shouldHandleDatabaseError() {
             // Arrange
-            SubscriptionExpiringEvent event = SubscriptionExpiringEvent.builder()
-                    .organisationId(organisationId)
-                    .subscriptionId(UUID.randomUUID())
-                    .tierName("Premium")
-                    .expiresAt(LocalDateTime.now().plusDays(7))
-                    .daysUntilExpiry(7)
-                    .build();
+            SubscriptionExpiringEvent event = new SubscriptionExpiringEvent(
+                    organisationId,
+                    UUID.randomUUID(),
+                    "Premium",
+                    null,
+                    LocalDateTime.now().plusDays(7),
+                    7);
 
             when(notificationRepository.save(any(Notification.class)))
                     .thenThrow(new RuntimeException("Database error"));
@@ -260,14 +269,15 @@ class AdminNotificationEventListenerTest {
         @DisplayName("Should set correct metadata for payment event")
         void shouldSetCorrectMetadataForPayment() {
             // Arrange
-            PaymentFailedEvent event = PaymentFailedEvent.builder()
-                    .organisationId(organisationId)
-                    .gymId(gymId)
-                    .amount(BigDecimal.valueOf(99.99))
-                    .failureReason("Card declined")
-                    .nextRetryDate(LocalDateTime.now().plusDays(1))
-                    .invoiceId("inv-456")
-                    .build();
+            PaymentFailedEvent event = new PaymentFailedEvent(
+                    organisationId,
+                    gymId,
+                    BigDecimal.valueOf(99.99),
+                    "Card declined",
+                    LocalDateTime.now().plusDays(1),
+                    "inv-456",
+                    null,
+                    null);
 
             ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
 
@@ -286,13 +296,13 @@ class AdminNotificationEventListenerTest {
         void shouldSetRelatedEntityId() {
             // Arrange
             UUID memberId = UUID.randomUUID();
-            MemberJoinedEvent event = MemberJoinedEvent.builder()
-                    .organisationId(organisationId)
-                    .gymId(gymId)
-                    .memberId(memberId)
-                    .memberName("Jane Doe")
-                    .membershipPlan("Annual")
-                    .build();
+            MemberJoinedEvent event = new MemberJoinedEvent(
+                    organisationId,
+                    gymId,
+                    memberId,
+                    "Jane Doe",
+                    null,
+                    "Annual");
 
             ArgumentCaptor<Notification> captor = ArgumentCaptor.forClass(Notification.class);
 

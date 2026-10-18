@@ -6,6 +6,8 @@ package com.gymmate.access.internal.domain.enums;
  */
 public enum DenyReason {
   INVALID_CREDENTIAL,
+  /** The access point belongs to a different organisation than the member (no cross-network entry). */
+  FOREIGN_ORGANISATION,
   NO_ACTIVE_MEMBERSHIP,
   SUSPENDED_OR_FROZEN,
   INCOMPLETE_SIGNUP,

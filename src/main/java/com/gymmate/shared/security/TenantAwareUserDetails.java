@@ -1,6 +1,5 @@
 package com.gymmate.shared.security;
 
-import com.gymmate.user.domain.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -20,30 +19,43 @@ public class TenantAwareUserDetails implements UserDetails {
     private final boolean emailVerified;
     private final Collection<? extends GrantedAuthority> authorities;
     private final boolean active;
+    /** Gym context carried by the access token (null when none was selected). */
+    private final UUID gymId;
 
-    public TenantAwareUserDetails(User user) {
-        this.userId = user.getId();
-        this.email = user.getEmail();
-        this.password = user.getPasswordHash();
-        this.organisationId = user.getOrganisationId();
-        this.role = user.getRole().name();
-        this.emailVerified = user.isEmailVerified();
-        this.authorities = Collections.singletonList(
-            new SimpleGrantedAuthority("ROLE_" + user.getRole().name())
-        );
-        this.active = user.isActive();
+    public TenantAwareUserDetails(UUID userId, UUID organisationId, String email, String password, String role, boolean active, boolean emailVerified) {
+        this(userId, organisationId, null, email, password, role, active, emailVerified);
     }
 
-    // Alternate constructor used by TenantAwareUserDetailsService
-    public TenantAwareUserDetails(UUID userId, UUID organisationId, String email, String password, String role, boolean active, boolean emailVerified) {
+    public TenantAwareUserDetails(UUID userId, UUID organisationId, UUID gymId, String email, String password, String role, boolean active, boolean emailVerified) {
         this.userId = userId;
+        this.gymId = gymId;
         this.email = email;
         this.password = password;
         this.organisationId = organisationId;
         this.role = role;
         this.emailVerified = emailVerified;
-        this.authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role));
+        this.authorities = buildAuthorities(role);
         this.active = active;
+    }
+
+    /**
+     * {@code ROLE_<role>} plus the role's permissions from {@link RolePermissions}. Endpoints
+     * authorise on permissions; the role authority remains for display and auditing.
+     */
+    private static Collection<? extends GrantedAuthority> buildAuthorities(String roleName) {
+        java.util.Set<GrantedAuthority> auths = new java.util.HashSet<>();
+        if (roleName != null) {
+            auths.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+            for (Permission permission : RolePermissions.of(roleName)) {
+                auths.add(new SimpleGrantedAuthority(permission.authority()));
+            }
+        }
+        return auths;
+    }
+
+    /** This user's permission authorities, sorted (sent to the frontend). */
+    public java.util.List<String> getPermissions() {
+        return RolePermissions.authorities(role);
     }
 
     @Override

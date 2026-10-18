@@ -2,7 +2,6 @@ package com.gymmate.scheduling.internal.domain;
 
 import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.shared.domain.GymScopedEntity;
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
@@ -11,63 +10,48 @@ import java.util.UUID;
 
 /**
  * ClassBooking entity representing a member's booking for a class.
- * Extends GymScopedEntity for automatic organisation and gym filtering.
+ * Extends GymScopedJpaEntity for automatic organisation and gym filtering.
  */
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "class_bookings")
 public class ClassBooking extends GymScopedEntity {
 
-  // Note: gymId is inherited from GymScopedEntity
-  // Note: organisationId is inherited from TenantEntity (via GymScopedEntity)
-  @Column(name = "member_id", nullable = false)
+  // Note: gymId is inherited from GymScopedJpaEntity
+  // Note: organisationId is inherited from TenantEntity (via GymScopedJpaEntity)
   private UUID memberId;
 
-  @Column(name = "class_schedule_id", nullable = false)
   private UUID classScheduleId;
 
-  @Column(name = "booking_date")
   @Builder.Default
   private LocalDateTime bookingDate = LocalDateTime.now();
 
-  @Enumerated(EnumType.STRING)
-  @Column(length = 20)
   @Builder.Default
   private BookingStatus status = BookingStatus.CONFIRMED;
 
   // Payment
-  @Column(name = "credits_used")
   @Builder.Default
   private Integer creditsUsed = 1;
 
-  @Column(name = "amount_paid", precision = 10, scale = 2)
   @Builder.Default
   private BigDecimal amountPaid = BigDecimal.ZERO;
 
   // Attendance
-  @Column(name = "checked_in_at")
   private LocalDateTime checkedInAt;
 
-  @Column(name = "checked_out_at")
   private LocalDateTime checkedOutAt;
 
   // Cancellation
-  @Column(name = "cancelled_at")
   private LocalDateTime cancelledAt;
 
-  @Column(name = "cancellation_reason", columnDefinition = "TEXT")
   private String cancellationReason;
 
   // Notes
-  @Column(name = "member_notes", columnDefinition = "TEXT")
   private String memberNotes;
 
   // Waitlist tracking
-  @Column(name = "waitlist_position")
   private Integer waitlistPosition;
 
   public void checkIn() {
@@ -102,4 +86,3 @@ public class ClassBooking extends GymScopedEntity {
     return checkedInAt != null;
   }
 }
-

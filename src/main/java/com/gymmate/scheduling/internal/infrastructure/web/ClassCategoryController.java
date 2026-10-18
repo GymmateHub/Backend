@@ -1,0 +1,75 @@
+package com.gymmate.scheduling.internal.infrastructure.web;
+
+import com.gymmate.scheduling.internal.application.dto.CategoryResponse;
+import com.gymmate.scheduling.internal.application.dto.CreateCategoryRequest;
+import com.gymmate.scheduling.internal.application.mapper.ClassCategoryMapper;
+import com.gymmate.scheduling.internal.application.ClassCategoryService;
+import com.gymmate.scheduling.internal.domain.ClassCategory;
+import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/class-categories")
+@RequiredArgsConstructor
+@Tag(name = "Category", description = "Category management operations")
+public class ClassCategoryController {
+  private final ClassCategoryService categoryService;
+  private final ClassCategoryMapper mapper;
+
+  @PostMapping
+
+  @PreAuthorize("hasAuthority('classes:manage')")
+  public ResponseEntity<ApiResponse<CategoryResponse>> create(@Valid @RequestBody CreateCategoryRequest req) {
+    ClassCategory c = mapper.toEntity(req);
+    UUID effectiveGymId = req.gymId() != null ? req.gymId() : TenantContext.getCurrentGymId();
+    c.setGymId(effectiveGymId);
+    ClassCategory created = categoryService.createCategory(c);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Category created"));
+  }
+
+  @GetMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
+  public ResponseEntity<ApiResponse<CategoryResponse>> get(@PathVariable UUID id) {
+    ClassCategory c = categoryService.getCategory(id);
+    return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(c)));
+  }
+
+  @GetMapping("/gym/{gymId}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
+  public ResponseEntity<ApiResponse<List<CategoryResponse>>> listByGym(@PathVariable UUID gymId) {
+    List<ClassCategory> list = categoryService.listByGym(gymId);
+    List<CategoryResponse> res = list.stream().map(mapper::toResponse).collect(Collectors.toList());
+    return ResponseEntity.ok(ApiResponse.success(res));
+  }
+
+  @PutMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
+  public ResponseEntity<ApiResponse<CategoryResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateCategoryRequest req) {
+    ClassCategory c = categoryService.getCategory(id);
+    c.updateDetails(req.name(), req.description(), req.color());
+    ClassCategory updated = categoryService.updateCategory(c);
+    return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated), "Category updated"));
+  }
+
+  @DeleteMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
+  public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+    categoryService.deleteCategory(id);
+    return ResponseEntity.ok(ApiResponse.success(null, "Category deleted"));
+  }
+}

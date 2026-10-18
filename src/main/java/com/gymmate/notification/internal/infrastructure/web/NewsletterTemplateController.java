@@ -1,0 +1,121 @@
+package com.gymmate.notification.internal.infrastructure.web;
+
+import com.gymmate.notification.internal.application.dto.CreateTemplateRequest;
+import com.gymmate.notification.internal.application.dto.TemplateResponse;
+import com.gymmate.notification.internal.application.dto.UpdateTemplateRequest;
+import com.gymmate.notification.internal.application.NewsletterTemplateService;
+import com.gymmate.notification.internal.domain.NewsletterTemplate;
+import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.shared.security.CurrentUser;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * REST controller for newsletter template management.
+ */
+@Slf4j
+@RestController
+@RequestMapping("/api/newsletters/templates")
+@RequiredArgsConstructor
+@Tag(name = "Newsletter Templates", description = "Newsletter template management APIs")
+public class NewsletterTemplateController {
+
+    private final NewsletterTemplateService templateService;
+
+    /**
+     * Create a new newsletter template.
+     */
+    @PostMapping
+    @PreAuthorize("hasAuthority('notifications:manage')")
+    @Operation(summary = "Create template", description = "Create a new newsletter template")
+    public ResponseEntity<ApiResponse<TemplateResponse>> createTemplate(
+            @Valid @RequestBody CreateTemplateRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        UUID userId = extractUserId(authHeader);
+        NewsletterTemplate template = templateService.create(request, userId);
+
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(
+                        TemplateResponse.fromEntity(template),
+                        "Template created successfully"));
+    }
+
+    /**
+     * Get all templates for a gym or organisation.
+     */
+    @GetMapping
+    @PreAuthorize("hasAuthority('notifications:manage')")
+    @Operation(summary = "List templates", description = "Get all newsletter templates for a gym or organisation")
+    public ResponseEntity<ApiResponse<List<TemplateResponse>>> getTemplates(
+            @RequestParam(required = false) UUID gymId) {
+
+        List<NewsletterTemplate> templates;
+        if (gymId != null) {
+            templates = templateService.getActiveByGymId(gymId);
+        } else {
+            templates = templateService.getActiveByOrganisationId(TenantContext.getCurrentTenantId());
+        }
+
+        List<TemplateResponse> response = templates.stream()
+                .map(TemplateResponse::fromEntity)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Get a template by ID.
+     */
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('notifications:manage')")
+    @Operation(summary = "Get template", description = "Get a newsletter template by ID")
+    public ResponseEntity<ApiResponse<TemplateResponse>> getTemplate(@PathVariable UUID id) {
+        NewsletterTemplate template = templateService.getById(id);
+        return ResponseEntity.ok(ApiResponse.success(TemplateResponse.fromEntity(template)));
+    }
+
+    /**
+     * Update a template.
+     */
+    @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('notifications:manage')")
+    @Operation(summary = "Update template", description = "Update a newsletter template")
+    public ResponseEntity<ApiResponse<TemplateResponse>> updateTemplate(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateTemplateRequest request) {
+
+        NewsletterTemplate template = templateService.update(id, request);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                TemplateResponse.fromEntity(template),
+                "Template updated successfully"));
+    }
+
+    /**
+     * Delete a template.
+     */
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('notifications:manage')")
+    @Operation(summary = "Delete template", description = "Delete a newsletter template")
+    public ResponseEntity<ApiResponse<Void>> deleteTemplate(@PathVariable UUID id) {
+        templateService.delete(id);
+        return ResponseEntity.ok(ApiResponse.success(null, "Template deleted successfully"));
+    }
+
+    /** The authenticated caller (the header is still required by the endpoint contract). */
+    private UUID extractUserId(String authHeader) {
+        return CurrentUser.requireUserId();
+    }
+}

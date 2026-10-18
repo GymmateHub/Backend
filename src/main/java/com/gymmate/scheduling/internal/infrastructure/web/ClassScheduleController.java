@@ -1,0 +1,82 @@
+package com.gymmate.scheduling.internal.infrastructure.web;
+
+import com.gymmate.scheduling.internal.application.mapper.ClassScheduleMapper;
+import com.gymmate.scheduling.internal.application.dto.CreateScheduleRequest;
+import com.gymmate.scheduling.internal.application.dto.ScheduleResponse;
+import com.gymmate.scheduling.internal.application.ClassScheduleService;
+import com.gymmate.scheduling.internal.domain.ClassSchedule;
+import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.multitenancy.TenantContext;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
+
+import jakarta.validation.Valid;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+@RestController
+@RequestMapping("/api/class-schedules")
+@RequiredArgsConstructor
+@Tag(name = "Schedule", description = "Schedule management operations")
+public class ClassScheduleController {
+  private final ClassScheduleService scheduleService;
+  private final ClassScheduleMapper mapper;
+
+  @PostMapping
+
+  @PreAuthorize("hasAuthority('classes:manage')")
+  public ResponseEntity<ApiResponse<ScheduleResponse>> create(@Valid @RequestBody CreateScheduleRequest req) {
+    ClassSchedule s = mapper.toEntity(req);
+    UUID effectiveGymId = req.gymId() != null ? req.gymId() : TenantContext.getCurrentGymId();
+    if (s.getGymId() == null) {
+      s.setGymId(effectiveGymId);
+    }
+    ClassSchedule created = scheduleService.createSchedule(s);
+    return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(mapper.toResponse(created), "Schedule created"));
+  }
+
+  @GetMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
+  public ResponseEntity<ApiResponse<ScheduleResponse>> get(@PathVariable UUID id) {
+    ClassSchedule s = scheduleService.getSchedule(id);
+    return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(s)));
+  }
+
+  @GetMapping("/gym/{gymId}")
+
+  @PreAuthorize("hasAuthority('classes:view')")
+  public ResponseEntity<ApiResponse<List<ScheduleResponse>>> listByGym(@PathVariable UUID gymId) {
+    List<ClassSchedule> list = scheduleService.listByGym(gymId);
+    List<ScheduleResponse> res = list.stream().map(mapper::toResponse).collect(Collectors.toList());
+    return ResponseEntity.ok(ApiResponse.success(res));
+  }
+
+  @PutMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
+  public ResponseEntity<ApiResponse<ScheduleResponse>> update(@PathVariable UUID id, @Valid @RequestBody CreateScheduleRequest req) {
+    ClassSchedule s = scheduleService.getSchedule(id);
+    s.setStartTime(req.startTime());
+    s.setEndTime(req.endTime());
+    s.setCapacityOverride(req.capacityOverride());
+    s.setPriceOverride(req.priceOverride());
+    s.setTrainerId(req.trainerId());
+    s.setAreaId(req.areaId());
+    ClassSchedule updated = scheduleService.updateSchedule(s);
+    return ResponseEntity.ok(ApiResponse.success(mapper.toResponse(updated), "Schedule updated"));
+  }
+
+  @DeleteMapping("/{id}")
+
+  @PreAuthorize("hasAuthority('classes:manage')")
+  public ResponseEntity<ApiResponse<Void>> delete(@PathVariable UUID id) {
+    scheduleService.deleteSchedule(id);
+    return ResponseEntity.ok(ApiResponse.success(null, "Schedule deleted"));
+  }
+}

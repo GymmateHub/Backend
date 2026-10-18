@@ -1,21 +1,21 @@
 package com.gymmate.unit.payment.application;
 
-import com.gymmate.gym.infrastructure.GymRepository;
-import com.gymmate.notification.application.NotificationService;
-import com.gymmate.notification.events.ChargeDisputedEvent;
-import com.gymmate.notification.events.ChargeRefundedEvent;
-import com.gymmate.notification.events.SubscriptionPausedEvent;
-import com.gymmate.payment.application.PaymentNotificationService;
-import com.gymmate.payment.application.StripeConnectService;
-import com.gymmate.payment.application.StripeWebhookService;
-import com.gymmate.payment.application.WebhookEventTracker;
-import com.gymmate.payment.infrastructure.GymInvoiceRepository;
-import com.gymmate.payment.infrastructure.StripeWebhookEventRepository;
-import com.gymmate.shared.config.StripeConfig;
+import com.gymmate.billing.internal.application.port.GymPaymentAccountPort;
+import com.gymmate.notification.api.NotificationApi;
+import com.gymmate.notification.api.event.ChargeDisputedEvent;
+import com.gymmate.notification.api.event.ChargeRefundedEvent;
+import com.gymmate.notification.api.event.SubscriptionPausedEvent;
+import com.gymmate.billing.internal.application.PaymentNotificationService;
+import com.gymmate.billing.internal.application.StripeConnectService;
+import com.gymmate.billing.internal.application.StripeWebhookService;
+import com.gymmate.billing.internal.application.WebhookEventTracker;
+import com.gymmate.billing.internal.application.port.GymInvoiceRepository;
+import com.gymmate.billing.internal.application.port.StripeWebhookEventRepository;
+import com.gymmate.shared.infrastructure.config.StripeConfig;
 import com.gymmate.shared.constants.InvoiceStatus;
 import com.gymmate.shared.constants.SubscriptionStatus;
-import com.gymmate.shared.service.UtilityService;
-import com.gymmate.subscription.domain.SubscriptionRepository;
+import com.gymmate.shared.util.UtilityService;
+import com.gymmate.billing.internal.application.port.SubscriptionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,9 +28,6 @@ import org.springframework.context.ApplicationEventPublisher;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for the new Stripe webhook handlers:
@@ -49,8 +46,8 @@ class StripeWebhookNewHandlersTest {
     @Mock private StripeConnectService connectService;
     @Mock private ApplicationEventPublisher eventPublisher;
     @Mock private UtilityService utilityService;
-    @Mock private NotificationService notificationService;
-    @Mock private GymRepository gymRepository;
+    @Mock private NotificationApi notificationService;
+    @Mock private GymPaymentAccountPort gymRepository;
     @Mock private WebhookEventTracker webhookEventTracker;
     @Mock private PaymentNotificationService paymentNotificationService;
 
@@ -111,14 +108,13 @@ class StripeWebhookNewHandlersTest {
         @Test
         @DisplayName("ChargeDisputedEvent should build with correct fields")
         void chargeDisputedEventShouldBuild() {
-            ChargeDisputedEvent event = ChargeDisputedEvent.builder()
-                    .organisationId(organisationId)
-                    .amount(java.math.BigDecimal.valueOf(50.00))
-                    .currency("USD")
-                    .disputeId("dp_test123")
-                    .disputeReason("fraudulent")
-                    .paymentIntentId("pi_test123")
-                    .build();
+            ChargeDisputedEvent event = new ChargeDisputedEvent(
+                    organisationId,
+                    java.math.BigDecimal.valueOf(50.00),
+                    "USD",
+                    "dp_test123",
+                    "fraudulent",
+                    "pi_test123");
 
             assertThat(event.getEventId()).isNotNull();
             assertThat(event.getOccurredAt()).isNotNull();
@@ -133,14 +129,13 @@ class StripeWebhookNewHandlersTest {
         @Test
         @DisplayName("ChargeRefundedEvent should build with correct fields")
         void chargeRefundedEventShouldBuild() {
-            ChargeRefundedEvent event = ChargeRefundedEvent.builder()
-                    .organisationId(organisationId)
-                    .amount(java.math.BigDecimal.valueOf(25.00))
-                    .currency("EUR")
-                    .refundId("re_test456")
-                    .paymentIntentId("pi_test456")
-                    .reason("requested_by_customer")
-                    .build();
+            ChargeRefundedEvent event = new ChargeRefundedEvent(
+                    organisationId,
+                    java.math.BigDecimal.valueOf(25.00),
+                    "EUR",
+                    "re_test456",
+                    "pi_test456",
+                    "requested_by_customer");
 
             assertThat(event.getEventType()).isEqualTo("CHARGE_REFUNDED");
             assertThat(event.getNotificationTitle()).contains("Refund");
@@ -153,11 +148,11 @@ class StripeWebhookNewHandlersTest {
         @DisplayName("SubscriptionPausedEvent should build with correct fields")
         void subscriptionPausedEventShouldBuild() {
             UUID subId = UUID.randomUUID();
-            SubscriptionPausedEvent event = SubscriptionPausedEvent.builder()
-                    .organisationId(organisationId)
-                    .subscriptionId(subId)
-                    .tierName("Pro")
-                    .build();
+            SubscriptionPausedEvent event = new SubscriptionPausedEvent(
+                    organisationId,
+                    subId,
+                    "Pro",
+                    null);
 
             assertThat(event.getEventType()).isEqualTo("SUBSCRIPTION_PAUSED");
             assertThat(event.getNotificationTitle()).contains("Paused");
@@ -168,9 +163,13 @@ class StripeWebhookNewHandlersTest {
         @Test
         @DisplayName("Events should handle null fields gracefully in messages")
         void eventsShouldHandleNullFields() {
-            ChargeDisputedEvent event = ChargeDisputedEvent.builder()
-                    .organisationId(organisationId)
-                    .build();
+            ChargeDisputedEvent event = new ChargeDisputedEvent(
+                    organisationId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null);
 
             // Should not throw NPE
             String message = event.getNotificationMessage();

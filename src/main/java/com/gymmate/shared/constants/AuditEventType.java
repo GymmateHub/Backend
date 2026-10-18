@@ -15,5 +15,7 @@ public enum AuditEventType {
   SUSPICIOUS_ACTIVITY,
   DATA_ACCESS,
   PERMISSION_DENIED,
-  RATE_LIMIT_EXCEEDED
+  RATE_LIMIT_EXCEEDED,
+  /** A SUPER_ADMIN acted inside an organisation (X-Organisation-Id). */
+  SUPER_ADMIN_ORG_OVERRIDE
 }

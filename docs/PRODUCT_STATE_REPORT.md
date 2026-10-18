@@ -28,7 +28,7 @@
 
 ## 1. Executive Summary
 
-GymMate is a **multi-tenant SaaS gym management platform** built as a Spring Boot 3.5.6 modular monolith in Java 21. The codebase contains approximately **300 Java files** across **17 modules**, with a clean/hexagonal architecture pattern (`api/`, `application/`, `domain/`, `infrastructure/`) applied consistently.
+GymMate is a **multi-tenant SaaS gym management platform** built as a Spring Boot 4.1.1 modular monolith in Java 21. The codebase contains approximately **300 Java files** across **17 modules**, with a clean/hexagonal architecture pattern (`api/`, `application/`, `domain/`, `infrastructure/`) applied consistently.
 
 The product is in a **mid-to-late stage development phase** (~75–80% MVP complete). Core infrastructure and most business modules are well-built with full vertical slices (domain → service → API). Access control and AI modules are now partially implemented; booking and dashboard remain placeholders.
 
@@ -42,7 +42,7 @@ Register Organisation → Create Gym → Add Members → Sell Memberships → Bo
 | Component | Technology | Version |
 |-----------|-----------|---------|
 | Language | Java | 21 |
-| Framework | Spring Boot | 3.5.6 |
+| Framework | Spring Boot | 4.1.1 |
 | Build Tool | Maven Wrapper | — |
 | Database (prod) | PostgreSQL | 15+ |
 | Database (dev/test) | H2 (in-memory) | — |

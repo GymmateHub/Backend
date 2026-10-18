@@ -56,6 +56,16 @@ spring:
     baseline-version: 0
     locations: classpath:db/migration
 
+  # Spring Modulith — durable cross-module event publication (transactional outbox).
+  # Table is owned by Flyway (V18); schema-initialization is an idempotent safety net
+  # for environments running with FLYWAY_ENABLED=false.
+  modulith:
+    events:
+      jdbc:
+        schema-initialization:
+          enabled: true
+      republish-outstanding-events-on-restart: true
+
   # Redis Configuration
   data:
     redis:
@@ -118,7 +128,7 @@ logging:
 # ============================================
 jwt:
   secret: ${JWT_SECRET:Z3ltbWF0ZV9qd3Rfc2VjcmV0X2tleV9tdXN0X2JlX2F0X2xlYXN0XzMyX2J5dGVzX2xvbmdfMTIzNDU2}
-  expiration: ${JWT_EXPIRATION:900000}
+  expiration: ${JWT_EXPIRATION:86400000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 cors:
