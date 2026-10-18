@@ -1,13 +1,17 @@
 package com.gymmate.unit.pos.application;
 
-import com.gymmate.inventory.api.InventoryFacade;
-import com.gymmate.pos.api.dto.CreateSaleRequest;
-import com.gymmate.pos.api.dto.SaleItemRequest;
-import com.gymmate.pos.internal.service.PosService;
-import com.gymmate.pos.internal.domain.*;
-import com.gymmate.pos.internal.repository.CashDrawerJpaRepository;
-import com.gymmate.pos.internal.repository.SaleItemJpaRepository;
-import com.gymmate.pos.internal.repository.SaleJpaRepository;
+import com.gymmate.retail.internal.domain.CashDrawer;
+import com.gymmate.retail.internal.domain.PaymentType;
+import com.gymmate.retail.internal.domain.Sale;
+import com.gymmate.retail.internal.domain.SaleItem;
+import com.gymmate.retail.internal.domain.SaleStatus;
+import com.gymmate.retail.api.InventoryFacade;
+import com.gymmate.retail.internal.application.dto.CreateSaleRequest;
+import com.gymmate.retail.internal.application.dto.SaleItemRequest;
+import com.gymmate.retail.internal.application.PosService;
+import com.gymmate.retail.internal.application.port.CashDrawerRepository;
+import com.gymmate.retail.internal.application.port.SaleItemRepository;
+import com.gymmate.retail.internal.application.port.SaleRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,13 +38,13 @@ import static org.mockito.Mockito.*;
 class PosServiceTest {
 
     @Mock
-    private SaleJpaRepository saleRepository;
+    private SaleRepository saleRepository;
 
     @Mock
-    private SaleItemJpaRepository saleItemRepository;
+    private SaleItemRepository saleItemRepository;
 
     @Mock
-    private CashDrawerJpaRepository cashDrawerRepository;
+    private CashDrawerRepository cashDrawerRepository;
 
     @Mock
     private InventoryFacade inventoryFacade;

@@ -1,0 +1,23 @@
+package com.gymmate.scheduling.internal.application.port;
+
+import com.gymmate.shared.application.port.DomainRepository;
+import com.gymmate.scheduling.internal.domain.ClassCategory;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+/**
+ * Repository interface for ClassCategory domain entity (moved to infrastructure).
+ */
+public interface ClassCategoryRepository extends DomainRepository<ClassCategory, UUID> {
+
+  List<ClassCategory> findByGymId(UUID gymId);
+
+  List<ClassCategory> findActiveByGymId(UUID gymId);
+
+  Optional<ClassCategory> findByGymIdAndName(UUID gymId, String name);
+
+  boolean existsByGymIdAndName(UUID gymId, String name);
+}
+

@@ -1,7 +1,7 @@
 package com.gymmate.unit.notification.domain;
 
-import com.gymmate.notification.domain.CampaignRecipient;
-import com.gymmate.notification.domain.RecipientStatus;
+import com.gymmate.notification.internal.domain.CampaignRecipient;
+import com.gymmate.notification.internal.domain.RecipientStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

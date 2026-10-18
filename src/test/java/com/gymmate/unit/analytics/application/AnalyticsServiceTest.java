@@ -1,17 +1,21 @@
 package com.gymmate.unit.analytics.application;
 
-import com.gymmate.analytics.api.dto.*;
-import com.gymmate.analytics.internal.service.AnalyticsService;
-import com.gymmate.analytics.internal.domain.AnalyticsPeriod;
+import com.gymmate.reporting.internal.application.dto.ClassAnalyticsResponse;
+import com.gymmate.reporting.internal.application.dto.DashboardResponse;
+import com.gymmate.reporting.internal.application.dto.MemberAnalyticsResponse;
+import com.gymmate.reporting.internal.application.dto.RevenueAnalyticsResponse;
+import com.gymmate.reporting.internal.application.AnalyticsService;
+import com.gymmate.reporting.internal.domain.AnalyticsPeriod;
 import com.gymmate.shared.constants.BookingStatus;
 import com.gymmate.scheduling.api.ClassesFacade;
-import com.gymmate.inventory.api.InventoryFacade;
-import com.gymmate.membership.domain.MembershipStatus;
-import com.gymmate.membership.infrastructure.MemberInvoiceRepository;
-import com.gymmate.membership.infrastructure.MemberMembershipJpaRepository;
-import com.gymmate.membership.infrastructure.MembershipPlanJpaRepository;
-import com.gymmate.pos.api.PosFacade;
-import com.gymmate.user.infrastructure.MemberRepository;
+import com.gymmate.retail.api.InventoryFacade;
+import com.gymmate.membership.internal.domain.MembershipStatus;
+import com.gymmate.membership.internal.application.port.MemberInvoiceRepository;
+import com.gymmate.membership.internal.application.port.MemberMembershipRepository;
+import com.gymmate.membership.internal.application.port.MembershipPlanRepository;
+import com.gymmate.retail.api.PosFacade;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.membership.internal.application.MembershipApiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -27,20 +31,20 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AnalyticsService Unit Tests")
 class AnalyticsServiceTest {
 
         @Mock
-        private MemberRepository memberRepository;
+        private IdentityApi identityApi;
 
         @Mock
-        private MemberMembershipJpaRepository membershipRepository;
+        private MemberMembershipRepository membershipRepository;
 
         @Mock
-        private MembershipPlanJpaRepository membershipPlanRepository;
+        private MembershipPlanRepository membershipPlanRepository;
 
         @Mock
         private ClassesFacade classesFacade;
@@ -60,14 +64,13 @@ class AnalyticsServiceTest {
 
         @BeforeEach
         void setUp() {
+                // membership facade over the mocked repositories (stubs below stay effective)
                 analyticsService = new AnalyticsService(
-                                memberRepository,
-                                membershipRepository,
-                                membershipPlanRepository,
+                                identityApi,
+                                new MembershipApiService(membershipRepository, memberInvoiceRepository),
                                 classesFacade,
                                 inventoryFacade,
-                                posFacade,
-                                memberInvoiceRepository);
+                                posFacade);
 
                 gymId = UUID.randomUUID();
         }
@@ -95,7 +98,7 @@ class AnalyticsServiceTest {
                 @DisplayName("Should have correct member count in KPI")
                 void getDashboard_CorrectMemberCount() {
                         // Arrange
-                        when(memberRepository.countByGymId(gymId)).thenReturn(150L);
+                        when(identityApi.countMembersByGym(gymId)).thenReturn(150L);
                         setupOtherMocks();
 
                         // Act
@@ -110,7 +113,7 @@ class AnalyticsServiceTest {
                 @DisplayName("Should handle empty data gracefully")
                 void getDashboard_EmptyData_ReturnsZeros() {
                         // Arrange - All repos return 0/empty
-                        when(memberRepository.countByGymId(gymId)).thenReturn(0L);
+                        when(identityApi.countMembersByGym(gymId)).thenReturn(0L);
                         when(membershipRepository.countActiveByGymId(gymId)).thenReturn(0L);
                         when(inventoryFacade.countLowStockItems(gymId))
                                         .thenReturn(0L);
@@ -132,11 +135,11 @@ class AnalyticsServiceTest {
                 @DisplayName("Should return member analytics with all metrics")
                 void getMemberAnalytics_ReturnsCompleteData() {
                         // Arrange
-                        when(memberRepository.countByGymId(gymId)).thenReturn(200L);
+                        when(identityApi.countMembersByGym(gymId)).thenReturn(200L);
                         when(membershipRepository.countActiveByGymId(gymId)).thenReturn(180L);
                         when(membershipRepository.countByGymIdAndStatus(eq(gymId), eq(MembershipStatus.PAUSED)))
                                         .thenReturn(10L);
-                        when(memberRepository.countByGymIdAndCreatedAtBetween(eq(gymId), any(), any()))
+                        when(identityApi.countMembersByGymCreatedBetween(eq(gymId), any(), any()))
                                         .thenReturn(25L);
                         when(membershipRepository.countCancelledByGymIdAndDateRange(eq(gymId), any(), any()))
                                         .thenReturn(5L);
@@ -162,10 +165,10 @@ class AnalyticsServiceTest {
                 @DisplayName("Should calculate retention rate correctly")
                 void getMemberAnalytics_CorrectRetentionRate() {
                         // Arrange
-                        when(memberRepository.countByGymId(gymId)).thenReturn(100L);
+                        when(identityApi.countMembersByGym(gymId)).thenReturn(100L);
                         when(membershipRepository.countActiveByGymId(gymId)).thenReturn(90L);
                         when(membershipRepository.countByGymIdAndStatus(eq(gymId), any())).thenReturn(5L);
-                        when(memberRepository.countByGymIdAndCreatedAtBetween(eq(gymId), any(), any())).thenReturn(10L);
+                        when(identityApi.countMembersByGymCreatedBetween(eq(gymId), any(), any())).thenReturn(10L);
                         when(membershipRepository.countCancelledByGymIdAndDateRange(eq(gymId), any(), any()))
                                         .thenReturn(5L);
                         when(membershipRepository.findExpiringMemberships(eq(gymId), any(), any()))
@@ -186,10 +189,10 @@ class AnalyticsServiceTest {
                 @DisplayName("Should get members by plan breakdown")
                 void getMemberAnalytics_MembersByPlanBreakdown() {
                         // Arrange
-                        when(memberRepository.countByGymId(gymId)).thenReturn(100L);
+                        when(identityApi.countMembersByGym(gymId)).thenReturn(100L);
                         when(membershipRepository.countActiveByGymId(gymId)).thenReturn(90L);
                         when(membershipRepository.countByGymIdAndStatus(eq(gymId), any())).thenReturn(0L);
-                        when(memberRepository.countByGymIdAndCreatedAtBetween(eq(gymId), any(), any())).thenReturn(0L);
+                        when(identityApi.countMembersByGymCreatedBetween(eq(gymId), any(), any())).thenReturn(0L);
                         when(membershipRepository.countCancelledByGymIdAndDateRange(eq(gymId), any(), any()))
                                         .thenReturn(0L);
                         when(membershipRepository.findExpiringMemberships(eq(gymId), any(), any()))
@@ -409,7 +412,7 @@ class AnalyticsServiceTest {
 
         // Helper methods
         private void setupMockRepositories() {
-                when(memberRepository.countByGymId(gymId)).thenReturn(100L);
+                when(identityApi.countMembersByGym(gymId)).thenReturn(100L);
                 setupOtherMocks();
         }
 

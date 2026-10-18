@@ -1,6 +1,6 @@
 package com.gymmate.unit.gym.domain;
 
-import com.gymmate.gym.domain.Gym;
+import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.shared.constants.GymStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

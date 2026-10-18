@@ -7,9 +7,9 @@ import com.gymmate.access.internal.domain.enums.AccessDecision;
 import com.gymmate.access.internal.domain.enums.AccessDirection;
 import com.gymmate.access.internal.domain.enums.AccessPointMode;
 import com.gymmate.access.internal.domain.enums.CredentialType;
-import com.gymmate.access.internal.repository.AccessCredentialRepository;
-import com.gymmate.access.internal.repository.AccessEventRepository;
-import com.gymmate.access.internal.repository.AccessPointRepository;
+import com.gymmate.access.internal.application.port.AccessCredentialRepository;
+import com.gymmate.access.internal.application.port.AccessEventRepository;
+import com.gymmate.access.internal.application.port.AccessPointRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,9 +17,9 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -43,7 +43,7 @@ class AccessPersistenceIntegrationTest {
 
 
   @Container
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
+  static PostgreSQLContainer postgres = new PostgreSQLContainer("postgres:18-alpine")
       .withDatabaseName("gymmate_test")
       .withUsername("test")
       .withPassword("test");

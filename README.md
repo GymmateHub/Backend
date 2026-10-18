@@ -22,32 +22,38 @@ GymMateHub is a modular monolith built with Spring Boot, designed to provide a c
 
 ## Project Structure
 
-The project follows a modular monolithic architecture with clear separation of concerns:
+A Spring Modulith modular monolith with Clean/Hexagonal modules (see
+[ADR 0002](docs/adr/0002-clean-modular-monolith.md)):
 
 ```
 src/main/java/com/gymmate/
-├── shared/                 # Cross-cutting concerns
-│   ├── config/            # Application configuration
-│   ├── dto/               # Common DTOs
-│   ├── exception/         # Global exception handling
-│   ├── security/         # Security configuration
-│   ├── service/          # Shared services
-│   └── util/             # Utility classes
-│
-├── user/                  # User Management Module
-├── membership/           # Gym & Membership Module
-├── booking/             # Class & Session Booking
-├── payment/             # Payment Processing
-├── inventory/           # Equipment & Resource Management
-├── analytics/           # Business Analytics
-└── notification/        # Notification System
+├── shared/         # Kernel: base types, multitenancy, errors, CurrentUser, event infrastructure
+├── identity/       # Users, staff, auth, JWT, OTP, invites, security chain
+├── onboarding/     # Owner / member registration
+├── organisation/   # Organisations and gyms
+├── billing/        # Payments, Stripe, platform subscriptions
+├── membership/     # Plans, memberships, freezes, member invoices
+├── scheduling/     # Classes, bookings, waitlists
+├── access/         # Door access, credentials, check-in
+├── health/         # Workouts, health metrics, goals
+├── retail/         # Inventory, equipment, point of sale
+├── notification/   # Email, SMS, push, in-app, broadcasts
+├── whitelabel/     # Tenant branding, custom mail and WhatsApp channels
+├── crm/            # Leads
+├── ai/             # AI trainer
+└── reporting/      # Analytics and platform admin
 ```
 
-Each feature module follows a clean architecture pattern with four layers:
-- **api**: Controllers, DTOs, and API endpoints
-- **application**: Services and use cases
-- **domain**: Core business logic and entities
-- **infrastructure**: External implementations (repositories, adapters)
+Each module exposes only `api/` (facades, `dto`, `event`, `spi`); everything else is
+under `internal/`:
+
+- **domain**: pure Java aggregates and rules (no Spring/JPA)
+- **application**: use cases, outbound ports, module-local DTOs
+- **infrastructure**: `web` controllers, `persistence` JPA entities + adapters,
+  `messaging` listeners, `integration` external adapters
+
+Boundaries are enforced in the build by `ModularityTests` (Spring Modulith) and
+`CleanArchitectureTest` (ArchUnit). Integration tests need Docker (Testcontainers).
 
 ## Getting Started
 
@@ -55,7 +61,7 @@ Each feature module follows a clean architecture pattern with four layers:
 
 - JDK 21
 - Maven 3.8+
-- PostgreSQL 15+
+- PostgreSQL 18+
 
 ### Local Development Setup
 
@@ -114,12 +120,47 @@ The application will start on `http://localhost:8080`
 - **Analytics**: Business insights and reporting
 - **Notification System**: Email and push notifications
 
-## Database Migrations
+## Database Migrations & Pre-Go-Live Cleanup
 
+### Migrations
 The project uses Flyway for database migrations. Migration files are located in:
 ```
 src/main/resources/db/migration/
 ```
+
+### 🧹 Pre-Go-Live Test Data Cleanup
+Before launching to production, any test data (test organizations, gyms, dummy members, test payments, fake workouts, and mock access logs) must be purged from the PostgreSQL database.
+
+A safe, transactional cleanup script is provided at:
+- **SQL Script**: [`scripts/cleanup_test_data_before_golive.sql`](scripts/cleanup_test_data_before_golive.sql)
+- **Runner Script**: [`scripts/cleanup_vps_db.sh`](scripts/cleanup_vps_db.sh)
+
+**What the cleanup script does:**
+1. **Preserves Schema & Migrations**: Does NOT drop tables or touch `flyway_schema_history`.
+2. **Preserves System Seed Catalogs**: Retains platform `subscription_tiers` (Starter, Professional, Enterprise) and system `exercise_categories`.
+3. **Safely Truncates Test Data**: Cleans all tenant, user, transactional, and operational records inside an atomic transaction.
+4. **Auto-initializes Super Admin**: When the backend container restarts post-cleanup, `SuperAdminInitializer` automatically provisions the primary Super Admin account defined in your environment variables (`APP_ADMIN_EMAIL` / `APP_ADMIN_PASSWORD`).
+
+**How to run on the VPS:**
+```bash
+# Option 1: Using the interactive bash runner
+chmod +x scripts/cleanup_vps_db.sh
+./scripts/cleanup_vps_db.sh
+
+# Option 2: Running via Docker command directly
+docker exec -i $(docker ps -q -f name=postgres) psql -U gymmate -d gymmate < scripts/cleanup_test_data_before_golive.sql
+docker compose restart gymmate-backend
+```
+
+## Email Deliverability (Mailtrap Live SMTP)
+
+The backend is configured to use **Mailtrap Live SMTP** as its default transactional email provider:
+- **Host**: `live.smtp.mailtrap.io`
+- **Port**: `587` (STARTTLS)
+- **Username**: `api`
+- **Password**: `<YOUR_MAILTRAP_LIVE_API_TOKEN>`
+- **From Address**: Must use a domain verified in your Mailtrap Sending Domains dashboard (e.g. `noreply@gymmatehub.com` or `noreply@vantroxialabs.com`).
+
 
 ## Contributing
 

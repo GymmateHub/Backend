@@ -1,0 +1,18 @@
+package com.gymmate.access.internal.application.dto;
+
+import com.gymmate.access.internal.domain.enums.AccessPointMode;
+import com.gymmate.access.internal.domain.enums.AccessPointType;
+import jakarta.validation.constraints.NotBlank;
+
+import java.util.UUID;
+
+public record AccessPointCreateRequest(
+    @NotBlank String name,
+    AccessPointType type,
+    AccessPointMode mode,
+    UUID areaId,
+    String deviceId,
+    Integer reentryLockoutSeconds,
+    UUID gymId
+) {
+}

@@ -1,6 +1,6 @@
 # ADR 0001: Spring Modulith Phase 0 — boundary enforcement, without a big refactor
 
-**Status:** Accepted
+**Status:** Accepted. Superseded by [ADR 0002](0002-clean-modular-monolith.md), which resolved its debt tiers.
 **Date:** 2026-08-07
 
 ## Context

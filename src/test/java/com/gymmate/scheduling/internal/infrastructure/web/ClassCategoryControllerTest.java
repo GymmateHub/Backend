@@ -1,0 +1,58 @@
+package com.gymmate.scheduling.internal.infrastructure.web;
+
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import com.gymmate.scheduling.internal.application.dto.CategoryResponse;
+import com.gymmate.scheduling.internal.application.dto.CreateCategoryRequest;
+import com.gymmate.scheduling.internal.application.mapper.ClassCategoryMapper;
+import com.gymmate.scheduling.internal.application.ClassCategoryService;
+import com.gymmate.scheduling.internal.domain.ClassCategory;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+public class ClassCategoryControllerTest {
+
+  private MockMvc mvc;
+  private ObjectMapper objectMapper = new JsonMapper();
+
+  private ClassCategoryService categoryService;
+  private ClassCategoryMapper mapper;
+
+  @BeforeEach
+  void setUp() {
+    categoryService = mock(ClassCategoryService.class);
+    mapper = mock(ClassCategoryMapper.class);
+    ClassCategoryController controller = new ClassCategoryController(categoryService, mapper);
+    mvc = MockMvcBuilders.standaloneSetup(controller).build();
+  }
+
+  @Test
+  void createCategory_returnsCreated() throws Exception {
+    UUID gymId = UUID.randomUUID();
+    CreateCategoryRequest req = new CreateCategoryRequest(gymId, "Spin", "Spin classes", "#00FF00");
+
+    ClassCategory saved = ClassCategory.builder().name(req.name()).description(req.description()).color(req.color()).build();
+    saved.setId(UUID.randomUUID());
+    saved.setGymId(gymId);
+
+    when(mapper.toEntity(any(CreateCategoryRequest.class))).thenReturn(saved);
+    when(categoryService.createCategory(any(ClassCategory.class))).thenReturn(saved);
+    when(mapper.toResponse(any(ClassCategory.class))).thenReturn(new CategoryResponse(null, null, null, null, null, null));
+
+    mvc.perform(post("/api/class-categories")
+      .contentType(MediaType.APPLICATION_JSON)
+      .content(objectMapper.writeValueAsString(req)))
+      .andExpect(status().isCreated());
+  }
+}

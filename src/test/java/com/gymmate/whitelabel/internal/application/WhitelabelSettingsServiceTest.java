@@ -1,0 +1,119 @@
+package com.gymmate.whitelabel.internal.application;
+
+import com.gymmate.whitelabel.internal.application.port.TenantMailSenders;
+import com.gymmate.whitelabel.internal.application.dto.WhitelabelSettingsRequest;
+import com.gymmate.whitelabel.internal.application.dto.WhitelabelSettingsResponse;
+import com.gymmate.whitelabel.internal.domain.SmtpSecurity;
+import com.gymmate.whitelabel.internal.domain.WhitelabelSettings;
+import com.gymmate.whitelabel.internal.application.port.WhitelabelSettingsRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class WhitelabelSettingsServiceTest {
+
+    @Mock
+    private WhitelabelSettingsRepository settingsRepository;
+
+    @Mock
+    private WhitelabelEncryptionService encryptionService;
+
+    @Mock
+    private TenantMailSenders mailSenderFactory;
+
+    @InjectMocks
+    private WhitelabelSettingsService settingsService;
+
+    private UUID organisationId;
+    private UUID gymId;
+
+    @BeforeEach
+    void setUp() {
+        organisationId = UUID.randomUUID();
+        gymId = UUID.randomUUID();
+    }
+
+    @Test
+    void testSaveOrganisationSettingsEncryptsPassword() {
+        WhitelabelSettingsRequest request = new WhitelabelSettingsRequest(
+                null,
+                "FitNation",
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true,
+                "smtp.fitnation.com",
+                587,
+                "admin@fitnation.com",
+                "SecretPass123!",
+                SmtpSecurity.STARTTLS,
+                null,
+                null,
+                false,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                null,
+                null,
+                null,
+                null,
+                null);
+
+        when(settingsRepository.findByOrganisationIdAndGymIdIsNull(organisationId))
+                .thenReturn(Optional.empty());
+        when(encryptionService.encrypt("SecretPass123!"))
+                .thenReturn("ENCRYPTED_PASS");
+        when(settingsRepository.save(any(WhitelabelSettings.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        WhitelabelSettingsResponse response = settingsService.saveOrganisationSettings(organisationId, request);
+
+        assertNotNull(response);
+        assertEquals("FitNation", response.brandName());
+        assertTrue(response.smtpEnabled());
+        assertEquals("smtp.fitnation.com", response.smtpHost());
+        assertEquals("••••••••", response.smtpPasswordMasked());
+
+        verify(encryptionService).encrypt("SecretPass123!");
+        verify(mailSenderFactory).evictCache(organisationId, null);
+    }
+
+    @Test
+    void testGetWhitelabelSettingsFallbackToOrg() {
+        WhitelabelSettings orgSettings = WhitelabelSettings.builder()
+                .brandName("OrgLevelBrand")
+                .build();
+        orgSettings.setOrganisationId(organisationId);
+
+        when(settingsRepository.findByOrganisationIdAndGymId(organisationId, gymId))
+                .thenReturn(Optional.empty());
+        when(settingsRepository.findByOrganisationIdAndGymIdIsNull(organisationId))
+                .thenReturn(Optional.of(orgSettings));
+
+        Optional<WhitelabelSettings> resolved = settingsService.getWhitelabelSettings(organisationId, gymId);
+
+        assertTrue(resolved.isPresent());
+        assertEquals("OrgLevelBrand", resolved.get().getBrandName());
+    }
+}

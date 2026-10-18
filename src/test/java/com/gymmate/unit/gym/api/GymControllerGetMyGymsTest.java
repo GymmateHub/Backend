@@ -1,11 +1,11 @@
 package com.gymmate.unit.gym.api;
 
-import com.gymmate.gym.internal.web.GymController;
-import com.gymmate.gym.application.GymService;
-import com.gymmate.gym.domain.Gym;
+import com.gymmate.organisation.internal.infrastructure.web.GymController;
+import com.gymmate.organisation.internal.application.GymService;
+import com.gymmate.organisation.internal.domain.Gym;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.shared.security.service.JwtService;
+import com.gymmate.identity.internal.application.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

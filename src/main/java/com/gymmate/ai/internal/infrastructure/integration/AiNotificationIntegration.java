@@ -1,0 +1,57 @@
+package com.gymmate.ai.internal.infrastructure.integration;
+
+import com.gymmate.ai.internal.application.port.AiPlanNotifier;
+import com.gymmate.ai.internal.domain.AiRecommendation;
+import com.gymmate.notification.api.NotificationApi;
+import com.gymmate.shared.constants.NotificationPriority;
+import com.gymmate.identity.api.IdentityApi;
+import com.gymmate.identity.api.dto.MemberProfile;
+import com.gymmate.identity.api.dto.UserSummary;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class AiNotificationIntegration implements AiPlanNotifier {
+
+    private final NotificationApi notificationService;
+    private final IdentityApi identityApi;
+
+    /**
+     * @param memberId
+     * @param recommendation
+     */
+    @Transactional
+    @Override
+    public void sendAiPlanNotification(UUID memberId, AiRecommendation recommendation) {
+        try {
+            MemberProfile member = identityApi.getMember(memberId);
+            UserSummary user = identityApi.findUser(member.userId()).orElseThrow();
+
+            String title = "Your Personalized AI Gym Plan is Ready!";
+            String messageContent = "Hello " + user.firstName() + ",\n\n" +
+                    "Based on your location and fitness goals, our AI Gym Trainer has crafted a personalized plan for you:\n\n"
+                    +
+                    "**Workout Plan**\n" + recommendation.getWorkoutPlan() + "\n\n" +
+                    "**Meal Plan**\n" + recommendation.getMealPlan();
+
+            // Depending on Notification module architecture, we'll send it
+            // Assuming NotificationApi has a method to create standard notifications
+            // If not, we will save it manually or use EmailService
+            // TODO: Implement actual notification sending
+            notificationService.sendToUser(memberId, title, messageContent, NotificationPriority.HIGH, messageContent, null);
+
+            // As a fallback, we log it
+            log.info("AI Plan generated for user: {}. Content: {}", user.email(), messageContent);
+
+            // If the notification service requires more structure, we will adapt here
+        } catch (Exception e) {
+            log.error("Error sending AI notification to member {}", memberId, e);
+        }
+    }
+}

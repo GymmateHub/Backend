@@ -1,7 +1,6 @@
 package com.gymmate.access.internal.domain;
 
 import com.gymmate.shared.domain.GymScopedEntity;
-import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.UUID;
@@ -14,15 +13,11 @@ import java.util.UUID;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Data
-@Entity
 @EqualsAndHashCode(callSuper = true)
 @Builder
-@Table(name = "door_benefits")
 public class DoorBenefit extends GymScopedEntity {
 
-  @Column(name = "access_point_id", nullable = false)
   private UUID accessPointId;
 
-  @Column(name = "membership_plan_id", nullable = false)
   private UUID membershipPlanId;
 }

@@ -105,7 +105,7 @@ Status legend: `✅ Complete` (fully delivered), `🔄 Partial` (usable but not 
 | Layer | Technology | Details |
 |-------|------------|---------|
 | **Runtime** | Java 21 (LTS) | Long-term support version |
-| **Framework** | Spring Boot 3.5.6 | Latest stable release |
+| **Framework** | Spring Boot 4.1.1 | Latest stable release |
 | **Build** | Maven 3.x | Via Maven Wrapper (mvnw) |
 | **Database** | PostgreSQL 15+ | Production database |
 | **Dev Database** | H2 | In-memory for development |

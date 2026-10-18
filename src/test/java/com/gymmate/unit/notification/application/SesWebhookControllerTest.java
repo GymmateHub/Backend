@@ -1,9 +1,9 @@
 package com.gymmate.unit.notification.application;
 
-import com.gymmate.notification.application.EmailSuppressionService;
-import com.gymmate.notification.application.SesWebhookService;
-import com.gymmate.notification.domain.SuppressionReason;
-import com.gymmate.notification.internal.web.SesWebhookController;
+import com.gymmate.notification.internal.application.EmailSuppressionService;
+import com.gymmate.notification.internal.application.SesWebhookService;
+import com.gymmate.notification.internal.domain.SuppressionReason;
+import com.gymmate.notification.internal.infrastructure.web.SesWebhookController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

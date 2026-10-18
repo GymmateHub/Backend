@@ -3,7 +3,7 @@ package com.gymmate.unit.user.domain;
 import com.gymmate.shared.constants.UserRole;
 import com.gymmate.shared.constants.UserStatus;
 import com.gymmate.shared.domain.TenantEntity;
-import com.gymmate.user.domain.User;
+import com.gymmate.identity.internal.domain.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

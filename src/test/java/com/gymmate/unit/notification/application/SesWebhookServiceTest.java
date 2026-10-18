@@ -1,12 +1,13 @@
 package com.gymmate.unit.notification.application;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gymmate.notification.application.EmailSuppressionService;
-import com.gymmate.notification.application.SesWebhookService;
-import com.gymmate.notification.application.SnsSignatureVerifier;
-import com.gymmate.notification.domain.SnsProcessedMessage;
-import com.gymmate.notification.domain.SuppressionReason;
-import com.gymmate.notification.infrastructure.SnsProcessedMessageRepository;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import com.gymmate.notification.internal.application.EmailSuppressionService;
+import com.gymmate.notification.internal.application.SesWebhookService;
+import com.gymmate.notification.internal.infrastructure.integration.SnsSignatureVerifier;
+import com.gymmate.notification.internal.domain.SnsProcessedMessage;
+import com.gymmate.notification.internal.domain.SuppressionReason;
+import com.gymmate.notification.internal.application.port.SnsProcessedMessageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -33,7 +34,7 @@ class SesWebhookServiceTest {
     private EmailSuppressionService suppressionService;
 
     private SesWebhookService webhookService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new JsonMapper();
 
     @BeforeEach
     void setUp() {
