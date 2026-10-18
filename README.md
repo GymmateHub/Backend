@@ -1,136 +1,178 @@
-# GymMate Backend
+# GymMateHub Backend (Spring Boot Modular Monolith)
 
-Multi-tenant SaaS gym management platform built as a Spring Boot modular monolith.
+GymMateHub is a modular monolith built with Spring Boot, designed to provide a comprehensive gym management system. It organizes features into cohesive modules while maintaining a single deployable unit for simplicity and speed during MVP development.
+
+## 📢 Recent Updates
+
+### ✅ November 20, 2025 - Tenant Context Fix
+- **Fixed**: GET `/api/gyms` endpoint now works correctly (was returning 403 Forbidden)
+- **Updated**: SecurityConfig to properly handle public gym listing endpoints
+- **Enhanced**: TenantFilter for better public endpoint handling
+
+👉 **For technical details, testing, and implementation gaps**: See `TECHNICAL_NOTES.md`
 
 ## Tech Stack
 
-- **Java 21** / **Spring Boot 3.5.6**
-- **PostgreSQL** (H2 for local dev) with **Flyway** migrations
-- **Spring Security** + JWT authentication
-- **Stripe** for payment processing
-- **SpringDoc OpenAPI** (Swagger)
-- **Lombok** + **MapStruct**
-- **Maven Wrapper** (`./mvnw`)
-
-## Quick Start
-
-### 1. Prerequisites
-
-- JDK 21
-- PostgreSQL 15+ (optional — H2 works for local dev)
-
-### 2. Environment Setup
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` with your values. The minimum required variables are already set for H2 local development.
-
-### 3. Build & Run
-
-```bash
-# Verify Java version
-java -version   # Must be 21
-
-# Build (skip tests)
-./mvnw clean package -DskipTests
-
-# Run
-./mvnw spring-boot:run
-```
-
-The app starts on **http://localhost:8080**.
-
-### 4. Verify
-
-- **Health:** http://localhost:8080/actuator/health
-- **Swagger UI:** http://localhost:8080/swagger-ui.html
-- **API Docs:** http://localhost:8080/v3/api-docs
+- **Java**: 21
+- **Spring Boot**: 3.3.x
+- **Build Tool**: Maven
+- **Database**: PostgreSQL (with Flyway for migrations)
+- **API Documentation**: SpringDoc OpenAPI (Swagger)
+- **Architecture**: Modular Monolith with Clean/Hexagonal Architecture principles
 
 ## Project Structure
 
+A Spring Modulith modular monolith with Clean/Hexagonal modules (see
+[ADR 0002](docs/adr/0002-clean-modular-monolith.md)):
+
 ```
 src/main/java/com/gymmate/
-├── shared/              # Cross-cutting: config, security, exceptions, DTOs
-├── user/                # User management (owners, staff, trainers, members)
-├── organisation/        # Organisation (multi-tenant parent entity)
-├── gym/                 # Gym management
-├── membership/          # Membership plans & subscriptions
-├── classes/             # Class scheduling & bookings
-├── booking/             # Session booking
-├── payment/             # Stripe payments, invoices, refunds
-├── inventory/           # Equipment & resource tracking
-├── analytics/           # Business insights & reporting
-├── notification/        # Email, SSE, push notifications
-├── newsletter/          # Newsletter & campaign management
-└── subscription/        # Platform subscription tiers & rate limiting
+├── shared/         # Kernel: base types, multitenancy, errors, CurrentUser, event infrastructure
+├── identity/       # Users, staff, auth, JWT, OTP, invites, security chain
+├── onboarding/     # Owner / member registration
+├── organisation/   # Organisations and gyms
+├── billing/        # Payments, Stripe, platform subscriptions
+├── membership/     # Plans, memberships, freezes, member invoices
+├── scheduling/     # Classes, bookings, waitlists
+├── access/         # Door access, credentials, check-in
+├── health/         # Workouts, health metrics, goals
+├── retail/         # Inventory, equipment, point of sale
+├── notification/   # Email, SMS, push, in-app, broadcasts
+├── whitelabel/     # Tenant branding, custom mail and WhatsApp channels
+├── crm/            # Leads
+├── ai/             # AI trainer
+└── reporting/      # Analytics and platform admin
 ```
 
-Each module follows clean/hexagonal architecture:
+Each module exposes only `api/` (facades, `dto`, `event`, `spi`); everything else is
+under `internal/`:
 
-```
-module/
-├── api/              # Controllers & request/response DTOs
-├── application/      # Service layer & use cases
-├── domain/           # Entities, value objects, repository interfaces
-└── infrastructure/   # JPA repositories, adapters, external integrations
-```
+- **domain**: pure Java aggregates and rules (no Spring/JPA)
+- **application**: use cases, outbound ports, module-local DTOs
+- **infrastructure**: `web` controllers, `persistence` JPA entities + adapters,
+  `messaging` listeners, `integration` external adapters
 
-## Key Endpoints
+Boundaries are enforced in the build by `ModularityTests` (Spring Modulith) and
+`CleanArchitectureTest` (ArchUnit). Integration tests need Docker (Testcontainers).
 
-| Area | Endpoint | Description |
-|------|----------|-------------|
-| Auth | `POST /api/auth/login` | Login |
-| Auth | `POST /api/auth/refresh-token` | Refresh JWT |
-| Users | `POST /api/users/register/gym-owner` | Register gym owner |
-| Gyms | `POST /api/gyms/register` | Register a gym |
-| Gyms | `GET /api/gyms` | List gyms |
-| Members | `GET /api/members` | List members |
-| Classes | `GET /api/classes` | List classes |
-| Payments | `POST /api/payments` | Process payment |
+## Getting Started
 
-Full API reference available at `/swagger-ui.html` when the app is running.
+### Prerequisites
 
-## Database Migrations
+- JDK 21
+- Maven 3.8+
+- PostgreSQL 18+
 
-Migration files live in `src/main/resources/db/migration/`. Flyway is disabled by default in dev (`FLYWAY_ENABLED=false`, `JPA_DDL_AUTO=update`). For production, enable Flyway and set `JPA_DDL_AUTO=validate`.
+### Local Development Setup
 
-## Testing
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/GymMateHub/backend.git
+   cd gymmate-backend
+   ```
 
-```bash
-./mvnw test
-```
+2. Configure your database in `src/main/resources/application.yml`
 
-## Docker
+3. Build the project:
+   ```bash
+   ./mvnw clean package
+   ```
 
-```bash
-docker-compose up -d
-```
+4. Run the application:
+   ```bash
+   ./mvnw spring-boot:run
+   ```
 
-Or build the image directly:
+The application will start on `http://localhost:8080`
 
-```bash
-docker build -t gymmate-backend .
-```
+### Available Scripts
+
+- `build.sh`: Builds the application
+- `run.sh`: Starts the application
+- `stop.sh`: Stops the running application
+- `test_api.sh`: Runs API tests
 
 ## Documentation
 
-Detailed documentation lives in the [`docs/`](docs/) folder:
+### Technical Documentation
+📘 **[TECHNICAL_NOTES.md](docs/TECHNICAL_NOTES.md)** - **Start here for technical details**
+- Recent bug fixes and changes
+- Known issues and solutions
+- Implementation gaps and roadmap
+- Testing guidelines
+- Technical decisions
+- API documentation
+- Development troubleshooting
 
-| Document | Description |
-|----------|-------------|
-| [PRODUCT_STATE_REPORT.md](docs/PRODUCT_STATE_REPORT.md) | Full codebase audit — module status, tech debt, production readiness |
-| [GymMateHub_PRD_v1.0.md](docs/GymMateHub_PRD_v1.0.md) | Product requirements — feature specs, data models, API specs |
-| [GymMateHub_brd_v2.md](docs/GymMateHub_brd_v2.md) | Business requirements — strategy, module architecture, roadmap |
+### Business Documentation
+- 📋 **[BRD](docs/gymmate_brd.md)** - Business Requirements Document
+- 🗂️ **[Schema](docs/gymmate_schema.md)** - Database schema
+- 📖 **[Comprehensive Spec](docs/gymmate_comprehensive_spec.md)** - Detailed specifications
+
+## Key Features
+
+- **User Management**: Registration, authentication, and profile management
+- **Gym Management**: Gym registration and management
+- **Membership Systems**: Membership plans and subscriptions
+- **Booking System**: Class and session scheduling
+- **Payment Processing**: Handle payments and subscriptions
+- **Inventory Management**: Track gym equipment and resources
+- **Analytics**: Business insights and reporting
+- **Notification System**: Email and push notifications
+
+## Database Migrations & Pre-Go-Live Cleanup
+
+### Migrations
+The project uses Flyway for database migrations. Migration files are located in:
+```
+src/main/resources/db/migration/
+```
+
+### 🧹 Pre-Go-Live Test Data Cleanup
+Before launching to production, any test data (test organizations, gyms, dummy members, test payments, fake workouts, and mock access logs) must be purged from the PostgreSQL database.
+
+A safe, transactional cleanup script is provided at:
+- **SQL Script**: [`scripts/cleanup_test_data_before_golive.sql`](scripts/cleanup_test_data_before_golive.sql)
+- **Runner Script**: [`scripts/cleanup_vps_db.sh`](scripts/cleanup_vps_db.sh)
+
+**What the cleanup script does:**
+1. **Preserves Schema & Migrations**: Does NOT drop tables or touch `flyway_schema_history`.
+2. **Preserves System Seed Catalogs**: Retains platform `subscription_tiers` (Starter, Professional, Enterprise) and system `exercise_categories`.
+3. **Safely Truncates Test Data**: Cleans all tenant, user, transactional, and operational records inside an atomic transaction.
+4. **Auto-initializes Super Admin**: When the backend container restarts post-cleanup, `SuperAdminInitializer` automatically provisions the primary Super Admin account defined in your environment variables (`APP_ADMIN_EMAIL` / `APP_ADMIN_PASSWORD`).
+
+**How to run on the VPS:**
+```bash
+# Option 1: Using the interactive bash runner
+chmod +x scripts/cleanup_vps_db.sh
+./scripts/cleanup_vps_db.sh
+
+# Option 2: Running via Docker command directly
+docker exec -i $(docker ps -q -f name=postgres) psql -U gymmate -d gymmate < scripts/cleanup_test_data_before_golive.sql
+docker compose restart gymmate-backend
+```
+
+## Email Deliverability (Mailtrap Live SMTP)
+
+The backend is configured to use **Mailtrap Live SMTP** as its default transactional email provider:
+- **Host**: `live.smtp.mailtrap.io`
+- **Port**: `587` (STARTTLS)
+- **Username**: `api`
+- **Password**: `<YOUR_MAILTRAP_LIVE_API_TOKEN>`
+- **From Address**: Must use a domain verified in your Mailtrap Sending Domains dashboard (e.g. `noreply@gymmatehub.com` or `noreply@vantroxialabs.com`).
+
 
 ## Contributing
 
-1. Create a feature branch (`git checkout -b feature/your-feature`)
-2. Commit your changes (`git commit -m 'Add your feature'`)
-3. Push to the branch (`git push origin feature/your-feature`)
+1. Create a feature branch (`git checkout -b feature/amazing-feature`)
+2. Commit your changes (`git commit -m 'Add amazing feature'`)
+3. Push to the branch (`git push origin feature/amazing-feature`)
 4. Open a Pull Request
+
+## Project Status
+
+Currently in active development. Version 1.0.0 development in progress.
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.

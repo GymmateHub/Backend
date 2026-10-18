@@ -1,0 +1,40 @@
+server:
+  port: ${APP_PORT:8080}
+
+management:
+  health:
+    mail:
+      enabled: false
+
+spring:
+  # Email Configuration (Mailtrap Live / AWS SES SMTP)
+  mail:
+    host: ${MAIL_HOST:${SES_SMTP_HOST:live.smtp.mailtrap.io}}
+    port: ${MAIL_PORT:${SES_SMTP_PORT:587}}
+    username: ${MAIL_USERNAME:${SES_SMTP_USERNAME:api}}
+    password: ${MAIL_PASSWORD:${SES_SMTP_PASSWORD:}}
+    from: ${MAIL_FROM:noreply@gymmatehub.com}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: ${MAIL_HOST:${SES_SMTP_HOST:live.smtp.mailtrap.io}}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+        transport:
+          protocol: smtp
+        debug: false
+    test-connection: false
+
+app:
+  email:
+    from:
+      address: ${MAIL_FROM:noreply@gymmatehub.com}
+      name: GymMateHub
+    ses-tenant: ${SES_TENANT:gymmatehub}
+    configuration-set: ${SES_CONFIGURATION_SET:gymmatehub-transactional}

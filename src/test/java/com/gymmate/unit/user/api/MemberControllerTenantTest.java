@@ -1,14 +1,15 @@
 package com.gymmate.unit.user.api;
 
-import com.gymmate.organisation.application.OrganisationLimitService;
+import com.gymmate.organisation.internal.application.OrganisationLimitService;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
-import com.gymmate.user.api.MemberController;
-import com.gymmate.user.api.dto.MemberResponse;
-import com.gymmate.user.application.MemberService;
-import com.gymmate.user.domain.Member;
+import com.gymmate.identity.internal.infrastructure.web.MemberController;
+import com.gymmate.identity.internal.application.dto.MemberResponse;
+import com.gymmate.identity.internal.application.MemberService;
+import com.gymmate.identity.internal.domain.Member;
 import com.gymmate.shared.constants.MemberStatus;
-import com.gymmate.user.infrastructure.MemberRepository;
+import com.gymmate.identity.internal.application.port.MemberRepository;
+import com.gymmate.identity.internal.application.port.UserRepository;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,7 +22,8 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.when;
 
 /**
  * Unit tests for MemberController tenant isolation.
@@ -38,6 +40,8 @@ class MemberControllerTenantTest {
     private MemberRepository memberRepository;
     @Mock
     private OrganisationLimitService limitService;
+    @Mock
+    private UserRepository userRepository;
 
     @InjectMocks
     private MemberController memberController;

@@ -1,14 +1,23 @@
 package com.gymmate.fixtures;
 
-import com.gymmate.gym.domain.Gym;
-import com.gymmate.payment.domain.*;
-import com.gymmate.shared.constants.*;
-import com.gymmate.user.domain.*;
-
+import com.gymmate.billing.internal.domain.GymInvoice;
+import com.gymmate.billing.internal.domain.PaymentMethod;
+import com.gymmate.billing.internal.domain.PaymentRefund;
+import com.gymmate.shared.constants.InvoiceStatus;
+import com.gymmate.shared.constants.MemberStatus;
+import com.gymmate.shared.constants.PaymentMethodType;
+import com.gymmate.shared.constants.RefundStatus;
+import com.gymmate.shared.constants.RefundType;
+import com.gymmate.shared.constants.UserRole;
+import com.gymmate.shared.constants.UserStatus;
+import com.gymmate.identity.internal.domain.Member;
+import com.gymmate.identity.internal.domain.User;
+import com.gymmate.organisation.internal.domain.Gym;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Test fixtures factory for creating test data objects.
@@ -35,7 +44,7 @@ public class TestFixtures {
     }
 
     public static User createGymOwner() {
-        return createUser("owner@gym.com", UserRole.OWNER);
+        return createUser("owner@gym.com", UserRole.GYM_OWNER);
     }
 
     public static User createSuperAdmin() {
@@ -173,6 +182,6 @@ public class TestFixtures {
     }
 
     public static String generateUniquePhone() {
-        return "+1" + (1000000000L + (long) (Math.random() * 9000000000L));
+        return "+1" + (1000000000L + (long) (ThreadLocalRandom.current().nextDouble() * 9000000000L));
     }
 }

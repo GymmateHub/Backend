@@ -1,14 +1,12 @@
 package com.gymmate.shared.security;
 
-import com.gymmate.user.domain.User;
 import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 import java.util.UUID;
 
 @Getter
@@ -21,21 +19,16 @@ public class TenantAwareUserDetails implements UserDetails {
     private final boolean emailVerified;
     private final Collection<? extends GrantedAuthority> authorities;
     private final boolean active;
+    /** Gym context carried by the access token (null when none was selected). */
+    private final UUID gymId;
 
-    public TenantAwareUserDetails(User user) {
-        this.userId = user.getId();
-        this.email = user.getEmail();
-        this.password = user.getPasswordHash();
-        this.organisationId = user.getOrganisationId();
-        this.role = user.getRole().name();
-        this.emailVerified = user.isEmailVerified();
-        this.authorities = buildAuthorities(user.getRole().name());
-        this.active = user.isActive();
+    public TenantAwareUserDetails(UUID userId, UUID organisationId, String email, String password, String role, boolean active, boolean emailVerified) {
+        this(userId, organisationId, null, email, password, role, active, emailVerified);
     }
 
-    // Alternate constructor used by TenantAwareUserDetailsService
-    public TenantAwareUserDetails(UUID userId, UUID organisationId, String email, String password, String role, boolean active, boolean emailVerified) {
+    public TenantAwareUserDetails(UUID userId, UUID organisationId, UUID gymId, String email, String password, String role, boolean active, boolean emailVerified) {
         this.userId = userId;
+        this.gymId = gymId;
         this.email = email;
         this.password = password;
         this.organisationId = organisationId;
@@ -46,15 +39,23 @@ public class TenantAwareUserDetails implements UserDetails {
     }
 
     /**
-     * Builds the authority list for a role. "GYM_OWNER" is accepted as a
-     * legacy alias for OWNER so sessions or data created before the
-     * V11 role migration keep working.
+     * {@code ROLE_<role>} plus the role's permissions from {@link RolePermissions}. Endpoints
+     * authorise on permissions; the role authority remains for display and auditing.
      */
-    private static List<GrantedAuthority> buildAuthorities(String role) {
-        List<GrantedAuthority> authorities = new ArrayList<>();
-        String effectiveRole = "GYM_OWNER".equals(role) ? "OWNER" : role;
-        authorities.add(new SimpleGrantedAuthority("ROLE_" + effectiveRole));
-        return authorities;
+    private static Collection<? extends GrantedAuthority> buildAuthorities(String roleName) {
+        java.util.Set<GrantedAuthority> auths = new java.util.HashSet<>();
+        if (roleName != null) {
+            auths.add(new SimpleGrantedAuthority("ROLE_" + roleName));
+            for (Permission permission : RolePermissions.of(roleName)) {
+                auths.add(new SimpleGrantedAuthority(permission.authority()));
+            }
+        }
+        return auths;
+    }
+
+    /** This user's permission authorities, sorted (sent to the frontend). */
+    public java.util.List<String> getPermissions() {
+        return RolePermissions.authorities(role);
     }
 
     @Override

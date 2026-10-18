@@ -213,7 +213,7 @@ Completion semantics: `100%` = production-ready scope complete, `1-99%` = partia
 | Layer | Technology | Version | Purpose |
 |-------|------------|---------|---------|
 | **Runtime** | Java | 21 (LTS) | Application runtime |
-| **Framework** | Spring Boot | 3.5.6 | Application framework |
+| **Framework** | Spring Boot | 4.1.1 | Application framework |
 | **Build Tool** | Maven | 3.x | Dependency management |
 | **Database** | PostgreSQL | 15+ | Production database |
 | **Dev Database** | H2 | Latest | In-memory testing |

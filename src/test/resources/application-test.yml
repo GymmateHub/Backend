@@ -1,0 +1,45 @@
+spring:
+  mail:
+    host: localhost
+    port: 2525
+    test-connection: false
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+
+server:
+  port: 0
+
+logging:
+  level:
+    root: WARN
+    com.gymmate: DEBUG
+
+jwt:
+  secret: ${JWT_SECRET:Z3ltbWF0ZV9qd3Rfc2VjcmV0X2tleV9tdXN0X2JlX2F0X2xlYXN0XzMyX2J5dGVzX2xvbmdfMTIzNDU2}
+  expiration: ${JWT_EXPIRATION:3600000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION:86400000}
+
+cors:
+  allowed-origins: "http://localhost:5173"
+  allow-credentials: true
+
+file:
+  upload-dir: /tmp/gymmate-test-uploads
+  max-size: 10MB
+  max-request-size: 10MB
+
+management:
+  health:
+    mail:
+      enabled: false
+
+app:
+  frontend-url: http://localhost:5173
+  admin:
+    email: admin@gymmate.test
+    password: Admin!Test123
+    firstName: System
+    lastName: Admin

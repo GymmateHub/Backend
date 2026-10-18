@@ -1,13 +1,17 @@
 package com.gymmate.unit.pos.application;
 
-import com.gymmate.inventory.application.InventoryService;
-import com.gymmate.pos.api.dto.CreateSaleRequest;
-import com.gymmate.pos.api.dto.SaleItemRequest;
-import com.gymmate.pos.application.PosService;
-import com.gymmate.pos.domain.*;
-import com.gymmate.pos.infrastructure.CashDrawerJpaRepository;
-import com.gymmate.pos.infrastructure.SaleItemJpaRepository;
-import com.gymmate.pos.infrastructure.SaleJpaRepository;
+import com.gymmate.retail.internal.domain.CashDrawer;
+import com.gymmate.retail.internal.domain.PaymentType;
+import com.gymmate.retail.internal.domain.Sale;
+import com.gymmate.retail.internal.domain.SaleItem;
+import com.gymmate.retail.internal.domain.SaleStatus;
+import com.gymmate.retail.api.InventoryFacade;
+import com.gymmate.retail.internal.application.dto.CreateSaleRequest;
+import com.gymmate.retail.internal.application.dto.SaleItemRequest;
+import com.gymmate.retail.internal.application.PosService;
+import com.gymmate.retail.internal.application.port.CashDrawerRepository;
+import com.gymmate.retail.internal.application.port.SaleItemRepository;
+import com.gymmate.retail.internal.application.port.SaleRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,16 +38,16 @@ import static org.mockito.Mockito.*;
 class PosServiceTest {
 
     @Mock
-    private SaleJpaRepository saleRepository;
+    private SaleRepository saleRepository;
 
     @Mock
-    private SaleItemJpaRepository saleItemRepository;
+    private SaleItemRepository saleItemRepository;
 
     @Mock
-    private CashDrawerJpaRepository cashDrawerRepository;
+    private CashDrawerRepository cashDrawerRepository;
 
     @Mock
-    private InventoryService inventoryService;
+    private InventoryFacade inventoryFacade;
 
     private PosService posService;
 
@@ -57,7 +61,7 @@ class PosServiceTest {
                 saleRepository,
                 saleItemRepository,
                 cashDrawerRepository,
-                inventoryService);
+                inventoryFacade);
 
         gymId = UUID.randomUUID();
         staffId = UUID.randomUUID();
@@ -170,8 +174,8 @@ class PosServiceTest {
 
             // Assert
             assertThat(result.getStatus()).isEqualTo(SaleStatus.COMPLETED);
-            // Verify inventory service was called for sale recording
-            verify(inventoryService).recordSale(eq(inventoryItemId), eq(2), any(), any(), any(), any());
+            // Verify inventory facade was called for sale recording
+            verify(inventoryFacade).recordSale(eq(inventoryItemId), eq(2), any(), any(), any(), any());
         }
 
         @Test

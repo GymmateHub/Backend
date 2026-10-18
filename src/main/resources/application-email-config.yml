@@ -1,15 +1,14 @@
 # ============================================
 # GymMate SMTP Configuration - All Email Accounts
-# Based on your cPanel setup
 # ============================================
 
 spring:
   mail:
-    # Namecheap SMTP server
-    host: ${MAIL_HOST:premium700.web-hosting.com}      # ← KEY FIX
-    port: ${MAIL_PORT:465}
-    username: noreply@gymmatehub.com
-    password: ${MAIL_PASSWORD}
+    host: ${MAIL_HOST:live.smtp.mailtrap.io}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:api}
+    password: ${MAIL_PASSWORD:}
+    from: ${MAIL_FROM:noreply@gymmatehub.com}
     properties:
       mail:
         smtp:
@@ -18,7 +17,12 @@ spring:
             enable: true
             required: true
           ssl:
-            trust: ${MAIL_HOST:premium700.web-hosting.com}   # ← Must match host
+            trust: ${MAIL_HOST:live.smtp.mailtrap.io}
+          # Without timeouts an unreachable SMTP host blocks callers (and the mail health
+          # indicator) indefinitely.
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
         transport:
           protocol: smtp
         debug: false
@@ -32,21 +36,19 @@ app:
   email:
     # Main transactional email (noreply)
     from:
-      address: noreply@gymmatehub.com
+      address: ${MAIL_FROM:noreply@gymmatehub.com}
       name: GymMateHub
 
     # Support team email
     support:
       address: support@gymmatehub.com
       name: GymMateHub Support
-      # Password for support email (if sending from support directly)
       password: ${MAIL_SUPPORT_PASSWORD:}
 
     # Admin team email
     admin:
       address: admin@gymmatehub.com
       name: GymMateHub Admin
-      # Password for admin email (if sending from admin directly)
       password: ${MAIL_ADMIN_PASSWORD:}
 
     templates:
@@ -65,32 +67,70 @@ app:
 # Environment-specific overrides
 # ============================================
 ---
-# Development
+# Development - Uses Mailtrap by default for local testing
 spring:
   config:
     activate:
       on-profile: dev
   mail:
-    port: 587
-    test-connection: true
-
----
-# Production
-spring:
-  config:
-    activate:
-      on-profile: production
-  mail:
-    port: ${MAIL_PORT:587}
+    host: ${MAILTRAP_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAILTRAP_PORT:2525}
+    username: ${MAILTRAP_USERNAME:74f485d35b9e56}
+    password: ${MAILTRAP_PASSWORD:1bab170254a5de}
+    from: ${MAIL_FROM:noreply@gymmatehub.com}
     properties:
       mail:
         smtp:
-          ssl:
+          auth: true
+          starttls:
             enable: true
-          socketFactory:
-            class: javax.net.ssl.SSLSocketFactory
-            port: ${MAIL_PORT:587}
-# Prevent mail health check from causing 503 errors
+            required: false
+          ssl:
+            trust: "*"
+        transport:
+          protocol: smtp
+        debug: true
+    test-connection: false
+
+management:
+  health:
+    mail:
+      enabled: false
+
+---
+# Production / Server (Mailtrap Live / AWS SES SMTP)
+spring:
+  config:
+    activate:
+      on-profile: prod | production
+  mail:
+    host: ${MAIL_HOST:${SES_SMTP_HOST:live.smtp.mailtrap.io}}
+    port: ${MAIL_PORT:${SES_SMTP_PORT:587}}
+    username: ${MAIL_USERNAME:${SES_SMTP_USERNAME:api}}
+    password: ${MAIL_PASSWORD:${SES_SMTP_PASSWORD:}}
+    from: ${MAIL_FROM:noreply@gymmatehub.com}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: ${MAIL_HOST:${SES_SMTP_HOST:live.smtp.mailtrap.io}}
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+        transport:
+          protocol: smtp
+        debug: false
+    test-connection: false
+
+app:
+  email:
+    ses-tenant: ${SES_TENANT:gymmatehub}
+    configuration-set: ${SES_CONFIGURATION_SET:gymmatehub-transactional}
+
 management:
   health:
     mail:

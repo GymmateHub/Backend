@@ -1,17 +1,21 @@
 package com.gymmate.unit.notification.application;
 
-import com.gymmate.notification.api.dto.AudiencePreviewResponse;
-import com.gymmate.notification.api.dto.CreateCampaignRequest;
-import com.gymmate.notification.application.AudienceResolver;
-import com.gymmate.notification.application.BroadcastService;
-import com.gymmate.notification.application.NewsletterCampaignService;
-import com.gymmate.notification.application.NewsletterTemplateService;
-import com.gymmate.notification.domain.*;
-import com.gymmate.notification.infrastructure.CampaignRecipientRepository;
-import com.gymmate.notification.infrastructure.NewsletterCampaignRepository;
-import com.gymmate.notification.infrastructure.NewsletterTemplateRepository;
+import com.gymmate.notification.api.dto.AudienceType;
+import com.gymmate.notification.internal.domain.CampaignStatus;
+import com.gymmate.notification.internal.domain.NewsletterCampaign;
+import com.gymmate.notification.internal.domain.NewsletterTemplate;
+import com.gymmate.notification.internal.application.dto.AudiencePreviewResponse;
+import com.gymmate.notification.internal.application.dto.CreateCampaignRequest;
+import com.gymmate.notification.internal.application.AudienceResolver;
+import com.gymmate.notification.internal.application.BroadcastService;
+import com.gymmate.notification.internal.application.NewsletterCampaignService;
+import com.gymmate.notification.internal.application.NewsletterTemplateService;
+import com.gymmate.notification.internal.application.port.CampaignRecipientRepository;
+import com.gymmate.notification.internal.application.port.NewsletterCampaignRepository;
+import com.gymmate.notification.internal.application.port.NewsletterTemplateRepository;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.whitelabel.api.WhitelabelApi;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -53,6 +57,9 @@ class NewsletterCampaignServiceTest {
     @Mock
     private BroadcastService broadcastService;
 
+    @Mock
+    private WhitelabelApi whitelabelSettingsService;
+
     private NewsletterCampaignService campaignService;
 
     private UUID gymId;
@@ -67,7 +74,8 @@ class NewsletterCampaignServiceTest {
                 recipientRepository,
                 audienceResolver,
                 templateService,
-                broadcastService);
+                broadcastService,
+                whitelabelSettingsService);
         gymId = UUID.randomUUID();
         organisationId = UUID.randomUUID();
         createdBy = UUID.randomUUID();
@@ -81,12 +89,15 @@ class NewsletterCampaignServiceTest {
         @DisplayName("Should create campaign without template")
         void create_WithoutTemplate_Success() {
             // Arrange
-            CreateCampaignRequest request = new CreateCampaignRequest();
-            request.setGymId(gymId);
-            request.setName("Monthly Newsletter");
-            request.setSubject("Monthly Update");
-            request.setBody("<p>Hello members!</p>");
-            request.setAudienceType(AudienceType.ALL_MEMBERS);
+            CreateCampaignRequest request = new CreateCampaignRequest(
+                    gymId,
+                    null,
+                    "Monthly Newsletter",
+                    "Monthly Update",
+                    "<p>Hello members!</p>",
+                    AudienceType.ALL_MEMBERS,
+                    null,
+                    null);
 
             when(campaignRepository.save(any(NewsletterCampaign.class)))
                     .thenAnswer(inv -> {
@@ -121,13 +132,15 @@ class NewsletterCampaignServiceTest {
                     .build();
             template.setId(templateId);
 
-            CreateCampaignRequest request = new CreateCampaignRequest();
-            request.setGymId(gymId);
-            request.setTemplateId(templateId);
-            request.setName("Welcome Campaign");
-            request.setSubject(""); // Should use template subject
-            request.setBody(""); // Should use template body
-            request.setAudienceType(AudienceType.ALL_MEMBERS);
+            CreateCampaignRequest request = new CreateCampaignRequest(
+                    gymId,
+                    templateId,
+                    "Welcome Campaign",
+                    "", // Should use template subject
+                    "", // Should use template body
+                    AudienceType.ALL_MEMBERS,
+                    null,
+                    null);
 
             when(templateRepository.findById(templateId)).thenReturn(Optional.of(template));
             when(campaignRepository.save(any(NewsletterCampaign.class)))
@@ -155,12 +168,15 @@ class NewsletterCampaignServiceTest {
         void create_TemplateNotFound_ThrowsException() {
             // Arrange
             UUID templateId = UUID.randomUUID();
-            CreateCampaignRequest request = new CreateCampaignRequest();
-            request.setGymId(gymId);
-            request.setTemplateId(templateId);
-            request.setSubject("Subject");
-            request.setBody("Body");
-            request.setAudienceType(AudienceType.ALL_MEMBERS);
+            CreateCampaignRequest request = new CreateCampaignRequest(
+                    gymId,
+                    templateId,
+                    null,
+                    "Subject",
+                    "Body",
+                    AudienceType.ALL_MEMBERS,
+                    null,
+                    null);
 
             when(templateRepository.findById(templateId)).thenReturn(Optional.empty());
 
@@ -178,13 +194,15 @@ class NewsletterCampaignServiceTest {
         @DisplayName("Should schedule campaign if scheduledAt provided")
         void create_WithScheduledAt_SchedulesCampaign() {
             // Arrange
-            CreateCampaignRequest request = new CreateCampaignRequest();
-            request.setGymId(gymId);
-            request.setName("Scheduled Campaign");
-            request.setSubject("Subject");
-            request.setBody("Body");
-            request.setAudienceType(AudienceType.ALL_MEMBERS);
-            request.setScheduledAt(LocalDateTime.now().plusDays(1));
+            CreateCampaignRequest request = new CreateCampaignRequest(
+                    gymId,
+                    null,
+                    "Scheduled Campaign",
+                    "Subject",
+                    "Body",
+                    AudienceType.ALL_MEMBERS,
+                    null,
+                    LocalDateTime.now().plusDays(1));
 
             when(campaignRepository.save(any(NewsletterCampaign.class)))
                     .thenAnswer(inv -> {
@@ -316,9 +334,7 @@ class NewsletterCampaignServiceTest {
             NewsletterCampaign campaign = createExistingCampaign(campaignId);
             campaign.setGymId(gymId);
 
-            AudiencePreviewResponse preview = AudiencePreviewResponse.builder()
-                    .totalCount(150)
-                    .build();
+            AudiencePreviewResponse preview = new AudiencePreviewResponse(150, null);
 
             when(campaignRepository.findById(campaignId)).thenReturn(Optional.of(campaign));
             when(audienceResolver.getAudiencePreview(gymId, AudienceType.ALL_MEMBERS, null))
@@ -328,7 +344,7 @@ class NewsletterCampaignServiceTest {
             AudiencePreviewResponse result = campaignService.getAudiencePreview(campaignId);
 
             // Assert
-            assertThat(result.getTotalCount()).isEqualTo(150);
+            assertThat(result.totalCount()).isEqualTo(150);
         }
     }
 
