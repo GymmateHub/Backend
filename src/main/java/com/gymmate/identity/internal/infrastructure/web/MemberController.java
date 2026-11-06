@@ -3,6 +3,7 @@ package com.gymmate.identity.internal.infrastructure.web;
 import com.gymmate.shared.exception.DomainException;
 import com.gymmate.shared.dto.ApiResponse;
 import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.shared.security.CurrentUser;
 import com.gymmate.identity.internal.application.dto.MemberCreateRequest;
 import com.gymmate.identity.internal.application.dto.MemberResponse;
 import com.gymmate.identity.internal.application.dto.MemberUpdateRequest;
@@ -98,6 +99,21 @@ public class MemberController {
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success(mapWithUser(member), "Member created successfully"));
+    }
+
+    /**
+     * The signed-in member's own profile.
+     * Members hold {@code self:service}, not {@code members:view}, so this is how the member app
+     * learns the member id that subscribe, bookings and memberships take. The member is resolved
+     * from the authenticated principal, never from a parameter, so it can only return the
+     * caller's own record. 404 when the user has no member profile.
+     */
+    @GetMapping("/me")
+    @PreAuthorize("hasAuthority('self:service')")
+    @Operation(summary = "Get my member profile", description = "The signed-in member's own profile")
+    public ResponseEntity<ApiResponse<MemberResponse>> getMyProfile() {
+        Member member = memberService.findByUserId(CurrentUser.requireUserId());
+        return ResponseEntity.ok(ApiResponse.success(mapWithUser(member)));
     }
 
     /**
