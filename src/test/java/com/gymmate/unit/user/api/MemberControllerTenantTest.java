@@ -2,7 +2,9 @@ package com.gymmate.unit.user.api;
 
 import com.gymmate.organisation.internal.application.OrganisationLimitService;
 import com.gymmate.shared.dto.ApiResponse;
+import com.gymmate.shared.exception.ResourceNotFoundException;
 import com.gymmate.shared.multitenancy.TenantContext;
+import com.gymmate.shared.security.CurrentUser;
 import com.gymmate.identity.internal.infrastructure.web.MemberController;
 import com.gymmate.identity.internal.application.dto.MemberResponse;
 import com.gymmate.identity.internal.application.MemberService;
@@ -22,6 +24,7 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
@@ -167,5 +170,43 @@ class MemberControllerTenantTest {
             }
         }
     }
-}
 
+    @Nested
+    @DisplayName("getMyProfile (GET /api/members/me)")
+    class GetMyProfile {
+
+        @Test
+        @DisplayName("Should return the caller's own member profile")
+        void shouldReturnCallersOwnProfile() {
+            Member member = buildMember(orgA);
+            UUID callerUserId = member.getUserId();
+            when(memberService.findByUserId(callerUserId)).thenReturn(member);
+
+            try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+                current.when(CurrentUser::requireUserId).thenReturn(callerUserId);
+
+                ResponseEntity<ApiResponse<MemberResponse>> response = memberController.getMyProfile();
+
+                assertThat(response.getStatusCode().value()).isEqualTo(200);
+                assertThat(response.getBody()).isNotNull();
+                assertThat(response.getBody().getData().id()).isEqualTo(memberId);
+                assertThat(response.getBody().getData().userId()).isEqualTo(callerUserId);
+            }
+        }
+
+        @Test
+        @DisplayName("Should 404 when the caller has no member profile")
+        void shouldNotFindWhenNoMemberProfile() {
+            UUID callerUserId = UUID.randomUUID();
+            when(memberService.findByUserId(callerUserId))
+                    .thenThrow(new ResourceNotFoundException("Member", "userId=" + callerUserId));
+
+            try (MockedStatic<CurrentUser> current = mockStatic(CurrentUser.class)) {
+                current.when(CurrentUser::requireUserId).thenReturn(callerUserId);
+
+                assertThatThrownBy(() -> memberController.getMyProfile())
+                        .isInstanceOf(ResourceNotFoundException.class);
+            }
+        }
+    }
+}

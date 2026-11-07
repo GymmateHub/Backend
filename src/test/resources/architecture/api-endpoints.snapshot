@@ -123,6 +123,7 @@ GET /api/members
 GET /api/members/active
 GET /api/members/count/status/{status}
 GET /api/members/gym/{gymId}
+GET /api/members/me
 GET /api/members/membership-number/{number}
 GET /api/members/new-since/{date}
 GET /api/members/organisation
