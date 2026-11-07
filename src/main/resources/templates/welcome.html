@@ -22,7 +22,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #465FFF;
             color: #ffffff;
             padding: 40px 20px;
             text-align: center;
@@ -35,7 +35,6 @@
         .header p {
             margin: 0;
             font-size: 16px;
-            opacity: 0.9;
         }
         .content {
             padding: 40px 30px;
@@ -60,7 +59,7 @@
         }
         .features h2 {
             margin-top: 0;
-            color: #667eea;
+            color: #465FFF;
             font-size: 20px;
         }
         .feature-item {
@@ -78,7 +77,7 @@
         }
         .cta-button {
             display: inline-block;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #465FFF;
             color: #ffffff;
             padding: 15px 40px;
             text-decoration: none;
@@ -99,7 +98,7 @@
             border-top: 1px solid #e9ecef;
         }
         .footer a {
-            color: #667eea;
+            color: #465FFF;
             text-decoration: none;
         }
         .footer a:hover {
@@ -110,7 +109,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏋️ Welcome to GymMate!</h1>
+            <img src="cid:gymmatehub-logo" alt="GymMateHub" width="261" height="40" style="display:block;margin:0 auto 16px;border:0;outline:none;text-decoration:none;">
+            <h1>Welcome to GymMateHub!</h1>
             <p>Your journey to fitness management excellence starts here</p>
         </div>
 
@@ -118,7 +118,7 @@
             <p class="greeting">Hi <span th:text="${firstName}">User</span>! 🎉</p>
 
             <p class="message">
-                Congratulations on successfully registering with GymMate! We're thrilled to have you
+                Congratulations on successfully registering with GymMateHub! We're thrilled to have you
                 on board as a gym owner. Your account has been created and you're ready to start
                 managing your gym operations with ease.
             </p>
@@ -155,7 +155,7 @@
 
             <p class="message" style="margin-top: 30px;">
                 <strong>Best regards,</strong><br>
-                The GymMate Team
+                The GymMateHub Team
             </p>
         </div>
 
@@ -171,7 +171,7 @@
                 <a href="#">LinkedIn</a>
             </p>
             <p style="margin-top: 15px; color: #999999;">
-                © GymMate. All rights reserved.
+                © <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> GymMateHub. All rights reserved.
             </p>
         </div>
     </div>

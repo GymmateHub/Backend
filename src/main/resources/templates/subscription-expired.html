@@ -25,7 +25,7 @@
         }
 
         .header {
-            background-color: #e74c3c;
+            background-color: #465FFF;
             color: #ffffff;
             padding: 40px 20px;
             text-align: center;
@@ -40,7 +40,6 @@
         .header p {
             margin: 0;
             font-size: 16px;
-            opacity: 0.9;
         }
 
         .content {
@@ -117,12 +116,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>⛔ Subscription Expired</h1>
-            <p>Your GymMate subscription has expired</p>
+            <img src="cid:gymmatehub-logo" alt="GymMateHub" width="261" height="40" style="display:block;margin:0 auto 16px;border:0;outline:none;text-decoration:none;">
+            <h1>Subscription Expired</h1>
+            <p>Your GymMateHub subscription has expired</p>
         </div>
 
         <div class="content">
-            <p class="greeting">Hello GymMate Owner,</p>
+            <p class="greeting">Hello,</p>
 
             <p class="message">
                 We're sorry to see you go! Your subscription for <strong><span th:text="${organisationName}">My
@@ -135,7 +135,7 @@
             </div>
 
             <p class="message">
-                Your gym's access to GymMate features has been restricted. But don't worry, your data is safe! You can
+                Your gym's access to GymMateHub features has been restricted. But don't worry, your data is safe! You can
                 reactivate your account anytime by renewing your subscription.
             </p>
 
@@ -147,7 +147,7 @@
 
             <p class="message" style="margin-top: 30px;">
                 <strong>Best regards,</strong><br>
-                The GymMate Team
+                The GymMateHub Team
             </p>
         </div>
 
@@ -157,7 +157,7 @@
                 <a href="mailto:support@gymmatehub.com">support@gymmatehub.com</a>
             </p>
             <p style="margin-top: 15px; color: #999999;">
-                © GymMate. All rights reserved.
+                © <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> GymMateHub. All rights reserved.
             </p>
         </div>
     </div>

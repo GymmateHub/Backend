@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your GymMate Verification Code</title>
+    <title>Your GymMateHub Verification Code</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -22,7 +22,7 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #465FFF;
             color: #ffffff;
             padding: 30px 20px;
             text-align: center;
@@ -48,7 +48,7 @@
         }
         .otp-box {
             background-color: #f8f9fa;
-            border: 2px dashed #667eea;
+            border: 2px dashed #465FFF;
             border-radius: 8px;
             padding: 25px;
             text-align: center;
@@ -57,7 +57,7 @@
         .otp-code {
             font-size: 36px;
             font-weight: bold;
-            color: #667eea;
+            color: #465FFF;
             letter-spacing: 8px;
             font-family: 'Courier New', monospace;
             margin: 10px 0;
@@ -96,7 +96,7 @@
             border-top: 1px solid #e9ecef;
         }
         .footer a {
-            color: #667eea;
+            color: #465FFF;
             text-decoration: none;
         }
         .footer a:hover {
@@ -107,14 +107,14 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏋️ GymMate</h1>
+            <img src="cid:gymmatehub-logo" alt="GymMateHub" width="261" height="40" style="display:block;margin:0 auto;border:0;outline:none;text-decoration:none;">
         </div>
 
         <div class="content">
             <p class="greeting">Hi <span th:text="${firstName}">User</span>,</p>
 
             <p class="message">
-                Thank you for registering with GymMate! To complete your registration,
+                Thank you for registering with GymMateHub! To complete your registration,
                 please verify your email address using the verification code below.
             </p>
 
@@ -135,20 +135,20 @@
 
             <p class="message">
                 After verifying your email, you'll be able to set your password and
-                access your GymMate dashboard.
+                access your GymMateHub dashboard.
             </p>
         </div>
 
         <div class="footer">
             <p>
-                This is an automated message from GymMate. Please do not reply to this email.
+                This is an automated message from GymMateHub. Please do not reply to this email.
             </p>
             <p>
                 Need help? Contact us at
                 <a href="mailto:support@gymmatehub.com">support@gymmatehub.com</a>
             </p>
             <p style="margin-top: 15px; color: #999999;">
-                © 2025 GymMate. All rights reserved.
+                © <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> GymMateHub. All rights reserved.
             </p>
         </div>
     </div>

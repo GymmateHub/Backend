@@ -11,6 +11,7 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
@@ -29,6 +30,16 @@ import java.util.UUID;
 @Slf4j
 @RequiredArgsConstructor
 public class EmailService implements EmailApi {
+
+    /**
+     * The GymMateHub logo for email headers, sent as an inline (CID) image: email clients don't
+     * render SVG and Gmail blocks data: URIs, and an attachment needs no hosted URL. A template
+     * opts in by referencing {@code src="cid:gymmatehub-logo"}. The PNG is the white Kettle Gm
+     * lockup ({@code gymmatehub-lockup-white.svg} from the GymMateHub brand identity, as used in
+     * the frontend and mobile repos) rendered at 2x (522x80) for a 261x40 header.
+     */
+    static final String LOGO_CONTENT_ID = "gymmatehub-logo";
+    private static final ClassPathResource LOGO = new ClassPathResource("email/gymmatehub-logo.png");
 
     private final TemplateEngine templateEngine;
     private final RealtimeNotifier sseEmitterRegistry;
@@ -233,6 +244,9 @@ public class EmailService implements EmailApi {
         helper.setTo(to);
         helper.setSubject(subject);
         helper.setText(content, true);
+        if (content.contains("cid:" + LOGO_CONTENT_ID)) {
+            helper.addInline(LOGO_CONTENT_ID, LOGO, "image/png"); // after setText, as Spring requires
+        }
 
         // Attach AWS SES Tenant, Configuration Set, and tag headers when using system
         // sender
