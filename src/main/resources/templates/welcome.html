@@ -109,8 +109,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="cid:gymmate-logo" alt="GymMate" width="207" height="40" style="display:block;margin:0 auto 16px;border:0;outline:none;text-decoration:none;">
-            <h1>Welcome to GymMate!</h1>
+            <img src="cid:gymmatehub-logo" alt="GymMateHub" width="261" height="40" style="display:block;margin:0 auto 16px;border:0;outline:none;text-decoration:none;">
+            <h1>Welcome to GymMateHub!</h1>
             <p>Your journey to fitness management excellence starts here</p>
         </div>
 
@@ -118,7 +118,7 @@
             <p class="greeting">Hi <span th:text="${firstName}">User</span>! 🎉</p>
 
             <p class="message">
-                Congratulations on successfully registering with GymMate! We're thrilled to have you
+                Congratulations on successfully registering with GymMateHub! We're thrilled to have you
                 on board as a gym owner. Your account has been created and you're ready to start
                 managing your gym operations with ease.
             </p>
@@ -155,7 +155,7 @@
 
             <p class="message" style="margin-top: 30px;">
                 <strong>Best regards,</strong><br>
-                The GymMate Team
+                The GymMateHub Team
             </p>
         </div>
 
@@ -171,7 +171,7 @@
                 <a href="#">LinkedIn</a>
             </p>
             <p style="margin-top: 15px; color: #999999;">
-                © GymMate. All rights reserved.
+                © <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> GymMateHub. All rights reserved.
             </p>
         </div>
     </div>

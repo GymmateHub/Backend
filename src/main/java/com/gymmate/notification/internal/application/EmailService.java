@@ -32,13 +32,14 @@ import java.util.UUID;
 public class EmailService implements EmailApi {
 
     /**
-     * The GymMate logo for email headers, sent as an inline (CID) image: email clients don't
+     * The GymMateHub logo for email headers, sent as an inline (CID) image: email clients don't
      * render SVG and Gmail blocks data: URIs, and an attachment needs no hosted URL. A template
-     * opts in by referencing {@code src="cid:gymmate-logo"}. Generated from the brand kit in the
-     * mobile repo (gymmate_mobile/brand).
+     * opts in by referencing {@code src="cid:gymmatehub-logo"}. The PNG is the white Kettle Gm
+     * lockup ({@code gymmatehub-lockup-white.svg} from the GymMateHub brand identity, as used in
+     * the frontend and mobile repos) rendered at 2x (522x80) for a 261x40 header.
      */
-    static final String LOGO_CONTENT_ID = "gymmate-logo";
-    private static final ClassPathResource LOGO = new ClassPathResource("email/gymmate-logo.png");
+    static final String LOGO_CONTENT_ID = "gymmatehub-logo";
+    private static final ClassPathResource LOGO = new ClassPathResource("email/gymmatehub-logo.png");
 
     private final TemplateEngine templateEngine;
     private final RealtimeNotifier sseEmitterRegistry;

@@ -32,7 +32,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 /**
- * The GymMate logo travels with transactional emails as an inline (CID) image, so it shows
+ * The GymMateHub logo travels with transactional emails as an inline (CID) image, so it shows
  * without a hosted URL and in clients that block data: URIs.
  */
 @ExtendWith(MockitoExtension.class)
@@ -77,10 +77,10 @@ class EmailServiceLogoTest {
     @DisplayName("attaches the logo inline when the email references it")
     void attachesLogoInline() throws Exception {
         emailService.sendHtmlEmail("ada@example.com", "Welcome",
-                "<img src=\"cid:gymmate-logo\" alt=\"GymMate\"><p>Hi</p>");
+                "<img src=\"cid:gymmatehub-logo\" alt=\"GymMateHub\"><p>Hi</p>");
 
         assertThat(sentMessage())
-                .contains("Content-ID: <gymmate-logo>")
+                .contains("Content-ID: <gymmatehub-logo>")
                 .contains("Content-Type: image/png");
     }
 
@@ -89,7 +89,7 @@ class EmailServiceLogoTest {
     void noLogoWhenNotReferenced() throws Exception {
         emailService.sendHtmlEmail("ada@example.com", "Campaign", "<p>No logo here</p>");
 
-        assertThat(sentMessage()).doesNotContain("gymmate-logo");
+        assertThat(sentMessage()).doesNotContain("gymmatehub-logo");
     }
 
     @ParameterizedTest(name = "{0}")
@@ -99,7 +99,7 @@ class EmailServiceLogoTest {
     void templatesShowTheLogo(String template) throws Exception {
         String html = new ClassPathResource("templates/" + template + ".html").getContentAsString(StandardCharsets.UTF_8);
 
-        assertThat(html).contains("src=\"cid:gymmate-logo\"").contains("alt=\"GymMate\"");
-        assertThat(new ClassPathResource("email/gymmate-logo.png").exists()).isTrue();
+        assertThat(html).contains("src=\"cid:gymmatehub-logo\"").contains("alt=\"GymMateHub\"");
+        assertThat(new ClassPathResource("email/gymmatehub-logo.png").exists()).isTrue();
     }
 }

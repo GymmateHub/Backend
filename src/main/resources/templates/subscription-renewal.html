@@ -106,13 +106,13 @@
 <body>
     <div class="container">
         <div class="header">
-            <img src="cid:gymmate-logo" alt="GymMate" width="207" height="40" style="display:block;margin:0 auto 16px;border:0;outline:none;text-decoration:none;">
+            <img src="cid:gymmatehub-logo" alt="GymMateHub" width="261" height="40" style="display:block;margin:0 auto 16px;border:0;outline:none;text-decoration:none;">
             <h1>Subscription Renewal</h1>
-            <p>Your GymMate subscription is renewing soon</p>
+            <p>Your GymMateHub subscription is renewing soon</p>
         </div>
 
         <div class="content">
-            <p class="greeting">Hello GymMate Owner,</p>
+            <p class="greeting">Hello,</p>
 
             <p class="message">
                 This is a friendly reminder that your subscription for <strong><span th:text="${organisationName}">My Gym</span></strong> is scheduled to renew automatically in 3 days.
@@ -146,7 +146,7 @@
 
             <p class="message" style="margin-top: 30px;">
                 <strong>Best regards,</strong><br>
-                The GymMate Team
+                The GymMateHub Team
             </p>
         </div>
 
@@ -156,7 +156,7 @@
                 <a href="mailto:support@gymmatehub.com">support@gymmatehub.com</a>
             </p>
             <p style="margin-top: 15px; color: #999999;">
-                © GymMate. All rights reserved.
+                © <span th:text="${#temporals.year(#temporals.createNow())}">2026</span> GymMateHub. All rights reserved.
             </p>
         </div>
     </div>
