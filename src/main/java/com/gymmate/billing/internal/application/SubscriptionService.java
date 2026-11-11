@@ -8,12 +8,15 @@ import com.gymmate.billing.internal.application.port.SubscriptionTierRepository;
 import com.gymmate.billing.internal.application.port.SubscriptionUsageRepository;
 import com.gymmate.billing.internal.application.StripePaymentService;
 import com.gymmate.billing.internal.application.port.OrganisationBillingInfoProvider;
+import com.gymmate.configuration.api.MessageTemplateConfigApi;
+import com.gymmate.configuration.api.dto.RenderedEmail;
 import com.gymmate.shared.constants.SubscriptionStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.gymmate.notification.api.EmailApi;
 import com.gymmate.notification.api.NotificationApi;
 import com.gymmate.shared.constants.NotificationPriority;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,6 +40,10 @@ public class SubscriptionService {
     private final EmailApi emailService;
     private final NotificationApi notificationService;
     private final OrganisationBillingInfoProvider organisationBillingInfoProvider;
+    private final MessageTemplateConfigApi messageTemplateConfigApi;
+
+    @Value("${app.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     public Subscription createSubscription(UUID organisationId, String tierName, boolean startTrial) {
         return createSubscription(organisationId, tierName, startTrial, null, true);
@@ -221,13 +228,18 @@ public class SubscriptionService {
             organisationBillingInfoProvider.findBillingInfo(organisationId).ifPresent(org -> {
                 String email = org.preferredEmail();
                 if (email != null && !email.isBlank()) {
-                    emailService.sendHtmlEmail(email,
-                            "Consider Upgrading Your GymMate Plan",
-                            "<p>Hi " + org.name() + ",</p>"
-                                    + "<p>Your current member count (" + memberCount + ") has exceeded your plan limits. "
-                                    + "Overage charges now exceed 50% of your base cost.</p>"
-                                    + "<p>We recommend upgrading to reduce costs and unlock more features.</p>"
-                                    + "<p><a href='http://localhost:3000/gym/settings/subscription'>View Plans</a></p>");
+                    RenderedEmail rendered = messageTemplateConfigApi.renderEmail(
+                            "EMAIL_BILLING_UPGRADE_SUGGESTED",
+                            organisationId,
+                            Map.of(
+                                    "organisationName", org.name(),
+                                    "memberCount", memberCount,
+                                    "memberLimit", subscription.getTier().getMaxMembers(),
+                                    "currentTier", subscription.getTier().getName(),
+                                    "frontendUrl", frontendUrl));
+                    if (rendered.enabled()) {
+                        emailService.sendHtmlEmail(email, rendered.subject(), rendered.htmlBody());
+                    }
                 }
             });
         }

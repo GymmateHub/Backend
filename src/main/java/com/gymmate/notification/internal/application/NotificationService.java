@@ -1,16 +1,17 @@
 package com.gymmate.notification.internal.application;
 
+import com.gymmate.configuration.api.MessageTemplateConfigApi;
+import com.gymmate.configuration.api.dto.RenderedNotification;
 import com.gymmate.notification.internal.domain.Notification;
 import com.gymmate.notification.internal.application.port.NotificationRepository;
 import com.gymmate.shared.exception.ResourceNotFoundException;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.beans.BeanProperty;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -27,7 +28,6 @@ import java.util.Map;
  */
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NotificationService {
 
@@ -36,6 +36,29 @@ public class NotificationService {
     private final tools.jackson.databind.ObjectMapper objectMapper;
 
     private final EmailService emailService;
+    private final MessageTemplateConfigApi messageTemplateConfigApi;
+
+    @Autowired
+    public NotificationService(
+            NotificationRepository notificationRepository,
+            com.gymmate.notification.internal.application.port.RealtimeNotifier sseEmitterRegistry,
+            tools.jackson.databind.ObjectMapper objectMapper,
+            EmailService emailService,
+            MessageTemplateConfigApi messageTemplateConfigApi) {
+        this.notificationRepository = notificationRepository;
+        this.sseEmitterRegistry = sseEmitterRegistry;
+        this.objectMapper = objectMapper;
+        this.emailService = emailService;
+        this.messageTemplateConfigApi = messageTemplateConfigApi;
+    }
+
+    public NotificationService(
+            NotificationRepository notificationRepository,
+            com.gymmate.notification.internal.application.port.RealtimeNotifier sseEmitterRegistry,
+            tools.jackson.databind.ObjectMapper objectMapper,
+            EmailService emailService) {
+        this(notificationRepository, sseEmitterRegistry, objectMapper, emailService, null);
+    }
 
     /**
      * Create and broadcast a notification to an entire organisation.
@@ -64,12 +87,21 @@ public class NotificationService {
             NotificationPriority priority, String eventType,
             Map<String, Object> metadata, NotificationScope scope, RecipientRole role) {
 
+        String resolvedTitle = title;
+        String resolvedMessage = message;
+        if (messageTemplateConfigApi != null && eventType != null && !eventType.isBlank()) {
+            RenderedNotification rendered = messageTemplateConfigApi.renderNotification(
+                    eventType, organisationId, metadata, title, message);
+            resolvedTitle = rendered.title();
+            resolvedMessage = rendered.message();
+        }
+
         String metadataJson = metadata != null ? objectMapper.writeValueAsString(metadata) : "{}";
 
         Notification notification = Notification.builder()
                 .gymId(gymId)
-                .title(title)
-                .message(message)
+                .title(resolvedTitle)
+                .message(resolvedMessage)
                 .priority(priority)
                 .eventType(eventType)
                 .metadata(metadataJson)
