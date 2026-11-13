@@ -1,5 +1,6 @@
 package com.gymmate.identity;
 
+import com.gymmate.configuration.api.MessageTemplateConfigApi;
 import com.gymmate.notification.api.EmailApi;
 import com.gymmate.identity.api.spi.GymDirectory;
 import com.gymmate.identity.api.spi.MemberLimitGuard;
@@ -25,6 +26,9 @@ class IdentityModuleTest extends ModuleIntegrationTest {
 
     @MockitoBean
     MemberLimitGuard memberLimitGuard;
+
+    @MockitoBean
+    MessageTemplateConfigApi messageTemplateConfigApi;
 
     @Test
     void bootstrapsInIsolation() {

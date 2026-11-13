@@ -1,5 +1,7 @@
 package com.gymmate.identity.internal.application;
 
+import com.gymmate.configuration.api.MessageTemplateConfigApi;
+import com.gymmate.configuration.api.dto.RenderedEmail;
 import com.gymmate.notification.api.EmailApi;
 import com.gymmate.shared.exception.BadRequestException;
 import com.gymmate.shared.exception.ResourceNotFoundException;
@@ -22,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.security.MessageDigest;
@@ -37,6 +40,7 @@ public class InviteService {
     private final UserRepository userRepository;
     private final GymDirectory gymDirectory;
     private final EmailApi emailService;
+    private final MessageTemplateConfigApi messageTemplateConfigApi;
 
     @Value("${app.frontend-url:http://localhost:3000}")
     private String frontendUrl;
@@ -171,13 +175,20 @@ public class InviteService {
 
     private void sendInviteEmail(UserInvite invite, String gymName, String inviterName) {
         String inviteLink = frontendUrl + "/invite?token=" + invite.getToken();
-        emailService.sendHtmlEmail(
-                invite.getEmail(),
-                "You've been invited to join " + gymName,
-                "Hello " + (invite.getFirstName() != null ? invite.getFirstName() : "") + ",<br><br>" +
-                        inviterName + " has invited you to join " + gymName + " as a " + invite.getRole() + ".<br><br>"
-                        +
-                        "Click here to accept: <a href=\"" + inviteLink + "\">" + inviteLink + "</a>");
+        RenderedEmail rendered = messageTemplateConfigApi.renderEmail(
+                "EMAIL_USER_INVITE",
+                invite.getOrganisationId(),
+                Map.of(
+                        "firstName", invite.getFirstName() != null ? invite.getFirstName() : "",
+                        "inviterName", inviterName != null ? inviterName : "",
+                        "gymName", gymName != null ? gymName : "",
+                        "role", invite.getRole() != null ? invite.getRole().name() : "",
+                        "inviteLink", inviteLink));
+        if (!rendered.enabled()) {
+            log.info("Skipping disabled email template EMAIL_USER_INVITE for invite {}", invite.getId());
+            return;
+        }
+        emailService.sendHtmlEmail(invite.getEmail(), rendered.subject(), rendered.htmlBody());
     }
 
     private String hashToken(String token) {

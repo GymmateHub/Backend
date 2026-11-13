@@ -1,6 +1,7 @@
 DELETE /api/class-categories/{id}
 DELETE /api/class-schedules/{id}
 DELETE /api/classes/{id}
+DELETE /api/configurations/message-templates/{templateKey}/override
 DELETE /api/exercises/{exerciseId}
 DELETE /api/fitness-goals/{goalId}
 DELETE /api/gym-areas/{id}
@@ -49,6 +50,10 @@ GET /api/class-schedules/{id}
 GET /api/classes
 GET /api/classes/gym/{gymId}
 GET /api/classes/{id}
+GET /api/configurations/message-templates
+GET /api/configurations/message-templates/platform
+GET /api/configurations/message-templates/platform/{templateKey}
+GET /api/configurations/message-templates/{templateKey}
 GET /api/connect/can-accept-payments
 GET /api/connect/dashboard
 GET /api/connect/status
@@ -250,6 +255,7 @@ POST /api/bookings
 POST /api/class-categories
 POST /api/class-schedules
 POST /api/classes
+POST /api/configurations/message-templates/platform/{templateKey}/reset
 POST /api/connect/onboard
 POST /api/connect/refresh
 POST /api/exercises
@@ -331,6 +337,8 @@ PUT /api/bookings/{id}/check-out
 PUT /api/class-categories/{id}
 PUT /api/class-schedules/{id}
 PUT /api/classes/{id}
+PUT /api/configurations/message-templates/platform/{templateKey}
+PUT /api/configurations/message-templates/{templateKey}
 PUT /api/exercises/{exerciseId}
 PUT /api/fitness-goals/{goalId}/progress
 PUT /api/gym-areas/{id}

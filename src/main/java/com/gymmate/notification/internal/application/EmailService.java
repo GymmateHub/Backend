@@ -1,5 +1,7 @@
 package com.gymmate.notification.internal.application;
 
+import com.gymmate.configuration.api.MessageTemplateConfigApi;
+import com.gymmate.configuration.api.dto.RenderedEmail;
 import com.gymmate.notification.api.EmailApi;
 import com.gymmate.notification.internal.application.port.RealtimeNotifier;
 import com.gymmate.shared.multitenancy.TenantContext;
@@ -8,8 +10,8 @@ import com.gymmate.whitelabel.api.dto.WhitelabelProfile;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,12 +25,12 @@ import org.thymeleaf.context.Context;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 public class EmailService implements EmailApi {
 
     /**
@@ -55,6 +57,39 @@ public class EmailService implements EmailApi {
     // TenantFilter.NON_TENANT_ENDPOINTS), so a
     // whitelabel lookup is guaranteed to come back empty. BUG-001.
     private final JavaMailSender defaultMailSender;
+    private final MessageTemplateConfigApi messageTemplateConfigApi;
+
+    @Autowired
+    public EmailService(
+            TemplateEngine templateEngine,
+            RealtimeNotifier sseEmitterRegistry,
+            WhitelabelApi whitelabelApi,
+            EmailSuppressionService suppressionService,
+            com.gymmate.notification.internal.application.port.SesTenantResolver sesTenantResolver,
+            com.gymmate.notification.internal.application.port.SesConfigurationSetResolver sesConfigurationSetResolver,
+            JavaMailSender defaultMailSender,
+            MessageTemplateConfigApi messageTemplateConfigApi) {
+        this.templateEngine = templateEngine;
+        this.sseEmitterRegistry = sseEmitterRegistry;
+        this.whitelabelApi = whitelabelApi;
+        this.suppressionService = suppressionService;
+        this.sesTenantResolver = sesTenantResolver;
+        this.sesConfigurationSetResolver = sesConfigurationSetResolver;
+        this.defaultMailSender = defaultMailSender;
+        this.messageTemplateConfigApi = messageTemplateConfigApi;
+    }
+
+    public EmailService(
+            TemplateEngine templateEngine,
+            RealtimeNotifier sseEmitterRegistry,
+            WhitelabelApi whitelabelApi,
+            EmailSuppressionService suppressionService,
+            com.gymmate.notification.internal.application.port.SesTenantResolver sesTenantResolver,
+            com.gymmate.notification.internal.application.port.SesConfigurationSetResolver sesConfigurationSetResolver,
+            JavaMailSender defaultMailSender) {
+        this(templateEngine, sseEmitterRegistry, whitelabelApi, suppressionService,
+                sesTenantResolver, sesConfigurationSetResolver, defaultMailSender, null);
+    }
 
     @Value("${spring.mail.from:noreply@gymmatehub.com}")
     private String defaultFromEmail;
@@ -70,8 +105,21 @@ public class EmailService implements EmailApi {
             context.setVariable("name", name);
             context.setVariable("resetLink", resetLink);
 
-            String emailContent = templateEngine.process("password-reset", context);
-            sendEmailInternal(to, "Reset Your Password", emailContent);
+            RenderedEmail configured = resolveTemplate(
+                    "EMAIL_PASSWORD_RESET",
+                    Map.of("name", name != null ? name : "", "resetLink", resetLink != null ? resetLink : ""));
+            if (configured != null && !configured.enabled()) {
+                log.info("Skipping disabled email template EMAIL_PASSWORD_RESET for recipient: {}", to);
+                return;
+            }
+
+            String subject = configured != null && StringUtils.hasText(configured.subject())
+                    ? configured.subject()
+                    : "Reset Your Password";
+            String emailContent = configured != null && configured.bodyCustomised() && StringUtils.hasText(configured.htmlBody())
+                    ? configured.htmlBody()
+                    : templateEngine.process("password-reset", context);
+            sendEmailInternal(to, subject, emailContent);
             log.info("Password reset email sent to: {}", to);
         } catch (MessagingException e) {
             log.error("Failed to send password reset email to: {}", to, e);
@@ -92,8 +140,24 @@ public class EmailService implements EmailApi {
             context.setVariable("otp", otp);
             context.setVariable("validityMinutes", validityMinutes);
 
-            String emailContent = templateEngine.process("registration-otp", context);
-            sendEmailInternal(to, "Your Verification Code", emailContent);
+            RenderedEmail configured = resolveTemplate(
+                    "EMAIL_REGISTRATION_OTP",
+                    Map.of(
+                            "firstName", firstName != null ? firstName : "",
+                            "otp", otp != null ? otp : "",
+                            "validityMinutes", validityMinutes));
+            if (configured != null && !configured.enabled()) {
+                log.info("Skipping disabled email template EMAIL_REGISTRATION_OTP for recipient: {}", to);
+                return;
+            }
+
+            String subject = configured != null && StringUtils.hasText(configured.subject())
+                    ? configured.subject()
+                    : "Your Verification Code";
+            String emailContent = configured != null && configured.bodyCustomised() && StringUtils.hasText(configured.htmlBody())
+                    ? configured.htmlBody()
+                    : templateEngine.process("registration-otp", context);
+            sendEmailInternal(to, subject, emailContent);
             log.info("OTP email sent successfully to: {}", to);
 
             sseEmitterRegistry.sendEmailStatus(userId, "SENT", "Verification email sent successfully");
@@ -112,8 +176,21 @@ public class EmailService implements EmailApi {
             Context context = new Context();
             context.setVariable("firstName", firstName);
 
-            String emailContent = templateEngine.process("welcome", context);
-            sendEmailInternal(to, "Welcome!", emailContent);
+            RenderedEmail configured = resolveTemplate(
+                    "EMAIL_WELCOME",
+                    Map.of("firstName", firstName != null ? firstName : ""));
+            if (configured != null && !configured.enabled()) {
+                log.info("Skipping disabled email template EMAIL_WELCOME for recipient: {}", to);
+                return;
+            }
+
+            String subject = configured != null && StringUtils.hasText(configured.subject())
+                    ? configured.subject()
+                    : "Welcome!";
+            String emailContent = configured != null && configured.bodyCustomised() && StringUtils.hasText(configured.htmlBody())
+                    ? configured.htmlBody()
+                    : templateEngine.process("welcome", context);
+            sendEmailInternal(to, subject, emailContent);
             log.info("Welcome email sent to: {}", to);
         } catch (MessagingException e) {
             log.error("Failed to send welcome email to: {}", to, e);
@@ -138,14 +215,32 @@ public class EmailService implements EmailApi {
     public void sendSubscriptionRenewalEmail(String to, String organisationName, String planName,
             LocalDate renewalDate, BigDecimal amount) {
         try {
+            String formattedDate = renewalDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
             Context context = new Context();
             context.setVariable("organisationName", organisationName);
             context.setVariable("planName", planName);
-            context.setVariable("renewalDate", renewalDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")));
+            context.setVariable("renewalDate", formattedDate);
             context.setVariable("amount", amount);
 
-            String emailContent = templateEngine.process("subscription-renewal", context);
-            sendEmailInternal(to, "Subscription Renewal Notice", emailContent);
+            RenderedEmail configured = resolveTemplate(
+                    "EMAIL_SUBSCRIPTION_RENEWAL",
+                    Map.of(
+                            "organisationName", organisationName != null ? organisationName : "",
+                            "planName", planName != null ? planName : "",
+                            "renewalDate", formattedDate,
+                            "amount", amount != null ? amount : ""));
+            if (configured != null && !configured.enabled()) {
+                log.info("Skipping disabled email template EMAIL_SUBSCRIPTION_RENEWAL for recipient: {}", to);
+                return;
+            }
+
+            String subject = configured != null && StringUtils.hasText(configured.subject())
+                    ? configured.subject()
+                    : "Subscription Renewal Notice";
+            String emailContent = configured != null && configured.bodyCustomised() && StringUtils.hasText(configured.htmlBody())
+                    ? configured.htmlBody()
+                    : templateEngine.process("subscription-renewal", context);
+            sendEmailInternal(to, subject, emailContent);
             log.info("Subscription renewal email sent to: {}", to);
         } catch (Exception e) {
             log.error("Failed to send subscription renewal email to: {}", to, e);
@@ -156,12 +251,28 @@ public class EmailService implements EmailApi {
     @Override
     public void sendTrialEndingEmail(String to, String organisationName, LocalDate trialEndDate) {
         try {
+            String formattedDate = trialEndDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
             Context context = new Context();
             context.setVariable("organisationName", organisationName);
-            context.setVariable("trialEndDate", trialEndDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")));
+            context.setVariable("trialEndDate", formattedDate);
 
-            String emailContent = templateEngine.process("subscription-trial-ending", context);
-            sendEmailInternal(to, "Your Trial is Ending Soon", emailContent);
+            RenderedEmail configured = resolveTemplate(
+                    "EMAIL_SUBSCRIPTION_TRIAL_ENDING",
+                    Map.of(
+                            "organisationName", organisationName != null ? organisationName : "",
+                            "trialEndDate", formattedDate));
+            if (configured != null && !configured.enabled()) {
+                log.info("Skipping disabled email template EMAIL_SUBSCRIPTION_TRIAL_ENDING for recipient: {}", to);
+                return;
+            }
+
+            String subject = configured != null && StringUtils.hasText(configured.subject())
+                    ? configured.subject()
+                    : "Your Trial is Ending Soon";
+            String emailContent = configured != null && configured.bodyCustomised() && StringUtils.hasText(configured.htmlBody())
+                    ? configured.htmlBody()
+                    : templateEngine.process("subscription-trial-ending", context);
+            sendEmailInternal(to, subject, emailContent);
             log.info("Trial ending email sent to: {}", to);
         } catch (Exception e) {
             log.error("Failed to send trial ending email to: {}", to, e);
@@ -172,15 +283,44 @@ public class EmailService implements EmailApi {
     @Override
     public void sendSubscriptionExpiredEmail(String to, String organisationName, LocalDate expiryDate) {
         try {
+            String formattedDate = expiryDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy"));
             Context context = new Context();
             context.setVariable("organisationName", organisationName);
-            context.setVariable("expiryDate", expiryDate.format(DateTimeFormatter.ofPattern("MMMM d, yyyy")));
+            context.setVariable("expiryDate", formattedDate);
 
-            String emailContent = templateEngine.process("subscription-expired", context);
-            sendEmailInternal(to, "Subscription Expired", emailContent);
+            RenderedEmail configured = resolveTemplate(
+                    "EMAIL_SUBSCRIPTION_EXPIRED",
+                    Map.of(
+                            "organisationName", organisationName != null ? organisationName : "",
+                            "expiryDate", formattedDate));
+            if (configured != null && !configured.enabled()) {
+                log.info("Skipping disabled email template EMAIL_SUBSCRIPTION_EXPIRED for recipient: {}", to);
+                return;
+            }
+
+            String subject = configured != null && StringUtils.hasText(configured.subject())
+                    ? configured.subject()
+                    : "Subscription Expired";
+            String emailContent = configured != null && configured.bodyCustomised() && StringUtils.hasText(configured.htmlBody())
+                    ? configured.htmlBody()
+                    : templateEngine.process("subscription-expired", context);
+            sendEmailInternal(to, subject, emailContent);
             log.info("Subscription expired email sent to: {}", to);
         } catch (Exception e) {
             log.error("Failed to send subscription expired email to: {}", to, e);
+        }
+    }
+
+    private RenderedEmail resolveTemplate(String templateKey, Map<String, Object> variables) {
+        if (messageTemplateConfigApi == null) {
+            return null;
+        }
+        try {
+            return messageTemplateConfigApi.renderEmail(templateKey, TenantContext.getCurrentTenantId(), variables);
+        } catch (Exception e) {
+            log.warn("Could not resolve configured email template {} — falling back to built-in template: {}",
+                    templateKey, e.getMessage());
+            return null;
         }
     }
 
