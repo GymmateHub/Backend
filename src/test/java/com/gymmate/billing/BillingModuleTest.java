@@ -1,5 +1,6 @@
 package com.gymmate.billing;
 
+import com.gymmate.configuration.api.MessageTemplateConfigApi;
 import com.gymmate.identity.api.IdentityApi;
 import com.gymmate.notification.api.EmailApi;
 import com.gymmate.notification.api.NotificationApi;
@@ -36,6 +37,9 @@ class BillingModuleTest extends ModuleIntegrationTest {
 
     @MockitoBean
     OrganisationApi organisationApi;
+
+    @MockitoBean
+    MessageTemplateConfigApi messageTemplateConfigApi;
 
     @Autowired
     JdbcTemplate jdbc;

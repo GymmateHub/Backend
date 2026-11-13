@@ -1,5 +1,7 @@
 package com.gymmate.notification.internal.infrastructure.messaging;
 
+import com.gymmate.configuration.api.MessageTemplateConfigApi;
+import com.gymmate.configuration.api.dto.RenderedNotification;
 import com.gymmate.shared.events.AsyncModuleListener;
 import com.gymmate.notification.internal.application.NotificationDispatcher;
 import com.gymmate.notification.api.event.MemberJoinedEvent;
@@ -10,15 +12,13 @@ import tools.jackson.databind.ObjectMapper;
 import com.gymmate.notification.internal.domain.Notification;
 import com.gymmate.notification.internal.application.port.NotificationRepository;
 import com.gymmate.shared.multitenancy.TenantScope;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * Event listener for domain events that creates admin notifications.
@@ -26,12 +26,31 @@ import java.util.Map;
  */
 @Component
 @Slf4j
-@RequiredArgsConstructor
 public class AdminNotificationEventListener {
 
     private final NotificationRepository notificationRepository;
     private final NotificationDispatcher notificationDispatcher;
     private final ObjectMapper objectMapper;
+    private final MessageTemplateConfigApi messageTemplateConfigApi;
+
+    @Autowired
+    public AdminNotificationEventListener(
+            NotificationRepository notificationRepository,
+            NotificationDispatcher notificationDispatcher,
+            ObjectMapper objectMapper,
+            MessageTemplateConfigApi messageTemplateConfigApi) {
+        this.notificationRepository = notificationRepository;
+        this.notificationDispatcher = notificationDispatcher;
+        this.objectMapper = objectMapper;
+        this.messageTemplateConfigApi = messageTemplateConfigApi;
+    }
+
+    public AdminNotificationEventListener(
+            NotificationRepository notificationRepository,
+            NotificationDispatcher notificationDispatcher,
+            ObjectMapper objectMapper) {
+        this(notificationRepository, notificationDispatcher, objectMapper, null);
+    }
 
     /**
      * Handle payment failed events.
@@ -48,6 +67,14 @@ public class AdminNotificationEventListener {
             metadata.put("nextRetryDate", event.nextRetryDate());
             metadata.put("invoiceId", event.invoiceId());
 
+            RenderedNotification rendered = resolveNotification(
+                    event.getEventType(), event.getOrganisationId(), metadata,
+                    event.getNotificationTitle(), event.getNotificationMessage());
+            if (!rendered.enabled()) {
+                log.info("Skipping disabled notification template {}", event.getEventType());
+                return;
+            }
+
             // A platform (organisation-level) subscription failure has no single gym
             // (event.getGymId() is null — see StripeWebhookService.handleInvoicePaymentFailed);
             // a Connect (member payment) failure always has one. Scope the in-app
@@ -55,8 +82,8 @@ public class AdminNotificationEventListener {
             boolean isGymScoped = event.gymId() != null;
             Notification notification = Notification.builder()
                     .gymId(event.gymId())
-                    .title(event.getNotificationTitle())
-                    .message(event.getNotificationMessage())
+                    .title(rendered.title())
+                    .message(rendered.message())
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
@@ -97,10 +124,18 @@ public class AdminNotificationEventListener {
             metadata.put("invoiceUrl", event.invoiceUrl());
             metadata.put("periodEnd", event.periodEnd());
 
+            RenderedNotification rendered = resolveNotification(
+                    event.getEventType(), event.getOrganisationId(), metadata,
+                    event.getNotificationTitle(), event.getNotificationMessage());
+            if (!rendered.enabled()) {
+                log.info("Skipping disabled notification template {}", event.getEventType());
+                return;
+            }
+
             Notification notification = Notification.builder()
                     .gymId(event.gymId())
-                    .title(event.getNotificationTitle())
-                    .message(event.getNotificationMessage())
+                    .title(rendered.title())
+                    .message(rendered.message())
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
@@ -136,9 +171,17 @@ public class AdminNotificationEventListener {
             metadata.put("expiresAt", event.expiresAt());
             metadata.put("daysUntilExpiry", event.daysUntilExpiry());
 
+            RenderedNotification rendered = resolveNotification(
+                    event.getEventType(), event.getOrganisationId(), metadata,
+                    event.getNotificationTitle(), event.getNotificationMessage());
+            if (!rendered.enabled()) {
+                log.info("Skipping disabled notification template {}", event.getEventType());
+                return;
+            }
+
             Notification notification = Notification.builder()
-                    .title(event.getNotificationTitle())
-                    .message(event.getNotificationMessage())
+                    .title(rendered.title())
+                    .message(rendered.message())
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
@@ -174,10 +217,18 @@ public class AdminNotificationEventListener {
             metadata.put("memberEmail", event.memberEmail());
             metadata.put("membershipPlan", event.membershipPlan());
 
+            RenderedNotification rendered = resolveNotification(
+                    event.getEventType(), event.getOrganisationId(), metadata,
+                    event.getNotificationTitle(), event.getNotificationMessage());
+            if (!rendered.enabled()) {
+                log.info("Skipping disabled notification template {}", event.getEventType());
+                return;
+            }
+
             Notification notification = Notification.builder()
                     .gymId(event.gymId())
-                    .title(event.getNotificationTitle())
-                    .message(event.getNotificationMessage())
+                    .title(rendered.title())
+                    .message(rendered.message())
                     .priority(event.getPriority())
                     .eventType(event.getEventType())
                     .metadata(objectMapper.writeValueAsString(metadata))
@@ -196,5 +247,15 @@ public class AdminNotificationEventListener {
         } catch (Exception e) {
             log.error("Failed to handle MemberJoinedEvent: {}", e.getMessage(), e);
         }
+    }
+
+    private RenderedNotification resolveNotification(
+            String eventType, UUID organisationId, Map<String, Object> metadata,
+            String defaultTitle, String defaultMessage) {
+        if (messageTemplateConfigApi == null) {
+            return new RenderedNotification(eventType, defaultTitle, defaultMessage, true);
+        }
+        return messageTemplateConfigApi.renderNotification(
+                eventType, organisationId, metadata, defaultTitle, defaultMessage);
     }
 }
