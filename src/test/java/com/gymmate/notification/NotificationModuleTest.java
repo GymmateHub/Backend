@@ -1,5 +1,6 @@
 package com.gymmate.notification;
 
+import com.gymmate.configuration.api.MessageTemplateConfigApi;
 import com.gymmate.whitelabel.api.WhitelabelApi;
 import com.gymmate.notification.api.spi.AudienceMemberIdsResolver;
 import com.gymmate.notification.api.spi.GymAccessVerifier;
@@ -33,6 +34,9 @@ class NotificationModuleTest extends ModuleIntegrationTest {
 
     @MockitoBean
     OrganisationSettingsSource organisationSettingsSource;
+
+    @MockitoBean
+    MessageTemplateConfigApi messageTemplateConfigApi;
 
     @Test
     void bootstrapsInIsolation() {
