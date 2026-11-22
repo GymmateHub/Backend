@@ -43,8 +43,8 @@ USER gymmate
 # Expose port
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=45s --retries=3 \
+# Health check (allow up to 180s for Flyway + Hibernate + Spring cold boot)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=180s --retries=5 \
   CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Run the application
