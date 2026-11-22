@@ -1,8 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════
 # GymMateHub/Backend — CI/CD Pipeline
-# Triggers: push/PR to main, dev
-# Steps: build + test → build & push image to GHCR → dispatch deploy to
-#        Vantroxia-Labs/infra (which rolls the stack on the VPS).
+# Triggers: push/PR to main, dev, or manual dispatch
+# Steps: build + test → build & push image to GHCR → trigger Dokploy deploy.
 # ═══════════════════════════════════════════════════════════════════════════
 name: GymMate-hub CI/CD Pipeline
 
@@ -11,6 +10,7 @@ on:
     branches: ["main", "dev"]
   pull_request:
     branches: ["main", "dev"]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -59,7 +59,7 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
+    if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev')
     permissions:
       contents: read
       packages: write
@@ -93,6 +93,7 @@ jobs:
         with:
           context: .
           push: true
+          platforms: linux/amd64
           tags: |
             ${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.branch_tag }}
             ${{ env.IMAGE_NAME }}:${{ steps.tags.outputs.sha_tag }}
@@ -101,42 +102,21 @@ jobs:
           cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache-${{ steps.tags.outputs.branch_tag }},mode=max
 
   # ─────────────────────────────────────────────────────────────────────────
-  # Step 3: Trigger deploy on the VPS (main only)
+  # Step 3: Trigger deploy on Dokploy (main only)
   # ─────────────────────────────────────────────────────────────────────────
   trigger-deploy:
     runs-on: ubuntu-latest
     needs: docker
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.DOKPLOY_APP_ID != ''
     steps:
-      - name: Dispatch deploy workflow to infra repo
-        if: "${{ env.INFRA_TOKEN != '' }}"
+      - name: Redeploy on Dokploy
         env:
-          INFRA_TOKEN: ${{ secrets.INFRA_DEPLOY_TOKEN }}
-        uses: peter-evans/repository-dispatch@v3
-        with:
-          token: ${{ secrets.INFRA_DEPLOY_TOKEN }}
-          repository: Vantroxia-Labs/infra
-          event-type: deploy
-          client-payload: |
-            {
-              "service": "gymmate",
-              "image_tag": "${{ needs.docker.outputs.sha_tag || 'latest' }}",
-              "triggered_by": "${{ github.repository }}",
-              "commit_sha": "${{ github.sha }}",
-              "commit_message": ${{ toJSON(github.event.head_commit.message) }}
-            }
-
-      - name: Deploy directly to VPS via SSH (fallback)
-        if: "${{ env.INFRA_TOKEN == '' && env.SSH_HOST != '' }}"
-        env:
-          INFRA_TOKEN: ${{ secrets.INFRA_DEPLOY_TOKEN }}
-          SSH_HOST: ${{ secrets.AZURE_VM_HOST || secrets.VPS_HOST }}
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.AZURE_VM_HOST || secrets.VPS_HOST }}
-          username: ${{ secrets.AZURE_VM_USERNAME || 'deploy' }}
-          key: ${{ secrets.AZURE_VM_SSH_KEY || secrets.VPS_SSH_KEY }}
-          script: |
-            cd /opt/vantroxia/apps/gymmate || cd /opt/gymmate || true
-            docker compose pull || true
-            docker compose up -d || true
+          DOKPLOY_URL: ${{ secrets.DOKPLOY_URL }}
+          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
+          APP_ID: ${{ vars.DOKPLOY_APP_ID }}
+        run: |
+          curl -sS --fail-with-body -X POST "${DOKPLOY_URL%/}/api/application.deploy" \
+            -H "accept: application/json" \
+            -H "x-api-key: $DOKPLOY_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"applicationId\": \"$APP_ID\"}"

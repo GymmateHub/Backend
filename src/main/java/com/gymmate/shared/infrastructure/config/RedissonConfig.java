@@ -31,12 +31,16 @@ public class RedissonConfig {
     @Value("${spring.data.redis.password:}")
     private String redisPassword;
 
+    @Value("${spring.data.redis.database:0}")
+    private int redisDatabase = 0;
+
     @Bean(destroyMethod = "shutdown")
     public RedissonClient redissonClient() {
         Config config = new Config();
         String address = "redis://" + redisHost + ":" + redisPort;
         var serverConfig = config.useSingleServer()
                 .setAddress(address)
+                .setDatabase(redisDatabase)
                 .setConnectTimeout(2000)
                 .setTimeout(3000);
         if (redisPassword != null && !redisPassword.isBlank()) {

@@ -16,6 +16,7 @@ class RedissonConfigTest {
         RedissonConfig config = new RedissonConfig();
         ReflectionTestUtils.setField(config, "redisHost", "127.0.0.1");
         ReflectionTestUtils.setField(config, "redisPort", 63899); // Unused port
+        ReflectionTestUtils.setField(config, "redisDatabase", 1);
 
         RedissonClient client = config.redissonClient();
         assertNotNull(client, "RedissonClient should not be null");
