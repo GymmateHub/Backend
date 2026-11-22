@@ -29,7 +29,7 @@ public class WelcomeController {
         info.put("status", "running");
         info.put("timestamp", LocalDateTime.now());
         info.put("message", "Welcome to GymMate API");
-        info.put("docs", "/swagger-ui.html");
+        info.put("docs", "/scalar.html");
         info.put("health", "/actuator/health");
 
         return ResponseEntity.ok(ApiResponse.success(info, "API is running successfully"));
